@@ -15,7 +15,7 @@
 
 		function getNavState()
 		{
-			var cannotLeaveEditMode = !(!Slick.GlobalEditorLock.isEditing() || Slick.GlobalEditorLock.commitCurrentEdit());
+			var cannotLeaveEditMode = !Slick.GlobalEditorLock.commitCurrentEdit();
 			var pagingInfo = dataView.getPagingInfo();
 			var lastPage = Math.floor(pagingInfo.totalRows/pagingInfo.pageSize);
 
