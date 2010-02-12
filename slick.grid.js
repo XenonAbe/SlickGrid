@@ -8,7 +8,7 @@
  * (c) 2009-2010 Michael Leibman (michael.leibman@gmail.com)
  * All rights reserved.
  *
- * SlickGrid v1.1.0
+ * SlickGrid v1.1.1
  *
  * TODO:
  * - frozen columns
@@ -1274,7 +1274,10 @@ if (!jQuery.fn.drag) {
 
             switch (e.which) {
             case 27:  // esc
-                options.editorLock.cancelCurrentEdit(); // noop if lock is inactive
+                if (!options.editorLock.isActive()) {
+                    return true; // no editing mode to cancel, allow bubbling and default processing (exit without cancelling the event)
+                }
+                options.editorLock.cancelCurrentEdit();
                 if (currentCellNode) {
                     currentCellNode.focus();
                 }
@@ -1303,7 +1306,7 @@ if (!jQuery.fn.drag) {
 
             default:
                 // exit without cancelling the event
-                return;
+                return true;
             }
 
             e.stopPropagation();
@@ -1753,7 +1756,7 @@ if (!jQuery.fn.drag) {
         // Public API
 
         $.extend(this, {
-            "slickGridVersion": "1.1.0",
+            "slickGridVersion": "1.1.1",
 
             // Events
             "onSort":                null,
