@@ -411,16 +411,16 @@ if (!jQuery.fn.drag) {
             $divHeadersScroller.bind("contextmenu", handleHeaderContextMenu);
         }
 
-        function hoverBegin() {
-            $(this).addClass('ui-state-hover');
-        }
-
-        function hoverEnd() {
-            $(this).removeClass('ui-state-hover');
-        }
-
         function createColumnHeaders() {
             var i;
+
+            function hoverBegin() {
+                $(this).addClass('ui-state-hover');
+            }
+            function hoverEnd() {
+                $(this).removeClass('ui-state-hover');
+            }
+
             for (i = 0; i < columns.length; i++) {
                 var m = columns[i] = $.extend({},columnDefaults,columns[i]);
                 columnsById[m.id] = i;
