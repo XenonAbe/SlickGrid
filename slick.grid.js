@@ -2397,8 +2397,10 @@ if (typeof Slick === "undefined") {
       if (activeCellNode !== null) {
         makeActiveCellNormal();
         $(activeCellNode).removeClass("active");
+        $(activeCellNode).parent().removeClass("active-row");
         if (rowsCache[activeRow]) {
           $(rowsCache[activeRow].rowNode).removeClass("active");
+          $(rowsCache[activeRow].rowNode).parent().removeClass("active-row");
         }
       }
 
@@ -2411,7 +2413,9 @@ if (typeof Slick === "undefined") {
 
         $(activeCellNode).addClass("active");
         $(rowsCache[activeRow].rowNode).addClass("active");
-
+        $(activeCellNode).parent().addClass("active-row");
+        $(rowsCache[activeRow].rowNode).parent().addClass("active-row");
+		
         if (options.editable && editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
           clearTimeout(h_editorLoader);
 
