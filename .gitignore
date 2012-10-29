@@ -1,2 +1,6 @@
 .gitk*
 .idea/*
+
+# Editor backup files
+*~
+*.bak
