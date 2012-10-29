@@ -770,6 +770,7 @@ if (typeof Slick === "undefined") {
               }
               maxPageX = pageX + Math.min(shrinkLeewayOnRight, stretchLeewayOnLeft);
               minPageX = pageX - Math.min(shrinkLeewayOnLeft, stretchLeewayOnRight);
+              trigger(self.onColumnsResizeStart, {});
             })
             .bind("drag", function (e, dd) {
               var actualMinWidth, d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX, x;
@@ -3149,6 +3150,7 @@ if (typeof Slick === "undefined") {
       "onValidationError": new Slick.Event(),
       "onViewportChanged": new Slick.Event(),
       "onColumnsReordered": new Slick.Event(),
+      "onColumnsResizeStart": new Slick.Event(),
       "onColumnsResized": new Slick.Event(),
       "onCellChange": new Slick.Event(),
       "onBeforeEditCell": new Slick.Event(),
