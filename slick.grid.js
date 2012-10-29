@@ -505,6 +505,12 @@ if (typeof Slick === "undefined") {
       return $header && $header[0];
     }
 
+    function getHeadersColumn(columnId) {
+      var idx = getColumnIndex(columnId);
+      var $header = $headers.children().eq(idx);
+      return $header && $header[0];
+    }
+
     function createColumnHeaders() {
       function hoverBegin() {
         $(this).addClass("ui-state-hover");
@@ -3221,6 +3227,7 @@ if (typeof Slick === "undefined") {
       "setHeaderRowVisibility": setHeaderRowVisibility,
       "getHeaderRow": getHeaderRow,
       "getHeaderRowColumn": getHeaderRowColumn,
+      "getHeadersColumn": getHeadersColumn,
       "getGridPosition": getGridPosition,
       "flashCell": flashCell,
       "addCellCssStyles": addCellCssStyles,
