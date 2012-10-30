@@ -2285,7 +2285,8 @@ if (typeof Slick === "undefined") {
     }
 
     function cellExists(row, cell) {
-      return !(row < 0 || row >= getDataLength() || cell < 0 || cell >= columns.length);
+      // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
+      return (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0);
     }
 
     function getCellFromPoint(x, y) {
@@ -2909,65 +2910,63 @@ if (typeof Slick === "undefined") {
 
     function setActiveCell(row, cell) {
       if (!initialized) { return; }
-      if (row > getDataLength() || row < 0 || cell >= columns.length || cell < 0) {
-        return;
-      }
+      // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
+      if (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0) {
+        if (!options.enableCellNavigation) {
+          return;
+        }
 
-      if (!options.enableCellNavigation) {
-        return;
+        scrollRowIntoView(row, false);
+        scrollCellIntoView(row, cell);
+        setActiveCellInternal(getCellNode(row, cell), false);
       }
-
-      scrollRowIntoView(row, false);
-      scrollCellIntoView(row, cell);
-      setActiveCellInternal(getCellNode(row, cell), false);
     }
 
     function canCellBeActive(row, cell) {
-      if (!options.enableCellNavigation || row >= getDataLength() + (options.enableAddRow ? 1 : 0) ||
-          row < 0 || cell >= columns.length || cell < 0) {
-        return false;
-      }
+      // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
+      if (options.enableCellNavigation && row < getDataLength() + (options.enableAddRow ? 1 : 0) && row >= 0 && cell < columns.length && cell >= 0) {
+        var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
+        if (rowMetadata && typeof rowMetadata.focusable === "boolean") {
+          return rowMetadata.focusable;
+        }
 
-      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
-      if (rowMetadata && typeof rowMetadata.focusable === "boolean") {
-        return rowMetadata.focusable;
-      }
+        var columnMetadata = rowMetadata && rowMetadata.columns;
+        if (columnMetadata && columnMetadata[columns[cell].id] && typeof columnMetadata[columns[cell].id].focusable === "boolean") {
+          return columnMetadata[columns[cell].id].focusable;
+        }
+        if (columnMetadata && columnMetadata[cell] && typeof columnMetadata[cell].focusable === "boolean") {
+          return columnMetadata[cell].focusable;
+        }
 
-      var columnMetadata = rowMetadata && rowMetadata.columns;
-      if (columnMetadata && columnMetadata[columns[cell].id] && typeof columnMetadata[columns[cell].id].focusable === "boolean") {
-        return columnMetadata[columns[cell].id].focusable;
-      }
-      if (columnMetadata && columnMetadata[cell] && typeof columnMetadata[cell].focusable === "boolean") {
-        return columnMetadata[cell].focusable;
-      }
+        if (typeof columns[cell].focusable === "boolean") {
+          return columns[cell].focusable;
+        }
 
-      if (typeof columns[cell].focusable === "boolean") {
-        return columns[cell].focusable;
-      }
-
-      return true;
+        return true;
+      } 
+      return false;
     }
 
     function canCellBeSelected(row, cell) {
-      if (row >= getDataLength() || row < 0 || cell >= columns.length || cell < 0) {
-        return false;
-      }
+      // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
+      if (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0) {
+        var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
+        if (rowMetadata && typeof rowMetadata.selectable === "boolean") {
+          return rowMetadata.selectable;
+        }
 
-      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
-      if (rowMetadata && typeof rowMetadata.selectable === "boolean") {
-        return rowMetadata.selectable;
-      }
+        var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[columns[cell].id] || rowMetadata.columns[cell]);
+        if (columnMetadata && typeof columnMetadata.selectable === "boolean") {
+          return columnMetadata.selectable;
+        }
 
-      var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[columns[cell].id] || rowMetadata.columns[cell]);
-      if (columnMetadata && typeof columnMetadata.selectable === "boolean") {
-        return columnMetadata.selectable;
-      }
+        if (typeof columns[cell].selectable === "boolean") {
+          return columns[cell].selectable;
+        }
 
-      if (typeof columns[cell].selectable === "boolean") {
-        return columns[cell].selectable;
+        return true;
       }
-
-      return true;
+      return false;
     }
 
     function gotoCell(row, cell, forceEdit) {
