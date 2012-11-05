@@ -2194,14 +2194,10 @@ if (typeof Slick === "undefined") {
     }
 
     function handleClick(e) {
-      console.log("slick::handleClick", arguments);
-
       if (!currentEditor) {
         // if this click resulted in some cell child node getting focus,
         // don't steal it back - keyboard events will still bubble up
         if (e.target != document.activeElement) {
-          console.log("slick::handleClick::setFocus", arguments);
-
           setFocus();
         }
       }
@@ -2377,8 +2373,6 @@ if (typeof Slick === "undefined") {
     }
 
     function setFocus() {
-      console.log("slick::setFocus", arguments, $focusSink);
-
       $focusSink[0].focus();
     }
 
@@ -2497,8 +2491,6 @@ if (typeof Slick === "undefined") {
     }
 
     function makeActiveCellEditable(editor) {
-      console.log("slick::makeActiveCellEditable", arguments);
-
       if (!activeCellNode) {
         return;
       }
@@ -2552,8 +2544,6 @@ if (typeof Slick === "undefined") {
     }
 
     function commitEditAndSetFocus() {
-      console.log("slick::commitEditAndSetFocus", arguments);
-
       // if the commit fails, it would do so due to a validation error
       // if so, do not steal the focus from the editor
       if (getEditorLock().commitCurrentEdit()) {
@@ -2565,8 +2555,6 @@ if (typeof Slick === "undefined") {
     }
 
     function cancelEditAndSetFocus() {
-      console.log("slick::cancelEditAndSetFocus", arguments);
-
       if (getEditorLock().cancelCurrentEdit()) {
         setFocus();
       }
@@ -2883,8 +2871,6 @@ if (typeof Slick === "undefined") {
     }
 
     function navigate(dir) {
-      console.log("slick::navigate", arguments);
-
       if (!activeCellNode || !options.enableCellNavigation) {
         return;
       }
@@ -2984,8 +2970,6 @@ if (typeof Slick === "undefined") {
     }
 
     function gotoCell(row, cell, forceEdit) {
-      console.log("slick::gotoCell", arguments);
-
       if (!initialized) { return; }
       if (!canCellBeActive(row, cell)) {
         return;
