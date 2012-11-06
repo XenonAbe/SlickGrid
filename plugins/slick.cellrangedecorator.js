@@ -39,12 +39,18 @@
       var from = grid.getCellNodeBox(range.fromRow, range.fromCell);
       var to = grid.getCellNodeBox(range.toRow, range.toCell);
 
-      _elem.css({
-        top: from.top - 1,
-        left: from.left - 1,
-        height: to.bottom - from.top - 2,
-        width: to.right - from.left - 2
-      });
+      // prevent JS crash when trying to decorate header cells, as those would
+      // produce from/to == null as .fromRow/.toRow would be < 0:
+      if (from && to) {
+        _elem.css({
+          top: from.top - 1,
+          left: from.left - 1,
+          height: to.bottom - from.top - 2,
+          width: to.right - from.left - 2
+        });
+      } else {
+        // TBD
+      }
 
       return _elem;
     }
