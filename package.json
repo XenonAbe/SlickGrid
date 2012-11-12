@@ -1,0 +1,12 @@
+{
+  "name": "SlickGrid",
+  "version": "2.1.0",
+  "main": "./slick.core.js",
+  "description": "shim repo for SlickGrid component",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ErisJS/SlickGrid.git"
+  },
+  "dependencies": {
+  }
+}
