@@ -278,7 +278,7 @@ if (typeof Slick === "undefined") {
                 $container.css("position", "relative");
             }
 
-            $focusSink = $("<div tabIndex='0' hideFocus style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
+            $focusSink = $("<div tabIndex='0' hideFocus='true' style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
 
             // Containers used for scrolling frozen columns and rows
             $paneHeaderL = $("<div class='slick-pane slick-pane-header slick-pane-left' tabIndex='0' />").appendTo($container);
@@ -555,7 +555,7 @@ if (typeof Slick === "undefined") {
                     $headerRowL.width(canvasWidthL);
                     $headerRowR.width(canvasWidthR);
 
-                    $paneTopL.width( canvasWidthL );
+                    $paneTopL.width(canvasWidthL);
                     $viewportTopL.width(canvasWidthL);
 
                     $viewportTopR.width(viewportW - canvasWidthL);
@@ -678,7 +678,9 @@ if (typeof Slick === "undefined") {
                     "column": columnDef
                 });
 
-                $header.attr("title", toolTip || "").children().eq(0).html(title);
+                $header
+				    .attr("title", toolTip || "")
+				    .children().eq(0).html(title);
 
                 trigger(self.onHeaderCellRendered, {
                     "node": $header[0],
@@ -709,6 +711,12 @@ if (typeof Slick === "undefined") {
             }
 
             var $header = $headerRowTarget.children().eq(idx);
+            return $header && $header[0];
+        }
+
+        function getHeadersColumn(columnId) {
+            var idx = getColumnIndex(columnId);
+            var $header = $headers.children().eq(idx);
             return $header && $header[0];
         }
 
@@ -776,7 +784,9 @@ if (typeof Slick === "undefined") {
                 });
 
                 if (options.showHeaderRow) {
-                    var headerRowCell = $("<div class='ui-state-default slick-headerrow-column l" + i + " r" + i + "'></div>").data("column", m).appendTo($headerRowTarget);
+                    var headerRowCell = $("<div class='ui-state-default slick-headerrow-column l" + i + " r" + i + "'></div>")
+					    .data("column", m)
+						.appendTo($headerRowTarget);
 
                     trigger(self.onHeaderRowCellRendered, {
                         "node": headerRowCell[0],
@@ -869,7 +879,10 @@ if (typeof Slick === "undefined") {
         }
 
         function setupColumnReorder() {
-            $headers.sortable("destroy");
+	        if (!(jQuery.isEmptyObject($.data( $headers, $headers.sortable.prototype.widgetFullName ) ))){
+               $headers.sortable("destroy");
+			}
+
             var columnScrollTimer = null;
 
             function scrollColumnsRight() {
@@ -1017,6 +1030,8 @@ if (typeof Slick === "undefined") {
                         }
                         maxPageX = pageX + Math.min(shrinkLeewayOnRight, stretchLeewayOnLeft);
                         minPageX = pageX - Math.min(shrinkLeewayOnLeft, stretchLeewayOnRight);
+						
+                        trigger(self.onColumnsResizeStart, {});
                     }).bind("drag", function(e, dd) {
                         var actualMinWidth, d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX,
                             x;
@@ -1555,8 +1570,10 @@ if (typeof Slick === "undefined") {
                 }
                 var columnIndex = getColumnIndex(col.columnId);
                 if (columnIndex != null) {
-                    headerColumnEls.eq(columnIndex).addClass("slick-header-column-sorted").find(".slick-sort-indicator").addClass(
-                    col.sortAsc ? "slick-sort-indicator-asc" : "slick-sort-indicator-desc");
+                    headerColumnEls.eq(columnIndex)
+					    .addClass("slick-header-column-sorted")
+						.find(".slick-sort-indicator")
+						.addClass(col.sortAsc ? "slick-sort-indicator-asc" : "slick-sort-indicator-desc");
                 }
             });
         }
@@ -1779,9 +1796,15 @@ if (typeof Slick === "undefined") {
             var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
 
             // look up by id, then index
-            var columnOverrides = rowMetadata && rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[getColumnIndex(column.id)]);
+            var columnOverrides = rowMetadata && 
+			        rowMetadata.columns && 
+					(rowMetadata.columns[column.id] || rowMetadata.columns[getColumnIndex(column.id)]);
 
-            return (columnOverrides && columnOverrides.formatter) || (rowMetadata && rowMetadata.formatter) || column.formatter || (options.formatterFactory && options.formatterFactory.getFormatter(column)) || options.defaultFormatter;
+            return (columnOverrides && columnOverrides.formatter) || 
+			    (rowMetadata && rowMetadata.formatter) || 
+				column.formatter || 
+				(options.formatterFactory && options.formatterFactory.getFormatter(column)) || 
+				options.defaultFormatter;
         }
 
         function getEditor(row, cell) {
@@ -3049,7 +3072,8 @@ if (typeof Slick === "undefined") {
         }
 
         function cellExists(row, cell) {
-            return !(row < 0 || row >= getDataLength() || cell < 0 || cell >= columns.length);
+            // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
+            return (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0);
         }
 
         function getCellFromPoint(x, y) {
@@ -3780,66 +3804,66 @@ if (typeof Slick === "undefined") {
         function setActiveCell(row, cell) {
             if (!initialized) {
                 return;
-            }
-            if (row > getDataLength() || row < 0 || cell >= columns.length || cell < 0) {
-                return;
-            }
+            }                                                                    
+			
+            // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
+            if (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0) {
+                if (!options.enableCellNavigation) {
+                    return;
+                }
 
-            if (!options.enableCellNavigation) {
-                return;
+                scrollRowIntoView(row, false);
+                scrollCellIntoView(row, cell);
+                setActiveCellInternal(getCellNode(row, cell), false);
             }
-
-            scrollRowIntoView(row, false);
-            scrollCellIntoView(row, cell);
-            setActiveCellInternal(getCellNode(row, cell), false);
         }
 
         function canCellBeActive(row, cell) {
-            if (!options.enableCellNavigation || row >= getDataLength() + (options.enableAddRow ? 1 : 0) || row < 0 || cell >= columns.length || cell < 0) {
-                return false;
-            }
+            // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
+            if (options.enableCellNavigation && row < getDataLength() + (options.enableAddRow ? 1 : 0) && row >= 0 && cell < columns.length && cell >= 0) {
+		      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
+		      if (rowMetadata && typeof rowMetadata.focusable === "boolean") {
+		        return rowMetadata.focusable;
+		      }
 
-            var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
-            if (rowMetadata && typeof rowMetadata.focusable === "boolean") {
-                return rowMetadata.focusable;
-            }
+		      var columnMetadata = rowMetadata && rowMetadata.columns;
+		      if (columnMetadata && columnMetadata[columns[cell].id] && typeof columnMetadata[columns[cell].id].focusable === "boolean") {
+		        return columnMetadata[columns[cell].id].focusable;
+		      }
+		      if (columnMetadata && columnMetadata[cell] && typeof columnMetadata[cell].focusable === "boolean") {
+		        return columnMetadata[cell].focusable;
+		      }
 
-            var columnMetadata = rowMetadata && rowMetadata.columns;
-            if (columnMetadata && columnMetadata[columns[cell].id] && typeof columnMetadata[columns[cell].id].focusable === "boolean") {
-                return columnMetadata[columns[cell].id].focusable;
-            }
-            if (columnMetadata && columnMetadata[cell] && typeof columnMetadata[cell].focusable === "boolean") {
-                return columnMetadata[cell].focusable;
-            }
+		      if (typeof columns[cell].focusable === "boolean") {
+		        return columns[cell].focusable;
+		      }
 
-            if (typeof columns[cell].focusable === "boolean") {
-                return columns[cell].focusable;
-            }
+		      return true;
+		    }
+	        return false;
+	    }
 
-            return true;
-        }
+	    function canCellBeSelected(row, cell) {
+	        // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
+	        if (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0) {
+		      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
+		      if (rowMetadata && typeof rowMetadata.selectable === "boolean") {
+		        return rowMetadata.selectable;
+		      }
 
-        function canCellBeSelected(row, cell) {
-            if (row >= getDataLength() || row < 0 || cell >= columns.length || cell < 0) {
-                return false;
-            }
+		      var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[columns[cell].id] || rowMetadata.columns[cell]);
+		      if (columnMetadata && typeof columnMetadata.selectable === "boolean") {
+		        return columnMetadata.selectable;
+		      }
 
-            var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
-            if (rowMetadata && typeof rowMetadata.selectable === "boolean") {
-                return rowMetadata.selectable;
-            }
+		      if (typeof columns[cell].selectable === "boolean") {
+		        return columns[cell].selectable;
+		      }
 
-            var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[columns[cell].id] || rowMetadata.columns[cell]);
-            if (columnMetadata && typeof columnMetadata.selectable === "boolean") {
-                return columnMetadata.selectable;
-            }
-
-            if (typeof columns[cell].selectable === "boolean") {
-                return columns[cell].selectable;
-            }
-
-            return true;
-        }
+		      return true;
+	        }
+	        return false;
+	    }
 
         function gotoCell(row, cell, forceEdit) {
             if (!initialized) {
@@ -4027,6 +4051,7 @@ if (typeof Slick === "undefined") {
             "onValidationError": new Slick.Event(),
             "onViewportChanged": new Slick.Event(),
             "onColumnsReordered": new Slick.Event(),
+            "onColumnsResizeStart": new Slick.Event(),
             "onColumnsResized": new Slick.Event(),
             "onCellChange": new Slick.Event(),
             "onBeforeEditCell": new Slick.Event(),
@@ -4105,6 +4130,7 @@ if (typeof Slick === "undefined") {
             "setHeaderRowVisibility": setHeaderRowVisibility,
             "getHeaderRow": getHeaderRow,
             "getHeaderRowColumn": getHeaderRowColumn,
+            "getHeadersColumn": getHeadersColumn,
             "getGridPosition": getGridPosition,
             "flashCell": flashCell,
             "addCellCssStyles": addCellCssStyles,
