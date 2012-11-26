@@ -5,7 +5,7 @@
   "description": "shim repo for SlickGrid component",
   "repository": {
     "type": "git",
-    "url": "git://github.com/ErisJS/SlickGrid.git"
+    "url": "git://github.com/GerHobbelt/SlickGrid.git"
   },
   "dependencies": {
   }
