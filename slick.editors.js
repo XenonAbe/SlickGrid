@@ -29,7 +29,7 @@
       $input = $("<INPUT type=text class='editor-text' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === _.keyCode.LEFT || e.keyCode === _.keyCode.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -98,7 +98,7 @@
       $input = $("<INPUT type=text class='editor-text' />");
 
       $input.bind("keydown.nav", function (e) {
-        if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+        if (e.keyCode === _.keyCode.LEFT || e.keyCode === _.keyCode.RIGHT) {
           e.stopImmediatePropagation();
         }
       });
@@ -164,7 +164,7 @@
       $input.datepicker({
         showOn: "button",
         buttonImageOnly: true,
-        buttonImage: "../images/calendar.gif",
+        buttonImage: "/img/calendar.gif",
         beforeShow: function () {
           calendarOpen = true
         },
@@ -438,15 +438,15 @@
     };
 
     this.handleKeyDown = function (e) {
-      if (e.which == $.ui.keyCode.ENTER && e.ctrlKey) {
+      if (e.which == _.keyCode.ENTER && e.ctrlKey) {
         scope.save();
-      } else if (e.which == $.ui.keyCode.ESCAPE) {
+      } else if (e.which == _.keyCode.ESCAPE) {
         e.preventDefault();
         scope.cancel();
-      } else if (e.which == $.ui.keyCode.TAB && e.shiftKey) {
+      } else if (e.which == _.keyCode.TAB && e.shiftKey) {
         e.preventDefault();
         args.grid.navigatePrev();
-      } else if (e.which == $.ui.keyCode.TAB) {
+      } else if (e.which == _.keyCode.TAB) {
         e.preventDefault();
         args.grid.navigateNext();
       }
