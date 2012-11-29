@@ -1,3 +1,13 @@
+# DataSplice SlickGrid Fork
+
+* uses a deferred editor interface, so editors can validate, get, set, commit, etc asynchronously.
+* dependencies on jquery ui have been removed, stubbed out the only hard depencency (_.keyCode) in the
+`slick.editors.js` file.
+* merged in features from https://github.com/JLynch7/SlickGrid/tree/2.0-frozenRowsAndColumns for
+frozen column support
+* tracking mleibman's master
+* installable via bower
+
 # Welcome to SlickGrid
 
 For now, please check out [the wiki](/mleibman/SlickGrid/wiki).
