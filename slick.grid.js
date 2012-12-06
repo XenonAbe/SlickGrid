@@ -885,7 +885,7 @@ if (typeof Slick === "undefined") {
 	        if (!(jQuery.isEmptyObject($.data( $headers, $headers.sortable.prototype.widgetFullName ) ))){
                 // force init jquery ui sortable +1.9
                 $headers.sortable();
-                $headers.sortable("destroy");
+		        $headers.filter(":ui-sortable").sortable("destroy");
 			}
 
             var columnScrollTimer = null;
@@ -3214,8 +3214,10 @@ if (typeof Slick === "undefined") {
             if (activeCellNode !== null) {
                 makeActiveCellNormal();
                 $(activeCellNode).removeClass("active");
+                $(activeCellNode).parent().removeClass("active-row");
                 if (rowsCache[activeRow]) {
                     $(rowsCache[activeRow].rowNode).removeClass("active");
+                    $(rowsCache[activeRow].rowNode).parent().removeClass("active-row");
                 }
             }
 
@@ -3240,8 +3242,11 @@ if (typeof Slick === "undefined") {
                 activeRow = cell.row;
                 activeCell = activePosX = activeCell = activePosX = getCellFromNode(activeCellNode[0]);
 
-                $activeCellNode.addClass("active");
-
+                $(activeCellNode).addClass("active");
+                $(rowsCache[activeRow].rowNode).addClass("active");
+                $(activeCellNode).parent().addClass("active-row");
+                $(rowsCache[activeRow].rowNode).parent().addClass("active-row");
+		
                 if (options.editable && editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
                     clearTimeout(h_editorLoader);
 
