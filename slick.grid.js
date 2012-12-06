@@ -1313,6 +1313,7 @@ if (typeof Slick === "undefined") {
         cursor: "default",
         tolerance: "intersection",
         helper: "clone",
+        delay: 300,
         placeholder: "slick-sortable-placeholder ui-state-default slick-header-column",
         start: function (e, ui) {
           ui.placeholder.width(ui.helper.width());
