@@ -4084,6 +4084,10 @@ if (typeof Slick === "undefined") {
       selectionModel.setSelectedRanges(rowsToRanges(rows));
     }
 
+    function getScrollbarDimensions() {
+      return scrollbarDimensions;
+    }
+
     // ////////////////////////////////////////////////////////////////////////////////////////////
     // Debug
 
@@ -4224,6 +4228,7 @@ if (typeof Slick === "undefined") {
       "setCellCssStyles": setCellCssStyles,
       "removeCellCssStyles": removeCellCssStyles,
       "getCellCssStyles": getCellCssStyles,
+      "getScrollbarDimensions": getScrollbarDimensions,
       "getFrozenRowOffset": getFrozenRowOffset,
 
       "init": finishInitialization,
