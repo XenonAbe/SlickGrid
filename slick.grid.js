@@ -85,7 +85,8 @@ if (typeof Slick === "undefined") {
       fullWidthRows: false,
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
-      forceSyncScrolling: false
+      forceSyncScrolling: false,
+	  onRenderComplete: null /* added this function to be called after rendering new rows in the viewport*/
     };
 
     var columnDefaults = {
@@ -1856,6 +1857,11 @@ if (typeof Slick === "undefined") {
       if (needToReselectCell) {
         activeCellNode = getCellNode(activeRow, activeCell);
       }
+	  
+	  // trigger once all the rows in the view port get rendered
+	  if (options.onRenderComplete) {
+		options.onRenderComplete();
+	  }
     }
 
     function startPostProcessing() {
