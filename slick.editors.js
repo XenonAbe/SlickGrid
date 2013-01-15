@@ -85,6 +85,9 @@
         msg: null
       };
     };
+    this.getContainer = function () {
+      return args.container;
+    };
 
     this.init();
   }
@@ -148,6 +151,9 @@
       };
     };
 
+    this.getContainer = function () {
+      return args.container;
+    };
     this.init();
   }
 
@@ -232,6 +238,9 @@
         msg: null
       };
     };
+    this.getContainer = function () {
+      return args.container;
+    };
 
     this.init();
   }
@@ -240,7 +249,7 @@
     var $select;
     var defaultValue;
     var scope = this;
-
+    
     this.init = function () {
       $select = $("<SELECT tabIndex='0' class='editor-yesno'><OPTION value='yes'>Yes</OPTION><OPTION value='no'>No</OPTION></SELECT>");
       $select.appendTo(args.container);
@@ -277,6 +286,9 @@
         valid: true,
         msg: null
       };
+    };
+    this.getContainer = function () {
+      return args.container;
     };
 
     this.init();
@@ -329,6 +341,9 @@
       };
     };
 
+    this.getContainer = function () {
+      return args.container;
+    };
     this.init();
   }
 
@@ -402,6 +417,9 @@
         valid: true,
         msg: null
       };
+    };
+    this.getContainer = function () {
+      return args.container;
     };
 
     this.init();
@@ -505,6 +523,9 @@
         valid: true,
         msg: null
       };
+    };
+    this.getContainer = function () {
+      return args.container;
     };
 
     this.init();
