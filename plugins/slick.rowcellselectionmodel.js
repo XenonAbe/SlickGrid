@@ -11,7 +11,7 @@
     var _canvas;
     var _ranges = [];
     var _self = this;
-    var _selector = new Slick.CellRangeSelector();
+    var _selector = new Slick.CellSelector();
 	var _handler = new Slick.EventHandler();
     var _inHandler;
     var _options;
@@ -26,8 +26,8 @@
       _canvas = _grid.getCanvasNode();
       _grid.onActiveCellChanged.subscribe(handleActiveCellChange);
       grid.registerPlugin(_selector);
-      _selector.onCellRangeSelected.subscribe(handleCellRangeSelected);
-      _selector.onBeforeCellRangeSelected.subscribe(handleBeforeCellRangeSelected);
+      _selector.onCellSelected.subscribe(handleCellSelected);
+      _selector.onBeforeCellSelected.subscribe(handleBeforeCellSelected);
 	  _handler.subscribe(_grid.onActiveCellChanged, wrapHandler(handleActiveCellChange));
       _handler.subscribe(_grid.onKeyDown, wrapHandler(handleKeyDown));
       _handler.subscribe(_grid.onClick, wrapHandler(handleClick));
@@ -35,8 +35,8 @@
 
     function destroy() {
       _grid.onActiveCellChanged.unsubscribe(handleActiveCellChange);
-      _selector.onCellRangeSelected.unsubscribe(handleCellRangeSelected);
-      _selector.onBeforeCellRangeSelected.unsubscribe(handleBeforeCellRangeSelected);
+      _selector.onCellSelected.unsubscribe(handleCellSelected);
+      _selector.onBeforeCellSelected.unsubscribe(handleBeforeCellSelected);
       _grid.unregisterPlugin(_selector);
 	   _handler.unsubscribeAll();
     }
@@ -187,14 +187,14 @@
       return _ranges;
     }
 
-    function handleBeforeCellRangeSelected(e, args) {
+    function handleBeforeCellSelected(e, args) {
       if (_grid.getEditorLock().isActive()) {
         e.stopPropagation();
         return false;
       }
     }
 
-    function handleCellRangeSelected(e, args) {
+    function handleCellSelected(e, args) {
       setSelectedRanges([args.range]);
     }
 
