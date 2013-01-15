@@ -1,0 +1,194 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
+  <style>
+    .slick-cell-radiobuttonsel {
+      background: #f0f0f0;
+      border-right-color: silver;
+      border-right-style: solid;
+    }
+	.selRow {
+		background-color: beige !important;
+	}
+  </style>
+</head>
+<body>
+<div style="position:relative">
+  <div style="width:600px;">
+    <div id="myGrid" style="width:100%;height:500px;"></div>
+	<br>
+	<input id="srchBy" type="text" />
+	<div id="msg" />
+  
+  </div>
+
+  <div class="options-panel">
+    <h2>Demonstrates:</h2>
+    <ul>
+      <li>Radiobutton row select column</li>
+    </ul>
+  </div>
+</div>
+
+<script src="../lib/firebugx.js"></script>
+
+<script src="../lib/jquery-1.7.min.js"></script>
+<script src="../lib/jquery-ui-1.8.16.custom.min.js"></script>
+<script src="../lib/jquery.event.drag-2.0.min.js"></script>
+
+<script src="../slick.core.js"></script>
+<script src="../plugins/slick.radiobuttonselectcolumn.js"></script>
+<script src="../plugins/slick.autotooltips.js"></script>
+<script src="../plugins/slick.cellrangedecorator.js"></script>
+<script src="../plugins/slick.cellrangeselector.js"></script>
+<script src="../plugins/slick.cellcopymanager.js"></script>
+<script src="../plugins/slick.rowcellselectionmodel.js"></script>
+<script src="../slick.formatters.js"></script>
+<script src="../slick.editors.js"></script>
+<script src="../slick.grid.js"></script>
+<script src="../slick.dataview.js"></script>
+
+<script>
+  var data = [],
+	options = {
+		editable: true,
+		enableCellNavigation: true,
+		asyncEditorLoading: false,
+		autoEdit: false
+	  },
+	columns = [], 
+	filterBy = {},
+	tempList = [],
+	rIdx = 0,
+	city, state, grid, dataLen, radiobuttonSelector, dataView;
+	
+	city = ['Arlington', 'Columbus', 'Culver City', 'Seatle', 'NYC'];
+	state = ['VA', 'OH', 'CA', 'WA', 'NY'];
+	
+	function getCity(no) {
+		return city[no];
+	}
+	  
+	function getState(no) {
+		return state[no];
+	}
+	
+	function locationFormatter(row, cell, value, columnDef, dataContext) {
+		if (dataContext) {
+			tempList.push(dataContext);
+			console.log(tempList.length + ') Id: ' + dataContext.id);
+			if(dataContext.isFooter) {
+				return '';
+			}
+			
+			return dataContext['city'] + ', ' + dataContext['state'];
+		}
+	}
+	
+	function myFilter(item, args) {
+		if (!args.sc.val) {
+			return true;
+		}
+	  if (item[args.sc.field] && item[args.sc.field].toLowerCase().indexOf(args.sc.val.toLowerCase()) >= 0) {
+		return true;
+	  } else if (item.isFooter){
+		return true;
+	  }
+
+	  return false;
+	}
+
+  $(function () {
+    for (var i = 0; i < 5; i++) {
+      var d = (data[i] = {});
+      d['id'] = i;
+      d["title"] = "Row" + i;
+	  d["city"] = getCity(Math.round(Math.random() * 4));
+	  d["state"] = getState(Math.round(Math.random() * 4));
+    }
+
+    radiobuttonSelector = new Slick.RadiobuttonSelectColumn({
+      cssClass: "slick-cell-radiobuttonsel"
+    });
+
+    columns.push(radiobuttonSelector.getColumnDefinition());
+	columns.push({id: "title", name: "Title", field: "title", width: 120, cssClass: "cell-title"});		
+	columns.push({id: "city", name: "City", field: "city", width: 240, formatter: locationFormatter});
+
+	dataLen = data.length;
+	data.push({ id: 9999, title: "Home schooled", isFooter: true});
+	data.push({ id: -1, title: "School/College not found", isFooter: true});
+	
+	dataView = new Slick.Data.DataView();
+    dataView.getItemMetadata = function (row) {
+      if (row < dataLen) {
+        return {
+          "columns": {
+            "duration": {
+              "colspan": 3
+            }
+          }
+        };
+      } else {
+        return {
+          "columns": {
+            1: {
+              "colspan": "*"
+            }
+          }
+        };
+      }
+    };
+	
+	grid = new Slick.Grid("#myGrid", dataView, columns, options);
+	grid.setSelectionModel(new Slick.RowCellSelectionModel({selectActiveRow: false}));
+    grid.registerPlugin(radiobuttonSelector);
+	
+	  // wire up model events to drive the grid
+	  dataView.onRowCountChanged.subscribe(function (e, args) {
+		grid.updateRowCount();
+		grid.render();
+	  });
+
+	  dataView.onRowsChanged.subscribe(function (e, args) {
+		grid.invalidateRows(args.rows);
+		grid.render();
+	  });
+	  
+	$("#srchBy").keyup(function (e) {
+		// clear on Esc
+		if (e.which == 27) {
+		  this.value = "";
+		}
+
+		filterBy = { field: 'title', val: this.value};
+		updateFilter();
+	  });
+	  
+	  function updateFilter() {
+		dataView.setFilterArgs({
+		  sc: filterBy
+		});
+		dataView.refresh();
+	  }
+	  
+	  // initialize the model after all the events have been hooked up
+	  dataView.beginUpdate();
+	  dataView.setItems(data);
+	  dataView.setFilterArgs({
+		sc: filterBy
+	  });
+	  dataView.setFilter(myFilter);
+	  dataView.endUpdate();
+
+	  // if you don't want the items that are not visible (due to being filtered out
+	  // or being on a different page) to stay selected, pass 'false' to the second arg
+	  dataView.syncGridSelection(grid, true);
+  })
+</script>
+</body>
+</html>

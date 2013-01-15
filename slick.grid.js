@@ -85,8 +85,7 @@ if (typeof Slick === "undefined") {
       fullWidthRows: false,
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
-      forceSyncScrolling: false,
-	  onRenderComplete: null /* added this function to be called after rendering new rows in the viewport*/
+      forceSyncScrolling: false
     };
 
     var columnDefaults = {
