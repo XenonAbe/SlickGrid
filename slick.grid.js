@@ -1868,74 +1868,70 @@ if (typeof Slick === "undefined") {
     }
 
     function appendRowHtml(stringArrayL, stringArrayR, row, range) {
-      $.when(getDataItem(row)).done(function (d) {
-        var dataLoading = row < getDataLength() && !d;
-        var rowCss = "slick-row" +
-            (dataLoading ? " loading" : "") +
-            (row === activeRow ? " active" : "") +
-            (row % 2 == 1 ? " odd" : " even");
+      var rowCss = "slick-row" +
+          (row < getDataLength() ? " loading" : "") +
+          (row === activeRow ? " active" : "") +
+          (row % 2 == 1 ? " odd" : " even");
 
-        var metadata = data.getItemMetadata && data.getItemMetadata(row);
+      var metadata = data.getItemMetadata && data.getItemMetadata(row);
 
-        if (metadata && metadata.cssClasses) {
-          rowCss += " " + metadata.cssClasses;
-        }
+      if (metadata && metadata.cssClasses) {
+        rowCss += " " + metadata.cssClasses;
+      }
 
       var frozenRowOffset = getFrozenRowOffset(row);
 
-        var rowHtml = "<div class='ui-widget-content " + rowCss + "' style='top:"
-            + (options.rowHeight * row - offset - frozenRowOffset )
-            + "px'>";
+      var rowHtml = "<div class='ui-widget-content " + rowCss + "' style='top:"
+          + (options.rowHeight * row - offset - frozenRowOffset )
+          + "px'>";
 
-        stringArrayL.push(rowHtml);
+      stringArrayL.push(rowHtml);
 
-        if (options.frozenColumn > -1) {
-          stringArrayR.push(rowHtml);
+      if (options.frozenColumn > -1) {
+        stringArrayR.push(rowHtml);
+      }
+
+      var colspan, m;
+      for (var i = 0, ii = columns.length; i < ii; i++) {
+        m = columns[i];
+        colspan = 1;
+        if (metadata && metadata.columns) {
+          var columnData = metadata.columns[m.id] || metadata.columns[i];
+          colspan = (columnData && columnData.colspan) || 1;
+          if (colspan === "*") {
+            colspan = ii - i;
+          }
         }
 
-        var colspan, m;
-        for (var i = 0, ii = columns.length; i < ii; i++) {
-          m = columns[i];
-          colspan = 1;
-          if (metadata && metadata.columns) {
-            var columnData = metadata.columns[m.id] || metadata.columns[i];
-            colspan = (columnData && columnData.colspan) || 1;
-            if (colspan === "*") {
-              colspan = ii - i;
-            }
+        // Do not render cells outside of the viewport.
+        if (columnPosRight[Math.min(ii - 1, i + colspan - 1)] > range.leftPx) {
+          if (columnPosLeft[i] > range.rightPx) {
+            // All columns to the right are outside the range.
+            break;
           }
-
-          // Do not render cells outside of the viewport.
-          if (columnPosRight[Math.min(ii - 1, i + colspan - 1)] > range.leftPx) {
-            if (columnPosLeft[i] > range.rightPx) {
-              // All columns to the right are outside the range.
-              break;
-            }
-
-            if (( options.frozenColumn > -1 ) && ( i > options.frozenColumn )) {
-              appendCellHtml(stringArrayR, row, i, colspan);
-            } else {
-              appendCellHtml(stringArrayL, row, i, colspan);
-            }
-          } else if (( options.frozenColumn > -1 ) && ( i <= options.frozenColumn )) {
+          if (( options.frozenColumn > -1 ) && ( i > options.frozenColumn )) {
+            appendCellHtml(stringArrayR, row, i, colspan);
+          } else {
             appendCellHtml(stringArrayL, row, i, colspan);
           }
-
-          if (colspan > 1) {
-            i += (colspan - 1);
-          }
+        } else if (( options.frozenColumn > -1 ) && ( i <= options.frozenColumn )) {
+          appendCellHtml(stringArrayL, row, i, colspan);
         }
 
-        stringArrayL.push("</div>");
 
-        if (options.frozenColumn > -1) {
-          stringArrayR.push("</div>");
+        if (colspan > 1) {
+          i += (colspan - 1);
         }
-      });
+      }
+
+      stringArrayL.push("</div>");
+
+      if (options.frozenColumn > -1) {
+        stringArrayR.push("</div>");
+      }
     }
 
     function appendCellHtml(stringArray, row, cell, colspan) {
-      $.when(getDataItem(row)).done(function (d) {
         var m = columns[cell];
         var cellCss = "slick-cell l" + cell + " r" + Math.min(columns.length - 1, cell + colspan - 1) +
             (m.cssClass ? " " + m.cssClass : "");
@@ -1944,25 +1940,38 @@ if (typeof Slick === "undefined") {
         }
 
         // TODO:  merge them together in the setter
-        for (var key in cellCssClasses) {
-          if (cellCssClasses[key][row] && cellCssClasses[key][row][m.id]) {
-            cellCss += (" " + cellCssClasses[key][row][m.id]);
+        function getAddtlCss(row, col){
+          var s = "";
+          for (var key in cellCssClasses) {
+            if (cellCssClasses[key][row] && cellCssClasses[key][row][m.id]) {
+              s += (" " + cellCssClasses[key][row][m.id]);
+            }
           }
+          return s;
         }
 
-        stringArray.push("<div class='" + cellCss + "'>");
+        cellCss += getAddtlCss(row,m.id);
 
+        stringArray.push("<div class='" + cellCss + "'></div>");
         // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
-        if (d) {
-          var value = getDataItemValueForColumn(d, m);
-          stringArray.push(getFormatter(row, m)(row, cell, value, m, d));
-        }
-
-        stringArray.push("</div>");
-
         rowsCache[row].cellRenderQueue.push(cell);
         rowsCache[row].cellColSpans[cell] = colspan;
-      });
+
+        // insert the data at a later time, whenever it is actually ready.
+        $.when(getDataItem(row)).done(function (d) {
+          if (d) {
+            _.defer(function(){
+              var value = getDataItemValueForColumn(d, m);
+              var o = getCellNode(row,cell);
+
+              if (currentEditor && currentEditor.getContainer() == o){
+                // skip filling in the cell, an editor is in charge here.
+              } else {
+                o.empty().append(getFormatter(row, m)(row, cell, value, m, d));
+              }
+            });
+          }
+        });
     }
 
 
@@ -2366,7 +2375,7 @@ if (typeof Slick === "undefined") {
 
     function ensureCellNodesInRowsCache(row) {
       var cacheEntry = rowsCache[row];
-      if (cacheEntry) {
+      if (cacheEntry && cacheEntry.rowNode) {
         if (cacheEntry.cellRenderQueue.length) {
           var $lastNode = cacheEntry.rowNode.children().last();
           while (cacheEntry.cellRenderQueue.length) {
@@ -2570,6 +2579,7 @@ if (typeof Slick === "undefined") {
 
       for (var i = 0, ii = rows.length; i < ii; i++) {
         if (( hasFrozenRows ) && ( rows[i] >= actualFrozenRow )) {
+          // HAS FROZEN ROWS
           if (options.frozenColumn > -1) {
             rowsCache[rows[i]].rowNode = $()
                 .add($(x.firstChild).appendTo($canvasBottomL))
@@ -2579,10 +2589,12 @@ if (typeof Slick === "undefined") {
                 .add($(x.firstChild).appendTo($canvasBottomL));
           }
         } else if (options.frozenColumn > -1) {
+          // HAS FROZEN COLUMNS
           rowsCache[rows[i]].rowNode = $()
               .add($(x.firstChild).appendTo($canvasTopL))
               .add($(xRight.firstChild).appendTo($canvasTopR));
         } else {
+          // HAS NONE
           rowsCache[rows[i]].rowNode = $()
               .add($(x.firstChild).appendTo($canvasTopL));
         }
