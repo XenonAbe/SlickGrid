@@ -14,7 +14,6 @@
  *     This increases the speed dramatically, but can only be done safely because there are no event handlers
  *     or data associated with any cell/row DOM nodes.  Cell editors must make sure they implement .destroy()
  *     and do proper cleanup.
- *
  */
 
 // make sure required JavaScript modules are loaded
@@ -27,6 +26,7 @@ if (!jQuery.fn.drag) {
 if (typeof Slick === "undefined") {
   throw "slick.core.js not loaded";
 }
+
 
 (function ($) {
   // Slick.Grid
@@ -1440,6 +1440,7 @@ if (typeof Slick === "undefined") {
       $container.empty().removeClass(uid);
     }
 
+
     // ////////////////////////////////////////////////////////////////////////////////////////////
     // General
 
@@ -1540,10 +1541,8 @@ if (typeof Slick === "undefined") {
         return;
       }
       var h;
-
       for (var i = 0, headers = $headers.children(), ii = headers.length; i < ii; i++) {
         h = $(headers[i]);
-
         if (h.width() !== columns[i].width - headerColumnWidthDiff) {
           h.width(columns[i].width - headerColumnWidthDiff);
         }
@@ -1715,7 +1714,6 @@ if (typeof Slick === "undefined") {
       data = newData;
       invalidateAllRows();
       updateRowCount();
-
       if (scrollToTop) {
         scrollTo(0);
       }
@@ -1859,7 +1857,7 @@ if (typeof Slick === "undefined") {
         }
       }
 
-      return promise.promise()
+      return promise.promise();
     }
 
     function getDataItemValueForColumn(item, columnDef) {
@@ -2009,7 +2007,6 @@ if (typeof Slick === "undefined") {
       if (!cacheEntry) {
         return;
       }
-
       cacheEntry.rowNode[0].parentElement.removeChild(cacheEntry.rowNode[0]);
 
       // Remove the row from the right viewport
@@ -2066,7 +2063,6 @@ if (typeof Slick === "undefined") {
       if (!cacheEntry) {
         return;
       }
-
       ensureCellNodesInRowsCache(row);
       $.when(getDataItem(row)).done(function (d) {
         for (var columnIdx in cacheEntry.cellNodesByColumnIdx) {
@@ -2991,7 +2987,6 @@ if (typeof Slick === "undefined") {
       }
 
       var cell = getCellFromEvent(e);
-
       if (!cell || (currentEditor !== null && activeRow == cell.row && activeCell == cell.cell)) {
         return;
       }
@@ -3269,14 +3264,12 @@ if (typeof Slick === "undefined") {
         var $activeCellNode = $(activeCellNode);
         activeRow = getRowFromNode($activeCellNode.parent());
         activeCell = activePosX = activeCell = activePosX = getCellFromNode(activeCellNode[0]);
-
         $activeCellNode.addClass("active");
 
         // BING - potential promise insertion requirement.
         $.when(isCellPotentiallyEditable(activeRow, activeCell)).done(function (isEditable) {
           if (options.editable && editMode) {
             clearTimeout(h_editorLoader);
-
             if (options.asyncEditorLoading) {
               h_editorLoader = setTimeout(function () {
                 makeActiveCellEditable();
@@ -3325,7 +3318,6 @@ if (typeof Slick === "undefined") {
             }
           });
         }
-
       });
       return isEditable.promise();
     }
@@ -3428,6 +3420,7 @@ if (typeof Slick === "undefined") {
     }
 
     function commitEditAndSetFocus() {
+
       // if the commit fails, it would do so due to a validation error
       // if so, do not steal the focus from the editor
       $.when(getEditorLock().commitCurrentEdit()).done(function (commitResult) {
@@ -3950,9 +3943,7 @@ if (typeof Slick === "undefined") {
         if (passedCommit) {
           scrollRowIntoView(row, false);
           scrollCellIntoView(row, cell);
-
           var newCell = getCellNode(row, cell);
-
           // if selecting the 'add new' row, start editing right away
           setActiveCellInternal(newCell, forceEdit || (row === getDataLength()) || options.autoEdit);
 
@@ -3969,7 +3960,7 @@ if (typeof Slick === "undefined") {
     }
 
 
-    // ////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////
     // IEditor implementation for the editor lock
 
     function commitCurrentEdit() {
@@ -3980,7 +3971,6 @@ if (typeof Slick === "undefined") {
         $.when(currentEditor.isValueChanged(), getDataItem(activeRow)).then(function (isValueChanged, item) {
           if (isValueChanged) {
             $.when(currentEditor.validate()).then(function (validationResults) {
-
               if (validationResults.valid) {
                 $.when(currentEditor.serializeValue()).done(function (serializedValue) {
                   if (activeRow < getDataLength()) {
@@ -4022,7 +4012,6 @@ if (typeof Slick === "undefined") {
                       column: column
                     });
                   }
-
                   // check whether the lock has been re-acquired by event handlers
                   commitResult.resolve(!getEditorLock().isActive());
                 });
