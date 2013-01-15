@@ -21,8 +21,8 @@
   <div style="width:600px;">
     <div id="myGrid" style="width:100%;height:500px;"></div>
 	<br>
-	<input id="srchBy" type="text" />
-	<div id="msg" />
+	<div>Title: <input id="srchByTitle" class="jqSC" type="text" data-field="title" /></div>
+	<div>City: <input id="srchByCity" class="jqSC" type="text" data-field="city" /></div>
   
   </div>
 
@@ -44,7 +44,7 @@
 <script src="../plugins/slick.radiobuttonselectcolumn.js"></script>
 <script src="../plugins/slick.autotooltips.js"></script>
 <script src="../plugins/slick.cellrangedecorator.js"></script>
-<script src="../plugins/slick.cellrangeselector.js"></script>
+<script src="../plugins/slick.cellselector.js"></script>
 <script src="../plugins/slick.cellcopymanager.js"></script>
 <script src="../plugins/slick.rowcellselectionmodel.js"></script>
 <script src="../slick.formatters.js"></script>
@@ -61,7 +61,7 @@
 		autoEdit: false
 	  },
 	columns = [], 
-	filterBy = {},
+	filterBy = [],
 	rIdx = 0,
 	city, state, grid, dataLen, radiobuttonSelector, dataView;
 	
@@ -87,16 +87,21 @@
 	}
 	
 	function myFilter(item, args) {
-		if (!args.sc.val) {
+		if (args.sc.length === 0) {
 			return true;
 		}
-	  if (item[args.sc.field] && item[args.sc.field].toLowerCase().indexOf(args.sc.val.toLowerCase()) >= 0) {
+		
+		if(item.isFooter) {
+			return true;
+		} else {
+			for(var i in args.sc) {
+				if (!item[args.sc[i].field] || item[args.sc[i].field].toLowerCase().indexOf(args.sc[i].val.toLowerCase()) < 0 ) {
+					return false;
+				}
+			}
+		}
+		
 		return true;
-	  } else if (item.isFooter){
-		return true;
-	  }
-
-	  return false;
 	}
 
   $(function () {
@@ -163,13 +168,20 @@
 		grid.render();
 	  });
 	  
-	$("#srchBy").keyup(function (e) {
+	$("#srchByTitle, #srchByCity").keyup(function (e) {
 		// clear on Esc
 		if (e.which == 27) {
 		  this.value = "";
 		}
 
-		filterBy = { field: 'title', val: this.value};
+		filterBy = [];
+		
+		$('input[type="text"]').each(function() {
+			if(this.value != "") {
+				filterBy.push({ field: this.getAttribute('data-field'), val: this.value });
+			}
+		});
+		
 		updateFilter();
 	  });
 	  
