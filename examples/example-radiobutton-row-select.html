@@ -80,7 +80,7 @@
 	function locationFormatter(row, cell, value, columnDef, dataContext) {
 		if (dataContext) {
 			tempList.push(dataContext);
-			console.log(tempList.length + ') Id: ' + dataContext.id);
+			//console.log(tempList.length + ') Id: ' + dataContext.id);
 			if(dataContext.isFooter) {
 				return '';
 			}
@@ -103,7 +103,7 @@
 	}
 
   $(function () {
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < 100; i++) {
       var d = (data[i] = {});
       d['id'] = i;
       d["title"] = "Row" + i;
@@ -124,25 +124,32 @@
 	data.push({ id: -1, title: "School/College not found", isFooter: true});
 	
 	dataView = new Slick.Data.DataView();
-    dataView.getItemMetadata = function (row) {
-      if (row < dataLen) {
-        return {
-          "columns": {
-            "duration": {
-              "colspan": 3
-            }
-          }
-        };
-      } else {
-        return {
-          "columns": {
-            1: {
-              "colspan": "*"
-            }
-          }
-        };
-      }
-    };
+	
+	function row_metadata(old_metadata_provider) {
+	  return function(row) {
+		var item = this.getItem(row);
+		
+		if (!item.isFooter) {
+			return {
+			  "columns": {
+				"duration": {
+				  "colspan": 3
+				}
+			  }
+			};
+		  } else {
+			return {
+			  "columns": {
+				1: {
+				  "colspan": "*"
+				}
+			  }
+			};
+		  }		
+	  };
+	}
+
+	dataView.getItemMetadata = row_metadata(dataView.getItemMetadata);
 	
 	grid = new Slick.Grid("#myGrid", dataView, columns, options);
 	grid.setSelectionModel(new Slick.RowCellSelectionModel({selectActiveRow: false}));
