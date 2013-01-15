@@ -1856,6 +1856,11 @@ if (typeof Slick === "undefined") {
       if (needToReselectCell) {
         activeCellNode = getCellNode(activeRow, activeCell);
       }
+	  
+	  // trigger once all the rows in the view port get rendered
+	  if (options.onRenderComplete) {
+		options.onRenderComplete();
+	  }
     }
 
     function startPostProcessing() {

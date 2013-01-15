@@ -78,8 +78,8 @@ classes should alter those!
 }
 
 .slick-cell.active {
-  border-color: gray;
-  border-style: solid;
+  /*border-color: gray;
+  border-style: solid;*/
 }
 
 .slick-sortable-placeholder {
