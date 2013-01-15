@@ -64,6 +64,7 @@
 	  var $row = $(e.target).closest('.slick-row');
       $row.find(':radio').attr('checked', 'checked');
 	  toggleRowSelection($row);
+	  var item = _grid.getData().getItem(args.row);
     }
 
     function toggleRowSelection($row) {

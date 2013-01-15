@@ -62,7 +62,6 @@
 	  },
 	columns = [], 
 	filterBy = {},
-	tempList = [],
 	rIdx = 0,
 	city, state, grid, dataLen, radiobuttonSelector, dataView;
 	
@@ -79,8 +78,6 @@
 	
 	function locationFormatter(row, cell, value, columnDef, dataContext) {
 		if (dataContext) {
-			tempList.push(dataContext);
-			//console.log(tempList.length + ') Id: ' + dataContext.id);
 			if(dataContext.isFooter) {
 				return '';
 			}
