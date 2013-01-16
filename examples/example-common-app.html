@@ -63,7 +63,7 @@
 	columns = [], 
 	filterBy = [],
 	rIdx = 0,
-	city, state, grid, dataLen, radiobuttonSelector, dataView;
+	city, state, grid, radiobuttonSelector, dataView;
 	
 	city = ['Arlington', 'Columbus', 'Culver City', 'Seatle', 'NYC'];
 	state = ['VA', 'OH', 'CA', 'WA', 'NY'];
@@ -121,7 +121,6 @@
 	columns.push({id: "title", name: "Title", field: "title", width: 120, cssClass: "cell-title"});		
 	columns.push({id: "city", name: "City", field: "city", width: 240, formatter: locationFormatter});
 
-	dataLen = data.length;
 	data.push({ id: 9999, title: "Home schooled", isFooter: true});
 	data.push({ id: -1, title: "School/College not found", isFooter: true});
 	

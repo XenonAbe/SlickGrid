@@ -75,7 +75,7 @@
     function getColumnDefinition() {
       return {
         id: _options.columnId,
-        name: "<input type='radio' name='cbOpt'>",
+        name: "",
         toolTip: _options.toolTip,
         field: "sel",
         width: _options.width,
