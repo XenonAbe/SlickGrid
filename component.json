@@ -1,7 +1,16 @@
 {
-    "name": "SlickGrid",
-    "version": "2.1.1",
-    "dependencies": {
-        "jquery": "*"
-    }
+  "name": "slickgrid",
+  "version": "2.1.3",
+  "dependencies": {
+    "jquery": "*"
+  },
+  "gitHead": "05a5955c827bf3687d1c0f113b0b964f478e4876",
+  "readme": "# DataSplice SlickGrid Fork\n\n* uses a deferred editor interface, so editors can validate, get, set, commit, etc asynchronously.\n* dependencies on jquery ui have been removed, stubbed out the only hard depencency (_.keyCode) in the\n`slick.editors.js` file.\n* merged in features from https://github.com/JLynch7/SlickGrid/tree/2.0-frozenRowsAndColumns for\nfrozen column support\n* tracking mleibman's master\n* installable via bower\n\n# Welcome to SlickGrid\n\nFor now, please check out [the wiki](/mleibman/SlickGrid/wiki).\n\n## SlickGrid is an advanced JavaScript grid/spreadsheet component\n\nSome highlights:\n\n* Adaptive virtual scrolling (handle hundreds of thousands of rows with extreme responsiveness)\n* Extremely fast rendering speed\n* Supports jQuery UI Themes\n* Background post-rendering for richer cells\n* Configurable & customizable\n* Full keyboard navigation\n* Column resize/reorder/show/hide\n* Column autosizing & force-fit\n* Pluggable cell formatters & editors\n* Support for editing and creating new rows.\n* Grouping, filtering, custom aggregators, and more!\n* Advanced detached & multi-field editors with undo/redo support.\n* “GlobalEditorLock” to manage concurrent edits in cases where multiple Views on a page can edit the same data.\n* Support for [millions of rows](http://stackoverflow.com/a/2569488/1269037)\n",
+  "readmeFilename": "README.md",
+  "_id": "SlickGrid@2.1.1",
+  "description": "* uses a deferred editor interface, so editors can validate, get, set, commit, etc asynchronously. * dependencies on jquery ui have been removed, stubbed out the only hard depencency (_.keyCode) in the `slick.editors.js` file. * merged in features from https://github.com/JLynch7/SlickGrid/tree/2.0-frozenRowsAndColumns for frozen column support * tracking mleibman's master * installable via bower",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MattKunze/SlickGrid.git"
+  }
 }
