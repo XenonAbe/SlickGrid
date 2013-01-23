@@ -1966,7 +1966,7 @@ if (typeof Slick === "undefined") {
 
               if (currentEditor && currentEditor.getContainer() == o){
                 // skip filling in the cell, an editor is in charge here.
-              } else {
+              } else if (o) {
                 o.empty().append(getFormatter(row, m)(row, cell, value, m, d));
               }
             });
