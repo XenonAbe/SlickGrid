@@ -29,7 +29,7 @@
       _selector.onCellSelected.subscribe(handleCellSelected);
       _selector.onBeforeCellSelected.subscribe(handleBeforeCellSelected);
 	  _handler.subscribe(_grid.onActiveCellChanged, wrapHandler(handleActiveCellChange));
-      _handler.subscribe(_grid.onKeyDown, wrapHandler(handleKeyDown));
+      /*_handler.subscribe(_grid.onKeyDown, wrapHandler(handleKeyDown));*/
       _handler.subscribe(_grid.onClick, wrapHandler(handleClick));
     }
 

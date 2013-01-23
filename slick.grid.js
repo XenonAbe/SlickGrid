@@ -85,7 +85,8 @@ if (typeof Slick === "undefined") {
       fullWidthRows: false,
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
-      forceSyncScrolling: false
+      forceSyncScrolling: false,
+	  accessibility: false
     };
 
     var columnDefaults = {
@@ -2128,7 +2129,7 @@ if (typeof Slick === "undefined") {
     }
 
     function handleDrag(e, dd) {
-      return trigger(self.onDrag, dd, e);
+  return trigger(self.onDrag, dd, e);
     }
 
     function handleDragEnd(e, dd) {
@@ -2136,60 +2137,62 @@ if (typeof Slick === "undefined") {
     }
 
     function handleKeyDown(e) {
-      trigger(self.onKeyDown, {row: activeRow, cell: activeCell}, e);
-      var handled = e.isImmediatePropagationStopped();
+	  if (!options.accessibility) {
+		  trigger(self.onKeyDown, {row: activeRow, cell: activeCell}, e);
+	      var handled = e.isImmediatePropagationStopped();
 
-      if (!handled) {
-        if (!e.shiftKey && !e.altKey && !e.ctrlKey) {
-          if (e.which == 27) {
-            if (!getEditorLock().isActive()) {
-              return; // no editing mode to cancel, allow bubbling and default processing (exit without cancelling the event)
-            }
-            cancelEditAndSetFocus();
-          } else if (e.which == 37) {
-            handled = navigateLeft();
-          } else if (e.which == 39) {
-            handled = navigateRight();
-          } else if (e.which == 38) {
-            handled = navigateUp();
-          } else if (e.which == 40) {
-            handled = navigateDown();
-          } else if (e.which == 9) {
-            handled = navigateNext();
-          } else if (e.which == 13) {
-            if (options.editable) {
-              if (currentEditor) {
-                // adding new row
-                if (activeRow === getDataLength()) {
-                  navigateDown();
-                } else {
-                  commitEditAndSetFocus();
-                }
-              } else {
-                if (getEditorLock().commitCurrentEdit()) {
-                  makeActiveCellEditable();
-                }
-              }
-            }
-            handled = true;
-          }
-        } else if (e.which == 9 && e.shiftKey && !e.ctrlKey && !e.altKey) {
-          handled = navigatePrev();
-        }
-      }
+	      if (!handled) {
+	        if (!e.shiftKey && !e.altKey && !e.ctrlKey) {
+	          if (e.which == 27) {
+	            if (!getEditorLock().isActive()) {
+	              return; // no editing mode to cancel, allow bubbling and default processing (exit without cancelling the event)
+	            }
+	            cancelEditAndSetFocus();
+	          } else if (e.which == 37) {
+	            handled = navigateLeft();
+	          } else if (e.which == 39) {
+	            handled = navigateRight();
+	          } else if (e.which == 38) {
+	            handled = navigateUp();
+	          } else if (e.which == 40) {
+	            handled = navigateDown();
+	          } else if (e.which == 9) {
+	            handled = navigateNext();
+	          } else if (e.which == 13) {
+	            if (options.editable) {
+	              if (currentEditor) {
+	                // adding new row
+	                if (activeRow === getDataLength()) {
+	                  navigateDown();
+	                } else {
+	                  commitEditAndSetFocus();
+	                }
+	              } else {
+	                if (getEditorLock().commitCurrentEdit()) {
+	                  makeActiveCellEditable();
+	                }
+	              }
+	            }
+	            handled = true;
+	          }
+	        } else if (e.which == 9 && e.shiftKey && !e.ctrlKey && !e.altKey) {
+	          handled = navigatePrev();
+	        }
+	      }
 
-      if (handled) {
-        // the event has been handled so don't let parent element (bubbling/propagation) or browser (default) handle it
-        e.stopPropagation();
-        e.preventDefault();
-        try {
-          e.originalEvent.keyCode = 0; // prevent default behaviour for special keys in IE browsers (F3, F5, etc.)
-        }
-        // ignore exceptions - setting the original event's keycode throws access denied exception for "Ctrl"
-        // (hitting control key only, nothing else), "Shift" (maybe others)
-        catch (error) {
-        }
-      }
+	      if (handled) {
+	        // the event has been handled so don't let parent element (bubbling/propagation) or browser (default) handle it
+	        e.stopPropagation();
+	        e.preventDefault();
+	        try {
+	          e.originalEvent.keyCode = 0; // prevent default behaviour for special keys in IE browsers (F3, F5, etc.)
+	        }
+	        // ignore exceptions - setting the original event's keycode throws access denied exception for "Ctrl"
+	        // (hitting control key only, nothing else), "Shift" (maybe others)
+	        catch (error) {
+	        }
+	      }
+	  }
     }
 
     function handleClick(e) {
