@@ -23,10 +23,11 @@
 
     function init(grid) {
       _grid = grid;
+	  $('div', options.$grid).unbind('keydown.sg-events');
+	  $('div[tabindex="0"]', options.$grid).attr('tabindex', '-1');
       _handler
         .subscribe(_grid.onSelectedRowsChanged, handleSelectedRowsChanged)
-        .subscribe(_grid.onClick, handleClick)
-        .subscribe(_grid.onKeyDown, handleKeyDown);
+        .subscribe(_grid.onClick, handleClick);
     }
 
     function destroy() {
@@ -49,14 +50,6 @@
       }
       _selectedRowsLookup = lookup;
       _grid.render();
-    }
-
-    function handleKeyDown(e, args) {
-      if (e.which == 38) {
-		console.log(args);
-      } else if (e.which == 40) {
-		console.log(args);
-      }
     }
 
     function handleClick(e, args) {

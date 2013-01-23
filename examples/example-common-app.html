@@ -58,8 +58,7 @@
 		editable: true,
 		enableCellNavigation: true,
 		asyncEditorLoading: false,
-		autoEdit: false,
-		accessibility: true
+		autoEdit: false
 	  },
 	columns = [], 
 	filterBy = [],
@@ -106,6 +105,12 @@
 	}
 
   $(function () {
+	/*$(document).bind('keyup', function(e) {
+		if (e.keyCode === 9) {
+			console.log(document.querySelector('*:focus'));
+		}
+	});*/
+	
     for (var i = 0; i < 100; i++) {
       var d = (data[i] = {});
       d['id'] = i;
@@ -118,7 +123,7 @@
       cssClass: "slick-cell-radiobuttonsel"
     });
 
-    columns.push(radiobuttonSelector.getColumnDefinition());
+    columns.push(radiobuttonSelector.getColumnDefinition({$grid: $('#myGrid')}));
 	columns.push({id: "title", name: "Title", field: "title", width: 120, cssClass: "cell-title"});		
 	columns.push({id: "city", name: "City", field: "city", width: 240, formatter: locationFormatter});
 
