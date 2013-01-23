@@ -297,27 +297,27 @@ if (typeof Slick === "undefined") {
         $container
             .bind("resize.slickgrid", resizeCanvas);
         $viewport
-            .bind("scroll.sg-events", handleScroll);
+            .bind("scroll", handleScroll);
         $headerScroller
-            .bind("contextmenu.sg-events", handleHeaderContextMenu)
-            .bind("click.sg-events", handleHeaderClick)
-            .delegate(".slick-header-column", "mouseenter.sg-events", handleHeaderMouseEnter)
-            .delegate(".slick-header-column", "mouseleave.sg-events", handleHeaderMouseLeave);
+            .bind("contextmenu", handleHeaderContextMenu)
+            .bind("click", handleHeaderClick)
+            .delegate(".slick-header-column", "mouseenter", handleHeaderMouseEnter)
+            .delegate(".slick-header-column", "mouseleave", handleHeaderMouseLeave);
         $headerRowScroller
-            .bind("scroll.sg-events", handleHeaderRowScroll);
+            .bind("scroll", handleHeaderRowScroll);
         $focusSink.add($focusSink2)
-            .bind("keydown.sg-events", handleKeyDown);
+            .bind("keydown", handleKeyDown);
         $canvas
-            .bind("keydown.sg-events", handleKeyDown)
-            .bind("click.sg-events", handleClick)
-            .bind("dblclick.sg-events", handleDblClick)
-            .bind("contextmenu.sg-events", handleContextMenu)
-            .bind("draginit.sg-events", handleDragInit)
-            .bind("dragstart.sg-events", handleDragStart)
-            .bind("drag.sg-events", handleDrag)
-            .bind("dragend.sg-events", handleDragEnd)
-            .delegate(".slick-cell", "mouseenter.sg-events", handleMouseEnter)
-            .delegate(".slick-cell", "mouseleave.sg-events", handleMouseLeave);
+            .bind("keydown", handleKeyDown)
+            .bind("click", handleClick)
+            .bind("dblclick", handleDblClick)
+            .bind("contextmenu", handleContextMenu)
+            .bind("draginit", handleDragInit)
+            .bind("dragstart", handleDragStart)
+            .bind("drag", handleDrag)
+            .bind("dragend", handleDragEnd)
+            .delegate(".slick-cell", "mouseenter", handleMouseEnter)
+            .delegate(".slick-cell", "mouseleave", handleMouseLeave);
       }
     }
 

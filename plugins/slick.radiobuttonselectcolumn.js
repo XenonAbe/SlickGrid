@@ -23,7 +23,7 @@
 
     function init(grid) {
       _grid = grid;
-	  $('div', options.$grid).unbind('keydown.sg-events');
+	  $('div', options.$grid).unbind('keydown');
 	  $('div[tabindex="0"]', options.$grid).attr('tabindex', '-1');
       _handler
         .subscribe(_grid.onSelectedRowsChanged, handleSelectedRowsChanged)
