@@ -14,7 +14,6 @@
  *     This increases the speed dramatically, but can only be done safely because there are no event handlers
  *     or data associated with any cell/row DOM nodes.  Cell editors must make sure they implement .destroy()
  *     and do proper cleanup.
- *
  */
 
 // make sure required JavaScript modules are loaded
@@ -428,7 +427,7 @@ if (typeof Slick === "undefined") {
                     .bind("dblclick", handleDblClick)
                     .bind("contextmenu", handleContextMenu)
                     .bind("draginit", handleDragInit)
-                    .bind("dragstart", handleDragStart)
+                    .bind("dragstart", {distance: 3}, handleDragStart)
                     .bind("drag", handleDrag)
                     .bind("dragend", handleDragEnd)
                     .delegate(".slick-cell", "mouseenter", handleMouseEnter)
@@ -606,16 +605,19 @@ if (typeof Slick === "undefined") {
 
         function disableSelection($target) {
             if ($target && $target.jquery) {
-                $target.attr("unselectable", "on").css("MozUserSelect", "none").bind("selectstart.ui", function() {
-                    return false;
-                }); // from jquery:ui.core.js 1.7.2
+                $target
+                    .attr("unselectable", "on")
+                    .css("MozUserSelect", "none")
+                    .bind("selectstart.ui", function () {
+                        return false;
+                    }); // from jquery:ui.core.js 1.7.2
             }
         }
 
         function getMaxSupportedCssHeight() {
             var supportedHeight = 1000000;
             // FF reports the height back but still renders blank after ~6M px
-            var testUpTo = ($.browser.mozilla) ? 6000000 : 1000000000;
+            var testUpTo = navigator.userAgent.toLowerCase().match(/firefox/) ? 6000000 : 1000000000;
             var div = $("<div style='display:none' />").appendTo(document.body);
 
             while (true) {
@@ -724,11 +726,11 @@ if (typeof Slick === "undefined") {
         }
 
         function createColumnHeaders() {
-            function hoverBegin() {
+            function onMouseEnter() {
                 $(this).addClass("ui-state-hover");
             }
 
-            function hoverEnd() {
+            function onMouseLeave() {
                 $(this).removeClass("ui-state-hover");
             }
 
@@ -774,10 +776,13 @@ if (typeof Slick === "undefined") {
                 var header = $("<div class='ui-state-default slick-header-column' id='" + uid + m.id + "' />").html("<span class='slick-column-name'>" + m.name + "</span>").width(m.width - headerColumnWidthDiff).attr("title", m.toolTip || "").data("column", m).addClass(m.headerCssClass || "").appendTo($headerTarget);
 
                 if (options.enableColumnReorder || m.sortable) {
-                    header.hover(hoverBegin, hoverEnd);
+                header
+                    .on('mouseenter', onMouseEnter)
+                    .on('mouseleave', onMouseLeave);
                 }
 
                 if (m.sortable) {
+                    header.addClass("slick-header-sortable");
                     header.append("<span class='slick-sort-indicator' />");
                 }
 
@@ -900,6 +905,7 @@ if (typeof Slick === "undefined") {
 
             $headers.sortable({
                 containment: "parent",
+                distance: 3,
                 axis: "x",
                 cursor: "default",
                 tolerance: "intersection",
@@ -1447,10 +1453,12 @@ if (typeof Slick === "undefined") {
         }
 
         function autosizeColumns() {
-            var i, c, widths = [],
+            var i, c,
+                widths = [],
                 shrinkLeeway = 0,
                 total = 0,
-                prevTotal, availWidth = viewportHasVScroll ? viewportW - scrollbarDimensions.width : viewportW;
+                prevTotal,
+                availWidth = viewportHasVScroll ? viewportW - scrollbarDimensions.width : viewportW;
 
             for (i = 0; i < columns.length; i++) {
                 c = columns[i];
@@ -1567,7 +1575,10 @@ if (typeof Slick === "undefined") {
             sortColumns = cols;
 
             var headerColumnEls = $headers.children();
-            headerColumnEls.removeClass("slick-header-column-sorted").find(".slick-sort-indicator").removeClass("slick-sort-indicator-asc slick-sort-indicator-desc");
+            headerColumnEls
+                .removeClass("slick-header-column-sorted")
+                .find(".slick-sort-indicator")
+                    .removeClass("slick-sort-indicator-asc slick-sort-indicator-desc");
 
             $.each(sortColumns, function(i, col) {
                 if (col.sortAsc == null) {
@@ -1793,7 +1804,8 @@ if (typeof Slick === "undefined") {
             if (value == null) {
                 return "";
             } else {
-                return value.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    	      	// Safari 6 fix: (value + "") instead of .toString()
+                return (value + "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
             }
         }
 
@@ -2759,7 +2771,7 @@ if (typeof Slick === "undefined") {
                     if (m.asyncPostRender && !postProcessedRows[row][columnIdx]) {
                         var node = cacheEntry.cellNodesByColumnIdx[columnIdx];
                         if (node) {
-                            m.asyncPostRender(node, postProcessFromRow, getDataItem(row), m);
+              m.asyncPostRender(node, row, getDataItem(row), m);
                         }
                         postProcessedRows[row][columnIdx] = true;
                     }
@@ -3543,7 +3555,6 @@ if (typeof Slick === "undefined") {
 				colspan = colspan || 1;
 			}
 			return (colspan || 1);
-			return colspan;
 		}
 
         function findFirstFocusableCell(row) {
@@ -3955,7 +3966,9 @@ if (typeof Slick === "undefined") {
                             trigger(self.onCellChange, {
                                 row: activeRow,
                                 cell: activeCell,
-                                item: item
+                                item: item,
+                                previousValue: editCommand.prevSerializedValue,
+                                newValue: editCommand.serializedValue
                             });
                         } else {
                             var newItem = {};

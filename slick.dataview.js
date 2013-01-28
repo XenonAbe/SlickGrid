@@ -398,8 +398,6 @@
         }
 
         // TODO:  lazy totals calculation
-
-
         function calculateGroupTotals(group) {
             if (group.collapsed && !aggregateCollapsed) {
                 return;
@@ -467,7 +465,13 @@
 
         function compileAccumulatorLoop(aggregator) {
             var accumulatorInfo = getFunctionInfo(aggregator.accumulate);
-            var fn = new Function("_items", "for (var " + accumulatorInfo.params[0] + ", _i=0, _il=_items.length; _i<_il; _i++) {" + accumulatorInfo.params[0] + " = _items[_i]; " + accumulatorInfo.body + "}");
+            var fn = new Function(
+                "_items",
+                "for (var " + accumulatorInfo.params[0] + ", _i=0, _il=_items.length; _i<_il; _i++) {" +
+                    accumulatorInfo.params[0] + " = _items[_i]; " +
+                    accumulatorInfo.body +
+                    "}"
+            );
             fn.displayName = fn.name = "compiledAccumulatorLoop";
             return fn;
         }
@@ -475,14 +479,25 @@
         function compileFilter() {
             var filterInfo = getFunctionInfo(filter);
 
-            var filterBody = filterInfo.body.replace(/return false[;}]/gi, "{ continue _coreloop; }").replace(/return true[;}]/gi, "{ _retval[_idx++] = $item$; continue _coreloop; }").replace(/return ([^;}]+?);/gi, "{ if ($1) { _retval[_idx++] = $item$; }; continue _coreloop; }");
+            var filterBody = filterInfo.body
+                .replace(/return false[;}]/gi, "{ continue _coreloop; }")
+                .replace(/return true[;}]/gi, "{ _retval[_idx++] = $item$; continue _coreloop; }")
+                .replace(/return ([^;}]+?);/gi,
+                "{ if ($1) { _retval[_idx++] = $item$; }; continue _coreloop; }");
 
             // This preserves the function template code after JS compression,
             // so that replace() commands still work as expected.
             var tpl = [
-            //"function(_items, _args) { ",
-            "var _retval = [], _idx = 0; ", "var $item$, $args$ = _args; ", "_coreloop: ", "for (var _i = 0, _il = _items.length; _i < _il; _i++) { ", "$item$ = _items[_i]; ", "$filter$; ", "} ", "return _retval; "
-            //"}"
+                //"function(_items, _args) { ",
+                "var _retval = [], _idx = 0; ",
+                "var $item$, $args$ = _args; ",
+                "_coreloop: ",
+                "for (var _i = 0, _il = _items.length; _i < _il; _i++) { ",
+                "$item$ = _items[_i]; ",
+                "$filter$; ",
+                "} ",
+                "return _retval; "
+                //"}"
             ].join("");
             tpl = tpl.replace(/\$filter\$/gi, filterBody);
             tpl = tpl.replace(/\$item\$/gi, filterInfo.params[0]);
@@ -496,14 +511,29 @@
         function compileFilterWithCaching() {
             var filterInfo = getFunctionInfo(filter);
 
-            var filterBody = filterInfo.body.replace(/return false[;}]/gi, "{ continue _coreloop; }").replace(/return true[;}]/gi, "{ _cache[_i] = true;_retval[_idx++] = $item$; continue _coreloop; }").replace(/return ([^;}]+?);/gi, "{ if ((_cache[_i] = $1)) { _retval[_idx++] = $item$; }; continue _coreloop; }");
+            var filterBody = filterInfo.body
+                 .replace(/return false[;}]/gi, "{ continue _coreloop; }")
+                 .replace(/return true[;}]/gi, "{ _cache[_i] = true;_retval[_idx++] = $item$; continue _coreloop; }")
+                 .replace(/return ([^;}]+?);/gi,
+                 "{ if ((_cache[_i] = $1)) { _retval[_idx++] = $item$; }; continue _coreloop; }");
 
-            // This preserves the function template code after JS compression,
-            // so that replace() commands still work as expected.
-            var tpl = [
-            //"function(_items, _args, _cache) { ",
-            "var _retval = [], _idx = 0; ", "var $item$, $args$ = _args; ", "_coreloop: ", "for (var _i = 0, _il = _items.length; _i < _il; _i++) { ", "$item$ = _items[_i]; ", "if (_cache[_i]) { ", "_retval[_idx++] = $item$; ", "continue _coreloop; ", "} ", "$filter$; ", "} ", "return _retval; "
-            //"}"
+             // This preserves the function template code after JS compression,
+             // so that replace() commands still work as expected.
+             var tpl = [
+               //"function(_items, _args, _cache) { ",
+               "var _retval = [], _idx = 0; ",
+               "var $item$, $args$ = _args; ",
+               "_coreloop: ",
+               "for (var _i = 0, _il = _items.length; _i < _il; _i++) { ",
+               "$item$ = _items[_i]; ",
+               "if (_cache[_i]) { ",
+               "_retval[_idx++] = $item$; ",
+               "continue _coreloop; ",
+               "} ",
+               "$filter$; ",
+               "} ",
+               "return _retval; "
+               //"}"
             ].join("");
             tpl = tpl.replace(/\$filter\$/gi, filterBody);
             tpl = tpl.replace(/\$item\$/gi, filterInfo.params[0]);
@@ -685,14 +715,7 @@
             var selectedRowIds = self.mapRowsToIds(grid.getSelectedRows());;
             var inHandler;
 
-            grid.onSelectedRowsChanged.subscribe(function(e, args) {
-                if (inHandler) {
-                    return;
-                }
-                selectedRowIds = self.mapRowsToIds(grid.getSelectedRows());
-            });
-
-            this.onRowsChanged.subscribe(function(e, args) {
+            function update() {
                 if (selectedRowIds.length > 0) {
                     inHandler = true;
                     var selectedRows = self.mapIdsToRows(selectedRowIds);
@@ -702,7 +725,16 @@
                     grid.setSelectedRows(selectedRows);
                     inHandler = false;
                 }
+            }
+
+            grid.onSelectedRowsChanged.subscribe(function(e, args) {
+              if (inHandler) { return; }
+              selectedRowIds = self.mapRowsToIds(grid.getSelectedRows());
             });
+
+            this.onRowsChanged.subscribe(update);
+
+            this.onRowCountChanged.subscribe(update);
         }
 
         function syncGridCellCssStyles(grid, key) {
@@ -721,19 +753,7 @@
                 }
             }
 
-            grid.onCellCssStylesChanged.subscribe(function(e, args) {
-                if (inHandler) {
-                    return;
-                }
-                if (key != args.key) {
-                    return;
-                }
-                if (args.hash) {
-                    storeCellCssStyles(args.hash);
-                }
-            });
-
-            this.onRowsChanged.subscribe(function(e, args) {
+            function update() {
                 if (hashById) {
                     inHandler = true;
                     ensureRowsByIdCache();
@@ -747,7 +767,19 @@
                     grid.setCellCssStyles(key, newHash);
                     inHandler = false;
                 }
+            }
+
+            grid.onCellCssStylesChanged.subscribe(function(e, args) {
+                if (inHandler) { return; }
+                if (key != args.key) { return; }
+                if (args.hash) {
+                  storeCellCssStyles(args.hash);
+                }
             });
+
+            this.onRowsChanged.subscribe(update);
+
+            this.onRowCountChanged.subscribe(update);
         }
 
         return {
