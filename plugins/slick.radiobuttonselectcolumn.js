@@ -82,8 +82,8 @@
     function radiobuttonSelectionFormatter(row, cell, value, columnDef, dataContext) {
       if (dataContext) {
 		return _selectedRowsLookup[row]
-            ? "<input accesskey='c' type='radio' data-id='" + dataContext.id + "' name='cbOpt' checked='checked'>"
-            : "<input accesskey='c' type='radio' data-id='" + dataContext.id + "' name='cbOpt'>";
+            ? "<input accesskey='c' type='radio' data-id='" + dataContext.id + "' title='" + dataContext.title + "' name='cbOpt' checked='checked'>"
+            : "<input accesskey='c' type='radio' data-id='" + dataContext.id + "' title='" + dataContext.title + "' name='cbOpt'>";
       }
       return null;
     }
