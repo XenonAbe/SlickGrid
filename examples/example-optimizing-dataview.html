@@ -123,6 +123,29 @@
 
     dataView = new Slick.Data.DataView({ inlineFilters: true });
     grid = new Slick.Grid("#myGrid", dataView, columns, options);
+
+    dataView.getItemMetadata = function(row) {
+		return {
+			'rows': {
+				1: {
+					'height': 32
+				}
+				,5: {
+					'height': 55
+				}
+				,50: {
+					'height': 40
+				}
+				,4000: {
+					'height': 40
+				}
+				,499998: {
+					'height': 100
+				}
+			}
+		};
+	};
+
     var pager = new Slick.Controls.Pager(dataView, grid, $("#pager"));
 
     // wire up model events to drive the grid

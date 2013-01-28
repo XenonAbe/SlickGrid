@@ -102,12 +102,17 @@
         }
 
         grid.setColumns(visibleColumns);
+
+				_self.onColumnChanged.notify();
       }
     }
 
+		$.extend(this, {
+            "onColumnChanged": new Slick.Event()
+        });
+
     init();
   }
-
   // Slick.Controls.ColumnPicker
   $.extend(true, window, { Slick:{ Controls:{ ColumnPicker:SlickColumnPicker }}});
 })(jQuery);

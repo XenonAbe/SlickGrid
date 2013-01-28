@@ -343,6 +343,10 @@
         return options.groupItemMetadataProvider.getTotalsRowMetadata(item);
       }
 
+            if (options.groupItemMetadataProvider) {
+                return options.groupItemMetadataProvider.getRowMetadata(item);
+            }
+
       return null;
     }
 

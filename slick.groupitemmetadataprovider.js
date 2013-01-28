@@ -103,6 +103,14 @@
       }
     }
 
+        function getRowMetadata(item) {
+            if (options.getRowMetadata) {
+                return options.getRowMetadata(item);
+            }
+
+            return null;
+        }
+
     function getGroupRowMetadata(item) {
       return {
         selectable: false,
@@ -132,6 +140,7 @@
     return {
       "init": init,
       "destroy": destroy,
+            "getRowMetadata":       getRowMetadata,
       "getGroupRowMetadata": getGroupRowMetadata,
       "getTotalsRowMetadata": getTotalsRowMetadata
     };

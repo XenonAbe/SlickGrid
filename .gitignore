@@ -1,8 +1,12 @@
 .gitk*
 .idea/*          
+.project
+.settings/
 
 .DS_Store      
 
 # Editor backup files
 *~
 *.bak
+*.orig
+
