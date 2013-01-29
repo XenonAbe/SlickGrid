@@ -23,6 +23,9 @@
 	<br>
 	<div><label id="title" for="srchByTitle" accesskey="t">Title: </label><input id="srchByTitle" accesskey="t" class="jqSC" type="text" data-field="title" /></div>
 	<div><label id="city" for="srchByCity" accesskey="t">City: </label><input id="srchByCity" accesskey="t" class="jqSC" type="text" data-field="city" /></div>
+	
+	<button id="getValBtn" >Get selected Value</button>
+	<div id="displayVal"><div>
   
   </div>
 
@@ -76,6 +79,7 @@
 	columns = [], 
 	filterBy = [],
 	rIdx = 0,
+	msg = '<span>{0}, {1}, {2}, {3}</span>',
 	city, state, grid, radiobuttonSelector, dataView;
 	
 	city = ['Arlington', 'Columbus', 'Culver City', 'Seatle', 'NYC'];
@@ -115,6 +119,19 @@
 		}
 		
 		return true;
+	}
+	
+	function stringFormat() {
+		var str = arguments[0];
+
+		if (arguments.length > 1) {
+			for (var i = 1, j = 0; i < arguments.length; i++, j++) {
+				while (str.indexOf('{' + j + '}') >= 0) {
+					str = str.replace('{' + j + '}', arguments[i]);
+				}
+			}
+		}
+		return str;
 	}
 
   $(function () {
@@ -202,6 +219,19 @@
 		
 		updateFilter();
 	  });
+	  
+	$('#getValBtn')
+		.bind('click', function(e) {
+			var val = radiobuttonSelector.getSelectedRowData(),
+				msgVal;
+				
+			if(val) {
+				msgVal = stringFormat(msg, val.id, val.title, val.city, val.state);
+				$('#displayVal').html(msgVal);
+			} else {
+				$('#displayVal').html('Please select a row from the grid');
+			}
+		});
 	  
 	  function updateFilter() {
 		dataView.setFilterArgs({

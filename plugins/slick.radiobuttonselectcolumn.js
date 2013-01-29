@@ -12,6 +12,7 @@
     var _self = this;
     var _handler = new Slick.EventHandler();
     var _selectedRowsLookup = {};
+	var selectedItem;
     var _defaults = {
       columnId: "_radio_selector",
       cssClass: null,
@@ -57,8 +58,12 @@
 	  var $row = $(e.target).closest('.slick-row');
       $row.find(':radio').attr('checked', 'checked').focus();
 	  toggleRowSelection($row);
-	  var item = _grid.getData().getItem(args.row);
+	  selectedItem = _grid.getData().getItem(args.row);
     }
+	
+	function getSelectedRowData() {
+		return selectedItem;
+	}
 
     function toggleRowSelection($row) {
       $('.selRow').removeClass('selRow');
@@ -91,7 +96,8 @@
     $.extend(this, {
       "init": init,
       "destroy": destroy,
-      "getColumnDefinition": getColumnDefinition
+      "getColumnDefinition": getColumnDefinition,
+	  "getSelectedRowData": getSelectedRowData
     });
   }
 })(jQuery);
