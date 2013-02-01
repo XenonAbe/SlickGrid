@@ -2265,7 +2265,7 @@ if (typeof Slick === "undefined") {
       // the data decreased by thousands of rows
       var l = options.enableAddRow ? getDataLength() : getDataLength() - 1;
       for (var i in rowsCache) {
-        if (i >= l) {
+        if (i > l) {
           removeRowFromCache(i);
         }
       }
