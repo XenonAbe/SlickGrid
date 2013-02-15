@@ -113,6 +113,7 @@ if (typeof Slick === "undefined") {
     // private
     var initialized = false;
     var $container;
+    var $containerOuter; // the container passed in
     var uid = "slickgrid_" + Math.round(1000000 * Math.random());
     var self = this;
     var $focusSink, $focusSink2;
@@ -183,10 +184,26 @@ if (typeof Slick === "undefined") {
     // Initialization
 
     function init() {
-      $container = $(container);
-      if ($container.length < 1) {
+      $containerOuter = $(container);
+      if ($containerOuter.length < 1) {
         throw new Error("SlickGrid requires a valid container, " + container + " does not exist in the DOM.");
       }
+
+      // generate an inner container for flexibility
+      $container=$("<div></div>");
+
+      $container.appendTo($containerOuter);
+
+      // containerOuter is used to adjust to header space later on
+      $containerOuter
+        .css("position","absolute")
+        .css("top",0)
+        .css("bottom",0)
+        .css("left",0)
+        .css("right",0)
+        .css("width","100%")
+        .css("height","auto");
+
 
       // calculate these only once and share between grid instances
       maxSupportedCssHeight = maxSupportedCssHeight || getMaxSupportedCssHeight();
@@ -222,6 +239,7 @@ if (typeof Slick === "undefined") {
           .empty()
           .css("outline", 0)
           .css("position","relative")
+          .css("height","100%")
           .addClass(uid)
           .addClass("ui-widget");
 
@@ -253,10 +271,10 @@ if (typeof Slick === "undefined") {
         $headerRowScroller.hide();
       }
 
-      $viewport = $("<div class='slick-viewport' style='width:99%;height:97%; overflow: scroll;outline:0;white-space:nowrap;'>").appendTo($container);
+      $viewport = $("<div class='slick-viewport' style='width:100%;height:100%; overflow: scroll;outline:0;white-space:nowrap;'>").appendTo($container);
       //$viewport.css("overflow-y", options.autoHeight ? "hidden" : "auto");
 
-      $lockedCanvasWrap = $("<div class='grid-locked-canvas' style='overflow: hidden; z-index:10; position:absolute; left:0; top:45px;bottom:0; width:300px; border-right: 2px solid; ' />").appendTo($viewport);
+      $lockedCanvasWrap = $("<div class='grid-locked-canvas' style='overflow: hidden; z-index:10; position:absolute; left:0; top:0px;bottom:0; width:300px; border-right: 2px solid; ' />").appendTo($viewport);
       $canvas = $("<div class='grid-canvas' style=' z-index:0;' />").appendTo($viewport);
 
       $lockedCanvas = $("<div style='position:relative'></div>");
@@ -594,6 +612,16 @@ if (typeof Slick === "undefined") {
       if (options.enableColumnReorder) {
         setupColumnReorder();
       }
+
+      // this is needed so that we offset the header height from the height calculation so the scroll body will be of the right height
+      var headerHeight=$headerScroller.height()||0;
+      $headerScroller.css("margin-top",-headerHeight);
+      $containerOuter.css("top",headerHeight);
+
+      if ($lockedCanvasWrap){
+        $lockedCanvasWrap.css("top",headerHeight).css("bottom",-headerHeight+13);
+      }
+
     }
 
     function setupColumnSort() {
