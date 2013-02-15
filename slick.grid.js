@@ -1706,6 +1706,10 @@ if (typeof Slick === "undefined") {
             var columnIdx = cacheEntry.cellRenderQueue.pop();
             cacheEntry.cellNodesByColumnIdx[columnIdx] = lastChild;
             lastChild = lastChild.previousSibling;
+            // if there aren't any others, we must be skipping to the locked column section
+            if (!lastChild && rowsCache[row].lockedRowNode){
+              lastChild=rowsCache[row].lockedRowNode.lastChild;
+            }
           }
         }
       }
@@ -1766,7 +1770,7 @@ if (typeof Slick === "undefined") {
 
         cleanUpCells(range, row);
 
-        // Render missing cells.
+        // Render missing cells.  (NOTE: We assume that the locked rows are always shown and do not need to be re-rendered here for scroll left/right)
         cellsAdded = 0;
 
         var metadata = data.getItemMetadata && data.getItemMetadata(row);
