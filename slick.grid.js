@@ -92,6 +92,7 @@ if (typeof Slick === "undefined") {
       name: "",
       resizable: true,
       sortable: false,
+      locked: false,
       minWidth: 30,
       rerenderOnResize: false,
       headerCssClass: null,
@@ -122,6 +123,8 @@ if (typeof Slick === "undefined") {
     var $topPanel;
     var $viewport;
     var $canvas;
+    var $lockedCanvasWrap;
+    var $lockedCanvas;
     var $style;
     var $boundAncestors;
     var stylesheet, columnCssRulesL, columnCssRulesR;
@@ -217,8 +220,8 @@ if (typeof Slick === "undefined") {
 
       $container
           .empty()
-          .css("overflow", "hidden")
           .css("outline", 0)
+          .css("position","relative")
           .addClass(uid)
           .addClass("ui-widget");
 
@@ -250,10 +253,15 @@ if (typeof Slick === "undefined") {
         $headerRowScroller.hide();
       }
 
-      $viewport = $("<div class='slick-viewport' style='width:100%;overflow:auto;outline:0;position:relative;;'>").appendTo($container);
-      $viewport.css("overflow-y", options.autoHeight ? "hidden" : "auto");
+      $viewport = $("<div class='slick-viewport' style='width:99%;height:97%; overflow: scroll;outline:0;white-space:nowrap;'>").appendTo($container);
+      //$viewport.css("overflow-y", options.autoHeight ? "hidden" : "auto");
 
-      $canvas = $("<div class='grid-canvas' />").appendTo($viewport);
+      $lockedCanvasWrap = $("<div class='grid-locked-canvas' style='overflow: hidden; z-index:10; position:absolute; left:0; top:45px;bottom:0; width:300px; border-right: 2px solid; ' />").appendTo($viewport);
+      $canvas = $("<div class='grid-canvas' style=' z-index:0;' />").appendTo($viewport);
+
+      $lockedCanvas = $("<div style='position:relative'></div>");
+      $lockedCanvasWrap.append($lockedCanvas);
+
 
       $focusSink2 = $focusSink.clone().appendTo($container);
 
@@ -1361,13 +1369,14 @@ if (typeof Slick === "undefined") {
       return item[columnDef.field];
     }
 
-    function appendRowHtml(stringArray, row, range) {
+    function appendRowHtml(stringArray, lockedArray, row, range) {
       var d = getDataItem(row);
       var dataLoading = row < getDataLength() && !d;
       var rowCss = "slick-row" +
           (dataLoading ? " loading" : "") +
           (row === activeRow ? " active" : "") +
-          (row % 2 == 1 ? " odd" : " even");
+          (row % 2 == 1 ? " odd" : " even"),
+          topPx=(options.rowHeight * row - offset);
 
       var metadata = data.getItemMetadata && data.getItemMetadata(row);
 
@@ -1375,7 +1384,8 @@ if (typeof Slick === "undefined") {
         rowCss += " " + metadata.cssClasses;
       }
 
-      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px'>");
+      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + topPx + "px'>");
+      lockedArray.push("<div class='ui-widget-content slick-locked-content " + rowCss + "' style='top:" + topPx + "px'>");
 
       var colspan, m;
       for (var i = 0, ii = columns.length; i < ii; i++) {
@@ -1389,22 +1399,27 @@ if (typeof Slick === "undefined") {
           }
         }
 
-        // Do not render cells outside of the viewport.
-        if (columnPosRight[Math.min(ii - 1, i + colspan - 1)] > range.leftPx) {
-          if (columnPosLeft[i] > range.rightPx) {
-            // All columns to the right are outside the range.
-            break;
+        if (m.locked){
+          appendCellHtml(lockedArray, row, i, colspan);
+          // TODO: increment colspan for locked multicell
+        } else {
+          // Do not render cells outside of the viewport.
+          if (columnPosRight[Math.min(ii - 1, i + colspan - 1)] > range.leftPx) {
+            if (columnPosLeft[i] > range.rightPx) {
+              // All columns to the right are outside the range.
+              break;
+            }
+
+            appendCellHtml(stringArray, row, i, colspan);
           }
-
-          appendCellHtml(stringArray, row, i, colspan);
-        }
-
-        if (colspan > 1) {
-          i += (colspan - 1);
+          if (colspan > 1) {
+            i += (colspan - 1);
+          }
         }
       }
 
       stringArray.push("</div>");
+      lockedArray.push("</div>");
     }
 
     function appendCellHtml(stringArray, row, cell, colspan) {
@@ -1467,6 +1482,9 @@ if (typeof Slick === "undefined") {
         return;
       }
       $canvas[0].removeChild(cacheEntry.rowNode);
+      if (cacheEntry.lockedRowNode){
+        $lockedCanvas[0].removeChild(cacheEntry.lockedRowNode);
+      }
       delete rowsCache[row];
       delete postProcessedRows[row];
       renderedRows--;
@@ -1558,7 +1576,7 @@ if (typeof Slick === "undefined") {
       numVisibleRows = Math.ceil(viewportH / options.rowHeight);
       viewportW = parseFloat($.css($container[0], "width", true));
       if (!options.autoHeight) {
-        $viewport.height(viewportH);
+        //$viewport.height(1001);//viewportH);
       }
 
       if (options.forceFitColumns) {
@@ -1812,7 +1830,9 @@ if (typeof Slick === "undefined") {
 
     function renderRows(range) {
       var parentNode = $canvas[0],
+          lockedParentNode = $lockedCanvas[0],
           stringArray = [],
+          lockedArray = [],
           rows = [],
           needToReselectCell = false;
 
@@ -1827,6 +1847,7 @@ if (typeof Slick === "undefined") {
         // start populatating it.
         rowsCache[i] = {
           "rowNode": null,
+          "lockedRowNode": null, // if we're using locked columns, this is where the locked columns live
 
           // ColSpans of rendered cells (by column idx).
           // Can also be used for checking whether a cell has been rendered.
@@ -1841,7 +1862,7 @@ if (typeof Slick === "undefined") {
           "cellRenderQueue": []
         };
 
-        appendRowHtml(stringArray, i, range);
+        appendRowHtml(stringArray, lockedArray, i, range);
         if (activeCellNode && activeRow === i) {
           needToReselectCell = true;
         }
@@ -1853,8 +1874,14 @@ if (typeof Slick === "undefined") {
       var x = document.createElement("div");
       x.innerHTML = stringArray.join("");
 
+      var locked = document.createElement("div");
+      locked.innerHTML = lockedArray.join("");
+
+
       for (var i = 0, ii = rows.length; i < ii; i++) {
-        rowsCache[rows[i]].rowNode = parentNode.appendChild(x.firstChild);
+        var cache=rowsCache[rows[i]];
+        cache.rowNode = parentNode.appendChild(x.firstChild);
+        cache.lockedRowNode = lockedParentNode.appendChild(locked.firstChild);
       }
 
       if (needToReselectCell) {
@@ -1967,6 +1994,8 @@ if (typeof Slick === "undefined") {
           trigger(self.onViewportChanged, {});
         }
       }
+
+      $lockedCanvas.css("margin-top",-scrollTop || 0);
 
       trigger(self.onScroll, {scrollLeft: scrollLeft, scrollTop: scrollTop});
     }
