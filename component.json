@@ -1,0 +1,27 @@
+{
+	"name": "SlickGrid",
+	"version": "0.0.0",
+	"main": [
+		"./slick.core.js", 
+		"./slick.dataview.js", 
+		"./slick.grid.css",
+		"./slick.grid.js"
+	],
+	"ignore": [
+		"controls/",
+		"css/",
+		"examples/",
+		"images/",
+		"lib/",
+		"plugins/",
+		"tests/",
+		"./slick.editors.js",
+		"./slick.formatters.js",
+		"./slick.groupitemmetadataprovider.js",
+		"./slick.remotemodel.js",
+		"*.md",
+		"*.txt"
+  	],
+	"dependencies": {
+	}
+}
