@@ -3,22 +3,22 @@
 var grid;
 var el, offsetBefore, offsetAfter, dragged;
 
-var drag = function(handle, dx, dy) {
-    offsetBefore = el.offset();
-    $(handle).simulate("drag", {
-        dx: dx || 0,
-        dy: dy || 0
-    });
-    dragged = { dx: dx, dy: dy };
-    offsetAfter = el.offset();
-}
-
-var moved = function (dx, dy, msg) {
-    msg = msg ? msg + "." : "";
-    var actual = { left: offsetAfter.left, top: offsetAfter.top };
-    var expected = { left: offsetBefore.left + dx, top: offsetBefore.top + dy };
-    same(actual, expected, 'dragged[' + dragged.dx + ', ' + dragged.dy + '] ' + msg);
-}
+// var drag = function(handle, dx, dy) {
+//     offsetBefore = el.offset();
+//     $(handle).simulate("drag", {
+//         dx: dx || 0,
+//         dy: dy || 0
+//     });
+//     dragged = { dx: dx, dy: dy };
+//     offsetAfter = el.offset();
+// }
+// 
+// var moved = function (dx, dy, msg) {
+//     msg = msg ? msg + "." : "";
+//     var actual = { left: offsetAfter.left, top: offsetAfter.top };
+//     var expected = { left: offsetBefore.left + dx, top: offsetBefore.top + dy };
+//     same(actual, expected, 'dragged[' + dragged.dx + ', ' + dragged.dy + '] ' + msg);
+// }
 
 
 var ROWS = 500, COLS = 10;
@@ -48,7 +48,15 @@ grid.render();
 
 
 
-module("grid - column resizing");
+module("grid - column resizing", {
+		setup: function() {
+			// do some setup
+		},
+
+		teardown: function() {
+			// do some teardown
+		}
+});
 
 test("minWidth is respected", function() {
     var firstCol = $("#container .slick-header-column:first");
@@ -60,11 +68,12 @@ test("minWidth is respected", function() {
 
 test("onColumnsResized is fired on column resize", function() {
     expect(2);
-    grid.onColumnsResized = function() { ok(true,"onColumnsResized called") };
+    grid.onColumnsResized.subscribe(function() {
+      ok(true,"onColumnsResized called"); 
+    });
     var oldWidth = cols[0].width;
     $("#container .slick-resizable-handle:first").simulate("drag", {dx:100,dy:0});
     equal(cols[0].width, oldWidth+100-1, "columns array is updated");
-
 });
 
 
