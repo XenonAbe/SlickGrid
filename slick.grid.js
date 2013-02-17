@@ -956,33 +956,34 @@ if (typeof Slick === "undefined") {
     }
 
     function initializeRowPositions() {
-        rowPositionCache = {
-            0: {
-                 top: 0
-                ,height: options.rowHeight
-                ,bottom: options.rowHeight
-            }
+      rowPositionCache = {
+        0: {
+          top: 0
+          ,height: options.rowHeight
+          ,bottom: options.rowHeight
+          }
         };
     }
 
-    function cacheRowPositions() {
-        initializeRowPositions();
+	  function cacheRowPositions() {
+		  initializeRowPositions();
 
-        for ( var i = 0; i <= getDataLength(); i++ ) {
-            var metadata = data.getItemMetadata && data.getItemMetadata(i);
+		  for (var i = 0; i <= getDataLength(); i++) {
+			  var metadata = data.getItemMetadata && data.getItemMetadata(i);
+			  var hasRowMeta = metadata && metadata.hasOwnProperty('rows') && metadata.rows[i];
 
-            rowPositionCache[i] = {
-                 top: ( rowPositionCache[i - 1] )
-                      ? ( rowPositionCache[i - 1].bottom - offset )
-                      : 0
-                ,height: ( metadata && metadata.hasOwnProperty('rows') && metadata.rows[i] )
-                         ? metadata.rows[i].height
-                         : options.rowHeight
-            }
+			  rowPositionCache[i] = {
+				  top: ( rowPositionCache[i - 1] )
+						  ? ( rowPositionCache[i - 1].bottom - offset)
+						  : 0, height: hasRowMeta
+						  ? metadata.rows[i].height
+						  : options.rowHeight
+			  }
 
-            rowPositionCache[i].bottom = rowPositionCache[i].top + rowPositionCache[i].height;
-        }
-    }
+			  rowPositionCache[i].bottom = rowPositionCache[i].top + rowPositionCache[i].height +
+					  (hasRowMeta ? metadata.rows[i].offset : 0);
+		  }
+	  }
 
     function getColumnCssRules(idx) {
       if (!stylesheet) {
@@ -1749,32 +1750,32 @@ if (typeof Slick === "undefined") {
       };
     }
 
-    function getRowFromPosition( maxPosition ) {
-        var row = 0;
-        var rowsInPosCache = getDataLength();
+	  function getRowFromPosition(maxPosition) {
+		  var row = 0;
+		  var rowsInPosCache = getDataLength();
 
-        if ( !rowsInPosCache ) {
-            return row;
-        }
+		  if (!rowsInPosCache) {
+			  return row;
+		  }
 
-        // Loop through the row position cache and break when
-        // the row is found
-        for ( var i = 0; i < rowsInPosCache; i++ ) {
-            if ( rowPositionCache[i].top <= maxPosition
-                 && rowPositionCache[i].bottom >= maxPosition
-            ) {
-                row = i;
-                continue;
-            }
-        }
+		  // Loop through the row position cache and break when
+		  // the row is found
+		  for (var i = 0; i < rowsInPosCache; i++) {
+			  if (rowPositionCache[i].top <= maxPosition
+					  && rowPositionCache[i].bottom >= maxPosition
+					  ) {
+				  row = i;
+				  continue;
+			  }
+		  }
 
-        // Return the last row in the grid
-        if ( maxPosition > rowPositionCache[rowsInPosCache-1].bottom ) {
-            row = rowsInPosCache-1;
-        }
+		  // Return the last row in the grid
+		  if (maxPosition > rowPositionCache[rowsInPosCache - 1].bottom) {
+			  row = rowsInPosCache - 1;
+		  }
 
-        return row;
-    }
+		  return row;
+	  }
 
     function getRenderedRange(viewportTop, viewportLeft) {
       var range = getVisibleRange(viewportTop, viewportLeft);
