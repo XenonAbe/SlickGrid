@@ -59,6 +59,7 @@ if (typeof Slick === "undefined") {
     var defaults = {
       explicitInitialization: false,
       rowHeight: 25,
+      rowSpacing: 0,
       defaultColumnWidth: 80,
       enableAddRow: false,
       leaveSpaceForNewRows: false,
@@ -661,16 +662,16 @@ if (typeof Slick === "undefined") {
 
     function setupColumnReorder() {
       $headers.filter(":ui-sortable").sortable("destroy");
-            var columnScrollTimer = null;
-            var viewportLeft = $viewport.offset().left;
+      var columnScrollTimer = null;
+      var viewportLeft = $viewport.offset().left;
 
-            function scrollColumnsRight() {
-                $viewport[0].scrollLeft = $viewport[0].scrollLeft + 10;
-            }
+      function scrollColumnsRight() {
+        $viewport[0].scrollLeft = $viewport[0].scrollLeft + 10;
+      }
 
-            function scrollColumnsLeft() {
-                $viewport[0].scrollLeft = $viewport[0].scrollLeft - 10;
-            }
+      function scrollColumnsLeft() {
+        $viewport[0].scrollLeft = $viewport[0].scrollLeft - 10;
+      }
 
       $headers.sortable({
         containment: "parent",
@@ -688,22 +689,22 @@ if (typeof Slick === "undefined") {
           $(ui.helper).removeClass("slick-header-column-active");
         },
         sort: function(e, ui) {
-                   if ( e.originalEvent.pageX > $viewport[0].clientWidth ) {
-                       if ( !( columnScrollTimer ) ) {
-                           columnScrollTimer = setInterval(scrollColumnsRight, 100);
-                        }
-                    } else if ( e.originalEvent.pageX < viewportLeft ) {
-                        if ( !( columnScrollTimer ) ) {
-                            columnScrollTimer = setInterval(scrollColumnsLeft, 100);
-                        }
-                    } else {
-                        clearInterval(columnScrollTimer);
-                        columnScrollTimer = null;
-                    }
-                },
-        stop: function (e) {
-                    clearInterval( columnScrollTimer );
-                    columnScrollTimer = null;
+          if (e.originalEvent.pageX > $viewport[0].clientWidth) {
+            if (!( columnScrollTimer )) {
+              columnScrollTimer = setInterval(scrollColumnsRight, 100);
+            }
+          } else if (e.originalEvent.pageX < viewportLeft) {
+            if (!( columnScrollTimer )) {
+              columnScrollTimer = setInterval(scrollColumnsLeft, 100);
+            }
+          } else {
+            clearInterval(columnScrollTimer);
+            columnScrollTimer = null;
+          }
+        },
+        stop: function(e) {
+          clearInterval(columnScrollTimer);
+          columnScrollTimer = null;
 
           if (!getEditorLock().commitCurrentEdit()) {
             $(this).sortable("cancel");
@@ -965,25 +966,22 @@ if (typeof Slick === "undefined") {
         };
     }
 
-	  function cacheRowPositions() {
-		  initializeRowPositions();
+    function cacheRowPositions() {
+      initializeRowPositions();
 
-		  for (var i = 0; i <= getDataLength(); i++) {
-			  var metadata = data.getItemMetadata && data.getItemMetadata(i);
-			  var hasRowMeta = metadata && metadata.hasOwnProperty('rows') && metadata.rows[i];
+      for (var i = 0; i <= getDataLength(); i++) {
+        var metadata = data.getItemMetadata && data.getItemMetadata(i);
+        var hasRowMeta = metadata && metadata.hasOwnProperty('rows') && metadata.rows[i];
 
-			  rowPositionCache[i] = {
-				  top: ( rowPositionCache[i - 1] )
-						  ? ( rowPositionCache[i - 1].bottom - offset)
-						  : 0, height: hasRowMeta
-						  ? metadata.rows[i].height
-						  : options.rowHeight
-			  }
-
-			  rowPositionCache[i].bottom = rowPositionCache[i].top + rowPositionCache[i].height +
-					  (hasRowMeta ? metadata.rows[i].offset : 0);
-		  }
-	  }
+        rowPositionCache[i] = {
+          top: ( rowPositionCache[i - 1] )
+            ? ( rowPositionCache[i - 1].bottom - offset)
+            : 0, height: !hasRowMeta ? options.rowHeight : metadata.rows[i].height
+        };
+        rowPositionCache[i].bottom = rowPositionCache[i].top + rowPositionCache[i].height +
+          (!hasRowMeta ? options.rowSpacing : metadata.rows[i].spacing);
+      }
+    }
 
     function getColumnCssRules(idx) {
       if (!stylesheet) {
@@ -1392,14 +1390,14 @@ if (typeof Slick === "undefined") {
 
       // look up by id, then index
       var columnOverrides = rowMetadata &&
-          rowMetadata.columns &&
-          (rowMetadata.columns[column.id] || rowMetadata.columns[getColumnIndex(column.id)]);
+        rowMetadata.columns &&
+        (rowMetadata.columns[column.id] || rowMetadata.columns[getColumnIndex(column.id)]);
 
       return (columnOverrides && columnOverrides.formatter) ||
-          (rowMetadata && rowMetadata.formatter) ||
-          column.formatter ||
-          (options.formatterFactory && options.formatterFactory.getFormatter(column)) ||
-          options.defaultFormatter;
+        (rowMetadata && rowMetadata.formatter) ||
+        column.formatter ||
+        (options.formatterFactory && options.formatterFactory.getFormatter(column)) ||
+        options.defaultFormatter;
     }
 
     function getEditor(row, cell) {
@@ -1657,19 +1655,21 @@ if (typeof Slick === "undefined") {
     }
 
     function updateRowCount() {
-      if (!initialized) { return; }
+      if (!initialized) {
+        return;
+      }
 
       cacheRowPositions();
 
       numberOfRows = getDataLength()
-          + (options.enableAddRow ? 1 : 0);
-          + (options.leaveSpaceForNewRows ? numVisibleRows - 1 : 0);
+        + (options.enableAddRow ? 1 : 0);
+      +(options.leaveSpaceForNewRows ? numVisibleRows - 1 : 0);
 
       var oldViewportHasVScroll = viewportHasVScroll;
       // with autoHeight, we do not need to accommodate the vertical scroll bar
       viewportHasVScroll = !options.autoHeight
-                        && rowPositionCache[numberOfRows-1]
-                        && (rowPositionCache[numberOfRows-1].bottom > viewportH);
+        && rowPositionCache[numberOfRows - 1]
+        && (rowPositionCache[numberOfRows - 1].bottom > viewportH);
 
       // remove the rows that are now outside of the data range
       // this helps avoid redundant calls to .removeRow() when the size of the data decreased by thousands of rows
@@ -1686,8 +1686,8 @@ if (typeof Slick === "undefined") {
 
       var oldH = h;
       var rowMax = ( options.enableAddRow )
-                   ? rowPositionCache[getDataLength()].bottom
-                   : rowPositionCache[getDataLength()].top;
+        ? rowPositionCache[getDataLength()].bottom
+        : rowPositionCache[getDataLength()].top;
 
       th = Math.max(rowMax, viewportH - scrollbarDimensions.height);
 
@@ -1750,32 +1750,31 @@ if (typeof Slick === "undefined") {
       };
     }
 
-	  function getRowFromPosition(maxPosition) {
-		  var row = 0;
-		  var rowsInPosCache = getDataLength();
+    function getRowFromPosition(maxPosition) {
+      var row = 0;
+      var rowsInPosCache = getDataLength();
 
-		  if (!rowsInPosCache) {
-			  return row;
-		  }
+      if (!rowsInPosCache) {
+        return row;
+      }
 
-		  // Loop through the row position cache and break when
-		  // the row is found
-		  for (var i = 0; i < rowsInPosCache; i++) {
-			  if (rowPositionCache[i].top <= maxPosition
-					  && rowPositionCache[i].bottom >= maxPosition
-					  ) {
-				  row = i;
-				  continue;
-			  }
-		  }
+      // Loop through the row position cache and break when
+      // the row is found
+      for (var i = 0; i < rowsInPosCache; i++) {
+        if (rowPositionCache[i].top <= maxPosition
+          && rowPositionCache[i].bottom >= maxPosition) {
+          row = i;
+          continue;
+        }
+      }
 
-		  // Return the last row in the grid
-		  if (maxPosition > rowPositionCache[rowsInPosCache - 1].bottom) {
-			  row = rowsInPosCache - 1;
-		  }
+      // Return the last row in the grid
+      if (maxPosition > rowPositionCache[rowsInPosCache - 1].bottom) {
+        row = rowsInPosCache - 1;
+      }
 
-		  return row;
-	  }
+      return row;
+    }
 
     function getRenderedRange(viewportTop, viewportLeft) {
       var range = getVisibleRange(viewportTop, viewportLeft);
