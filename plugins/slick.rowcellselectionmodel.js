@@ -11,7 +11,6 @@
     var _canvas;
     var _ranges = [];
     var _self = this;
-    var _selector = new Slick.CellSelector();
 	var _handler = new Slick.EventHandler();
     var _inHandler;
     var _options;
@@ -25,20 +24,14 @@
       _grid = grid;
       _canvas = _grid.getCanvasNode();
       _grid.onActiveCellChanged.subscribe(handleActiveCellChange);
-      grid.registerPlugin(_selector);
-      _selector.onCellSelected.subscribe(handleCellSelected);
-      _selector.onBeforeCellSelected.subscribe(handleBeforeCellSelected);
-	  _handler.subscribe(_grid.onActiveCellChanged, wrapHandler(handleActiveCellChange));
+      _handler.subscribe(_grid.onActiveCellChanged, wrapHandler(handleActiveCellChange));
       _handler.subscribe(_grid.onKeyDown, wrapHandler(handleKeyDown));
       _handler.subscribe(_grid.onClick, wrapHandler(handleClick));
     }
 
     function destroy() {
       _grid.onActiveCellChanged.unsubscribe(handleActiveCellChange);
-      _selector.onCellSelected.unsubscribe(handleCellSelected);
-      _selector.onBeforeCellSelected.unsubscribe(handleBeforeCellSelected);
-      _grid.unregisterPlugin(_selector);
-	   _handler.unsubscribeAll();
+      _handler.unsubscribeAll();
     }
 	
 	function wrapHandler(handler) {
