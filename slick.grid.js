@@ -73,6 +73,7 @@ if (typeof Slick === "undefined") {
       editorLock: Slick.GlobalEditorLock,
       showHeaderRow: false,
       headerRowHeight: 25,
+      lockedBorderWidth: 2,
       showTopPanel: false,
       topPanelHeight: 25,
       formatterFactory: null,
@@ -249,14 +250,14 @@ if (typeof Slick === "undefined") {
         $container.css("position", "relative");
       }
 
-      var lockedWidth = getHeadersWidth(true)+2;
+      var lockedWidth = getHeadersWidth(true);
 
       $focusSink = $("<div tabIndex='0' hideFocus style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
 
       $headerScroller = $("<div class='slick-header ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
       $headers = $("<div class='slick-header-columns' style='left:-1000px' />")
         .width(getHeadersWidth())
-        .css("padding-left",lockedWidth)
+        .css("padding-left",lockedWidth+options.lockedBorderWidth)
         .appendTo($headerScroller);
 
       $headerRowScroller = $("<div class='slick-headerrow ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
@@ -267,7 +268,7 @@ if (typeof Slick === "undefined") {
 
 
       $lockedHeaders= $("<div class='slick-locked-header-columns' />")
-        .width(lockedWidth)
+        .width(lockedWidth+options.lockedBorderWidth)
         .appendTo($container);
 
       $topPanelScroller = $("<div class='slick-top-panel-scroller ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
@@ -284,8 +285,8 @@ if (typeof Slick === "undefined") {
       $viewport = $("<div class='slick-viewport' style='width:100%;height:100%; overflow: scroll;outline:0;white-space:nowrap;'>").appendTo($container);
       //$viewport.css("overflow-y", options.autoHeight ? "hidden" : "auto");
 
-      $lockedCanvasWrap = $("<div class='grid-locked-canvas' style='overflow: hidden; z-index:10; position:absolute; left:0; top:0px;bottom:0; border-right: 2px solid; ' />")
-        .css("width",lockedWidth)
+      $lockedCanvasWrap = $("<div class='grid-locked-canvas' style='overflow: hidden; z-index:10; position:absolute; left:0; top:0px;bottom:0; border-right: "+options.lockedBorderWidth+"px solid;' />")
+        .css("width",lockedWidth+options.lockedBorderWidth)
         .appendTo($viewport);
       $canvas = $("<div class='grid-canvas' style=' z-index:0;' />").appendTo($viewport);
 
@@ -1229,6 +1230,10 @@ if (typeof Slick === "undefined") {
         columnPosLeft[i] = x;
         columnPosRight[i] = x + columns[i].width;
         x += columns[i].width;
+        // spacer between the locked and unlocked cols
+        if (columns[i].locked && !columns[i+1].locked){
+          x+=options.lockedBorderWidth;
+        }
       }
     }
 
