@@ -1214,6 +1214,11 @@ if (typeof Slick === "undefined") {
         rule.right.style.right = (canvasWidth - x - w) + "px";
 
         x += columns[i].width;
+
+        // spacer between the locked and unlocked cols
+        if (columns[i].locked && !(columns[i+1]||{}).locked){
+          x+=options.lockedBorderWidth;
+        }
       }
     }
 
@@ -1284,7 +1289,7 @@ if (typeof Slick === "undefined") {
         columnPosRight[i] = x + columns[i].width;
         x += columns[i].width;
         // spacer between the locked and unlocked cols
-        if (columns[i].locked && !columns[i+1].locked){
+        if (columns[i].locked && !(columns[i+1]||{}).locked){
           x+=options.lockedBorderWidth;
         }
       }
