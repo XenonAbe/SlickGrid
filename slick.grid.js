@@ -346,17 +346,22 @@ if (typeof Slick === "undefined") {
             .bind("scroll", handleHeaderRowScroll);
         $focusSink.add($focusSink2)
             .bind("keydown", handleKeyDown);
-        $canvas
+
+        $([$canvas[0],$lockedCanvas[0]])
             .bind("keydown", handleKeyDown)
             .bind("click", handleClick)
             .bind("dblclick", handleDblClick)
             .bind("contextmenu", handleContextMenu)
+            .delegate(".slick-cell", "mouseenter", handleMouseEnter)
+            .delegate(".slick-cell", "mouseleave", handleMouseLeave);
+
+        // don't currently support drag events on locked canvas
+        $canvas
             .bind("draginit", handleDragInit)
             .bind("dragstart", {distance: 3}, handleDragStart)
             .bind("drag", handleDrag)
-            .bind("dragend", handleDragEnd)
-            .delegate(".slick-cell", "mouseenter", handleMouseEnter)
-            .delegate(".slick-cell", "mouseleave", handleMouseLeave);
+            .bind("dragend", handleDragEnd);
+
       }
     }
 
