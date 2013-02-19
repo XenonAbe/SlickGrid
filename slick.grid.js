@@ -410,6 +410,19 @@ if (typeof Slick === "undefined") {
       return dim;
     }
 
+    // TODO: cache this?
+    function getNumLockedColumns(){
+      var num=0;
+      for (var i=0; i<columns.length; i++){
+        if (columns[i].locked){
+          num++;
+        } else {
+          break;
+        }
+      }
+      return num;
+    }
+
     function getHeadersWidth(lockedOnly) {
       var headersWidth = 0;
       for (var i = 0, ii = columns.length; i < ii; i++) {
@@ -1140,11 +1153,12 @@ if (typeof Slick === "undefined") {
 
     function applyColumnHeaderWidths() {
       if (!initialized) { return; }
-      var h;
+      var h,
+        numLocked=getNumLockedColumns();;
       for (var i = 0, headers = $headers.children(), ii = headers.length; i < ii; i++) {
         h = $(headers[i]);
-        if (h.width() !== columns[i].width - headerColumnWidthDiff) {
-          h.width(columns[i].width - headerColumnWidthDiff);
+        if (h.width() !== columns[i+numLocked].width - headerColumnWidthDiff) {
+          h.width(columns[i+numLocked].width - headerColumnWidthDiff);
         }
       }
 
