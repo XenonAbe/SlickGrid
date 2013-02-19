@@ -159,3 +159,17 @@ classes should alter those!
   position: absolute;
   border: 2px dashed black;
 }
+
+.slick-locked-header-columns {
+    position:absolute;
+    z-index:11;
+    left:0;
+    top:0;
+    border-right: 2px solid;
+    overflow:hidden;
+    background-color: white;
+}
+
+.slick-locked-header-columns .slick-header-column {
+  left: 0 !important;
+}

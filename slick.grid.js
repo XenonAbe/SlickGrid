@@ -120,6 +120,7 @@ if (typeof Slick === "undefined") {
     var $headerScroller;
     var $headers;
     var $headerRow, $headerRowScroller, $headerRowSpacer;
+    var $lockedHeaders;
     var $topPanelScroller;
     var $topPanel;
     var $viewport;
@@ -248,17 +249,26 @@ if (typeof Slick === "undefined") {
         $container.css("position", "relative");
       }
 
+      var lockedWidth = getHeadersWidth(true)+2;
+
       $focusSink = $("<div tabIndex='0' hideFocus style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
 
       $headerScroller = $("<div class='slick-header ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
-      $headers = $("<div class='slick-header-columns' style='left:-1000px' />").appendTo($headerScroller);
-      $headers.width(getHeadersWidth());
+      $headers = $("<div class='slick-header-columns' style='left:-1000px' />")
+        .width(getHeadersWidth())
+        .css("padding-left",lockedWidth)
+        .appendTo($headerScroller);
 
       $headerRowScroller = $("<div class='slick-headerrow ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
       $headerRow = $("<div class='slick-headerrow-columns' />").appendTo($headerRowScroller);
       $headerRowSpacer = $("<div style='display:block;height:1px;position:absolute;top:0;left:0;'></div>")
           .css("width", getCanvasWidth() + scrollbarDimensions.width + "px")
           .appendTo($headerRowScroller);
+
+
+      $lockedHeaders= $("<div class='slick-locked-header-columns' />")
+        .width(lockedWidth)
+        .appendTo($container);
 
       $topPanelScroller = $("<div class='slick-top-panel-scroller ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
       $topPanel = $("<div class='slick-top-panel' style='width:10000px' />").appendTo($topPanelScroller);
@@ -274,7 +284,9 @@ if (typeof Slick === "undefined") {
       $viewport = $("<div class='slick-viewport' style='width:100%;height:100%; overflow: scroll;outline:0;white-space:nowrap;'>").appendTo($container);
       //$viewport.css("overflow-y", options.autoHeight ? "hidden" : "auto");
 
-      $lockedCanvasWrap = $("<div class='grid-locked-canvas' style='overflow: hidden; z-index:10; position:absolute; left:0; top:0px;bottom:0; width:300px; border-right: 2px solid; ' />").appendTo($viewport);
+      $lockedCanvasWrap = $("<div class='grid-locked-canvas' style='overflow: hidden; z-index:10; position:absolute; left:0; top:0px;bottom:0; border-right: 2px solid; ' />")
+        .css("width",lockedWidth)
+        .appendTo($viewport);
       $canvas = $("<div class='grid-canvas' style=' z-index:0;' />").appendTo($viewport);
 
       $lockedCanvas = $("<div style='position:relative'></div>");
@@ -397,14 +409,19 @@ if (typeof Slick === "undefined") {
       return dim;
     }
 
-    function getHeadersWidth() {
+    function getHeadersWidth(lockedOnly) {
       var headersWidth = 0;
       for (var i = 0, ii = columns.length; i < ii; i++) {
         var width = columns[i].width;
-        headersWidth += width;
+        if (!lockedOnly || columns[i].locked){
+          headersWidth += width;
+        }
       }
-      headersWidth += scrollbarDimensions.width;
-      return Math.max(headersWidth, viewportW) + 1000;
+      if (!lockedOnly){
+        headersWidth += scrollbarDimensions.width;
+        return Math.max(headersWidth, viewportW) + 1000;
+      }
+      return headersWidth;
     }
 
     function getCanvasWidth() {
@@ -577,7 +594,8 @@ if (typeof Slick === "undefined") {
             .attr("title", m.toolTip || "")
             .data("column", m)
             .addClass(m.headerCssClass || "")
-            .appendTo($headers);
+            .appendTo((m.locked ? $lockedHeaders : $headers ));
+
 
         if (options.enableColumnReorder || m.sortable) {
           header
