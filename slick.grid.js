@@ -423,6 +423,13 @@ if (typeof Slick === "undefined") {
       return num;
     }
 
+    // locked header width + border
+    function getLockedColumnWidth(){
+      var lockedWidth = getHeadersWidth(true);
+      if (lockedWidth===0) return 0;
+      return lockedWidth + options.lockedBorderWidth;
+    }
+
     function getHeadersWidth(lockedOnly) {
       var headersWidth = 0;
       for (var i = 0, ii = columns.length; i < ii; i++) {
@@ -2511,12 +2518,12 @@ if (typeof Slick === "undefined") {
 
     function scrollCellIntoView(row, cell) {
       var colspan = getColspan(row, cell);
-      var left = columnPosLeft[cell],
+      var left = columnPosLeft[cell]-getLockedColumnWidth(),
         right = columnPosRight[cell + (colspan > 1 ? colspan - 1 : 0)],
         scrollRight = scrollLeft + viewportW;
 
-      if (left < scrollLeft) {
-        $viewport.scrollLeft(left);
+      if (left - 5 < scrollLeft) {
+        $viewport.scrollLeft(left-5); // small fudge factor to avoid partial cell cutoff in some cases
         handleScroll();
         render();
       } else if (right > scrollRight) {
