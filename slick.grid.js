@@ -585,6 +585,7 @@ if (typeof Slick === "undefined") {
           }
         });
       $headers.empty();
+      $lockedHeaders.empty();
       $headers.width(getHeadersWidth());
 
       $headerRow.find(".slick-headerrow-column")
@@ -747,6 +748,12 @@ if (typeof Slick === "undefined") {
 
           var reorderedIds = $headers.sortable("toArray");
           var reorderedColumns = [];
+
+          // locked cols aren't part of $headers, so we'll just add these in first
+          for (var i=0; i<columns.length && columns[i].locked;i++){
+            reorderedColumns.push(columns[i]);
+          }
+
           for (var i = 0; i < reorderedIds.length; i++) {
             reorderedColumns.push(columns[getColumnIndex(reorderedIds[i].replace(uid, ""))]);
           }
@@ -760,22 +767,25 @@ if (typeof Slick === "undefined") {
     }
 
     function setupColumnResize() {
-      var $col, j, c, pageX, columnElements, minPageX, maxPageX, firstResizable, lastResizable;
+      var $col, j, c, pageX, columnElements, minPageX, maxPageX, firstResizable, lastResizable,
+        numLockedColumns=getNumLockedColumns();
       columnElements = $headers.children();
       columnElements.find(".slick-resizable-handle").remove();
       columnElements.each(function (i, e) {
-        if (columns[i].resizable) {
+        var colIdx=i+numLockedColumns;
+        if (columns[colIdx].resizable && !columns[colIdx].locked) {
           if (firstResizable === undefined) {
-            firstResizable = i;
+            firstResizable = colIdx;
           }
-          lastResizable = i;
+          lastResizable = colIdx;
         }
       });
       if (firstResizable === undefined) {
         return;
       }
       columnElements.each(function (i, e) {
-        if (i < firstResizable || (options.forceFitColumns && i >= lastResizable)) {
+        var colIdx=i+numLockedColumns;
+        if (colIdx < firstResizable || (options.forceFitColumns && colIdx >= lastResizable)) {
           return;
         }
         $col = $(e);
@@ -790,13 +800,14 @@ if (typeof Slick === "undefined") {
               var shrinkLeewayOnRight = null, stretchLeewayOnRight = null;
               // lock each column's width option to current width
               columnElements.each(function (i, e) {
-                columns[i].previousWidth = $(e).outerWidth();
+                var colIdx= i + numLockedColumns;
+                columns[colIdx].previousWidth = $(e).outerWidth();
               });
               if (options.forceFitColumns) {
                 shrinkLeewayOnRight = 0;
                 stretchLeewayOnRight = 0;
                 // colums on right affect maxPageX/minPageX
-                for (j = i + 1; j < columnElements.length; j++) {
+                for (j = colIdx + 1; j < columnElements.length; j++) {
                   c = columns[j];
                   if (c.resizable) {
                     if (stretchLeewayOnRight !== null) {
@@ -811,7 +822,7 @@ if (typeof Slick === "undefined") {
                 }
               }
               var shrinkLeewayOnLeft = 0, stretchLeewayOnLeft = 0;
-              for (j = 0; j <= i; j++) {
+              for (j = numLockedColumns; j <= colIdx; j++) {
                 // columns on left only affect minPageX
                 c = columns[j];
                 if (c.resizable) {
@@ -842,9 +853,10 @@ if (typeof Slick === "undefined") {
             })
             .bind("drag", function (e, dd) {
               var actualMinWidth, d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX, x;
+
               if (d < 0) { // shrink column
                 x = d;
-                for (j = i; j >= 0; j--) {
+                for (j = colIdx; j >= numLockedColumns; j--) {
                   c = columns[j];
                   if (c.resizable) {
                     actualMinWidth = Math.max(c.minWidth || 0, absoluteColumnMinWidth);
@@ -860,7 +872,7 @@ if (typeof Slick === "undefined") {
 
                 if (options.forceFitColumns) {
                   x = -d;
-                  for (j = i + 1; j < columnElements.length; j++) {
+                  for (j = colIdx + 1; j < columnElements.length; j++) {
                     c = columns[j];
                     if (c.resizable) {
                       if (x && c.maxWidth && (c.maxWidth - c.previousWidth < x)) {
@@ -875,7 +887,7 @@ if (typeof Slick === "undefined") {
                 }
               } else { // stretch column
                 x = d;
-                for (j = i; j >= 0; j--) {
+                for (j = colIdx; j >= numLockedColumns; j--) {
                   c = columns[j];
                   if (c.resizable) {
                     if (x && c.maxWidth && (c.maxWidth - c.previousWidth < x)) {
@@ -890,7 +902,7 @@ if (typeof Slick === "undefined") {
 
                 if (options.forceFitColumns) {
                   x = -d;
-                  for (j = i + 1; j < columnElements.length; j++) {
+                  for (j = colIdx + 1; j < columnElements.length; j++) {
                     c = columns[j];
                     if (c.resizable) {
                       actualMinWidth = Math.max(c.minWidth || 0, absoluteColumnMinWidth);
@@ -1154,7 +1166,7 @@ if (typeof Slick === "undefined") {
     function applyColumnHeaderWidths() {
       if (!initialized) { return; }
       var h,
-        numLocked=getNumLockedColumns();;
+        numLocked=getNumLockedColumns();
       for (var i = 0, headers = $headers.children(), ii = headers.length; i < ii; i++) {
         h = $(headers[i]);
         if (h.width() !== columns[i+numLocked].width - headerColumnWidthDiff) {
