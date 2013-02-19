@@ -250,7 +250,16 @@ if (typeof Slick === "undefined") {
         $container.css("position", "relative");
       }
 
-      var lockedWidth = getHeadersWidth(true);
+      var lockedWidth = getHeadersWidth(true),
+        lockedWidthWithBorder = 0;
+
+      if (lockedWidth>0){
+        lockedWidthWithBorder = lockedWidth+options.lockedBorderWidth;
+
+        $lockedHeaders= $("<div class='slick-locked-header-columns' />")
+          .width(lockedWidthWithBorder)
+          .appendTo($container);
+      }
 
       $focusSink = $("<div tabIndex='0' hideFocus style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
 
@@ -267,9 +276,6 @@ if (typeof Slick === "undefined") {
           .appendTo($headerRowScroller);
 
 
-      $lockedHeaders= $("<div class='slick-locked-header-columns' />")
-        .width(lockedWidth+options.lockedBorderWidth)
-        .appendTo($container);
 
       $topPanelScroller = $("<div class='slick-top-panel-scroller ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
       $topPanel = $("<div class='slick-top-panel' style='width:10000px' />").appendTo($topPanelScroller);
@@ -285,13 +291,18 @@ if (typeof Slick === "undefined") {
       $viewport = $("<div class='slick-viewport' style='width:100%;height:100%; overflow: scroll;outline:0;white-space:nowrap;'>").appendTo($container);
       //$viewport.css("overflow-y", options.autoHeight ? "hidden" : "auto");
 
-      $lockedCanvasWrap = $("<div class='grid-locked-canvas' style='overflow: hidden; z-index:10; position:absolute; left:0; top:0px;bottom:0; border-right: "+options.lockedBorderWidth+"px solid;' />")
-        .css("width",lockedWidth+options.lockedBorderWidth)
-        .appendTo($viewport);
+      if (lockedWidth>0){
+        $lockedCanvasWrap = $("<div class='grid-locked-canvas' style='overflow: hidden; z-index:10; position:absolute; left:0; top:0px;bottom:0; border-right: "+options.lockedBorderWidth+"px solid;' />")
+          .css("width",lockedWidthWithBorder)
+          .appendTo($viewport);
+      }
+
       $canvas = $("<div class='grid-canvas' style=' z-index:0;' />").appendTo($viewport);
 
-      $lockedCanvas = $("<div style='position:relative'></div>");
-      $lockedCanvasWrap.append($lockedCanvas);
+      if (lockedWidth>0){
+        $lockedCanvas = $("<div style='position:relative'></div>");
+        $lockedCanvasWrap.append($lockedCanvas);
+      }
 
 
       $focusSink2 = $focusSink.clone().appendTo($container);
@@ -347,7 +358,11 @@ if (typeof Slick === "undefined") {
         $focusSink.add($focusSink2)
             .bind("keydown", handleKeyDown);
 
-        $([$canvas[0],$lockedCanvas[0]])
+
+        var canvases = [$canvas[0]];
+        if ($lockedCanvas) { canvases.push( $lockedCanvas[0]); }
+
+        $(canvases)
             .bind("keydown", handleKeyDown)
             .bind("click", handleClick)
             .bind("dblclick", handleDblClick)
@@ -597,7 +612,7 @@ if (typeof Slick === "undefined") {
           }
         });
       $headers.empty();
-      $lockedHeaders.empty();
+      if ($lockedHeaders){ $lockedHeaders.empty(); }
       $headers.width(getHeadersWidth());
 
       $headerRow.find(".slick-headerrow-column")
@@ -1932,11 +1947,15 @@ if (typeof Slick === "undefined") {
 
     function renderRows(range) {
       var parentNode = $canvas[0],
-          lockedParentNode = $lockedCanvas[0],
+          lockedParentNode,
           stringArray = [],
           lockedArray = [],
           rows = [],
           needToReselectCell = false;
+
+      if ($lockedCanvas){
+        lockedParentNode = $lockedCanvas[0];
+      }
 
       for (var i = range.top; i <= range.bottom; i++) {
         if (rowsCache[i]) {
@@ -1976,14 +1995,17 @@ if (typeof Slick === "undefined") {
       var x = document.createElement("div");
       x.innerHTML = stringArray.join("");
 
-      var locked = document.createElement("div");
-      locked.innerHTML = lockedArray.join("");
-
+      if ($lockedCanvas){
+        var locked = document.createElement("div");
+        locked.innerHTML = lockedArray.join("");
+      }
 
       for (var i = 0, ii = rows.length; i < ii; i++) {
         var cache=rowsCache[rows[i]];
         cache.rowNode = parentNode.appendChild(x.firstChild);
-        cache.lockedRowNode = lockedParentNode.appendChild(locked.firstChild);
+        if ($lockedCanvas){
+          cache.lockedRowNode = lockedParentNode.appendChild(locked.firstChild);
+        }
       }
 
       if (needToReselectCell) {
@@ -2101,7 +2123,9 @@ if (typeof Slick === "undefined") {
         }
       }
 
-      $lockedCanvas.css("margin-top",-scrollTop || 0);
+      if ($lockedCanvas){
+        $lockedCanvas.css("margin-top",-scrollTop || 0);
+      }
 
       trigger(self.onScroll, {scrollLeft: scrollLeft, scrollTop: scrollTop});
     }
