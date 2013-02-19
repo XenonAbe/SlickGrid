@@ -1818,7 +1818,16 @@ if (typeof Slick === "undefined") {
 
       var cellToRemove;
       while ((cellToRemove = cellsToRemove.pop()) != null) {
-        cacheEntry.rowNode.removeChild(cacheEntry.cellNodesByColumnIdx[cellToRemove]);
+        var cellNode=cacheEntry.cellNodesByColumnIdx[cellToRemove];
+        try {
+          cacheEntry.rowNode.removeChild(cellNode);
+        } catch (e){}
+        try {
+          if (cacheEntry.lockedRowNode){
+            cacheEntry.lockedRowNode.removeChild(cellNode);
+          }
+        } catch (e){}
+
         delete cacheEntry.cellColSpans[cellToRemove];
         delete cacheEntry.cellNodesByColumnIdx[cellToRemove];
         if (postProcessedRows[row]) {
@@ -1987,7 +1996,11 @@ if (typeof Slick === "undefined") {
 
     function updateRowPositions() {
       for (var row in rowsCache) {
-        rowsCache[row].rowNode.style.top = (row * options.rowHeight - offset) + "px";
+        var offset = (row * options.rowHeight - offset) + "px";
+        rowsCache[row].rowNode.style.top = offset;
+        if (rowsCache[row].lockedRowNode){
+          rowsCache[row].lockedRowNode.style.top = offset;
+        }
       }
     }
 
@@ -2424,12 +2437,21 @@ if (typeof Slick === "undefined") {
 
     function getRowFromNode(rowNode) {
       for (var row in rowsCache) {
-        if (rowsCache[row].rowNode === rowNode) {
+        if (rowsCache[row].rowNode === rowNode ||
+          rowsCache[row].lockedRowNode === rowNode) {
           return row | 0;
         }
       }
 
       return null;
+    }
+
+    // return an array of one or two root row nodes from the row cache (locked, unlocked or unlocked)
+    function getRowNodesFromCacheForRow(row){
+      if (rowsCache[row].lockedRowNode){
+        return [rowsCache[row].lockedRowNode, rowsCache[row].rowNode];
+      }
+      return [rowsCache[row].rowNode];
     }
 
     function getCellFromEvent(e) {
@@ -2509,7 +2531,7 @@ if (typeof Slick === "undefined") {
         makeActiveCellNormal();
         $(activeCellNode).removeClass("active");
         if (rowsCache[activeRow]) {
-          $(rowsCache[activeRow].rowNode).removeClass("active");
+          $(getRowNodesFromCacheForRow(activeRow)).removeClass("active");
         }
       }
 
@@ -2521,7 +2543,7 @@ if (typeof Slick === "undefined") {
         activeCell = activePosX = getCellFromNode(activeCellNode);
 
         $(activeCellNode).addClass("active");
-        $(rowsCache[activeRow].rowNode).addClass("active");
+        $(getRowNodesFromCacheForRow(activeRow)).addClass("active");
 
         if (options.editable && editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
           clearTimeout(h_editorLoader);
