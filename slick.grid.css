@@ -83,9 +83,6 @@ classes should alter those!
   width: 100%;
 }
 
-.slick-locked-content div.slick-cell {
-    width:100%;
-}
 
 .slick-cell, .slick-headerrow-column {
   position: absolute;

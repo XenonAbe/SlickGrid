@@ -444,10 +444,14 @@ if (typeof Slick === "undefined") {
     }
 
     // locked header width + border
-    function getLockedColumnWidth(){
+    function getLockedColumnsTotalWidth(){
       var lockedWidth = getHeadersWidth(true);
       if (lockedWidth===0) return 0;
       return lockedWidth + options.lockedBorderWidth;
+    }
+
+    function getLockedColumnsWidth(){
+      return getHeadersWidth(true);
     }
 
     function getHeadersWidth(lockedOnly) {
@@ -1205,18 +1209,21 @@ if (typeof Slick === "undefined") {
     }
 
     function applyColumnWidths() {
-      var x = 0, w, rule;
+      var x = 0, w, rule,
+        lockedColumnsWidth = getLockedColumnsWidth();
       for (var i = 0; i < columns.length; i++) {
         w = columns[i].width;
 
         rule = getColumnCssRules(i);
         rule.left.style.left = x + "px";
-        rule.right.style.right = (canvasWidth - x - w) + "px";
+
+        var totalWidth = (columns[i].locked ? lockedColumnsWidth : canvasWidth);
+        rule.right.style.right = (totalWidth  - x - w) + "px";
 
         x += columns[i].width;
 
         // spacer between the locked and unlocked cols
-        if (columns[i].locked && !(columns[i+1]||{}).locked){
+        if ( lockedColumnsWidth>0 && columns[i].locked && !(columns[i+1]||{}).locked){
           x+=options.lockedBorderWidth;
         }
       }
@@ -2552,7 +2559,7 @@ if (typeof Slick === "undefined") {
 
     function scrollCellIntoView(row, cell) {
       var colspan = getColspan(row, cell);
-      var left = columnPosLeft[cell]-getLockedColumnWidth(),
+      var left = columnPosLeft[cell]-getLockedColumnsTotalWidth(),
         right = columnPosRight[cell + (colspan > 1 ? colspan - 1 : 0)],
         scrollRight = scrollLeft + viewportW;
 
