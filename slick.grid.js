@@ -976,7 +976,7 @@ if (typeof Slick === "undefined") {
         rowPositionCache[i] = {
           top: ( rowPositionCache[i - 1] )
             ? ( rowPositionCache[i - 1].bottom - offset)
-            : 0, height: !hasRowMeta ? options.rowHeight : metadata.rows[i].height
+            : options.rowSpacing, height: !hasRowMeta ? options.rowHeight : metadata.rows[i].height
         };
         rowPositionCache[i].bottom = rowPositionCache[i].top + rowPositionCache[i].height +
           (!hasRowMeta ? options.rowSpacing : metadata.rows[i].spacing);
