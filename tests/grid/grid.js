@@ -49,13 +49,13 @@ grid.render();
 
 
 module("grid - column resizing", {
-		setup: function() {
-			// do some setup
-		},
+	setup: function() {
+		// do some setup
+	},
 
-		teardown: function() {
-			// do some teardown
-		}
+	teardown: function() {
+		// do some teardown
+	}
 });
 
 test("minWidth is respected", function() {
@@ -69,7 +69,7 @@ test("minWidth is respected", function() {
 test("onColumnsResized is fired on column resize", function() {
     expect(2);
     grid.onColumnsResized.subscribe(function() {
-      ok(true,"onColumnsResized called"); 
+        ok(true,"onColumnsResized called");
     });
     var oldWidth = cols[0].width;
     $("#container .slick-resizable-handle:first").simulate("drag", {dx:100,dy:0});
