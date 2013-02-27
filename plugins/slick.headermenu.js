@@ -100,17 +100,17 @@
       _grid.setColumns(_grid.getColumns());
 
       // Hide the menu on outside click.
-      $(document.body).bind("mousedown", handleBodyMouseDown);
+      $(document.body).bind("click", handleBodyClick);
     }
 
 
     function destroy() {
       _handler.unsubscribeAll();
-      $(document.body).unbind("mousedown", handleBodyMouseDown);
+      $(document.body).unbind("click", handleBodyClick);
     }
 
 
-    function handleBodyMouseDown(e) {
+    function handleBodyClick(e) {
       if ($menu && $menu[0] != e.target && !$.contains($menu[0], e.target)) {
         hideMenu();
       }
@@ -148,9 +148,13 @@
           $el.attr("title", menu.tooltip);
         }
 
-        $el
-          .bind("click", showMenu)
-          .appendTo(args.node);
+        //Make the button show/hide the menu
+        $el.bind("click",function(e) {
+            if (!$menu) {
+                e.stopPropagation();
+                showMenu.call(this, [e]);
+            }
+        }).appendTo(args.node);
       }
     }
 
@@ -191,6 +195,11 @@
       for (var i = 0; i < menu.items.length; i++) {
         var item = menu.items[i];
 
+        if (item.separator) {
+            $("<hr/>").appendTo($menu);
+            continue;
+        }
+
         var $li = $("<div class='slick-header-menuitem'></div>")
           .data("command", item.command || '')
           .data("column", columnDef)
@@ -206,35 +215,59 @@
           $li.attr("title", item.tooltip);
         }
 
-        var $icon = $("<div class='slick-header-menuicon'></div>")
-          .appendTo($li);
+        var $icon = $("<div class='slick-header-menuicon'></div>");
 
-        if (item.iconCssClass) {
-          $icon.addClass(item.iconCssClass);
-        }
+        if (item.isSelectable) {
+            var checkbox = $("<input type='checkbox' value="+ item.command +">");
 
-        if (item.iconImage) {
-          $icon.css("background-image", "url(" + item.iconImage + ")");
-        }
+            if (item.isChecked) {
+                checkbox.attr("checked", "checked");
+            }
 
-        $("<span class='slick-header-menucontent'></span>")
-          .text(item.title)
-          .appendTo($li);
+            checkbox.appendTo($icon);
+            $icon.appendTo($li);
+
+        } else if (item.iconImage || item.iconCssClass) {
+            if (item.iconCssClass) {
+                $icon.addClass(item.iconCssClass);
+            }
+
+            if (item.iconImage) {
+                $icon.css("background-image", "url(" + item.iconImage + ")");
+            }
+
+            $icon.appendTo($li);
       }
 
+       var menuContent = $("<span class='slick-header-menucontent'></span>");
+
+       menuContent.text(item.title).appendTo($li);
+
+       if (item.contentClass) {
+        menuContent.addClass(item.contentClass);
+       }
+
+      }
 
       // Position the menu.
+      var topOffset = $(this).offset().top + $(this).height();
+
       $menu
-        .css("top", $(this).offset().top + $(this).height())
+        .css("top", topOffset)
         .css("left", $(this).offset().left);
 
+      if (menu.alignRight) {
+        $menu.css("margin-left", -($menu.width()));
+      }
+
+      // Stop the menu from growing above the window height
+      $menu.css("max-height", ($(window).height() - topOffset) * 0.95);
 
       // Mark the header as active to keep the highlighting.
       $activeHeaderColumn = $menuButton.closest(".slick-header-column");
       $activeHeaderColumn
         .addClass("slick-header-column-active");
     }
-
 
     function handleMenuItemClick(e) {
       var command = $(this).data("command");
@@ -245,7 +278,10 @@
         return;
       }
 
-      hideMenu();
+      // Change the item checkbox value
+      if (item.hasOwnProperty("isChecked")) {
+        item.isChecked = !item.isChecked;
+      }
 
       if (command != null && command != '') {
         _self.onCommand.notify({
@@ -261,9 +297,19 @@
       e.stopPropagation();
     }
 
+    function getSelectableMenuItems(selected){
+        return $("input[type='checkbox']", $menu);
+    }
+
+    function setMenuItemSelection(command, selected){
+        $("input[value='"+ command +"']", $menu).prop('checked', selected);
+    }
+
     $.extend(this, {
       "init": init,
       "destroy": destroy,
+      "getSelectableItems": getSelectableMenuItems,
+      "setMenuItemSelection": setMenuItemSelection,
 
       "onBeforeMenuShow": new Slick.Event(),
       "onCommand": new Slick.Event()
