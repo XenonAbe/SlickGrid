@@ -3343,14 +3343,21 @@ if (typeof Slick === "undefined") {
       });
       currentEditor.destroy();
       currentEditor = null;
+      getEditorLock().deactivate(editController);
+
+      // active node can change while data is fetched
+      var node = activeCellNode;
+      var row = activeRow;
+      var cell = activeCell;
+
       $.when(getDataItem(activeRow)).done(function (d) {
-        if (activeCellNode) {
-          $(activeCellNode).removeClass("editable invalid");
+        if (node) {
+          $(node).removeClass("editable invalid");
           if (d) {
-            var column = columns[activeCell];
-            var formatter = getFormatter(activeRow, column);
-            activeCellNode[0].innerHTML = formatter(activeRow, activeCell, getDataItemValueForColumn(d, column), column, d);
-            invalidatePostProcessingResults(activeRow);
+            var column = columns[cell];
+            var formatter = getFormatter(row, column);
+            node[0].innerHTML = formatter(row, cell, getDataItemValueForColumn(d, column), column, d);
+            invalidatePostProcessingResults(row);
           }
         }
 
@@ -3361,7 +3368,6 @@ if (typeof Slick === "undefined") {
           clearTextSelection();
         }
 
-        getEditorLock().deactivate(editController);
       });
 
     }
