@@ -302,7 +302,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = !!item[args.column.field];
+      defaultValue = item[args.column.field];
       if (defaultValue) {
         $select.attr("checked", "checked");
       } else {
@@ -311,7 +311,7 @@
     };
 
     this.serializeValue = function () {
-      return !!$select.attr("checked");
+      return $select.attr("checked");
     };
 
     this.applyValue = function (item, state) {
@@ -319,7 +319,7 @@
     };
 
     this.isValueChanged = function () {
-      return (this.serializeValue() !== defaultValue);
+      return ($select.attr("checked") != defaultValue);
     };
 
     this.validate = function () {
@@ -510,3 +510,4 @@
     this.init();
   }
 })(jQuery);
+);
