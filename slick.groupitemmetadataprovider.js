@@ -136,18 +136,4 @@
       "getTotalsRowMetadata": getTotalsRowMetadata
     };
   }
-})(jQuery);lsCssClass,
-        formatter: defaultTotalsCellFormatter,
-        editor: null
-      };
-    }
-
-
-    return {
-      "init": init,
-      "destroy": destroy,
-      "getGroupRowMetadata": getGroupRowMetadata,
-      "getTotalsRowMetadata": getTotalsRowMetadata
-    };
-  }
 })(jQuery);

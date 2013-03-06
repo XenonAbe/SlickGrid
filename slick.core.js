@@ -428,21 +428,3 @@
 })(jQuery);
 
 
- {
-      return (activeEditController ? activeEditController.commitCurrentEdit() : true);
-    };
-
-    /***
-     * Attempts to cancel the current edit by calling "cancelCurrentEdit" method on the active edit
-     * controller and returns whether the edit was successfully cancelled.  If no edit controller is
-     * active, returns true.
-     * @method cancelCurrentEdit
-     * @return {Boolean}
-     */
-    this.cancelCurrentEdit = function cancelCurrentEdit() {
-      return (activeEditController ? activeEditController.cancelCurrentEdit() : true);
-    };
-  }
-})(jQuery);
-
-
