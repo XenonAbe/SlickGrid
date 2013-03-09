@@ -1846,6 +1846,9 @@ if (typeof Slick === "undefined") {
         // This is a string, so it needs to be cast back to a number.
         i = i | 0;
 
+        // skip locked cols
+        if (columns[i] && columns[i].locked) continue;
+
         var colspan = cacheEntry.cellColSpans[i];
         if (columnPosLeft[i] > range.rightPx ||
           columnPosRight[Math.min(columns.length - 1, i + colspan - 1)] < range.leftPx) {
