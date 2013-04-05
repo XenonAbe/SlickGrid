@@ -2725,6 +2725,9 @@ if (typeof Slick === "undefined") {
       if (currentEditor.position) {
         handleActiveCellPositionChange();
       }
+
+
+      trigger(self.onActivateEditCell, {row: activeRow, cell: activeCell, item: item, column: columnDef,currentEditor:currentEditor});
     }
 
     function commitEditAndSetFocus() {
@@ -3382,6 +3385,7 @@ if (typeof Slick === "undefined") {
       "onColumnsResized": new Slick.Event(),
       "onCellChange": new Slick.Event(),
       "onBeforeEditCell": new Slick.Event(),
+      "onActivateEditCell": new Slick.Event(),
       "onBeforeCellEditorDestroy": new Slick.Event(),
       "onBeforeDestroy": new Slick.Event(),
       "onActiveCellChanged": new Slick.Event(),
