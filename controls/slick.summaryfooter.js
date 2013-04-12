@@ -7,19 +7,14 @@
     var columnSummaries = {};
 
     function init() {
-      grid.onHeaderRowCellRendered.subscribe(function(e, args) {
-        updateSummaryFooter(args);
-      });
-
-      /*dataView.onPagingInfoChanged.subscribe(function (e, pagingInfo) {
-        updateSummaryFooterRowCount(pagingInfo);
-      });*/
-
-      dataView.onRowsChanged.subscribe(function (e, args) {
+      dataView.onPagingInfoChanged.subscribe(function (e, pagingInfo) {
         items = dataView.getItems();
 
         constructSummaries();
+        constructSummaryFooterUI();
+      });
 
+      dataView.onRowsChanged.subscribe(function (e, args) {
         grid.invalidateRows(args.rows);
         grid.render();
 
@@ -40,6 +35,7 @@
     }
 
     function constructSummaries() {
+      columnSummaries = {};
       for (var it = 0; it < items.length; it++) {
         var row = items[it];
 
@@ -55,7 +51,7 @@
           }
         }
       }
-      console.log(columnSummaries);
+      console.log(items.length);
     }
 
     function constructSummaryFooterUI() {
@@ -118,30 +114,6 @@
               .appendTo($headerRow);*/
         //}
       }
-    }
-
-
-    function updateSummaryFooter(args) {
-      /*var state = getNavState();
-
-      $container.find(".slick-summaryfooter-nav span").removeClass("ui-state-disabled");
-      if (!state.canGotoFirst) {
-        $container.find(".ui-icon-seek-first").addClass("ui-state-disabled");
-      }
-      if (!state.canGotoLast) {
-        $container.find(".ui-icon-seek-end").addClass("ui-state-disabled");
-      }
-      if (!state.canGotoNext) {
-        $container.find(".ui-icon-seek-next").addClass("ui-state-disabled");
-      }
-      if (!state.canGotoPrev) {
-        $container.find(".ui-icon-seek-prev").addClass("ui-state-disabled");
-      }*/
-
-      $($status).empty();
-        $("<input type='text'>")
-           .data("columnId", args.column.id)
-           .appendTo($status);
     }
 
     init();
