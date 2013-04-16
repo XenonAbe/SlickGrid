@@ -25,6 +25,7 @@
 
     var defaults = {
       groupItemMetadataProvider: null,
+      droppableGroupBy: false,
       inlineFilters: false
     };
 
@@ -78,6 +79,185 @@
 
     options = $.extend(true, {}, defaults, options);
 
+    var slickGrid;
+    var headerElements;
+    var columns;
+
+    function setGrid(grid) {
+      slickGrid = grid;
+
+      if (grid.getOptions().enableDraggableGroupBy) {
+        headerElements = grid.getHeaderElements();
+        setupColumnDropbox();
+      }
+    }
+
+    function setColumns(col) {
+      columns = col;
+    }
+
+    var emptyDropbox;
+
+    function setupColumnDropbox() {
+      headerElements[0].find(".slick-placeholder").hide();
+      headerElements[0].droppable({
+        activeClass: "ui-state-default",
+        hoverClass: "ui-state-hover",
+        accept: ":not(.ui-sortable-helper)",
+        drop: function( event, ui ) {
+          handleGroupByDrop(this, ui.draggable);
+        }
+      });
+
+      emptyDropbox = headerElements[0].html();
+    }
+
+    var columnsGroupBy = [];
+    var groupBySorters = [];
+
+    function groupByFields(fields, sorters) {
+      if (!grid.getOptions().enableDraggableGroupBy) {
+        groupBy(null);
+        return;
+      }
+
+      if (fields == null) {
+        columnsGroupBy.forEach(function (element, index, array) {
+          var id = slickGrid.getUID() + element;
+          var column = $('#' + id);
+          column.unbind('click');
+        });
+        headerElements[0].html(emptyDropbox);
+
+        columnsGroupBy = [];
+        updateGroupBy();
+        return;
+      }
+
+      if (sorters == null) {
+        groupBySorters = [function (a, b) { return a.value - b.value; }];
+      } else {
+        groupBySorters = sorters;
+      }
+
+      console.log(groupBySorters);
+
+      fields.forEach(function (element, index, array) {
+        var container = headerElements[0][0];
+        var id = slickGrid.getUID() + element;
+        var column = $('#' + id);
+        var columnid = column.attr('id').replace(slickGrid.getUID(), "");
+
+        if (columnsGroupBy.indexOf(columnid) != -1) {
+          return;
+        }
+
+        var entry = $( "<li>" );
+        $
+        $("<span id='" + columnid + "'></span>").text(column.text() + " (X)").appendTo( entry );
+        $("</li>").appendTo( entry );
+        entry.appendTo( container );
+
+        addColumnGroupBy(columnid, column);
+        addGroupByRemoveClickHandler(columnid, container, column, entry);
+      });
+    }
+
+    function handleGroupByDrop(container, column) {
+      var columnid = column.attr('id').replace(slickGrid.getUID(), "");
+
+      if (columnsGroupBy.indexOf(columnid) != -1) {
+        return;
+      }
+
+      var entry = $( "<li>" );
+      $
+      $("<span id='" + columnid + "'></span>").text(column.text() + " (X)").appendTo( entry );
+      $("</li>").appendTo( entry );
+      entry.appendTo( container );
+
+      addColumnGroupBy(columnid, column);
+      addGroupByRemoveClickHandler(columnid, container, column, entry);
+    }
+
+    function addColumnGroupBy(id, column) {
+      columnsGroupBy.push(id);
+      updateGroupBy();
+    }
+
+    function addGroupByRemoveClickHandler(id, container, column, entry) {
+      var text = entry;
+      $('#' + id).bind('click', function() {
+        $(this).unbind('click');
+        removeGroupBy(id, column, text);
+      });
+    }
+
+    function removeFromArray(arr){
+      var what, a= arguments, L= a.length, ax;
+      while(L> 1 && arr.length){
+          what= a[--L];
+          while((ax= arr.indexOf(what))!= -1){
+              arr.splice(ax, 1);
+          }
+      }
+      return arr;
+    }
+
+    function removeGroupBy(id, column, entry) {
+      entry.remove();
+      removeFromArray(columnsGroupBy, id);
+      updateGroupBy();
+    }
+
+    function updateGroupBy() {
+
+      if (columnsGroupBy.length == 0) {
+        setGrouping([]);
+        return;
+      }
+
+      var groupByFields = [];
+
+      var groupingArray = [];
+
+      columnsGroupBy.forEach(function (element, index, array) {
+        var columnid = element.toString();
+
+        columns.forEach(function (e, i, a) {
+          if (e.id == columnid) {
+            var columnField = e.field;
+            groupByFields.push({id: e.id, field: e.field, name: e.name});
+          }
+        });
+      });
+
+      var groupingFields = [];
+      groupByFields.forEach(function (element, index, array) {
+        groupingFields.push(element.field);
+      });
+
+      var groupingTitles = [];
+      groupByFields.forEach(function (element, index, array) {
+        groupingTitles[element.field] = element.name;
+      });
+
+      var groupingFunctions = [];
+      groupByFields.forEach(function (element, index, array) {
+        var groupFunc = function(g) {
+            return groupingTitles[g.grouping] + ":  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
+        }
+        groupingFunctions.push(groupFunc);
+      })
+
+      setGrouping();
+
+      groupBy(
+        groupingFields,
+        groupingFunctions,
+        groupBySorters
+      );
+    }
 
     function beginUpdate() {
       suspend = true;
@@ -496,7 +676,7 @@
           group = groups[i];
           group.groups = extractGroups(group.rows, group);
         }
-      }      
+      }
 
       groups.sort(groupingInfos[level].comparer);
 
@@ -946,6 +1126,10 @@
       "deleteItem": deleteItem,
       "syncGridSelection": syncGridSelection,
       "syncGridCellCssStyles": syncGridCellCssStyles,
+
+      "setGrid": setGrid,
+      "setColumns": setColumns,
+      "groupByFields": groupByFields,
 
       // data provider methods
       "getLength": getLength,

@@ -85,7 +85,8 @@ if (typeof Slick === "undefined") {
       fullWidthRows: false,
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
-      forceSyncScrolling: false
+      forceSyncScrolling: false,
+      enableDraggableGroupBy: false,
     };
 
     var columnDefaults = {
@@ -126,6 +127,7 @@ if (typeof Slick === "undefined") {
     var $canvas;
     var $style;
     var $boundAncestors;
+    var headerElements = [];
     var stylesheet, columnCssRulesL, columnCssRulesR;
     var viewportH, viewportW;
     var canvasWidth;
@@ -231,6 +233,12 @@ if (typeof Slick === "undefined") {
 
       $focusSink = $("<div tabIndex='0' hideFocus style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
 
+      $headerDraggableGroupBy = $("<div class='slick-groupby ui-state-default' style='overflow:hidden;position:relative;'><div class='slick-placeholder'>Drop a column header here to group by the column</div></div>").appendTo($container);
+
+      if (!options.enableDraggableGroupBy) {
+        $headerDraggableGroupBy.hide();
+      }
+
       $headerScroller = $("<div class='slick-header ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
       $headers = $("<div class='slick-header-columns' style='left:-1000px' />").appendTo($headerScroller);
       $headers.width(getHeadersWidth());
@@ -240,6 +248,8 @@ if (typeof Slick === "undefined") {
       $headerRowSpacer = $("<div style='display:block;height:1px;position:absolute;top:0;left:0;'></div>")
           .css("width", getCanvasWidth() + scrollbarDimensions.width + "px")
           .appendTo($headerRowScroller);
+
+      headerElements.push($headerDraggableGroupBy, $headerScroller, $headers, $headerRowScroller, $headerRow, $headerRowSpacer);
 
       $topPanelScroller = $("<div class='slick-top-panel-scroller ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
       $topPanel = $("<div class='slick-top-panel' style='width:10000px' />").appendTo($topPanelScroller);
@@ -320,6 +330,13 @@ if (typeof Slick === "undefined") {
             .bind("dragend", handleDragEnd)
             .delegate(".slick-cell", "mouseenter", handleMouseEnter)
             .delegate(".slick-cell", "mouseleave", handleMouseLeave);
+      }
+
+
+      // if data is a dataView tell the dataView what grid we are connected to
+      if (data.hasOwnProperty('groupBy')) {
+        data.setGrid(self);
+        data.setColumns(columns);
       }
     }
 
@@ -671,39 +688,77 @@ if (typeof Slick === "undefined") {
 
     function setupColumnReorder() {
       $headers.filter(":ui-sortable").sortable("destroy");
-      $headers.sortable({
-        containment: "parent",
-        distance: 3,
-        axis: "x",
-        cursor: "default",
-        tolerance: "intersection",
-        helper: "clone",
-        placeholder: "slick-sortable-placeholder ui-state-default slick-header-column",
-        forcePlaceholderSize: true,
-        start: function (e, ui) {
-          $(ui.helper).addClass("slick-header-column-active");
-        },
-        beforeStop: function (e, ui) {
-          $(ui.helper).removeClass("slick-header-column-active");
-        },
-        stop: function (e) {
-          if (!getEditorLock().commitCurrentEdit()) {
-            $(this).sortable("cancel");
-            return;
-          }
 
-          var reorderedIds = $headers.sortable("toArray");
-          var reorderedColumns = [];
-          for (var i = 0; i < reorderedIds.length; i++) {
-            reorderedColumns.push(columns[getColumnIndex(reorderedIds[i].replace(uid, ""))]);
-          }
-          setColumns(reorderedColumns);
+      if (options.enableDraggableGroupBy) {
+        $headers.sortable({
+          distance: 3,
+          cursor: "default",
+          tolerance: "intersection",
+          helper: "clone",
+          placeholder: "slick-sortable-placeholder ui-state-default slick-header-column",
+          forcePlaceholderSize: true,
+          appendTo: "body",
+          start: function (e, ui) {
+            $(ui.helper).addClass("slick-header-column-active");
+            $headerDraggableGroupBy.find( ".slick-placeholder" ).show();
+          },
+          beforeStop: function (e, ui) {
+            $(ui.helper).removeClass("slick-header-column-active");
+            $headerDraggableGroupBy.find( ".slick-placeholder" ).hide();
+          },
+          stop: function (e) {
+            if (!getEditorLock().commitCurrentEdit()) {
+              $(this).sortable("cancel");
+              return;
+            }
 
-          trigger(self.onColumnsReordered, {});
-          e.stopPropagation();
-          setupColumnResize();
-        }
-      });
+            var reorderedIds = $headers.sortable("toArray");
+            var reorderedColumns = [];
+            for (var i = 0; i < reorderedIds.length; i++) {
+              reorderedColumns.push(columns[getColumnIndex(reorderedIds[i].replace(uid, ""))]);
+            }
+            setColumns(reorderedColumns);
+
+            trigger(self.onColumnsReordered, {});
+            e.stopPropagation();
+            setupColumnResize();
+          }
+        });
+      } else {
+        $headers.sortable({
+          containment: "parent",
+          distance: 3,
+          axis: "x",
+          cursor: "default",
+          tolerance: "intersection",
+          helper: "clone",
+          placeholder: "slick-sortable-placeholder ui-state-default slick-header-column",
+          forcePlaceholderSize: true,
+          start: function (e, ui) {
+            $(ui.helper).addClass("slick-header-column-active");
+          },
+          beforeStop: function (e, ui) {
+            $(ui.helper).removeClass("slick-header-column-active");
+          },
+          stop: function (e) {
+            if (!getEditorLock().commitCurrentEdit()) {
+              $(this).sortable("cancel");
+              return;
+            }
+
+            var reorderedIds = $headers.sortable("toArray");
+            var reorderedColumns = [];
+            for (var i = 0; i < reorderedIds.length; i++) {
+              reorderedColumns.push(columns[getColumnIndex(reorderedIds[i].replace(uid, ""))]);
+            }
+            setColumns(reorderedColumns);
+
+            trigger(self.onColumnsReordered, {});
+            e.stopPropagation();
+            setupColumnResize();
+          }
+        });
+      }
     }
 
     function setupColumnResize() {
@@ -1021,6 +1076,10 @@ if (typeof Slick === "undefined") {
 
     function getColumnIndex(id) {
       return columnsById[id];
+    }
+
+    function getHeaderElements() {
+      return headerElements;
     }
 
     function autosizeColumns() {
@@ -3239,6 +3298,7 @@ if (typeof Slick === "undefined") {
       "setSelectedRows": setSelectedRows,
 
       "getUID": getUID,
+      "getHeaderElements": getHeaderElements,
       "getHeaderColumnWidthDiff": getHeaderColumnWidthDiff,
       "getScrollbarDimensions": getScrollbarDimensions,
       "getHeadersWidth": getHeadersWidth,

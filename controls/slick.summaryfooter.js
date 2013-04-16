@@ -51,7 +51,6 @@
           }
         }
       }
-      console.log(items.length);
     }
 
     function constructSummaryFooterUI() {
