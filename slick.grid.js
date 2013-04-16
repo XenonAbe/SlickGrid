@@ -356,7 +356,9 @@ if (typeof Slick === "undefined") {
         $headerRowScroller
             .bind("scroll", handleHeaderRowScroll);
         $focusSink.add($focusSink2)
-            .bind("keydown", handleKeyDown);
+            .bind("keydown", handleKeyDown)
+            .bind("keypress", handleKeyPress);
+
 
 
         var canvases = [$canvas[0]];
@@ -364,6 +366,7 @@ if (typeof Slick === "undefined") {
 
         $(canvases)
             .bind("keydown", handleKeyDown)
+            .bind("keypress", handleKeyPress)
             .bind("click", handleClick)
             .bind("dblclick", handleDblClick)
             .bind("contextmenu", handleContextMenu)
@@ -2308,6 +2311,11 @@ if (typeof Slick === "undefined") {
       trigger(self.onDragEnd, dd, e);
     }
 
+
+    function handleKeyPress(e) {
+      trigger(self.onKeyPress, {row: activeRow, cell: activeCell}, e);
+    }
+
     function handleKeyDown(e) {
       trigger(self.onKeyDown, {row: activeRow, cell: activeCell}, e);
       var handled = e.isImmediatePropagationStopped();
@@ -3378,6 +3386,7 @@ if (typeof Slick === "undefined") {
       "onDblClick": new Slick.Event(),
       "onContextMenu": new Slick.Event(),
       "onKeyDown": new Slick.Event(),
+      "onKeyPress": new Slick.Event(),
       "onAddNewRow": new Slick.Event(),
       "onValidationError": new Slick.Event(),
       "onViewportChanged": new Slick.Event(),
