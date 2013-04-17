@@ -36,18 +36,20 @@
 
     function constructSummaries() {
       columnSummaries = {};
-      for (var it = 0; it < items.length; it++) {
+
+      for (var it = 0, len = items.length; it < len; it++) {
         var row = items[it];
 
-        for (var i = 0; i < columns.length; i++) {
+        for (var i = 0, clen = columns.length; i < clen; i++) {
           var m = columns[i];
+          var value = row[m.id];
 
-          if (!isNaN(String(row[m.id]))) {
+          if (!isNaN(value)) {
             if (!columnSummaries[m.id]) {
               columnSummaries[m.id] = 0;
             }
 
-            columnSummaries[m.id] = columnSummaries[m.id] + row[m.id];
+            columnSummaries[m.id] = columnSummaries[m.id] + value;
           }
         }
       }
