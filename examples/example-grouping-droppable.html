@@ -122,11 +122,35 @@ var columns = [
       aggregateCollapsed: false
     }
   },
-  {id: "%", name: "% Complete", field: "percentComplete", width: 80, formatter: Slick.Formatters.PercentCompleteBar, sortable: true, groupTotalsFormatter: avgTotalsFormatter},
+  {id: "percent", name: "% Complete", field: "percentComplete", width: 80, formatter: Slick.Formatters.PercentCompleteBar, sortable: true, groupTotalsFormatter: avgTotalsFormatter,
+    grouping: {
+      getter: "percentComplete",
+      formatter: function (g) {
+        return "% Complete:  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
+      },
+      aggregators: [
+        new Slick.Data.Aggregators.Avg("percentComplete")
+      ],
+      aggregateCollapsed: true,
+      collapsed: true
+    }
+  },
   {id: "start", name: "Start", field: "start", minWidth: 60, sortable: true},
   {id: "finish", name: "Finish", field: "finish", minWidth: 60, sortable: true},
   {id: "cost", name: "Cost", field: "cost", width: 90, sortable: true, groupTotalsFormatter: sumTotalsFormatter},
-  {id: "effort-driven", name: "Effort Driven", width: 80, minWidth: 20, maxWidth: 80, cssClass: "cell-effort-driven", field: "effortDriven", formatter: Slick.Formatters.Checkmark, sortable: true}
+  {id: "effort-driven", name: "Effort Driven", width: 80, minWidth: 20, maxWidth: 80, cssClass: "cell-effort-driven", field: "effortDriven", formatter: Slick.Formatters.Checkmark, sortable: true,
+    grouping: {
+      getter: "effortDriven",
+      formatter :function (g) {
+        return "Effort-Driven:  " + (g.value ? "True" : "False") + "  <span style='color:green'>(" + g.count + " items)</span>";
+      },
+      aggregators: [
+        new Slick.Data.Aggregators.Avg("percentComplete"),
+        new Slick.Data.Aggregators.Sum("cost")
+      ],
+      collapsed: true
+    }
+  }
 ];
 
 var options = {
@@ -394,7 +418,6 @@ $(function () {
     percentComplete: percentCompleteThreshold
   });
   loadData(50);
-  groupByDuration();
   dataView.endUpdate();
 
   $("#gridContainer").resizable();

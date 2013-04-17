@@ -104,8 +104,26 @@
         activeClass: "ui-state-default",
         hoverClass: "ui-state-hover",
         accept: ":not(.ui-sortable-helper)",
+        deactivate: function( event, ui ) {
+          headerElements[0].removeClass("slick-header-column-allowed");
+          headerElements[0].removeClass("slick-header-column-denied");
+        },
         drop: function( event, ui ) {
           handleGroupByDrop(this, ui.draggable);
+        },
+        over: function( event, ui )
+        {
+          var id = (ui.draggable).attr('id').replace(grid.getUID(), "");
+
+          columns.forEach(function (e, i, a) {
+            if (e.id == id) {
+              if (e.grouping != null) {
+                headerElements[0].addClass("slick-header-column-allowed");
+              } else {
+                headerElements[0].addClass("slick-header-column-denied");
+              }
+            }
+          });
         }
       });
 
@@ -115,73 +133,36 @@
     var columnsGroupBy = [];
     var groupBySorters = [];
 
-    function groupByFields(fields, sorters) {
-      if (!grid.getOptions().enableDraggableGroupBy) {
-        groupBy(null);
-        return;
-      }
-
-      if (fields == null) {
-        columnsGroupBy.forEach(function (element, index, array) {
-          var id = slickGrid.getUID() + element;
-          var column = $('#' + id);
-          column.unbind('click');
-        });
-        headerElements[0].html(emptyDropbox);
-
-        columnsGroupBy = [];
-        updateGroupBy();
-        return;
-      }
-
-      if (sorters == null) {
-        groupBySorters = [function (a, b) { return a.value - b.value; }];
-      } else {
-        groupBySorters = sorters;
-      }
-
-      console.log(groupBySorters);
-
-      fields.forEach(function (element, index, array) {
-        var container = headerElements[0][0];
-        var id = slickGrid.getUID() + element;
-        var column = $('#' + id);
-        var columnid = column.attr('id').replace(slickGrid.getUID(), "");
-
-        if (columnsGroupBy.indexOf(columnid) != -1) {
-          return;
-        }
-
-        var entry = $( "<li>" );
-        $
-        $("<span id='" + columnid + "'></span>").text(column.text() + " (X)").appendTo( entry );
-        $("</li>").appendTo( entry );
-        entry.appendTo( container );
-
-        addColumnGroupBy(columnid, column);
-        addGroupByRemoveClickHandler(columnid, container, column, entry);
-      });
-    }
-
     function handleGroupByDrop(container, column) {
       var columnid = column.attr('id').replace(slickGrid.getUID(), "");
 
-      if (columnsGroupBy.indexOf(columnid) != -1) {
-        return;
+      var columnAllowed = true;
+
+      columnsGroupBy.forEach(function (e, i, a) {
+        if (e.id == columnid) {
+          columnAllowed = false;
+        }
+      });
+
+      if (columnAllowed) {
+        columns.forEach(function (e, i, a) {
+          if (e.id == columnid) {
+            if (e.grouping != null) {
+              var entry = $( "<li>" );
+              $("<span id='" + columnid + "'></span>").text(column.text() + " (X)").appendTo( entry );
+              $("</li>").appendTo( entry );
+              entry.appendTo( container );
+
+              addColumnGroupBy(e, column, container, entry);
+              addGroupByRemoveClickHandler(columnid, container, column, entry);
+            }
+          }
+        });
       }
-
-      var entry = $( "<li>" );
-      $
-      $("<span id='" + columnid + "'></span>").text(column.text() + " (X)").appendTo( entry );
-      $("</li>").appendTo( entry );
-      entry.appendTo( container );
-
-      addColumnGroupBy(columnid, column);
-      addGroupByRemoveClickHandler(columnid, container, column, entry);
     }
 
-    function addColumnGroupBy(id, column) {
-      columnsGroupBy.push(id);
+    function addColumnGroupBy(column) {
+      columnsGroupBy.push(column);
       updateGroupBy();
     }
 
@@ -206,7 +187,13 @@
 
     function removeGroupBy(id, column, entry) {
       entry.remove();
-      removeFromArray(columnsGroupBy, id);
+
+      var groupby = [];
+      columns.forEach(function (e, i, a) {
+        groupby[e.id] = e;
+      });
+
+      removeFromArray(columnsGroupBy, groupby[id]);
       updateGroupBy();
     }
 
@@ -217,46 +204,13 @@
         return;
       }
 
-      var groupByFields = [];
-
       var groupingArray = [];
 
       columnsGroupBy.forEach(function (element, index, array) {
-        var columnid = element.toString();
-
-        columns.forEach(function (e, i, a) {
-          if (e.id == columnid) {
-            var columnField = e.field;
-            groupByFields.push({id: e.id, field: e.field, name: e.name});
-          }
-        });
+        groupingArray.push(element.grouping);
       });
 
-      var groupingFields = [];
-      groupByFields.forEach(function (element, index, array) {
-        groupingFields.push(element.field);
-      });
-
-      var groupingTitles = [];
-      groupByFields.forEach(function (element, index, array) {
-        groupingTitles[element.field] = element.name;
-      });
-
-      var groupingFunctions = [];
-      groupByFields.forEach(function (element, index, array) {
-        var groupFunc = function(g) {
-            return groupingTitles[g.grouping] + ":  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
-        }
-        groupingFunctions.push(groupFunc);
-      })
-
-      setGrouping();
-
-      groupBy(
-        groupingFields,
-        groupingFunctions,
-        groupBySorters
-      );
+      setGrouping(groupingArray);
     }
 
     function beginUpdate() {
@@ -1129,7 +1083,6 @@
 
       "setGrid": setGrid,
       "setColumns": setColumns,
-      "groupByFields": groupByFields,
 
       // data provider methods
       "getLength": getLength,

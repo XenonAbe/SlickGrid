@@ -35,6 +35,14 @@ classes should alter those!
   float: left;
 }
 
+.slick-header-column-allowed {
+  border: 2px solid green !important;
+}
+
+.slick-header-column-denied {
+  border: 2px solid red !important;
+}
+
 .slick-headerrow-column.ui-state-default {
   padding: 4px;
 }
