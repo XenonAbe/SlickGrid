@@ -52,19 +52,6 @@
       <hr/>
       <button onclick="dataView.setGrouping([])">Clear grouping</button>
       <br/>
-      <button onclick="groupByDuration()">Group by duration & sort groups by value</button>
-      <br/>
-      <button onclick="groupByDurationOrderByCount(false)">Group by duration & sort groups by count</button>
-      <br/>
-      <button onclick="groupByDurationOrderByCount(true)">Group by duration & sort groups by count, aggregate
-        collapsed
-      </button>
-      <br/>
-      <br/>
-      <button onclick="groupByDurationEffortDriven()">Group by duration then effort-driven</button>
-      <br/>
-      <button onclick="groupByDurationEffortDrivenPercent()">Group by duration then effort-driven then percent.</button>
-      <br/>
       <br/>
       <button onclick="dataView.collapseAllGroups()">Collapse all groups</button>
       <br/>
@@ -261,101 +248,6 @@ function comparer(a, b) {
   return (x == y ? 0 : (x > y ? 1 : -1));
 }
 
-function groupByDuration() {
-  dataView.setGrouping({
-    getter: "duration",
-    formatter: function (g) {
-      return "Duration:  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
-    },
-    aggregators: [
-      new Slick.Data.Aggregators.Avg("percentComplete"),
-      new Slick.Data.Aggregators.Sum("cost")
-    ],
-    aggregateCollapsed: false
-  });
-}
-
-function groupByDurationOrderByCount(aggregateCollapsed) {
-  dataView.setGrouping({
-    getter: "duration",
-    formatter: function (g) {
-      return "Duration:  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
-    },
-    comparer: function (a, b) {
-      return a.count - b.count;
-    },
-    aggregators: [
-      new Slick.Data.Aggregators.Avg("percentComplete"),
-      new Slick.Data.Aggregators.Sum("cost")
-    ],
-    aggregateCollapsed: aggregateCollapsed
-  });
-}
-
-function groupByDurationEffortDriven() {
-  dataView.setGrouping([
-    {
-      getter: "duration",
-      formatter :function (g) {
-        return "Duration:  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
-      },
-      aggregators: [
-        new Slick.Data.Aggregators.Sum("duration"),
-        new Slick.Data.Aggregators.Sum("cost")
-      ],
-      aggregateCollapsed: true
-    },
-    {
-      getter: "effortDriven",
-      formatter :function (g) {
-        return "Effort-Driven:  " + (g.value ? "True" : "False") + "  <span style='color:green'>(" + g.count + " items)</span>";
-      },
-      aggregators: [
-        new Slick.Data.Aggregators.Avg("percentComplete"),
-        new Slick.Data.Aggregators.Sum("cost")
-      ],
-      collapsed: true
-    }
-  ]);
-}
-
-function groupByDurationEffortDrivenPercent() {
-  dataView.setGrouping([
-    {
-      getter: "duration",
-      formatter: function (g) {
-        return "Duration:  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
-      },
-      aggregators: [
-        new Slick.Data.Aggregators.Sum("duration"),
-        new Slick.Data.Aggregators.Sum("cost")
-      ],
-      aggregateCollapsed: true
-    },
-    {
-      getter: "effortDriven",
-      formatter: function (g) {
-        return "Effort-Driven:  " + (g.value ? "True" : "False") + "  <span style='color:green'>(" + g.count + " items)</span>";
-      },
-      aggregators :[
-        new Slick.Data.Aggregators.Sum("duration"),
-        new Slick.Data.Aggregators.Sum("cost")
-      ]
-    },
-    {
-      getter: "percentComplete",
-      formatter: function (g) {
-        return "% Complete:  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
-      },
-      aggregators: [
-        new Slick.Data.Aggregators.Avg("percentComplete")
-      ],
-      aggregateCollapsed: true,
-      collapsed: true
-    }
-  ]);
-}
-
 function loadData(count) {
   var someDates = ["01/01/2009", "02/02/2009", "03/03/2009"];
   data = [];
@@ -486,7 +378,7 @@ $(function () {
     percentComplete: percentCompleteThreshold
   });
   loadData(50);
-  //groupByDuration();
+
   dataView.endUpdate();
 
   $("#gridContainer").resizable();
