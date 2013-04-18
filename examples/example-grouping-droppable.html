@@ -107,8 +107,32 @@ var dataView;
 var grid;
 var data = [];
 var columns = [
-  {id: "sel", name: "#", field: "num", cssClass: "cell-selection", width: 40, resizable: false, selectable: false, focusable: false },
-  {id: "title", name: "Title", field: "title", width: 70, minWidth: 50, cssClass: "cell-title", sortable: true, editor: Slick.Editors.Text},
+  {id: "sel", name: "#", field: "num", cssClass: "cell-selection", width: 40, resizable: false, selectable: false, focusable: false,
+    grouping: {
+      getter: "num",
+      formatter: function (g) {
+        return "#:  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
+      },
+      aggregators: [
+        new Slick.Data.Aggregators.Avg("percentComplete"),
+        new Slick.Data.Aggregators.Sum("cost")
+      ],
+      aggregateCollapsed: false
+    }
+  },
+  {id: "title", name: "Title", field: "title", width: 70, minWidth: 50, cssClass: "cell-title", sortable: true, editor: Slick.Editors.Text,
+    grouping: {
+      getter: "title",
+      formatter: function (g) {
+        return "Title:  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
+      },
+      aggregators: [
+        new Slick.Data.Aggregators.Avg("percentComplete"),
+        new Slick.Data.Aggregators.Sum("cost")
+      ],
+      aggregateCollapsed: false
+    }
+  },
   {id: "duration", name: "Duration", field: "duration", width: 70, sortable: true, groupTotalsFormatter: sumTotalsFormatter,
     grouping: {
       getter: "duration",
@@ -135,9 +159,45 @@ var columns = [
       collapsed: true
     }
   },
-  {id: "start", name: "Start", field: "start", minWidth: 60, sortable: true},
-  {id: "finish", name: "Finish", field: "finish", minWidth: 60, sortable: true},
-  {id: "cost", name: "Cost", field: "cost", width: 90, sortable: true, groupTotalsFormatter: sumTotalsFormatter},
+  {id: "start", name: "Start", field: "start", minWidth: 60, sortable: true,
+    grouping: {
+      getter: "start",
+      formatter: function (g) {
+        return "Start:  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
+      },
+      aggregators: [
+        new Slick.Data.Aggregators.Avg("percentComplete"),
+        new Slick.Data.Aggregators.Sum("cost")
+      ],
+      aggregateCollapsed: false
+    }
+  },
+  {id: "finish", name: "Finish", field: "finish", minWidth: 60, sortable: true,
+    grouping: {
+      getter: "finish",
+      formatter: function (g) {
+        return "Finish:  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
+      },
+      aggregators: [
+        new Slick.Data.Aggregators.Avg("percentComplete"),
+        new Slick.Data.Aggregators.Sum("cost")
+      ],
+      aggregateCollapsed: false
+    }
+  },
+  {id: "cost", name: "Cost", field: "cost", width: 90, sortable: true, groupTotalsFormatter: sumTotalsFormatter,
+    grouping: {
+      getter: "cost",
+      formatter: function (g) {
+        return "Cost:  " + g.value + "  <span style='color:green'>(" + g.count + " items)</span>";
+      },
+      aggregators: [
+        new Slick.Data.Aggregators.Avg("percentComplete"),
+        new Slick.Data.Aggregators.Sum("cost")
+      ],
+      aggregateCollapsed: false
+    }
+  },
   {id: "effort-driven", name: "Effort Driven", width: 80, minWidth: 20, maxWidth: 80, cssClass: "cell-effort-driven", field: "effortDriven", formatter: Slick.Formatters.Checkmark, sortable: true,
     grouping: {
       getter: "effortDriven",

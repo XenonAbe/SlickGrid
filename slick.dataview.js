@@ -82,13 +82,21 @@
     var slickGrid;
     var headerElements;
     var columns;
+    var dropbox;
+    var dropboxPlaceholder;
 
     function setGrid(grid) {
       slickGrid = grid;
 
       if (grid.getOptions().enableDraggableGroupBy) {
         headerElements = grid.getHeaderElements();
-        setupColumnDropbox();
+
+        if (headerElements[0]) {
+          dropbox = headerElements[0];
+          dropboxPlaceholder = dropbox.find(".slick-placeholder");
+
+          setupColumnDropbox();
+        }
       }
     }
 
@@ -99,14 +107,14 @@
     var emptyDropbox;
 
     function setupColumnDropbox() {
-      headerElements[0].find(".slick-placeholder").hide();
-      headerElements[0].droppable({
+      dropboxPlaceholder.hide();
+      dropbox.droppable({
         activeClass: "ui-state-default",
         hoverClass: "ui-state-hover",
         accept: ":not(.ui-sortable-helper)",
         deactivate: function( event, ui ) {
-          headerElements[0].removeClass("slick-header-column-allowed");
-          headerElements[0].removeClass("slick-header-column-denied");
+          dropbox.removeClass("slick-header-column-allowed");
+          dropbox.removeClass("slick-header-column-denied");
         },
         drop: function( event, ui ) {
           handleGroupByDrop(this, ui.draggable);
@@ -118,16 +126,16 @@
           columns.forEach(function (e, i, a) {
             if (e.id == id) {
               if (e.grouping != null) {
-                headerElements[0].addClass("slick-header-column-allowed");
+                dropbox.addClass("slick-header-column-allowed");
               } else {
-                headerElements[0].addClass("slick-header-column-denied");
+                dropbox.addClass("slick-header-column-denied");
               }
             }
           });
         }
       });
 
-      emptyDropbox = headerElements[0].html();
+      emptyDropbox = dropbox.html();
     }
 
     var columnsGroupBy = [];
@@ -149,12 +157,12 @@
           if (e.id == columnid) {
             if (e.grouping != null) {
               var entry = $( "<li>" );
-              $("<span id='" + columnid + "'></span>").text(column.text() + " (X)").appendTo( entry );
+              $("<span id='" + slickGrid.getUID() + e.id + "_entry'></span>").text(column.text() + " (X)").appendTo( entry );
               $("</li>").appendTo( entry );
               entry.appendTo( container );
 
               addColumnGroupBy(e, column, container, entry);
-              addGroupByRemoveClickHandler(columnid, container, column, entry);
+              addGroupByRemoveClickHandler(e.id, container, column, entry);
             }
           }
         });
@@ -168,7 +176,7 @@
 
     function addGroupByRemoveClickHandler(id, container, column, entry) {
       var text = entry;
-      $('#' + id).bind('click', function() {
+      $("#" + slickGrid.getUID() + id + "_entry").bind('click', function() {
         $(this).unbind('click');
         removeGroupBy(id, column, text);
       });
@@ -355,6 +363,17 @@
     function setGrouping(groupingInfo) {
       if (!options.groupItemMetadataProvider) {
         options.groupItemMetadataProvider = new Slick.Data.GroupItemMetadataProvider();
+      }
+
+      if (groupingInfo.length == 0) {
+        columnsGroupBy.forEach(function (e, i, a) {
+          var entry = $("#" + slickGrid.getUID() + e.id + "_entry");
+
+          entry.unbind('click');
+          entry.remove();
+        });
+
+        columnsGroupBy = [];
       }
 
       groups = [];
