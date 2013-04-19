@@ -87,6 +87,7 @@ if (typeof Slick === "undefined") {
       defaultFormatter: defaultFormatter,
       forceSyncScrolling: false,
       enableDraggableGroupBy: false,
+      groupByRemoveImage: "../images/delete.png",
     };
 
     var columnDefaults = {

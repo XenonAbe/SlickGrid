@@ -42,14 +42,16 @@
 
         for (var i = 0, clen = columns.length; i < clen; i++) {
           var m = columns[i];
-          var value = row[m.id];
+          var value = row[m.field];
 
-          if (!isNaN(value)) {
-            if (!columnSummaries[m.id]) {
-              columnSummaries[m.id] = 0;
+          if (m.summaryFormatter) {
+            if (!isNaN(value)) {
+              if (!columnSummaries[m.id]) {
+                columnSummaries[m.id] = 0;
+              }
+
+              columnSummaries[m.id] = columnSummaries[m.id] + value;
             }
-
-            columnSummaries[m.id] = columnSummaries[m.id] + value;
           }
         }
       }
@@ -101,7 +103,7 @@
           }
         }
 
-        var header = $("<div class='ui-state-default slick-footer-column slick-summaryfooter-column' id='" + grid.getUID() + m.id + "' />")
+        var header = $("<div class='ui-state-default slick-footer-column slick-summaryfooter-column' id='" + grid.getUID() + m.id + "_summary' />")
             .html("<span class='slick-column-name' title='" + value + "'>" + value + "</span>")
             .width(m.width - grid.getHeaderColumnWidthDiff())
             .attr("title", m.toolTip || "")

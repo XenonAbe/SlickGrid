@@ -113,7 +113,6 @@
         hoverClass: "ui-state-hover",
         accept: ":not(.ui-sortable-helper)",
         deactivate: function( event, ui ) {
-          dropbox.removeClass("slick-header-column-allowed");
           dropbox.removeClass("slick-header-column-denied");
         },
         drop: function( event, ui ) {
@@ -121,13 +120,11 @@
         },
         over: function( event, ui )
         {
-          var id = (ui.draggable).attr('id').replace(grid.getUID(), "");
+          var id = (ui.draggable).attr('id').replace(slickGrid.getUID(), "");
 
           columns.forEach(function (e, i, a) {
             if (e.id == id) {
-              if (e.grouping != null) {
-                dropbox.addClass("slick-header-column-allowed");
-              } else {
+              if (e.grouping == null) {
                 dropbox.addClass("slick-header-column-denied");
               }
             }
@@ -156,8 +153,11 @@
         columns.forEach(function (e, i, a) {
           if (e.id == columnid) {
             if (e.grouping != null) {
-              var entry = $( "<li>" );
-              $("<span id='" + slickGrid.getUID() + e.id + "_entry'></span>").text(column.text() + " (X)").appendTo( entry );
+              var entry = $( "<li id='" + slickGrid.getUID() + e.id + "_entry'>" );
+              var span = $("<span></span>").text(column.text() + " ")
+              var img = $("<img></img>").attr('src', slickGrid.getOptions().groupByRemoveImage);
+              img.appendTo( span );
+              span.appendTo( entry );
               $("</li>").appendTo( entry );
               entry.appendTo( container );
 
@@ -219,6 +219,7 @@
       });
 
       setGrouping(groupingArray);
+      collapseAllGroups();
     }
 
     function beginUpdate() {
