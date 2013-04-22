@@ -53,6 +53,7 @@ if (typeof Slick === "undefined") {
    * @param {Object}            options           Grid options.
    **/
   function SlickGrid(container, data, columnsInput, options) {
+
     // settings
     var defaults = {
       explicitInitialization: false,
@@ -132,7 +133,7 @@ if (typeof Slick === "undefined") {
         cellWidthDiff = 0, cellHeightDiff = 0;
     var absoluteColumnMinWidth;
     var numberOfRows = 0;
-	var $headerParents;
+  var $headerParents;
 
     var tabbingDirection = 1;
     var activePosX;
@@ -180,6 +181,7 @@ if (typeof Slick === "undefined") {
     var hasNestedColumns = false;
     var nestedColumns = null;
 
+    var moreOptions = [];
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Initialization
@@ -524,8 +526,82 @@ if (typeof Slick === "undefined") {
       }
 
       function createColumnHeader(m, appendTo) {
+
+        /* check if the viewOptions options is being used. */
+        var leftBtnSpan = '';
+        var rightBtnSpan = '';
+
+        if(m.groups && m.groups.length > 1) {
+          /* If viewOption is being used, construct object to store view details */
+          // console.log(m.groups);
+          if(!moreOptions[uid + m.id]) {
+              moreOptions[uid + m.id] = {
+              current:0,
+              options:m.groups,
+              onCycle:m.onCycle || false,
+              id: m.id
+            }
+          }
+
+          leftBtnSpan = "<a class='view-option view-option-left'> &lsaquo; </a>";
+          rightBtnSpan = "<a class='view-option view-option-right'> &rsaquo; </a>";
+
+          /* If viewOptions is used, set name attribute to first option */
+          // m.name = moreOptions[uid + m.id].options[0];
+        }
+
+
+        /* without unbinding click event, click events are fired twice */
+        $(".view-option").unbind("click");
+        $(".view-option").bind("click", function(e) {
+
+          var scope = this;
+          var isNextClicked = $(scope).hasClass("view-option-right");
+          var headerId = $(scope).parent().attr("id");
+          var optionsObject = moreOptions[headerId];
+          var currentOption = optionsObject.current;
+          var optionsCount = (optionsObject.options.length);
+
+
+          if(isNextClicked) {
+            /* if next btn is hit and already at last option start at beginning */
+            if(currentOption === (optionsCount - 1)) {
+              currentOption = 0;
+            } else {
+              currentOption++;
+            }
+          }
+
+
+          if(!isNextClicked) {
+            /* if back btn is hit and already at first option start at end */
+            if(currentOption === 0) {
+              currentOption = (optionsCount - 1);
+            } else {
+              currentOption--;
+            }
+          }
+
+          optionsObject.current = currentOption;
+
+          columnsInput = findReplaceColumn(columnsInput, optionsObject.id, currentOption);
+          setColumns(columnsInput);
+          e.stopPropagation();
+
+
+          /* Emit callback with current state */
+          if(optionsObject.onCycle) {
+            optionsObject.onCycle({
+              id: optionsObject.id,
+              direction: isNextClicked ? "next" : "back",
+              currentOption: optionsObject.options[currentOption]
+            });
+          }
+        })
+
+
         header = $("<div class='ui-state-default slick-header-column' id='" + uid + m.id + "' />")
-            .html("<span class='slick-column-name'>" + m.name + "</span>")
+            .html(leftBtnSpan + "<span class='slick-column-name'>" + m.name  + "</span>" + rightBtnSpan)
             .width(m.width - headerColumnWidthDiff)
             .attr("title", m.toolTip || "")
             .data("column", m)
@@ -537,11 +613,11 @@ if (typeof Slick === "undefined") {
         }
 
 
-		if (m.spacer) {
-			header.addClass("slick-column-spacer");
-		}
+    if (m.spacer) {
+      header.addClass("slick-column-spacer");
+    }
 
-		return header;
+    return header;
       }
 
       function createBaseColumnHeader(m) {
@@ -628,6 +704,41 @@ if (typeof Slick === "undefined") {
       if (options.enableColumnReorder) {
         setupColumnReorder();
       }
+    }
+
+    /* Update column definition to utilize groups attributes */
+    function initColumns(col) {
+      $.each(col, function(index, value) {
+        if(col[index].groups && !col[index].children) {
+          col[index].children = col[index].groups[0].options;
+          col[index].name = col[index].groups[0].name;
+        }
+
+        if(col[index].children) {
+          col[index].children = initColumns(col[index].children);
+        }
+      })
+
+      return col;
+    }
+
+    /**
+     * Recursively search column for id.
+     * Replace children with current group.
+     **/
+    function findReplaceColumn(col, id, replace) {
+      $.each(col, function(index, value) {
+        if(col[index].id === id) {
+          col[index].children = col[index].groups[replace].options;
+          col[index].name = col[index].groups[replace].name;
+        }
+
+        if(col[index].children) {
+          col[index].children = findReplaceColumn(col[index].children, id, replace);
+        }
+      })
+
+      return col;
     }
 
     function setupColumnSort() {
@@ -1280,8 +1391,8 @@ if (typeof Slick === "undefined") {
     }
 
     function setColumns(columnDefinitions) {
-	  parseColumns(columnDefinitions);
-
+      columnDefinitions, columnsInput = initColumns(columnDefinitions);
+      parseColumns(columnDefinitions);
       updateColumnCaches();
 
       if (initialized) {
@@ -1380,9 +1491,9 @@ if (typeof Slick === "undefined") {
 
     function parseColumns(columnsInput) {
       var maxDepth = 0;
-	  var j = 0;
+    var j = 0;
       columns = [];
-	  nestedColumns = null;
+    nestedColumns = null;
 
       function parse(columnsInput, depth) {
         var totalWidth = 0;
@@ -1396,7 +1507,7 @@ if (typeof Slick === "undefined") {
           else {
             column = columnsInput[i] = $.extend({}, columnDefaults, column);
             columnsById[column.id] = j;
-			j++;
+      j++;
             if (column.minWidth && column.width < column.minWidth) {
               column.width = column.minWidth;
             }
@@ -1405,7 +1516,7 @@ if (typeof Slick === "undefined") {
             }
             columns.push(column);
           }
-		  totalWidth += column.width;
+      totalWidth += column.width;
         }
         return totalWidth;
       }
@@ -1515,6 +1626,26 @@ if (typeof Slick === "undefined") {
       if (options.dataItemColumnValueExtractor) {
         return options.dataItemColumnValueExtractor(item, columnDef);
       }
+
+    // TODO: This sucks, replace it by determining this earlier
+    if (columnDef.field.indexOf('.') > 0) {
+      var parts = columnDef.field.split('.'),
+        index = 0,
+        current = item;
+
+      while (index < parts.length) {
+
+        if (!current) {
+          return null;
+        }
+
+        current = current[parts[index]];
+          index += 1;
+        }
+
+        return current;
+      }
+
       return item[columnDef.field];
     }
 
