@@ -188,7 +188,7 @@ if (typeof Slick === "undefined") {
 	  if (!columns || !columns.length) {
 		  columns = [{}];
 	  }
-	  
+
       // calculate these only once and share between grid instances
       maxSupportedCssHeight = maxSupportedCssHeight || getMaxSupportedCssHeight();
       scrollbarDimensions = scrollbarDimensions || measureScrollbar();
@@ -2431,7 +2431,7 @@ if (typeof Slick === "undefined") {
         $(rowsCache[activeRow].rowNode).addClass("active");
         $(activeCellNode).parent().addClass("active-row");
         $(rowsCache[activeRow].rowNode).parent().addClass("active-row");
-		
+
         if (options.editable && editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
           clearTimeout(h_editorLoader);
 

@@ -19,7 +19,10 @@
    */
   function CellRangeDecorator(grid, options) {
     var _elem;
+    var _elem_pos;
+    var _elem_range;
     var _defaults = {
+      borderThickness: 2,
       selectionCss: {
         "zIndex": "9999",
         "border": "2px dashed red"
@@ -36,20 +39,29 @@
             .appendTo(grid.getCanvasNode());
       }
 
+      // remember our input range (and output UI coordinates too!)
+      _elem_range = {
+        frowRow: range.fromRow, 
+        fromCell: range.fromCell,
+        towRow: range.toRow, 
+        toCell: range.toCell
+      };
+
       var from = grid.getCellNodeBox(range.fromRow, range.fromCell);
       var to = grid.getCellNodeBox(range.toRow, range.toCell);
 
       // prevent JS crash when trying to decorate header cells, as those would
       // produce from/to == null as .fromRow/.toRow would be < 0:
       if (from && to) {
-        _elem.css({
-          top: from.top - 1,
-          left: from.left - 1,
-          height: to.bottom - from.top - 2,
-          width: to.right - from.left - 2
+        _elem.css(_elem_pos = {
+          top: from.top,
+          left: from.left,
+          height: to.bottom - from.top - 2 * options.borderThickness,
+          width: to.right - from.left - 2 * options.borderThickness - 1 
         });
       } else {
         // TBD
+        _elem_pos = null;
       }
 
       return _elem;
@@ -62,9 +74,18 @@
       }
     }
 
+    function getInfo() {
+      return {
+        el: _elem,
+        range: _elem_range,
+        uiRect: _elem_pos
+      };
+    }
+
     $.extend(this, {
       "show": show,
-      "hide": hide
+      "hide": hide,
+      "getInfo": getInfo
     });
   }
 })(jQuery);
