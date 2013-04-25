@@ -54,10 +54,13 @@
       getter: null,
       formatter: null,
       comparer: function(a, b) { return a.value - b.value; },
+      predefinedValues: [],
       aggregators: [],
+      aggregateEmpty: false,
       aggregateCollapsed: false,
       aggregateChildGroups: false,
-      collapsed: false
+      collapsed: false,
+      displayTotalsRow: true
     };
     var groupingInfos = [];
     var groups = [];
@@ -263,7 +266,7 @@
      */
     function setAggregators(groupAggregators, includeCollapsed) {
       if (!groupingInfos.length) {
-        throw new Error("At least must setGrouping must be specified before calling setAggregators().");
+        throw new Error("At least one grouping must be specified before calling setAggregators().");
       }
 
       groupingInfos[0].aggregators = groupAggregators;
@@ -369,7 +372,7 @@
         return null;
       }
 
-      // overrides for setGrouping rows
+      // overrides for grouping rows
       if (item.__group) {
         return options.groupItemMetadataProvider.getGroupRowMetadata(item);
       }
@@ -459,18 +462,28 @@
       var level = parentGroup ? parentGroup.level + 1 : 0;
       var gi = groupingInfos[level];
 
-      for (var i = 0, l = rows.length; i < l; i++) {
-        r = rows[i];
-        val = gi.getterIsAFn ? gi.getter(r) : r[gi.getter];
-        val = val || 0;
+      for (var i = 0, l = gi.predefinedValues.length; i < l; i++) {
+        val = gi.predefinedValues[i];
         group = groupsByVal[val];
         if (!group) {
           group = new Slick.Group();
-          group.count = 0;
           group.value = val;
           group.level = level;
           group.groupingKey = (parentGroup ? parentGroup.groupingKey + groupingDelimiter : '') + val;
-          group.rows = [];
+          groups[groups.length] = group;
+          groupsByVal[val] = group;
+        }
+      }
+
+      for (var i = 0, l = rows.length; i < l; i++) {
+        r = rows[i];
+        val = gi.getterIsAFn ? gi.getter(r) : r[gi.getter];
+        group = groupsByVal[val];
+        if (!group) {
+          group = new Slick.Group();
+          group.value = val;
+          group.level = level;
+          group.groupingKey = (parentGroup ? parentGroup.groupingKey + groupingDelimiter : '') + val;
           groups[groups.length] = group;
           groupsByVal[val] = group;
         }
@@ -508,21 +521,24 @@
       group.totals = totals;
     }
 
-    function calculateTotals(groups) {
+    function calculateTotals(groups, level) {
+      level = level || 0;
+      var gi = groupingInfos[level];
       var idx = groups.length, g;
       while (idx--) {
         g = groups[idx];
 
-        if (g.collapsed && !groupingInfos[g.level].aggregateCollapsed) {
+        if (g.collapsed && !gi.aggregateCollapsed) {
           continue;
         }
 
         // Do a depth-first aggregation so that parent setGrouping aggregators can access subgroup totals.
         if (g.groups) {
-          calculateTotals(g.groups);
+          calculateTotals(g.groups, level + 1);
         }
 
-        if (groupingInfos[g.level].aggregators.length) {
+        if (gi.aggregators.length && (
+            gi.aggregateEmpty || g.rows.length || (g.groups && g.groups.length))) {
           calculateGroupTotals(g);
         }
       }
@@ -544,25 +560,27 @@
           // Let the non-leaf setGrouping rows get garbage-collected.
           // They may have been used by aggregates that go over all of the descendants,
           // but at this point they are no longer needed.
-          g.rows = null;
+          g.rows = [];
         }
       }
     }
 
-    function flattenGroupedRows(groups) {
+    function flattenGroupedRows(groups, level) {
+      level = level || 0;
+      var gi = groupingInfos[level];
       var groupedRows = [], rows, gl = 0, g;
       for (var i = 0, l = groups.length; i < l; i++) {
         g = groups[i];
         groupedRows[gl++] = g;
 
         if (!g.collapsed) {
-          rows = g.groups ? flattenGroupedRows(g.groups) : g.rows;
+          rows = g.groups ? flattenGroupedRows(g.groups, level + 1) : g.rows;
           for (var j = 0, jj = rows.length; j < jj; j++) {
             groupedRows[gl++] = rows[j];
           }
         }
 
-        if (g.totals && (!g.collapsed || groupingInfos[g.level].aggregateCollapsed)) {
+        if (g.totals && gi.displayTotalsRow && (!g.collapsed || gi.aggregateCollapsed)) {
           groupedRows[gl++] = g.totals;
         }
       }
