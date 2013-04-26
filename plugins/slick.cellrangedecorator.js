@@ -58,16 +58,22 @@
             .css("position", "absolute")
             .appendTo(grid.getCanvasNode());
       }
+      if (!range) {
+        range = _elem_range;
+      } else {
+        // remember our input range (clone!)
+        _elem_range = {
+          fromRow: range.fromRow, 
+          fromCell: range.fromCell,
+          toRow: range.toRow, 
+          toCell: range.toCell
+        };
+      }
 
-      // remember our input range (clone!)
-      _elem_range = {
-        fromRow: range.fromRow, 
-        fromCell: range.fromCell,
-        toRow: range.toRow, 
-        toCell: range.toCell
-      };
-
-      var box = calcRangeBox(range);
+      var box;
+      if (range) {
+        box = calcRangeBox(range);
+      }
       if (box) {
         _elem.css(box);
       } else {
