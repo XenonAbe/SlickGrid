@@ -61,9 +61,9 @@
 
       // remember our input range (clone!)
       _elem_range = {
-        frowRow: range.fromRow, 
+        fromRow: range.fromRow, 
         fromCell: range.fromCell,
-        towRow: range.toRow, 
+        toRow: range.toRow, 
         toCell: range.toCell
       };
 
