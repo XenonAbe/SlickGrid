@@ -88,7 +88,7 @@
       return {
         el: _elem,
         range: _elem_range,
-        uiRect: calcRangeBox(_elem_range)
+        gridRect: calcRangeBox(_elem_range)
       };
     }
 
