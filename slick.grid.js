@@ -2632,6 +2632,9 @@ if (typeof Slick === "undefined") {
     }
 
     function getActiveCellPosition() {
+      if (!activeCellNode) {
+        return null;
+      }
       return absBox(activeCellNode);
     }
 
