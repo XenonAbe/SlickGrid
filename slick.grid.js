@@ -1670,6 +1670,8 @@ if (typeof Slick === "undefined") {
       return {
         top: getRowFromPosition(viewportTop),
         bottom: getRowFromPosition(viewportTop + viewportH) + 1,
+        topPx: viewportTop,
+        bottomPx: viewportTop + viewportH,
         leftPx: viewportLeft,
         rightPx: viewportLeft + viewportW
       };
@@ -1679,6 +1681,9 @@ if (typeof Slick === "undefined") {
       var range = getVisibleRange(viewportTop, viewportLeft);
       var buffer = Math.round(viewportH / options.rowHeight);
       var minBuffer = 3;
+
+      delete range.topPx;
+      delete range.bottomPx;
 
       if (vScrollDir == -1) {
         range.top -= buffer;
@@ -2600,7 +2605,8 @@ if (typeof Slick === "undefined") {
         right: 0,
         width: $(elem).outerWidth(),
         height: $(elem).outerHeight(),
-        visible: true};
+        visible: true
+      };
       box.bottom = box.top + box.height;
       box.right = box.left + box.width;
 
