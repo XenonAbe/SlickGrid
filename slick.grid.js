@@ -2184,7 +2184,7 @@ if (typeof Slick === "undefined") {
             handled = navigateDown();
           } else if (e.which == 9) {
             handled = navigateNext();
-          } else if (e.which == 13) {
+          } else if (e.which == 13 || e.which == 113 /* [F2] */) {
             if (options.editable) {
               if (currentEditor) {
                 // adding new row
@@ -2600,8 +2600,8 @@ if (typeof Slick === "undefined") {
     function absBox(elem) {
       if (!elem) {
         // produce a box which is positioned way outside the visible area.
-        // Note: use values > 1e15 to abuse the floating point artifact 
-        // where adding small values to such numbers is neglected due 
+        // Note: use values > 1e15 to abuse the floating point artifact
+        // where adding small values to such numbers is neglected due
         // to mantissa limitations (e.g. 1e30 + 1 == 1e30)
         return {
           top: 1e38,
@@ -2610,7 +2610,7 @@ if (typeof Slick === "undefined") {
           right: 1e38,
           width: 0,
           height: 0,
-          visible: false // <-- that's the important bit! 
+          visible: false // <-- that's the important bit!
         };
       }
       var box = {
@@ -2629,7 +2629,7 @@ if (typeof Slick === "undefined") {
       var offsetParent = elem.offsetParent;
       while ((elem = elem.parentNode) != document.body) {
         if (!elem) {
-          // when we end up at elem===null, then the elem has been detached 
+          // when we end up at elem===null, then the elem has been detached
           // from the DOM and all our size calculations are useless:
           // produce a box which is positioned at (0,0) and has a size of (0,0).
           // return {
@@ -2639,9 +2639,9 @@ if (typeof Slick === "undefined") {
           //   right: 0,
           //   width: 0,
           //   height: 0,
-          //   visible: false // <-- that's the important bit! 
+          //   visible: false // <-- that's the important bit!
           // };
-          box.visible = false; // <-- that's the important bit! 
+          box.visible = false; // <-- that's the important bit!
           return box;
         }
         if (box.visible && elem.scrollHeight != elem.offsetHeight && $(elem).css("overflowY") != "visible") {
