@@ -71,6 +71,7 @@ if (typeof Slick === "undefined") {
       asyncPostRenderDelay: 50,
       autoHeight: false,
       editorLock: Slick.GlobalEditorLock,
+      disablePaging: false,
       showHeaderRow: false,
       headerRowHeight: 25,
       lockedBorderWidth: 2,
@@ -3128,7 +3129,7 @@ if (typeof Slick === "undefined") {
       var pos = stepFn(activeRow, activeCell, activePosX);
       if (pos) {
         var isAddNewRow = (pos.row == getDataLength());
-        scrollRowIntoView(pos.row, !isAddNewRow);
+        scrollRowIntoView(pos.row, !isAddNewRow && !options.disablePaging);
         scrollCellIntoView(pos.row, pos.cell);
         setActiveCellInternal(getCellNode(pos.row, pos.cell), isAddNewRow || options.autoEdit);
         activePosX = pos.posX;
