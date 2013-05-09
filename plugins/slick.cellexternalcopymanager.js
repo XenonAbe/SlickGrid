@@ -21,6 +21,7 @@
         copiedCellStyleLayerKey : sets the layer key for setting css values of copied cells. default : "copy-manager"
         dataItemColumnValueExtractor : option to specify a custom column value extractor function
         dataItemColumnValueSetter : option to specify a custom column value setter function
+        clipboardCommandHandler : option to specify a custom handler for paste actions
     */
     var _grid;
     var _self = this;
@@ -102,10 +103,10 @@
       var ta = document.createElement('textarea');
       ta.style.position = 'absolute';
       ta.style.left = '-1000px';
-      ta.style.top = '-1000px';
+      ta.style.top = document.body.scrollTop + 'px';
       ta.value = innerText;
       document.body.appendChild(ta);
-      ta.focus();
+      ta.select();
       
       return ta;
     }
@@ -122,7 +123,7 @@
         if (clipRows[i]!="")
           clippedRange[i] = clipRows[i].split("\t");
       }
-      
+
       var selectedCell = _grid.getActiveCell();
       var ranges = _grid.getSelectionModel().getSelectedRanges();
       var selectedRange = ranges && ranges.length ? ranges[0] : null;   // pick only one selection
@@ -148,44 +149,118 @@
         destH = selectedRange.toRow - selectedRange.fromRow +1;
         destW = selectedRange.toCell - selectedRange.fromCell +1;
       }
-      
-      var desty = activeRow;
-      var destx = activeCell;
-      var maxDestY = _grid.getDataLength();
-      var maxDestX = _grid.getColumns().length;
-      var h = 0;
-      var w = 0;
-      
-      for (var y = 0; y < destH; y++){
-        h++;
-        w=0;
-        for (var x = 0; x < destW; x++){
-          w++;
-          var desty = activeRow + y;
-          var destx = activeCell + x;
+	  var availableRows = _grid.getData().length - activeRow;
+	  var addRows = 0;
+	  if(availableRows < destH)
+	  {
+		var d = _grid.getData();
+		for(addRows = 1; addRows <= destH - availableRows; addRows++)
+			d.push({});
+		_grid.setData(d);
+		_grid.render();
+	  }  
+      var clipCommand = {
+
+        isClipboardCommand: true,
+        clippedRange: clippedRange,
+        oldValues: [],
+        cellExternalCopyManager: _self,
+        _options: _options,
+        setDataItemValueForColumn: setDataItemValueForColumn,
+        markCopySelection: markCopySelection,
+        oneCellToMultiple: oneCellToMultiple,
+        activeRow: activeRow,
+        activeCell: activeCell,
+        destH: destH,
+        destW: destW,
+        desty: activeRow,
+        destx: activeCell,
+        maxDestY: _grid.getDataLength(),
+        maxDestX: _grid.getColumns().length,
+        h: 0,
+        w: 0,
           
-          if (desty < maxDestY && destx < maxDestX ) {
-            var nd = _grid.getCellNode(desty, destx);
-            var dt = _grid.getDataItem(desty);
-            if (oneCellToMultiple)
-              setDataItemValueForColumn(dt, columns[destx], clippedRange[0][0]);
-            else
-              setDataItemValueForColumn(dt, columns[destx], clippedRange[y][x]);
-            _grid.updateCell(desty, destx);
+        execute: function() {
+          this.h=0;
+          for (var y = 0; y < destH; y++){
+            this.oldValues[y] = [];
+            this.w=0;
+            this.h++;
+            for (var x = 0; x < destW; x++){
+              this.w++;
+              var desty = activeRow + y;
+              var destx = activeCell + x;
+              
+              if (desty < this.maxDestY && destx < this.maxDestX ) {
+                var nd = _grid.getCellNode(desty, destx);
+                var dt = _grid.getDataItem(desty);
+                this.oldValues[y][x] = dt[columns[destx]['id']];
+                if (oneCellToMultiple)
+                  this.setDataItemValueForColumn(dt, columns[destx], clippedRange[0][0]);
+                else
+                  this.setDataItemValueForColumn(dt, columns[destx], clippedRange[y][x]);
+                _grid.updateCell(desty, destx);
+              }
+            }
+          }
+          
+          var bRange = {
+            'fromCell': activeCell,
+            'fromRow': activeRow,
+            'toCell': activeCell+this.w-1,
+            'toRow': activeRow+this.h-1
+          }
+
+          this.markCopySelection([bRange]);
+          _grid.getSelectionModel().setSelectedRanges([bRange]);
+          this.cellExternalCopyManager.onPasteCells.notify({ranges: [bRange]});
+        },
+
+        undo: function() {
+          for (var y = 0; y < destH; y++){
+            for (var x = 0; x < destW; x++){
+              var desty = activeRow + y;
+              var destx = activeCell + x;
+              
+              if (desty < this.maxDestY && destx < this.maxDestX ) {
+                var nd = _grid.getCellNode(desty, destx);
+                var dt = _grid.getDataItem(desty);
+                if (oneCellToMultiple)
+                  this.setDataItemValueForColumn(dt, columns[destx], this.oldValues[0][0]);
+                else
+                  this.setDataItemValueForColumn(dt, columns[destx], this.oldValues[y][x]);
+                _grid.updateCell(desty, destx);
+              }
+            }
+          }
+          
+          var bRange = {
+            'fromCell': activeCell,
+            'fromRow': activeRow,
+            'toCell': activeCell+this.w-1,
+            'toRow': activeRow+this.h-1
+          }
+
+          this.markCopySelection([bRange]);
+          _grid.getSelectionModel().setSelectedRanges([bRange]);
+          this.cellExternalCopyManager.onPasteCells.notify({ranges: [bRange]});
+          
+          if(addRows > 1){            
+            var d = _grid.getData();
+            for(; addRows > 1; addRows--)
+              d.splice(d.length - 1, 1);
+            _grid.setData(d);
+            _grid.render();
           }
         }
-      }
-      
-      var bRange = {
-        'fromCell': activeCell,
-        'fromRow': activeRow,
-        'toCell': activeCell+w-1,
-        'toRow': activeRow+h-1
-      }
+      };
 
-      markCopySelection([bRange]);
-      _grid.getSelectionModel().setSelectedRanges([bRange]);
-      _self.onPasteCells.notify({ranges: [bRange]});
+      if(_options.clipboardCommandHandler) {
+        _options.clipboardCommandHandler(clipCommand);
+      }
+      else {
+        clipCommand.execute();
+      }
     }
     
     
@@ -226,13 +301,18 @@
                 clipTextArr.push(clipTextRows.join("\r\n"));
             }
             var clipText = clipTextArr.join('');
+            var $focus = $(":focus");
+
             var ta = _createTextBox(clipText);
-            $(ta).select();
+
+            ta.focus();
             
             setTimeout(function(){
                 document.body.removeChild(ta);
+                // restore focus
+                if ($focus && $focus.length>0) { $focus.focus(); }
             }, 100);
-            
+
             return false;
           }
         }
