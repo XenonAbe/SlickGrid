@@ -2598,6 +2598,21 @@ if (typeof Slick === "undefined") {
     }
 
     function absBox(elem) {
+      if (!elem) {
+        // produce a box which is positioned way outside the visible area.
+        // Note: use values > 1e15 to abuse the floating point artifact 
+        // where adding small values to such numbers is neglected due 
+        // to mantissa limitations (e.g. 1e30 + 1 == 1e30)
+        return {
+          top: 1e38,
+          left: 1e38,
+          bottom: 1e38,
+          right: 1e38,
+          width: 0,
+          height: 0,
+          visible: false // <-- that's the important bit! 
+        };
+      }
       var box = {
         top: elem.offsetTop,
         left: elem.offsetLeft,
@@ -2613,6 +2628,22 @@ if (typeof Slick === "undefined") {
       // walk up the tree
       var offsetParent = elem.offsetParent;
       while ((elem = elem.parentNode) != document.body) {
+        if (!elem) {
+          // when we end up at elem===null, then the elem has been detached 
+          // from the DOM and all our size calculations are useless:
+          // produce a box which is positioned at (0,0) and has a size of (0,0).
+          // return {
+          //   top: 0,
+          //   left: 0,
+          //   bottom: 0,
+          //   right: 0,
+          //   width: 0,
+          //   height: 0,
+          //   visible: false // <-- that's the important bit! 
+          // };
+          box.visible = false; // <-- that's the important bit! 
+          return box;
+        }
         if (box.visible && elem.scrollHeight != elem.offsetHeight && $(elem).css("overflowY") != "visible") {
           box.visible = box.bottom > elem.scrollTop && box.top < elem.scrollTop + elem.clientHeight;
         }
@@ -2638,9 +2669,6 @@ if (typeof Slick === "undefined") {
     }
 
     function getActiveCellPosition() {
-      if (!activeCellNode) {
-        return null;
-      }
       return absBox(activeCellNode);
     }
 
