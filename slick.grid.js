@@ -324,7 +324,12 @@ if (typeof Slick === "undefined") {
             .bind("dragend", handleDragEnd)
             .delegate(".slick-cell", "mouseenter", handleMouseEnter)
             .delegate(".slick-cell", "mouseleave", handleMouseLeave);
+      } else if (!stylesheet) {
+        // when a previous 'init' run did not yet use the run-time stylesheet data, we have to adjust the canvas while waiting for the browser to actually parse that style.
+        resizeCanvas();
       }
+      // report the user whether we are a complete success (truthy) or not (falsey):
+      return !!stylesheet;
     }
 
     function registerPlugin(plugin) {
@@ -410,7 +415,8 @@ if (typeof Slick === "undefined") {
 
       $headerRowSpacer.width(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
 
-      if (canvasWidth != oldCanvasWidth || forceColumnWidthsUpdate) {
+      // when 'stylesheet' has not been set yet, it means that any previous call to applyColumnWidths() did not use up to date values yet as the run-time generated stylesheet wasn't parsed in time.
+      if (canvasWidth != oldCanvasWidth || forceColumnWidthsUpdate || !stylesheet) {
         applyColumnWidths();
       }
     }
@@ -936,6 +942,8 @@ if (typeof Slick === "undefined") {
       }
     }
 
+    // return FALSE when the relevant stylesheet has not been parsed yet (previously slickgrid would throw an exception for this!)
+    // otherwise return the style reference.
     function getColumnCssRules(idx) {
       if (!stylesheet) {
         var sheets = document.styleSheets;
@@ -947,7 +955,9 @@ if (typeof Slick === "undefined") {
         }
 
         if (!stylesheet) {
-          throw new Error("Cannot find stylesheet.");
+          console.log("########### Cannot find stylesheet.");
+          return false;
+          //throw new Error("Cannot find stylesheet.");
         }
 
         // find and cache column CSS rules
@@ -1117,9 +1127,10 @@ if (typeof Slick === "undefined") {
         w = columns[i].width;
 
         rule = getColumnCssRules(i);
-        rule.left.style.left = x + "px";
-        rule.right.style.right = (canvasWidth - x - w) + "px";
-
+        if (rule) {
+          rule.left.style.left = x + "px";
+          rule.right.style.right = (canvasWidth - x - w) + "px";
+        }
         x += columns[i].width;
       }
     }
@@ -1216,7 +1227,7 @@ if (typeof Slick === "undefined") {
         removeCssRules();
         createCssRules();
         resizeCanvas();
-        applyColumnWidths();
+        applyColumnWidths();   // this one would break as the run-time created style in createCssRules() may not have been parsed by the browser yet! (At least in Chrome/MAC)
         handleScroll();
       }
     }
