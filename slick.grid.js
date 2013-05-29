@@ -3106,7 +3106,8 @@ if (typeof Slick === "undefined") {
     }
 
     function getCellFromPoint(x, y) {
-      var row = Math.floor((y + offset) / options.rowHeight);
+      var zoom = $('body').css('zoom');
+      var row = Math.floor((y + offset) / (options.rowHeight * zoom));
       var cell = 0;
 
       var w = 0;
@@ -3175,6 +3176,9 @@ if (typeof Slick === "undefined") {
       //  if getCellFromEvent can work with frozen columns
 
       var c = $cell.parents('.grid-canvas').offset();
+      var zoom = $('body').css('zoom');
+      c.left *= zoom;
+      c.top *= zoom;
 
       var rowOffset = 0;
       var isBottom = $cell.parents('.grid-canvas-bottom').length;
