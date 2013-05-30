@@ -77,6 +77,9 @@
     function handleGridClick(e, args) {
       var item = this.getDataItem(args.row);
       if (item && item instanceof Slick.Group && $(e.target).hasClass(options.toggleCssClass)) {
+		if (Slick.GlobalEditorLock.isActive()) {
+			Slick.GlobalEditorLock.commitCurrentEdit();
+		}
         if (item.collapsed) {
           this.getData().expandGroup(item.groupingKey);
         } else {
