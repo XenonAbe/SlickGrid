@@ -173,20 +173,25 @@
     var calendarOpen = false;
 
     this.init = function () {
+		var config;
       $input = $("<INPUT type=text class='editor-text' />");
       $input.appendTo(args.container);
       $input.focus().select();
-      $input.datepicker({
-        showOn: "button",
-        buttonImageOnly: true,
-        buttonImage: "../images/calendar.gif",
-        beforeShow: function () {
-          calendarOpen = true
-        },
-        onClose: function () {
-          calendarOpen = false
-        }
-      });
+		config = {
+			showOn: "button",
+			buttonImageOnly: true,
+			buttonImage: "../images/calendar.gif",
+			beforeShow: function () {
+				calendarOpen = true
+			},
+			onClose: function () {
+				calendarOpen = false
+			}
+		};
+		if (args.editorConfig) {
+			$.extend(config, args.editorConfig);
+		}
+	  $input.datepicker(config);
       $input.width($input.width() - 18);
     };
 
@@ -243,7 +248,7 @@
 
     this.validate = function () {
       return {
-        valid: true,
+        valid: false,
         msg: null
       };
     };
@@ -289,6 +294,7 @@
 
     this.validate = function () {
       return {
+      	// true
         valid: true,
         msg: null
       };
