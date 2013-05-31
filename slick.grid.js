@@ -58,6 +58,7 @@ if (typeof Slick === "undefined") {
     var defaults = {
       explicitInitialization: false,
       rowHeight: 25,
+      groupRowHeight: 35,
       defaultColumnWidth: 80,
       enableAddRow: false,
       leaveSpaceForNewRows: false,
@@ -119,6 +120,7 @@ if (typeof Slick === "undefined") {
     var $headerScroller;
     var $headers;
     var $headerRow, $headerRowScroller, $headerRowSpacer;
+    var $headerParents;
     var $topPanelScroller;
     var $topPanel;
     var $viewport;
@@ -133,7 +135,6 @@ if (typeof Slick === "undefined") {
         cellWidthDiff = 0, cellHeightDiff = 0;
     var absoluteColumnMinWidth;
     var numberOfRows = 0;
-  var $headerParents;
 
     var tabbingDirection = 1;
     var activePosX;
@@ -144,6 +145,7 @@ if (typeof Slick === "undefined") {
     var editController;
 
     var rowsCache = {};
+    var rowPositionCache = [];
     var renderedRows = 0;
     var numVisibleRows;
     var prevScrollTop = 0;
@@ -532,6 +534,7 @@ if (typeof Slick === "undefined") {
         var rightBtnSpan = '';
 
         if(m.groups && m.groups.length > 1) {
+          //console.log(m.groups);
           /* If viewOption is being used, construct object to store view details */
           // console.log(m.groups);
           if(!moreOptions[uid + m.id]) {
@@ -1560,6 +1563,30 @@ if (typeof Slick === "undefined") {
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Rendering / Scrolling
 
+    function getRowTop(row) {
+      if (rowPositionCache && rowPositionCache[row]) {
+        return rowPositionCache[row].top;
+      }
+
+      return options.rowHeight * row - offset;
+    }
+
+    function getRowFromPosition(y) {
+      var intersectPoint = y + offset;
+
+      if (rowPositionCache) {
+        for (var i = 0; i < rowPositionCache.length; i++) {
+          var point = rowPositionCache[i];
+
+          if (point && intersectPoint >= point.top && intersectPoint < point.bottom) {
+            return i;
+          }
+        }
+      }
+
+      return Math.floor((y + offset) / options.rowHeight);
+    }
+
     function scrollTo(y) {
       y = Math.max(y, 0);
       y = Math.min(y, th - viewportH + (viewportHasHScroll ? scrollbarDimensions.height : 0));
@@ -1663,7 +1690,7 @@ if (typeof Slick === "undefined") {
         rowCss += " " + metadata.cssClasses;
       }
 
-      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px'>");
+      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px'>");
 
       var colspan, m;
       for (var i = 0, ii = columns.length; i < ii; i++) {
@@ -1858,6 +1885,26 @@ if (typeof Slick === "undefined") {
       render();
     }
 
+    function renderRowCache() {
+      for (var row = 0; row <= numberOfRows; row++) {
+        var metadata = data.getItemMetadata && data.getItemMetadata(row);
+
+        var priorCachedRow = rowPositionCache[row - 1];
+        var top = priorCachedRow ? priorCachedRow.bottom : getRowTop(row);
+        var currRowHeight = options.rowHeight;
+
+        if (metadata && metadata.cssClasses === 'slick-group') {
+          currRowHeight += options.groupRowHeight - options.rowHeight;
+        }
+
+        rowPositionCache[row] = {
+          top: top,
+          height: currRowHeight,
+          bottom: top + currRowHeight
+        };
+      }
+    }
+
     function updateRowCount() {
       if (!initialized) { return; }
       numberOfRows = getDataLength() +
@@ -1882,7 +1929,17 @@ if (typeof Slick === "undefined") {
       }
 
       var oldH = h;
-      th = Math.max(options.rowHeight * numberOfRows, viewportH - scrollbarDimensions.height);
+
+      if (!rowPositionCache[getDataLength()]) {
+        renderRowCache();
+      }
+
+      var rowMax = ( options.enableAddRow )
+                         ? rowPositionCache[getDataLength()].bottom
+                         : rowPositionCache[getDataLength()].top;
+
+      th = Math.max(rowMax, viewportH - scrollbarDimensions.height);
+
       if (th < maxSupportedCssHeight) {
         // just one page
         h = ph = th;
@@ -1932,8 +1989,8 @@ if (typeof Slick === "undefined") {
       }
 
       return {
-        top: Math.floor((viewportTop + offset) / options.rowHeight),
-        bottom: Math.ceil((viewportTop + offset + viewportH) / options.rowHeight),
+        top: getRowFromPosition(viewportTop),
+        bottom: getRowFromPosition(viewportTop + viewportH) + 1,
         leftPx: viewportLeft,
         rightPx: viewportLeft + viewportW
       };
@@ -2104,6 +2161,8 @@ if (typeof Slick === "undefined") {
           rows = [],
           needToReselectCell = false;
 
+      renderRowCache();
+
       for (var i = range.top; i <= range.bottom; i++) {
         if (rowsCache[i]) {
           continue;
@@ -2167,7 +2226,7 @@ if (typeof Slick === "undefined") {
 
     function updateRowPositions() {
       for (var row in rowsCache) {
-        rowsCache[row].rowNode.style.top = (row * options.rowHeight - offset) + "px";
+        rowsCache[row].rowNode.style.top = getRowTop(row) + "px";
       }
     }
 
@@ -2575,7 +2634,7 @@ if (typeof Slick === "undefined") {
     }
 
     function getCellFromPoint(x, y) {
-      var row = Math.floor((y + offset) / options.rowHeight);
+      var row = getRowFromPosition(y);
       var cell = 0;
 
       var w = 0;
@@ -2634,7 +2693,7 @@ if (typeof Slick === "undefined") {
         return null;
       }
 
-      var y1 = row * options.rowHeight - offset;
+      var y1 = getRowTop(row);
       var y2 = y1 + options.rowHeight - 1;
       var x1 = 0;
       for (var i = 0; i < cell; i++) {
