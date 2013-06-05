@@ -1,84 +1,118 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <title>SlickGrid example 15: nested headers</title>
-  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
-  <link rel="stylesheet" href="examples.css" type="text/css"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <title>SlickGrid example 15: nested headers</title>
+    <link rel="stylesheet" href="../slick.grid.css" type="text/css" />
+    <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css" />
+    <link rel="stylesheet" href="examples.css" type="text/css" />
 </head>
 <body>
-<table width="100%">
-  <tr>
-    <td valign="top" width="50%">
-      <div id="myGrid" style="width:600px;height:500px;"></div>
-    </td>
-    <td valign="top">
-      <h2>Demonstrates:</h2>
-      <ul>
-        <li>Nested headers</li>
-      </ul>
-    </td>
-  </tr>
-</table>
+    <table width="100%">
+        <tr>
+            <td valign="top" width="50%">
+                <div id="myGrid" style="width: 600px; height: 500px;"></div>
+            </td>
+            <td valign="top">
+                <h2>Demonstrates:</h2>
+                <ul>
+                    <li>Nested headers</li>
+                </ul>
+            </td>
+        </tr>
+    </table>
 
-<script src="../lib/jquery-1.7.min.js"></script>
-<script src="../lib/jquery.event.drag-2.0.min.js"></script>
+    <script src="../lib/jquery-1.7.min.js"></script>
+    <script src="../lib/jquery.event.drag-2.0.min.js"></script>
+    <script src="../lib/jquery-ui-1.8.16.custom.min.js"></script>
 
-<script src="../slick.core.js"></script>
-<script src="../slick.grid.js"></script>
+    <script src="../slick.core.js"></script>
+    <script src="../slick.grid.js"></script>
 
-<script>
-  var grid;
-  var columns = [
+    <script>
+        var grid;
+        var columns = [
 
-    {
-      name: "Information",
-      id: "information",
-      children: [
-        {id: "title", name: "Title", field: "title"},
-      ]
-    },
-    {
-      name: "Work",
-      id: "work",
-      children: [
-        {id: "duration", name: "Duration", field: "duration"},
-        {id: "%", name: "% Complete", field: "percentComplete"},
-        {
-          name: "Times",
-          id: "times",
-          children: [
-            {id: "start", name: "Start", field: "start"},
-            {id: "finish", name: "Finish", field: "finish"},
-          ]
-        }
-      ]
-    },
-    {id: "effort-driven", name: "Effort Driven", field: "effortDriven"}
-  ];
+          {
+              name: "top 1",
+              id: "top1",
+              children: [
+                  {
+                      id: "middle1",
+                      name: "middle 1",
+                      children: [{
+                          id: "bottom1",
+                          name: "bottom 1",
+                          field: "bottom1"
+                      }]
+                  }
+              ]
+          },
+          {
+              name: "top 2-5",
+              id: "top2",
+              children: [
+                {
+                    id: "middle2", name: "middle 2",
+                    children: [
+                        {
+                            id: "bottom2", name: "bottom 2", field: "bottom2"
+                        }]
+                },
+                {
+                    id: "middle3", name: "middle 3",
+                    children: [
+                        {
+                            id: "bottom3", name: "bottom 3", field: "bottom3"
+                        }]
+                },
+                {
+                    id: "middle4",
+                    name: "middle 4-5",
+                    children: [
+                      { id: "bottom4", name: "bottom 4", field: "bottom4" },
+                      { id: "bottom5", name: "bottom 5", field: "bottom5" }
+                    ]
+                }
+              ]
+          },
+          {
+              id: "top6", name: "top 6",
+              children: [
+                  {
+                      id: "middle6",
+                      name: "middle 6",
+                      children: [{
+                          id: "bottom6",
+                          name: "bottom 6",
+                          field: "bottom6"
+                      }]
+                  }
+              ]
+          }
+        ];
 
-  var options = {
-    enableCellNavigation: true,
-    enableColumnReorder: false,
-    forceFitColumns: true,
-  };
+        var options = {
+            enableCellNavigation: true,
+            enableColumnReorder: true,
+            forceFitColumns: true,
+        };
 
-  $(function () {
-    var data = [];
-    for (var i = 0; i < 500; i++) {
-      data[i] = {
-        title: "Task " + i,
-        duration: "5 days",
-        percentComplete: Math.round(Math.random() * 100),
-        start: "01/01/2009",
-        finish: "01/05/2009",
-        effortDriven: (i % 5 == 0)
-      };
-    }
+        $(function () {
+            var data = [];
+            for (var i = 0; i < 500; i++) {
+                data[i] = {
+                    title: "Task " + i,
+                    duration: "5 days",
+                    percentComplete: Math.round(Math.random() * 100),
+                    start: "01/01/2009",
+                    finish: "01/05/2009",
+                    effortDriven: (i % 5 == 0)
+                };
+            }
 
-    grid = new Slick.Grid("#myGrid", data, columns, options);
-  })
-</script>
+            grid = new Slick.Grid("#myGrid", data, columns, options);
+        })
+    </script>
 </body>
 </html>
