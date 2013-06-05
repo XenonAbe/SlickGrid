@@ -810,6 +810,82 @@ if (typeof Slick === "undefined") {
       });
     }
 
+    function reorderParentHeaderColumns(columnList, reorderedIds) {
+      var reorderedParentCoulmnList = [];
+      $.each(reorderedIds, function (idIndex, id) {
+        var reorderedId = id.replace(uid, '');
+
+        /*Find the top level parent for this column*/
+        $.each(columnList, function (topHeaderIndex, topHeader) {
+          reorderParentHeaderChildColumns(reorderedParentCoulmnList, reorderedId, topHeader, topHeader);
+        });
+      });
+      if (reorderedParentCoulmnList.length) {
+        return reorderedParentCoulmnList;
+      } else {
+        return columnList;
+      }
+    }
+
+    function reorderParentHeaderChildColumns(reorderedParentCoulmnList, reorderedId, topHeader, header) {
+      if (header.children && header.children.length) {
+        var matchingColumn = $.grep(header.children, function (child) { return child.id == reorderedId; });
+        if (matchingColumn.length === 1) {
+          var matchingTopHeaderColumn = $.grep(reorderedParentCoulmnList, function (reorderedColumn) { return reorderedColumn.id == topHeader.id; });
+          if (reorderedParentCoulmnList.length === 0 || matchingTopHeaderColumn.length === 0) {
+            reorderedParentCoulmnList.push(topHeader);
+          }
+        }
+
+        $.each(header.children, function orderEachChild(childHeaderIndex, childHeader) {
+          reorderParentHeaderChildColumns(reorderedParentCoulmnList, reorderedId, topHeader, childHeader);
+        });
+      }
+    }
+
+    function reorderColumns(columnList, reorderedIds) {
+      /*Reorder the top level columnList*/
+      var reorderedColumns = [];
+      $.each(reorderedIds, function order(idIndex, reorderedId) {
+        var columnId = reorderedId.replace(uid, '');
+        var matchingColumn = $.grep(columnList, function (column) { return column.id === columnId; });
+        if (matchingColumn.length === 1) {
+          reorderedColumns.push(matchingColumn[0]);
+        }
+      });
+      if (reorderedColumns.length) {
+        columnList = reorderedColumns;
+      }
+
+      /*Reorder children*/
+      return reorderChildColumns(columnList, reorderedIds);
+    }
+
+    function reorderChildColumns(columnList, reorderedIds) {
+      /*For each leaf level of the original input, rebuild the list according to
+      /*the new order, but sort within group only.*/
+      $.each(columnList, function reorderColumn(columnIndex, column) {
+        if (column.children) {
+          /*Rebuild order*/
+          var reorderedChildren = [];
+          $.each(reorderedIds, function order(idIndex, reorderedId) {
+            var id = reorderedId.replace(uid, '');          
+            var childColumn = $.grep(column.children, function (child) { return child.id === id; });
+            if (childColumn.length === 1) {
+              reorderedChildren.push(childColumn[0]);
+            }
+          });
+          if (reorderedChildren.length) {
+            column.children = reorderedChildren;
+          }
+
+          /*Recurs through children*/
+          reorderChildColumns(column.children, reorderedIds);
+        }
+      });
+      return columnList;
+    }
+
     function setupColumnReorder() {
       $headers.filter(":ui-sortable").sortable("destroy");
       $headers.sortable({
@@ -833,11 +909,49 @@ if (typeof Slick === "undefined") {
           }
 
           var reorderedIds = $headers.sortable("toArray");
-          var reorderedColumns = [];
-          for (var i = 0; i < reorderedIds.length; i++) {
-            reorderedColumns.push(columns[getColumnIndex(reorderedIds[i].replace(uid, ""))]);
+          columnsInput = reorderColumns(columnsInput, reorderedIds);
+          columnsInput = reorderParentHeaderColumns(columnsInput, reorderedIds);
+
+          setColumns(columnsInput);
+
+          trigger(self.onColumnsReordered, {});
+          e.stopPropagation();
+          setupColumnResize();
+        }
+      });
+
+      var $headerRows = $($headerParents.children());
+      $headerRows.filter(":ui-sortable").sortable("destroy");
+      $headerRows.sortable({
+        containment: "parent",
+        axis: "x",
+        cursor: "default",
+        tolerance: "intersection",
+        helper: "clone",
+        placeholder: "slick-sortable-placeholder ui-state-default slick-header-column",
+        forcePlaceholderSize: true,
+        start: function (e, ui) {
+          $(ui.helper).addClass("slick-header-column-active");
+        },
+        beforeStop: function (e, ui) {
+          $(ui.helper).removeClass("slick-header-column-active");
+        },
+        stop: function (e) {
+          if (!getEditorLock().commitCurrentEdit()) {
+            $(this).sortable("cancel");
+            return;
           }
-          setColumns(reorderedColumns);
+
+          $.each($headerRows, function orderHeader(headerRowIndex, headerRow) {
+            var reorderedIds = $(headerRow).sortable("toArray");
+            var matchingId = $.grep(reorderedIds, function (id) { return id === e.srcElement.id; });
+            if (matchingId.length === 1) { /*Else ignore to avoid conflicts in sorting*/
+              columnsInput = reorderColumns(columnsInput, reorderedIds);
+              columnsInput = reorderParentHeaderColumns(columnsInput, reorderedIds);
+            }
+          });
+
+          setColumns(columnsInput);
 
           trigger(self.onColumnsReordered, {});
           e.stopPropagation();
