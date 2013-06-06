@@ -914,7 +914,7 @@ if (typeof Slick === "undefined") {
 
           setColumns(columnsInput);
 
-          trigger(self.onColumnsReordered, {});
+          trigger(self.onColumnsReordered, {srcElementId: e.srcElement.id});
           e.stopPropagation();
           setupColumnResize();
         }
@@ -953,7 +953,7 @@ if (typeof Slick === "undefined") {
 
           setColumns(columnsInput);
 
-          trigger(self.onColumnsReordered, {});
+          trigger(self.onColumnsReordered, {srcElementId: e.srcElement.id});
           e.stopPropagation();
           setupColumnResize();
         }
