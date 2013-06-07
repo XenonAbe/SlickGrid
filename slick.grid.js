@@ -3106,7 +3106,7 @@ if (typeof Slick === "undefined") {
     }
 
     function getCellFromPoint(x, y) {
-      var zoom = $('body').css('zoom');
+      var zoom = getPageZoom();
       var row = Math.floor((y + offset) / (options.rowHeight * zoom));
       var cell = 0;
 
@@ -3176,7 +3176,7 @@ if (typeof Slick === "undefined") {
       //  if getCellFromEvent can work with frozen columns
 
       var c = $cell.parents('.grid-canvas').offset();
-      var zoom = $('body').css('zoom');
+      var zoom = getPageZoom();
       c.left *= zoom;
       c.top *= zoom;
 
@@ -4097,6 +4097,10 @@ if (typeof Slick === "undefined") {
 
     function getScrollbarDimensions() {
       return scrollbarDimensions;
+    }
+
+    function getPageZoom() {
+      return parseFloat($('body').css('zoom')) || 1;
     }
 
     // ////////////////////////////////////////////////////////////////////////////////////////////
