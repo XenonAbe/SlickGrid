@@ -557,7 +557,6 @@ if (typeof Slick === "undefined") {
         /* without unbinding click event, click events are fired twice */
         $(".view-option").unbind("click");
         $(".view-option").bind("click", function (e) {
-
           var scope = this;
           var isNextClicked = $(scope).hasClass("view-option-right");
           var headerId = $(scope).parent().attr("id");
@@ -883,7 +882,7 @@ if (typeof Slick === "undefined") {
 
           /*Recurs through children*/
           reorderChildColumns(column.children, reorderedIds);
-        }
+        } 
       });
       return columnList;
     }
