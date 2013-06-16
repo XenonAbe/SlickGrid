@@ -3122,7 +3122,8 @@ if (typeof Slick === "undefined") {
     }
 
     function getCellFromPoint(x, y) {
-      var row = Math.floor((y + offset) / options.rowHeight);
+      var zoom = getPageZoom();
+      var row = Math.floor((y + offset) / (options.rowHeight * zoom));
       var cell = 0;
 
       var w = 0;
@@ -3191,6 +3192,9 @@ if (typeof Slick === "undefined") {
       //  if getCellFromEvent can work with frozen columns
 
       var c = $cell.parents('.grid-canvas').offset();
+      var zoom = getPageZoom();
+      c.left *= zoom;
+      c.top *= zoom;
 
       var rowOffset = 0;
       var isBottom = $cell.parents('.grid-canvas-bottom').length;
@@ -3363,25 +3367,31 @@ if (typeof Slick === "undefined") {
       });
       currentEditor.destroy();
       currentEditor = null;
+      getEditorLock().deactivate(editController);
+
+      // active node can change while data is fetched
+      var node = activeCellNode;
+      var row = activeRow;
+      var cell = activeCell;
+
       $.when(getDataItem(activeRow)).done(function (d) {
-        if (activeCellNode) {
-          $(activeCellNode).removeClass("editable invalid");
+        if (node) {
+          $(node).removeClass("editable invalid");
           if (d) {
-            var column = columns[activeCell];
-            var formatter = getFormatter(activeRow, column);
-            activeCellNode[0].innerHTML = formatter(activeRow, activeCell, getDataItemValueForColumn(d, column), column, d);
-            invalidatePostProcessingResults(activeRow);
+            var column = columns[cell];
+            var formatter = getFormatter(row, column);
+            node[0].innerHTML = formatter(row, cell, getDataItemValueForColumn(d, column), column, d);
+            invalidatePostProcessingResults(row);
           }
         }
 
         // if there previously was text selected on a page (such as selected
         // text in the edit cell just removed),
         // IE can't set focus to anything else correctly
-        if ($.browser.msie) {
+        if (navigator.userAgent.toLowerCase().match(/msie/)) {
           clearTextSelection();
         }
 
-        getEditorLock().deactivate(editController);
       });
 
     }
@@ -4108,6 +4118,10 @@ if (typeof Slick === "undefined") {
 
     function getScrollbarDimensions() {
       return scrollbarDimensions;
+    }
+
+    function getPageZoom() {
+      return parseFloat($('body').css('zoom')) || 1;
     }
 
     // ////////////////////////////////////////////////////////////////////////////////////////////
