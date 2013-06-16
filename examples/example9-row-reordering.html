@@ -7,10 +7,6 @@
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    .cell-title {
-      zfont-weight: bold;
-    }
-
     .cell-effort-driven {
       text-align: center;
     }
@@ -82,7 +78,7 @@
 
 <script src="../lib/firebugx.js"></script>
 
-<script src="../lib/jquery-1.7.min.js"></script>
+<script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui-1.8.16.custom.min.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
 <script src="../lib/threedubmedia/event.drop/jquery.event.drop.js"></script>
@@ -269,7 +265,6 @@ $(function () {
     if (dd.mode != "recycle") {
       return;
     }
-    e.stopImmediatePropagation();
     dd.helper.css({top: e.pageY + 5, left: e.pageX + 5});
   });
 
