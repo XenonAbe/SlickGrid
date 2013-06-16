@@ -226,6 +226,7 @@ if (typeof Slick === "undefined") {
           .css("overflow", "hidden")
           .css("outline", 0)
           .addClass(uid)
+          .attr('role', 'grid')
           .addClass("ui-widget");
 
       // set up a positioning container if needed
@@ -236,7 +237,7 @@ if (typeof Slick === "undefined") {
       $focusSink = $("<div tabIndex='0' hideFocus='true' style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
 
       $headerScroller = $("<div class='slick-header ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
-      $headers = $("<div class='slick-header-columns' style='left:-1000px' />").appendTo($headerScroller);
+      $headers = $("<div class='slick-header-columns' style='left:-1000px' role='row' />").appendTo($headerScroller);
       $headers.width(getHeadersWidth());
 
       $headerRowScroller = $("<div class='slick-headerrow ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
@@ -563,7 +564,7 @@ if (typeof Slick === "undefined") {
       for (var i = 0; i < columns.length; i++) {
         var m = columns[i];
 
-        var header = $("<div class='ui-state-default slick-header-column' />")
+        var header = $("<div class='ui-state-default slick-header-column' role='columnheader' />")
             .html("<span class='slick-column-name'>" + m.name + "</span>")
             .width(m.width - headerColumnWidthDiff)
             .attr("id", "" + uid + m.id)
@@ -1415,7 +1416,7 @@ if (typeof Slick === "undefined") {
         rowCss += " " + metadata.cssClasses;
       }
 
-      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px'>");
+      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px' role='row'>");
 
       var colspan, m;
       for (var i = 0, ii = columns.length; i < ii; i++) {
@@ -1462,7 +1463,9 @@ if (typeof Slick === "undefined") {
         }
       }
 
-      stringArray.push("<div class='" + cellCss + "'>");
+      stringArray.push("<div class='" + cellCss +
+                       "' aria-describedby='" + uid + m.id +
+                       "' tabindex='-1' role='gridcell'>");
 
       // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
       if (item) {
@@ -2485,6 +2488,7 @@ if (typeof Slick === "undefined") {
       }
 
       if (activeCellChanged) {
+        activeCellNode.focus();
         trigger(self.onActiveCellChanged, getActiveCell());
       }
     }
