@@ -711,7 +711,10 @@ if (typeof Slick === "undefined") {
     /* Update column definition to utilize groups attributes */
     function initColumns(col) {
       $.each(col, function (index, value) {
-        if (col[index].groups && !col[index].children) {
+        if (col[index].groups && !col[index].children && col[index].selectedGroupName) {
+
+        }
+        else if (col[index].groups && !col[index].children) {
           col[index].children = col[index].groups[0].options;
           col[index].name = col[index].groups[0].name;
         }
