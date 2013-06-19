@@ -711,12 +711,21 @@ if (typeof Slick === "undefined") {
     /* Update column definition to utilize groups attributes */
     function initColumns(col) {
       $.each(col, function (index, value) {
-        if (col[index].groups && !col[index].children && col[index].selectedGroupName) {
-
-        }
-        else if (col[index].groups && !col[index].children) {
-          col[index].children = col[index].groups[0].options;
-          col[index].name = col[index].groups[0].name;
+        if (col[index].groups && !col[index].children) {
+          if (col[index].selectedGroupName) {
+            var selectedGroup = $.grep(col[index].groups, function (group) { return group.name == col[index].selectedGroupName; });
+            if (selectedGroup.length) {
+              col[index].children = selectedGroup[0].options;
+              col[index].name = selectedGroup[0].name;
+            } else {
+              col[index].children = col[index].groups[0].options;
+              col[index].name = col[index].groups[0].name;
+            }
+          }
+          else {
+            col[index].children = col[index].groups[0].options;
+            col[index].name = col[index].groups[0].name;
+          }
         }
 
         if (col[index].children) {
@@ -885,7 +894,7 @@ if (typeof Slick === "undefined") {
 
           /*Recurs through children*/
           reorderChildColumns(column.children, reorderedIds);
-        } 
+        }
       });
       return columnList;
     }
