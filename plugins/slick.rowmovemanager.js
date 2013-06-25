@@ -88,7 +88,8 @@
       var top = e.pageY - $(_canvas).offset().top;
       dd.selectionProxy.css("top", top - 5);
 
-      var insertBefore = Math.max(0, Math.min(Math.round(top / _grid.getOptions().rowHeight), _grid.getDataLength()));
+      var insertBefore = _grid.getRowFromPosition(top);
+
       if (insertBefore !== dd.insertBefore) {
         var eventData = {
           "rows": dd.selectedRows,
@@ -99,7 +100,7 @@
           dd.guide.css("top", -1000);
           dd.canMove = false;
         } else {
-          dd.guide.css("top", insertBefore * _grid.getOptions().rowHeight);
+          dd.guide.css("top", _grid.getRowTop(insertBefore));
           dd.canMove = true;
         }
 

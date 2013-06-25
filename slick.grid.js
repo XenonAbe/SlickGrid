@@ -1714,6 +1714,9 @@ if (typeof Slick === "undefined") {
       return Math.floor((y + offset) / options.rowHeight);
     }
 
+    this.getRowTop = getRowTop;
+    this.getRowFromPosition = getRowFromPosition;
+
     function scrollTo(y) {
       y = Math.max(y, 0);
       y = Math.min(y, th - viewportH + (viewportHasHScroll ? scrollbarDimensions.height : 0));
