@@ -25,6 +25,7 @@
 
     var defaults = {
       groupItemMetadataProvider: null,
+      hiddenItemMetadataProvider: null,
       inlineFilters: false
     };
 
@@ -64,10 +65,17 @@
     var pagenum = 0;
     var totalRows = 0;
 
+    // hiding
+    var hiddenGetter;
+    var hiddenGetterIsAFn;
+
     // events
     var onRowCountChanged = new Slick.Event();
     var onRowsChanged = new Slick.Event();
     var onPagingInfoChanged = new Slick.Event();
+    var onRowsHidden = new Slick.Event();
+    var onRowsUnhidden = new Slick.Event();
+    var onHiddenRowDblClick = new Slick.Event();
 
     options = $.extend(true, {}, defaults, options);
 
@@ -143,7 +151,7 @@
 
     function getPagingInfo() {
       var totalPages = pagesize ? Math.max(1, Math.ceil(totalRows / pagesize)) : 1;
-      return {pageSize: pagesize, pageNum: pagenum, totalRows: totalRows, totalPages: totalPages};
+      return { pageSize: pagesize, pageNum: pagenum, totalRows: totalRows, totalPages: totalPages };
     }
 
     function sort(comparer, ascending) {
@@ -218,6 +226,17 @@
       groupingComparer = sortComparer;
       collapsedGroups = {};
       groups = [];
+      refresh();
+    }
+
+    function hideBy(valueGetter) {
+      if (!options.hiddenItemMetadataProvider) {
+        options.hiddenItemMetadataProvider = new Slick.Data.HiddenItemMetadataProvider();
+      }
+
+      hiddenGetter = valueGetter;
+      hiddenGetterIsAFn = typeof hiddenGetter === "function";
+
       refresh();
     }
 
@@ -338,6 +357,11 @@
         return options.groupItemMetadataProvider.getGroupRowMetadata(item);
       }
 
+      // overrides for hidden rows
+      if (item.__hidden) {
+        return options.hiddenItemMetadataProvider.getHiddenRowMetadata(item, i, rows);
+      }
+
       // overrides for totals rows
       if (item.__groupTotals) {
         return options.groupItemMetadataProvider.getTotalsRowMetadata(item);
@@ -385,6 +409,39 @@
       }
 
       return groups;
+    }
+
+    function updateRowHiddenState(e, grid, row) {
+      var rowShouldBeHidden = (hiddenGetterIsAFn) ? hiddenGetter(row) : row[hiddenGetter];
+      if (row.__hidden & !rowShouldBeHidden || !row.__hidden & rowShouldBeHidden) {
+        row.__hidden = rowShouldBeHidden;
+        grid.invalidate();
+        grid.render();
+        if (row.__hidden) {
+          onRowsHidden.notify({ grid: grid, row: row }, null, self);
+          grid.setActiveCell(0, 0); /*Make sure selected node is not null to keep editor from being cancelled.*/
+        } else {
+          onRowsUnhidden.notify({ grid: grid, row: row }, null, self);
+          grid.setActiveCell(0, 0);
+        }
+      }
+    }
+
+    function setHiddenRows(rows) {
+      var r;
+
+      for (var i = 0, l = rows.length; i < l; i++) {
+        r = rows[i];
+        setHiddenRow(r);
+      }
+    }
+
+    function setHiddenRow(row) {
+      row.__hidden = (hiddenGetterIsAFn) ? hiddenGetter(row) : row[hiddenGetter];
+    }
+
+    function handleHiddenRowDblClick(e, grid, row) {
+      onHiddenRowDblClick.notify({ grid: grid, row: row }, null, self);
     }
 
     // TODO:  lazy totals calculation
@@ -589,7 +646,7 @@
         paged = filteredItems;
       }
 
-      return {totalRows: filteredItems.length, rows: paged};
+      return { totalRows: filteredItems.length, rows: paged };
     }
 
     function getRowDiffs(rows, newRows) {
@@ -618,9 +675,9 @@
               item.__updated ||
               item.__group && !item.equals(r))
               || (aggregators && eitherIsNonData &&
-              // no good way to compare totals since they are arbitrary DTOs
-              // deep object comparison is pretty expensive
-              // always considering them 'dirty' seems easier for the time being
+            // no good way to compare totals since they are arbitrary DTOs
+            // deep object comparison is pretty expensive
+            // always considering them 'dirty' seems easier for the time being
               (item.__groupTotals || r.__groupTotals))
               || item[idProperty] != r[idProperty]
               || (updated && updated[item[idProperty]])
@@ -657,6 +714,8 @@
         }
       }
 
+      setHiddenRows(rows);
+
       var diff = getRowDiffs(rows, newRows);
 
       rows = newRows;
@@ -689,10 +748,10 @@
         onPagingInfoChanged.notify(getPagingInfo(), null, self);
       }
       if (countBefore != rows.length) {
-        onRowCountChanged.notify({previous: countBefore, current: rows.length}, null, self);
+        onRowCountChanged.notify({ previous: countBefore, current: rows.length }, null, self);
       }
       if (diff.length > 0) {
-        onRowsChanged.notify({rows: diff}, null, self);
+        onRowsChanged.notify({ rows: diff }, null, self);
       }
     }
 
@@ -713,7 +772,7 @@
         }
       }
 
-      grid.onSelectedRowsChanged.subscribe(function(e, args) {
+      grid.onSelectedRowsChanged.subscribe(function (e, args) {
         if (inHandler) { return; }
         selectedRowIds = self.mapRowsToIds(grid.getSelectedRows());
       });
@@ -755,7 +814,7 @@
         }
       }
 
-      grid.onCellCssStylesChanged.subscribe(function(e, args) {
+      grid.onCellCssStylesChanged.subscribe(function (e, args) {
         if (inHandler) { return; }
         if (key != args.key) { return; }
         if (args.hash) {
@@ -781,9 +840,12 @@
       "fastSort": fastSort,
       "reSort": reSort,
       "groupBy": groupBy,
+      "hideBy": hideBy,
       "setAggregators": setAggregators,
       "collapseGroup": collapseGroup,
       "expandGroup": expandGroup,
+      "updateRowHiddenState": updateRowHiddenState,
+      "handleHiddenRowDblClick": handleHiddenRowDblClick,
       "getGroups": getGroups,
       "getIdxById": getIdxById,
       "getRowById": getRowById,
@@ -809,7 +871,10 @@
       // events
       "onRowCountChanged": onRowCountChanged,
       "onRowsChanged": onRowsChanged,
-      "onPagingInfoChanged": onPagingInfoChanged
+      "onPagingInfoChanged": onPagingInfoChanged,
+      "onRowsHidden": onRowsHidden,
+      "onRowsUnhidden": onRowsUnhidden,
+      "onHiddenRowDblClick": onHiddenRowDblClick
     };
   }
 

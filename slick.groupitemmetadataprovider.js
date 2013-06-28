@@ -26,6 +26,8 @@
     var _grid;
     var _defaults = {
       groupCssClass: "slick-group",
+      visibleGroupCssClass: "slick-group-visible",
+      hiddenGroupCssClass: "slick-group-hidden",
       totalsCssClass: "slick-group-totals",
       groupFocusable: true,
       totalsFocusable: false,
@@ -39,13 +41,22 @@
 
 
     function defaultGroupCellFormatter(row, cell, value, columnDef, item) {
-      if (!options.enableExpandCollapse) {
-        return item.title;
+      var visibleGroupedRow = undefined;
+      if(item.__group && item.rows) {
+        visibleGroupedRow = _.some(item.rows, function findVisibleRow(row) { return row.__hidden !== true; });
       }
 
-      return "<span class='" + options.toggleCssClass + " " +
+      if (visibleGroupedRow) {
+        if(!options.enableExpandCollapse) {
+          return item.title;
+        }
+
+        return "<span class='" + options.toggleCssClass + " " +
           (item.collapsed ? options.toggleCollapsedCssClass : options.toggleExpandedCssClass) +
           "'></span>" + item.title;
+      } else {
+        return '';
+      }
     }
 
     function defaultTotalsCellFormatter(row, cell, value, columnDef, item) {
@@ -104,10 +115,20 @@
     }
 
     function getGroupRowMetadata(item) {
+      var cssClasses = options.groupCssClass;
+      if (item.__group && item.rows) {
+        var visibleGroupedRow = _.some(item.rows, function findVisibleRow(row) { return row.__hidden !== true; });
+        if (visibleGroupedRow) {
+          cssClasses = cssClasses + ' ' + options.visibleGroupCssClass;
+        } else { /*All items in this group are hidden, hide this group*/
+          cssClasses = cssClasses + ' ' + options.hiddenGroupCssClass;
+        }
+      }
+
       return {
         selectable: false,
         focusable: options.groupFocusable,
-        cssClasses: options.groupCssClass,
+        cssClasses: cssClasses,
         columns: {
           0: {
             colspan: "*",
