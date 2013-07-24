@@ -3324,14 +3324,16 @@ if (typeof Slick === "undefined") {
           isEditable.resolve(false);
         } else if (columns[cell].cannotTriggerInsert && row >= getDataLength()) {
           isEditable.resolve(false);
+        } else if (data.isEditable) {
+          // shortcut method to define whether or not cells are editable
+          // without editor creation overhead
+          $.when(data.isEditable(row, columns[cell], d)).done(function (editable) {
+            isEditable.resolve(editable);
+          });
         } else {
-          // does this cell have an editor?
+          // fall back to whether or not the cell has an editor available
           $.when(getEditor(row, cell, d)).done(function (editor) {
-            if (!editor) {
-              isEditable.resolve(false);
-            } else {
-              isEditable.resolve(true);
-            }
+            isEditable.resolve(!!editor);
           });
         }
       });
@@ -3371,9 +3373,7 @@ if (typeof Slick === "undefined") {
         if (navigator.userAgent.toLowerCase().match(/msie/)) {
           clearTextSelection();
         }
-
       });
-
     }
 
     function makeActiveCellEditable(editor) {
