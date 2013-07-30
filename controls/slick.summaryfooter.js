@@ -30,6 +30,11 @@
         columns = grid.getColumns();
         constructSummaryFooterUI();
       });
+      
+      grid.onCellChange.subscribe(function (e, obj) {
+        columns = grid.getColumns();
+        constructSummaryFooterUI();
+      });
 
       columns = grid.getColumns();
     }
