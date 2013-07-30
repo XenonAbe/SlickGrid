@@ -18,6 +18,7 @@
         grid.invalidateRows(args.rows);
         grid.render();
 
+        constructSummaries();
         constructSummaryFooterUI();
       });
 
@@ -27,11 +28,6 @@
       });
 
       grid.onColumnsResized.subscribe(function (e, obj) {
-        columns = grid.getColumns();
-        constructSummaryFooterUI();
-      });
-      
-      grid.onCellChange.subscribe(function (e, obj) {
         columns = grid.getColumns();
         constructSummaryFooterUI();
       });
