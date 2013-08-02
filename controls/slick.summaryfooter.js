@@ -47,17 +47,40 @@
       for (var it = 0, len = items.length; it < len; it++) {
         var row = items[it];
 
-        for (var i = 0, clen = columns.length; i < clen; i++) {
-          var m = columns[i];
-          var value = row[m.field];
+        if (row.__group) {
+          if (row.collapsed == 1) {
+            for (var itG = 0, lenG = row.rows.length; itG < lenG; itG++) {
+              var groupRow = row.rows[itG];
 
-          if (m.summaryFormatter) {
-            if (!isNaN(value)) {
-              if (!columnSummaries[m.id]) {
-                columnSummaries[m.id] = 0;
+              for (var i = 0, clen = columns.length; i < clen; i++) {
+                var m = columns[i];
+                var value = groupRow[m.field];
+
+                if (m.summaryFormatter) {
+                  if (!isNaN(value)) {
+                    if (!columnSummaries[m.id]) {
+                      columnSummaries[m.id] = 0;
+                    }
+
+                    columnSummaries[m.id] = columnSummaries[m.id] + value;
+                  }
+                }
               }
+            }
+          }
+        } else {
+          for (var i = 0, clen = columns.length; i < clen; i++) {
+            var m = columns[i];
+            var value = row[m.field];
 
-              columnSummaries[m.id] = columnSummaries[m.id] + value;
+            if (m.summaryFormatter) {
+              if (!isNaN(value)) {
+                if (!columnSummaries[m.id]) {
+                  columnSummaries[m.id] = 0;
+                }
+
+                columnSummaries[m.id] = columnSummaries[m.id] + value;
+              }
             }
           }
         }
