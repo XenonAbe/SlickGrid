@@ -6,20 +6,26 @@
     var items;
     var columnSummaries = {};
 
-    function init() {
-      dataView.onPagingInfoChanged.subscribe(function (e, pagingInfo) {
-        items = dataView.getItems();
+    function handleDataChanged(e, args) {
+      var rows = [];
+      for (var i = 0; i < dataView.getLength(); i++) {
+        rows.push(dataView.getItem(i));
+      }
 
-        constructSummaries();
-        constructSummaryFooterUI();
-      });
+      items = rows;
+
+      constructSummaries();
+      constructSummaryFooterUI();
+    }
+
+    function init() {
+      dataView.onPagingInfoChanged.subscribe(handleDataChanged);
 
       dataView.onRowsChanged.subscribe(function (e, args) {
         grid.invalidateRows(args.rows);
         grid.render();
 
-        constructSummaries();
-        constructSummaryFooterUI();
+        handleDataChanged(e, args);
       });
 
       grid.onColumnsReordered.subscribe(function (e, obj) {
