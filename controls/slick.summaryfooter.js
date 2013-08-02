@@ -38,6 +38,11 @@
         constructSummaryFooterUI();
       });
 
+      grid.onScroll.subscribe(function (scrollLeft, scrollTop) {
+        //columns = grid.getColumns();
+        //constructSummaryFooterUI();
+      });
+
       columns = grid.getColumns();
     }
 

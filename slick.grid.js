@@ -1152,6 +1152,9 @@ if (typeof Slick === "undefined") {
 
       applyColumnHeaderWidths();
       updateCanvasWidth(true);
+
+      trigger(self.onColumnsResized, {});
+
       if (reRender) {
         invalidateAllRows();
         render();
