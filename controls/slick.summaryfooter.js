@@ -8,7 +8,8 @@
 
     function handleDataChanged(e, args) {
       var rows = [];
-      for (var i = 0; i < dataView.getLength(); i++) {
+      var length = dataView.getLength();
+      for (var i = 0; i < length; i++) {
         rows.push(dataView.getItem(i));
       }
 
@@ -48,16 +49,19 @@
 
     function constructSummaries() {
       columnSummaries = {};
-
-      for (var it = 0, len = items.length; it < len; it++) {
+      
+      var itemsLength = items.length;
+      for (var it = 0; it < itemsLength; it++) {
         var row = items[it];
 
         if (row.__group) {
           if (row.collapsed == 1) {
-            for (var itG = 0, lenG = row.rows.length; itG < lenG; itG++) {
+            var rowsLength = row.rows.length;
+            for (var itG = 0; itG < rowsLength; itG++) {
               var groupRow = row.rows[itG];
 
-              for (var i = 0, clen = columns.length; i < clen; i++) {
+              var columnsLength = columns.length;
+              for (var i = 0; i < columnsLength; i++) {
                 var m = columns[i];
                 var value = groupRow[m.field];
 
@@ -74,7 +78,8 @@
             }
           }
         } else {
-          for (var i = 0, clen = columns.length; i < clen; i++) {
+          var columnsLength = columns.length;
+          for (var i = 0; i < columnsLength; i++) {
             var m = columns[i];
             var value = row[m.field];
 
@@ -128,7 +133,8 @@
         });
       $headers.empty();
 
-      for (var i = 0; i < columns.length; i++) {
+      var columnsLength = columns.length;
+      for (var i = 0; i < columnsLength; i++) {
         var m = columns[i];
         var value = "";
 
