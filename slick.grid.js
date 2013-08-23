@@ -97,7 +97,8 @@ if (typeof Slick === "undefined") {
       headerCssClass: null,
       defaultSortAsc: true,
       focusable: true,
-      selectable: true
+      selectable: true,
+      reorderable: true
     };
 
     // scroller
@@ -567,6 +568,10 @@ if (typeof Slick === "undefined") {
           header.addClass("slick-header-sortable");
           header.append("<span class='slick-sort-indicator' />");
         }
+        
+        if (options.enableColumnReorder && m.reorderable) {
+          header.addClass("slick-header-reorderable");
+        }
 
         trigger(self.onHeaderCellRendered, {
           "node": header[0],
@@ -669,6 +674,7 @@ if (typeof Slick === "undefined") {
         helper: "clone",
         placeholder: "slick-sortable-placeholder ui-state-default slick-header-column",
         forcePlaceholderSize: true,
+        items: "> .slick-header-reorderable",
         start: function (e, ui) {
           $(ui.helper).addClass("slick-header-column-active");
         },
@@ -680,8 +686,9 @@ if (typeof Slick === "undefined") {
             $(this).sortable("cancel");
             return;
           }
-
-          var reorderedIds = $headers.sortable("toArray");
+          $headers.sortable("option", "items", "> *");                          // Reset items to grab all columns
+          var reorderedIds = $headers.sortable("toArray");                      // Get sorted order
+          $headers.sortable("option", "items", "> .slick-header-reorderable");  // Revert items
           var reorderedColumns = [];
           for (var i = 0; i < reorderedIds.length; i++) {
             reorderedColumns.push(columns[getColumnIndex(reorderedIds[i].replace(uid, ""))]);
