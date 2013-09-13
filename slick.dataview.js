@@ -100,9 +100,11 @@
     function updateIdxById(startingIndex) {
       startingIndex = startingIndex || 0;
       var id;
+
       for (var i = startingIndex, l = items.length; i < l; i++) {
         id = items[i][idProperty];
         if (id === undefined) {
+          console.log(items[i], idProperty);
           throw "Each data element must implement a unique 'id' property";
         }
         idxById[id] = i;
@@ -111,9 +113,11 @@
 
     function ensureIdUniqueness() {
       var id;
+
       for (var i = 0, l = items.length; i < l; i++) {
         id = items[i][idProperty];
         if (id === undefined || idxById[id] !== i) {
+          console.log('DUPLICATE', items[i], idProperty);
           throw "Each data element must implement a unique 'id' property";
         }
       }
@@ -365,6 +369,11 @@
       // overrides for totals rows
       if (item.__groupTotals) {
         return options.groupItemMetadataProvider.getTotalsRowMetadata(item);
+      }
+      
+      /* overrides for rows with items that supply a custom meta data provider*/
+      if (item.itemMetadataProvider) {
+        return item.itemMetadataProvider.getRowMetadata(item);
       }
 
       return null;
@@ -962,8 +971,15 @@
     };
 
     this.accumulate = function (item) {
-      var val = item[this.field_];
-      if (val != null && val != "" && val != NaN) {
+      var val = item;
+      var fieldParts = this.field_.split('.');
+      for (var i = 0; i < fieldParts.length; i++) {
+        if(val) {
+          val = val[fieldParts[i]];
+        }
+      }
+      //var val = item[this.field_];
+      if (val != null && val != "" && val != NaN && !isNaN(val)) {
         this.sum_ += parseFloat(val);
       }
     };

@@ -229,7 +229,7 @@ if (typeof Slick === "undefined") {
         $container.css("position", "relative");
       }
 
-      $focusSink = $("<div tabIndex='0' hideFocus style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
+      $focusSink = $("<div id='focusSink' tabIndex='0' hideFocus style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
 
       $headerScroller = $("<div class='slick-header ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
 
@@ -533,6 +533,7 @@ if (typeof Slick === "undefined") {
         /* check if the viewOptions options is being used. */
         var leftBtnSpan = '';
         var rightBtnSpan = '';
+        var cycleGroup = '';
 
         if (m.groups && m.groups.length > 1) {
           /* If viewOption is being used, construct object to store view details */
@@ -542,11 +543,17 @@ if (typeof Slick === "undefined") {
               options: m.groups,
               onCycle: m.onCycle || false,
               id: m.id
-            }
+            };
+          } else {
+            moreOptions[uid + m.id].options = m.groups; /*Always refresh the options*/
           }
 
-          leftBtnSpan = "<a class='view-option view-option-left'> &lsaquo; </a>";
-          rightBtnSpan = "<a class='view-option view-option-right'> &rsaquo; </a>";
+          if (m.cycleGroup) {
+            cycleGroup = 'cycleGroup cycleGroup-' + m.cycleGroup;
+          }
+
+          leftBtnSpan = "<a class='view-option view-option-left " + cycleGroup + "'> &lsaquo; </a>";
+          rightBtnSpan = "<a class='view-option view-option-right " + cycleGroup + "'> &rsaquo; </a>";
 
           /* If viewOptions is used, set name attribute to first option */
           // m.name = moreOptions[uid + m.id].options[0];
@@ -555,6 +562,26 @@ if (typeof Slick === "undefined") {
 
         /* without unbinding click event, click events are fired twice */
         $(".view-option").unbind("click");
+
+        $(".cycleGroup").bind("click", function (e) {
+          if (e.which) {
+            var scope = this;
+            var cycleGroupName = $(scope).attr("class").split("cycleGroup-")[1].split(" ")[0];
+            var query = '.cycleGroup-' + cycleGroupName;
+            var isNextClicked = $(scope).hasClass("view-option-right");
+
+            if (isNextClicked) {
+              query += '.view-option-right:not(.dontClickMe)';
+            } else {
+              query += '.view-option-left:not(.dontClickMe)';
+            }
+
+            $(this).addClass("dontClickMe");
+            $(query).click();
+            $(this).removeClass("dontClickMe");
+          }
+        })
+
         $(".view-option").bind("click", function (e) {
 
           var scope = this;
@@ -832,11 +859,24 @@ if (typeof Slick === "undefined") {
           reorderParentHeaderChildColumns(reorderedParentCoulmnList, reorderedId, topHeader, topHeader);
         });
       });
+
+      var orderedColumns;
       if (reorderedParentCoulmnList.length) {
-        return reorderedParentCoulmnList;
+        orderedColumns =  reorderedParentCoulmnList;
       } else {
-        return columnList;
+        orderedColumns = columnList;
       }
+      
+      /* Correct trailing groups. */
+      var trailingGroups = _.filter(orderedColumns, function findTrailingGroups(orderedColumn) {
+        return orderedColumn.trailing === true;
+      });
+      if (trailingGroups.length > 0) {
+        orderedColumns = _.difference(orderedColumns, trailingGroups);
+        orderedColumns = orderedColumns.concat(trailingGroups);
+      }
+
+      return orderedColumns;
     }
 
     function reorderParentHeaderChildColumns(reorderedParentCoulmnList, reorderedId, topHeader, header) {
@@ -865,6 +905,8 @@ if (typeof Slick === "undefined") {
           reorderedColumns.push(matchingColumn[0]);
         }
       });
+
+
       if (reorderedColumns.length) {
         columnList = reorderedColumns;
       }
@@ -1860,7 +1902,7 @@ if (typeof Slick === "undefined") {
     function appendCellHtml(stringArray, row, cell, colspan) {
       var m = columns[cell];
       var d = getDataItem(row);
-      var cellCss = "slick-cell l" + cell + " r" + Math.min(columns.length - 1, cell + colspan - 1) +
+      var cellCss = "slick-cell l" + cell + " r" + Math.min(columns.length - 1, cell + parseInt(colspan) - 1) +
           (m.cssClass ? " " + m.cssClass : "");
       if (row === activeRow && cell === activeCell) {
         cellCss += (" active");
@@ -1954,6 +1996,7 @@ if (typeof Slick === "undefined") {
         currentEditor.loadValue(d);
       } else {
         cellNode.innerHTML = d ? getFormatter(row, m)(row, cell, getDataItemValueForColumn(d, m), m, d) : "";
+
         invalidatePostProcessingResults(row);
       }
     }
@@ -1980,6 +2023,7 @@ if (typeof Slick === "undefined") {
           currentEditor.loadValue(d);
         } else if (d) {
           node.innerHTML = getFormatter(row, m)(row, columnIdx, getDataItemValueForColumn(d, m), m, d);
+
         } else {
           node.innerHTML = "";
         }
@@ -3043,9 +3087,9 @@ if (typeof Slick === "undefined") {
       // if so, do not steal the focus from the editor
       if (getEditorLock().commitCurrentEdit()) {
         setFocus();
-        if (options.autoEdit) {
-          navigateDown();
-        }
+        /*if (options.autoEdit) {*/
+        /*  navigateDown(); --This behavior is annoying with the long text editor involved and merged columns. Going to try it without.B*/
+        /*}*/
       }
     }
 
@@ -3169,7 +3213,13 @@ if (typeof Slick === "undefined") {
         return 1;
       }
 
-      var columnData = metadata.columns[columns[cell].id] || metadata.columns[cell];
+      var columnData;
+      if (columns[cell] && metadata.columns[columns[cell].id]) {
+        columnData = metadata.columns[columns[cell].id];
+      } else {
+        columnData = metadata.columns[cell];
+      }
+
       var colspan = (columnData && columnData.colspan);
       if (colspan === "*") {
         colspan = columns.length - cell;
@@ -3431,7 +3481,7 @@ if (typeof Slick === "undefined") {
         var isAddNewRow = (pos.row == getDataLength());
         scrollRowIntoView(pos.row, !isAddNewRow);
         scrollCellIntoView(pos.row, pos.cell);
-        setActiveCellInternal(getCellNode(pos.row, pos.cell), isAddNewRow || options.autoEdit);
+        setActiveCellInternal(getCellNode(pos.row, parseInt(pos.cell)), isAddNewRow || options.autoEdit);
         activePosX = pos.posX;
         return true;
       } else {

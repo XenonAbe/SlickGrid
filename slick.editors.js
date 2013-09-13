@@ -38,7 +38,9 @@
     };
 
     this.destroy = function () {
-      $input.remove();
+      if(Slick.GlobalEditorLock.isActive(this)) {
+        $input.remove();
+      }
     };
 
     this.focus = function () {
@@ -91,7 +93,6 @@
 
   function IntegerEditor(args) {
     var $input;
-    var defaultValue;
     var scope = this;
 
     this.init = function () {
@@ -103,12 +104,19 @@
         }
       });
 
+      $input.bind("keydown", function(e) {
+        $(e.target).data('keydown', e.keyCode)
+      })
+
       $input.appendTo(args.container);
       $input.focus().select();
+      this.$input = $input;
     };
 
     this.destroy = function () {
-      $input.remove();
+      if(Slick.GlobalEditorLock.isActive(this)) {
+        $input.remove();
+      }
     };
 
     this.focus = function () {
@@ -116,9 +124,9 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field];
-      $input.val(defaultValue);
-      $input[0].defaultValue = defaultValue;
+      this.defaultValue = item[args.column.field];
+      $input.val(this.defaultValue);
+      $input[0].defaultValue = this.defaultValue;
       $input.select();
     };
 
@@ -131,7 +139,10 @@
     };
 
     this.isValueChanged = function () {
-      return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
+      if (!$input.val() && !this.defaultValue) {
+        return false;
+      }
+      return ($input.val() != this.defaultValue);
     };
 
     this.validate = function () {
@@ -176,10 +187,12 @@
     };
 
     this.destroy = function () {
-      $.datepicker.dpDiv.stop(true, true);
-      $input.datepicker("hide");
-      $input.datepicker("destroy");
-      $input.remove();
+      if(Slick.GlobalEditorLock.isActive(this)) {
+        $.datepicker.dpDiv.stop(true, true);
+        $input.datepicker("hide");
+        $input.datepicker("destroy");
+        $input.remove();
+      }
     };
 
     this.show = function () {
@@ -248,7 +261,9 @@
     };
 
     this.destroy = function () {
-      $select.remove();
+      if(Slick.GlobalEditorLock.isActive(this)) {
+        $select.remove();
+      }
     };
 
     this.focus = function () {
@@ -294,7 +309,9 @@
     };
 
     this.destroy = function () {
-      $select.remove();
+      if(Slick.GlobalEditorLock.isActive(this)) {
+        $select.remove();
+      }
     };
 
     this.focus = function () {
@@ -365,8 +382,10 @@
     };
 
     this.destroy = function () {
-      $input.remove();
-      $picker.remove();
+      if(Slick.GlobalEditorLock.isActive(this)) {
+        $input.remove();
+        $picker.remove();
+      }
     };
 
     this.focus = function () {
@@ -416,17 +435,18 @@
     var $input, $wrapper;
     var defaultValue;
     var scope = this;
-
+    var grid = args.grid;
+    
     this.init = function () {
       var $container = $("body");
 
       $wrapper = $("<DIV style='z-index:10000;position:absolute;background:white;padding:5px;border:3px solid gray; -moz-border-radius:10px; border-radius:10px;'/>")
           .appendTo($container);
 
-      $input = $("<TEXTAREA hidefocus rows=5 style='backround:white;width:250px;height:80px;border:0;outline:0'>")
+      $input = $("<TEXTAREA hidefocus rows=5 style='background:white;width:250px;height:80px;border:0;outline:0'>")
           .appendTo($wrapper);
 
-      $("<DIV style='text-align:right'><BUTTON>Save</BUTTON><BUTTON>Cancel</BUTTON></DIV>")
+      $("<DIV style='text-align:right'><BUTTON class='button tiny'>Save</BUTTON>&nbsp;<BUTTON class='button tiny'>Cancel</BUTTON></DIV>")
           .appendTo($wrapper);
 
       $wrapper.find("button:first").bind("click", this.save);
@@ -437,7 +457,7 @@
       $input.focus().select();
     };
 
-    this.handleKeyDown = function (e) {
+    this.handleKeyDown = function (e, args) {
       if (e.which == $.ui.keyCode.ENTER && e.ctrlKey) {
         scope.save();
       } else if (e.which == $.ui.keyCode.ESCAPE) {
@@ -445,10 +465,10 @@
         scope.cancel();
       } else if (e.which == $.ui.keyCode.TAB && e.shiftKey) {
         e.preventDefault();
-        args.grid.navigatePrev();
+        grid.navigatePrev();
       } else if (e.which == $.ui.keyCode.TAB) {
         e.preventDefault();
-        args.grid.navigateNext();
+        grid.navigateNext();
       }
     };
 
@@ -476,7 +496,7 @@
     };
 
     this.destroy = function () {
-      $wrapper.remove();
+        $wrapper.remove();
     };
 
     this.focus = function () {
