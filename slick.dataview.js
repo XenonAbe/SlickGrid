@@ -104,7 +104,6 @@
       for (var i = startingIndex, l = items.length; i < l; i++) {
         id = items[i][idProperty];
         if (id === undefined) {
-          console.log(items[i], idProperty);
           throw "Each data element must implement a unique 'id' property";
         }
         idxById[id] = i;
@@ -117,7 +116,6 @@
       for (var i = 0, l = items.length; i < l; i++) {
         id = items[i][idProperty];
         if (id === undefined || idxById[id] !== i) {
-          console.log('DUPLICATE', items[i], idProperty);
           throw "Each data element must implement a unique 'id' property";
         }
       }
@@ -977,8 +975,7 @@
         if(val) {
           val = val[fieldParts[i]];
         }
-      }
-      //var val = item[this.field_];
+      }    
       if (val != null && val != "" && val != NaN && !isNaN(val)) {
         this.sum_ += parseFloat(val);
       }
