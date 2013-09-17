@@ -2102,6 +2102,8 @@ if (typeof Slick === "undefined") {
             + (options.enableAddRow ? 1 : 0)
             )
             + ( ( options.frozenColumn == -1 ) ? $headers.outerHeight() : 0 );
+        if (options.maxHeight && (viewportH > options.maxHeight)) {
+          viewportH = options.maxHeight;
       } else {
         viewportH = parseFloat($.css($container[0], "height", true))
             - parseFloat($.css($container[0], "paddingTop", true))
