@@ -2209,7 +2209,7 @@ if (typeof Slick === "undefined") {
             cancelEditAndSetFocus();
           } else if (e.which == 34) {
             navigatePageDown();
-            handled = true;           
+            handled = true;
           } else if (e.which == 33) {
             navigatePageUp();
             handled = true;
@@ -2802,7 +2802,7 @@ if (typeof Slick === "undefined") {
         var prevActivePosX = activePosX;
         while (cell <= activePosX) {
           if (canCellBeActive(row, cell)) {
-            prevCell = cell;  
+            prevCell = cell;
           }
           cell += getColspan(row, cell);
         }
@@ -3123,7 +3123,7 @@ if (typeof Slick === "undefined") {
 
     function canCellBeActive(row, cell) {
       // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
-      if (!options.enableCellNavigation && row < getDataLengthIncludingAddNew() && row >= 0 && cell < columns.length && cell >= 0) {
+      if (options.enableCellNavigation && row < getDataLengthIncludingAddNew() && row >= 0 && cell < columns.length && cell >= 0) {
         var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
         if (rowMetadata && typeof rowMetadata.focusable === "boolean") {
           return rowMetadata.focusable;
@@ -3319,7 +3319,7 @@ if (typeof Slick === "undefined") {
     // Public API
 
     $.extend(this, {
-      "slickGridVersion": "2.1",
+      "slickGridVersion": "2.2",
 
       // Events
       "onScroll": new Slick.Event(),
