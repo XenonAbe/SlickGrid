@@ -64,6 +64,12 @@
       d[0] = "Row " + i;
     }
 
+    data.getItemMetadata = function (row) {
+        return {
+          selectable: true
+        };
+    };
+
     var checkboxSelector = new Slick.CheckboxSelectColumn({
       cssClass: "slick-cell-checkboxsel"
     });
