@@ -459,7 +459,7 @@
       var group;
       var val;
       var groups = [];
-      var groupsByVal = [];
+      var groupsByVal = {};
       var r;
       var level = parentGroup ? parentGroup.level + 1 : 0;
       var gi = groupingInfos[level];
@@ -912,7 +912,7 @@
       this.onRowCountChanged.subscribe(update);
     }
 
-    return {
+    $.extend(this, {
       // methods
       "beginUpdate": beginUpdate,
       "endUpdate": endUpdate,
@@ -958,7 +958,7 @@
       "onRowCountChanged": onRowCountChanged,
       "onRowsChanged": onRowsChanged,
       "onPagingInfoChanged": onPagingInfoChanged
-    };
+    });
   }
 
   function AvgAggregator(field) {
