@@ -514,7 +514,7 @@
       var agg, idx = gi.aggregators.length;
       while (idx--) {
         agg = gi.aggregators[idx];
-        agg.init();
+        agg.init(gi, group, totals);
         gi.compiledAccumulators[idx].call(agg,
             (!isLeafLevel && gi.aggregateChildGroups) ? group.groups : group.rows);
         agg.storeResult(totals);
