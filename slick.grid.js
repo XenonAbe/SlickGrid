@@ -70,7 +70,7 @@ if (typeof Slick === "undefined") {
       enableAsyncPostRender: false,
       asyncPostRenderDelay: 50,
       autoHeight: false,
-      editorLock: Slick.GlobalEditorLock,
+      editorLock: new Slick.EditorLock(),
       showHeaderRow: false,
       headerRowHeight: 25,
       showTopPanel: false,
