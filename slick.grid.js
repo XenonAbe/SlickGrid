@@ -2265,7 +2265,8 @@ if (typeof Slick === "undefined") {
         // if this click resulted in some cell child node getting focus,
         // don't steal it back - keyboard events will still bubble up
         // IE9+ seems to default DIVs to tabIndex=0 instead of -1, so check for cell clicks directly.
-        if (e.target != document.activeElement || $(e.target).hasClass("slick-cell")) {
+        var activeElement = document.activeElement;
+        if ( ($(activeElement).is(":focus") && (e.target != activeElement)) || $(activeElement).hasClass("slick-cell")) {
           setFocus();
         }
       }
