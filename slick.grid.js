@@ -2145,13 +2145,37 @@ if (typeof Slick === "undefined") {
     function flashCell(row, cell, speed, times) {
       speed = speed || 100;
       times = times || 4;
+      var key = "flashing";
 
       if (rowsCache[row]) {
         var $cell = $(getCellNode(row, cell));
 
+        // and make sure intermediate .render() actions keep the 'flashing' class intact too!
+        var id = columns[cell].id;
+        var start_state = !$cell.hasClass(options.cellFlashingCssClass);
+
         function toggleCellClass(times) {
           $cell.queue(function () {
-            $cell.toggleClass(options.cellFlashingCssClass).dequeue();
+            var hash = getCellCssStyles(key) || {};
+            var new_state = !(times % 2);
+            new_state ^= start_state;
+            if (new_state) {
+              // switch to ON
+              if (!hash[row]) {
+                hash[row] = {};
+              }
+              hash[row][id] = options.cellFlashingCssClass;
+
+              $cell.addClass(options.cellFlashingCssClass).dequeue();
+            } else {
+              // switch to OFF
+              if (hash[row]) {
+                delete hash[row][id];
+              }
+              
+              $cell.removeClass(options.cellFlashingCssClass).dequeue();
+            }
+            setCellCssStyles(key, hash);
             execNextFlashPhase(times - 1);
           });
         }
@@ -2166,7 +2190,7 @@ if (typeof Slick === "undefined") {
               speed);
         }
 
-        toggleCellClass(times);
+        toggleCellClass(times | 0);
       }
     }
 
