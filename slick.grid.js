@@ -2134,25 +2134,39 @@ if (typeof Slick === "undefined") {
       return cellCssClasses[key];
     }
 
-    function flashCell(row, cell, speed) {
+    // parameters:
+    //   row,cell:    grid cell coordinate
+    //   speed:       number of milliseconds one half of each ON/OFF toggle cycle takes (default: 100ms)
+    //   times:       number of flash half-cycles to run through (default: 4) - proper 'flashing' requires you to set this to an EVEN number
+    //
+    // Notes:
+    // - starts flashing immediately.
+    // - when count = 0 or ODD, then the 'flash' class is SET [at the end of the flash period] but never reset!
+    function flashCell(row, cell, speed, times) {
       speed = speed || 100;
+      times = times || 4;
+
       if (rowsCache[row]) {
         var $cell = $(getCellNode(row, cell));
 
         function toggleCellClass(times) {
-          if (!times) {
+          $cell.queue(function () {
+            $cell.toggleClass(options.cellFlashingCssClass).dequeue();
+            execNextFlashPhase(times - 1);
+          });
+        }
+        
+        function execNextFlashPhase(times) {
+          if (times <= 0) {
             return;
           }
           setTimeout(function () {
-                $cell.queue(function () {
-                  $cell.toggleClass(options.cellFlashingCssClass).dequeue();
-                  toggleCellClass(times - 1);
-                });
+                toggleCellClass(times);
               },
               speed);
         }
 
-        toggleCellClass(4);
+        toggleCellClass(times);
       }
     }
 
