@@ -77,6 +77,7 @@ if (typeof Slick === "undefined") {
       topPanelHeight: 25,
       formatterFactory: null,
       editorFactory: null,
+      editorOptions: {},
       cellFlashingCssClass: "flashing",
       selectedCellCssClass: "selected",
       multiSelect: true,
@@ -675,9 +676,9 @@ if (typeof Slick === "undefined") {
     }
 
     function setupColumnReorder() {
-	  if (!(jQuery.isEmptyObject($.data( $headers, $headers.sortable.prototype.widgetFullName ) ))){
+  	  if (!(jQuery.isEmptyObject($.data( $headers, $headers.sortable.prototype.widgetFullName ) ))){
         $headers.filter(":ui-sortable").sortable("destroy");
-	  }
+	    }
       $headers.sortable({
         containment: "parent",
         distance: 3,
@@ -2172,7 +2173,7 @@ if (typeof Slick === "undefined") {
               if (hash[row]) {
                 delete hash[row][id];
               }
-              
+
               $cell.removeClass(options.cellFlashingCssClass).dequeue();
             }
             setCellCssStyles(key, hash);
@@ -2647,16 +2648,17 @@ if (typeof Slick === "undefined") {
         activeCellNode.innerHTML = "";
       }
 
-      currentEditor = new (editor || getEditor(activeRow, activeCell))({
-        grid: self,
-        gridPosition: absBox($container[0]),
-        position: absBox(activeCellNode),
-        container: activeCellNode,
-        column: columnDef,
-        item: item || {},
-        commitChanges: commitEditAndSetFocus,
-        cancelChanges: cancelEditAndSetFocus
-      });
+      currentEditor = new (editor || getEditor(activeRow, activeCell))($.extend({}, options.editorOptions, columnDef.editorOptions,
+        {
+          grid: self,
+          gridPosition: absBox($container[0]),
+          position: absBox(activeCellNode),
+          container: activeCellNode,
+          column: columnDef,
+          item: item || {},
+          commitChanges: commitEditAndSetFocus,
+          cancelChanges: cancelEditAndSetFocus
+        }));
 
       if (item) {
         currentEditor.loadValue(item);

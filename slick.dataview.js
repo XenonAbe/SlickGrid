@@ -28,6 +28,7 @@
 
     var defaults = {
       groupItemMetadataProvider: null,
+      flattenGroupedRows: flattenGroupedRows, // function (groups, level, groupingInfos, filteredItems, options) { return all_rows_you_want_to_see[]; }
       inlineFilters: false,
       idProperty: "id"
     };
@@ -567,8 +568,8 @@
       }
     }
 
-    function flattenGroupedRows(groups, level) {
-      level = level || 0;
+    function flattenGroupedRows(groups, level, groupingInfos, filteredItems, options) {
+      //level = level || 0;
       var gi = groupingInfos[level];
       var groupedRows = [], rows, gl = 0, g;
       for (var i = 0, l = groups.length; i < l; i++) {
@@ -576,7 +577,7 @@
         groupedRows[gl++] = g;
 
         if (!g.collapsed) {
-          rows = g.groups ? flattenGroupedRows(g.groups, level + 1) : g.rows;
+          rows = g.groups ? options.flattenGroupedRows(g.groups, level + 1, groupingInfos, filteredItems, options) : g.rows;
           for (var j = 0, jj = rows.length; j < jj; j++) {
             groupedRows[gl++] = rows[j];
           }
@@ -797,7 +798,7 @@
         if (groups.length) {
           calculateTotals(groups);
           finalizeGroups(groups);
-          newRows = flattenGroupedRows(groups);
+          newRows = options.flattenGroupedRows(groups, 0, groupingInfos, filteredItems, options);
         }
       }
 

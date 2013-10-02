@@ -227,7 +227,7 @@
       $input.datepicker({
         showOn: "button",
         buttonImageOnly: true,
-        buttonImage: "../images/calendar.gif",
+        buttonImage: args.dateButtonImage || "../images/calendar.gif",
         beforeShow: function () {
           calendarOpen = true
         },
