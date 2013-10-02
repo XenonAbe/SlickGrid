@@ -11,6 +11,7 @@
       "Editors": {
         "Text": TextEditor,
         "Integer": IntegerEditor,
+        "Float": FloatEditor,
         "Date": DateEditor,
         "YesNoSelect": YesNoSelectEditor,
         "Checkbox": CheckboxEditor,
@@ -26,7 +27,7 @@
     var scope = this;
 
     this.init = function () {
-      $input = $("<INPUT type=text class='editor-text' />")
+      $input = $("<INPUT type='text' class='editor-text' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
             if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
@@ -96,7 +97,7 @@
     var scope = this;
 
     this.init = function () {
-      $input = $("<INPUT type=text class='editor-text' />");
+      $input = $("<INPUT type='text' class='editor-text' />");
 
       $input.bind("keydown.nav", function (e) {
         if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
@@ -162,6 +163,68 @@
     this.init();
   }
 
+  function FloatEditor(args) {
+    var $input;
+    var defaultValue;
+    var scope = this;
+
+    this.init = function () {
+      $input = $("<INPUT type=text class='editor-text' />");
+
+      $input.bind("keydown.nav", function (e) {
+        if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+          e.stopImmediatePropagation();
+        }
+      });
+
+      $input.appendTo(args.container);
+      $input.focus().select();
+    };
+
+    this.destroy = function () {
+      $input.remove();
+    };
+
+    this.focus = function () {
+      $input.focus();
+    };
+
+    this.loadValue = function (item) {
+      defaultValue = item[args.column.field];
+      $input.val(defaultValue);
+      $input[0].defaultValue = defaultValue;
+      $input.select();
+    };
+
+    this.serializeValue = function () {
+      return parseFloat($input.val(), 10) || 0;
+    };
+
+    this.applyValue = function (item, state) {
+      item[args.column.field] = state;
+    };
+
+    this.isValueChanged = function () {
+      return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
+    };
+
+    this.validate = function () {
+      if (isNaN($input.val())) {
+        return {
+          valid: false,
+          msg: "Please enter a valid number"
+        };
+      }
+
+      return {
+        valid: true,
+        msg: null
+      };
+    };
+
+    this.init();
+  }
+
   function DateEditor(args) {
     var $input;
     var defaultValue;
@@ -169,7 +232,7 @@
     var calendarOpen = false;
 
     this.init = function () {
-      $input = $("<INPUT type=text class='editor-text' />");
+      $input = $("<INPUT type='text' class='editor-text' />");
       $input.appendTo(args.container);
       $input.focus().select();
       $input.datepicker({
@@ -303,7 +366,7 @@
     var scope = this;
 
     this.init = function () {
-      $select = $("<INPUT type=checkbox value='true' class='editor-checkbox' hideFocus>");
+      $select = $("<INPUT type='checkbox' value='true' class='editor-checkbox' hideFocus='true'>");
       $select.appendTo(args.container);
       $select.focus();
     };
@@ -321,14 +384,14 @@
     this.loadValue = function (item) {
       defaultValue = item[args.column.field];
       if (defaultValue) {
-        $select.attr("checked", "checked");
+        $select.prop('checked', true);
       } else {
-        $select.removeAttr("checked");
+        $select.prop('checked', false);
       }
     };
 
     this.serializeValue = function () {
-      return $select.attr("checked");
+      return $select.prop('checked');
     };
 
     this.applyValue = function (item, state) {
@@ -355,14 +418,14 @@
     var scope = this;
 
     this.init = function () {
-      $input = $("<INPUT type=text class='editor-percentcomplete' />");
+      $input = $("<INPUT type='text' class='editor-percentcomplete' />");
       $input.width($(args.container).innerWidth() - 25);
       $input.appendTo(args.container);
 
       $picker = $("<div class='editor-percentcomplete-picker' />").appendTo(args.container);
       $picker.append("<div class='editor-percentcomplete-helper'><div class='editor-percentcomplete-wrapper'><div class='editor-percentcomplete-slider' /><div class='editor-percentcomplete-buttons' /></div></div>");
 
-      $picker.find(".editor-percentcomplete-buttons").append("<button val=0>Not started</button><br/><button val=50>In Progress</button><br/><button val=100>Complete</button>");
+      $picker.find(".editor-percentcomplete-buttons").append("<button val='0'>Not started</button><br/><button val='50'>In Progress</button><br/><button val='100'>Complete</button>");
 
       $input.focus().select();
 
@@ -443,7 +506,7 @@
       $wrapper = $("<DIV style='z-index:10000;position:absolute;background:white;padding:5px;border:3px solid gray; -moz-border-radius:10px; border-radius:10px;'/>")
           .appendTo($container);
 
-      $input = $("<TEXTAREA hidefocus rows=5 style='background:white;width:250px;height:80px;border:0;outline:0'>")
+      $input = $("<TEXTAREA hidefocus='true' rows='5' style='background:white; width:250px; height:80px; border:0; outline:0;'>")
           .appendTo($wrapper);
 
       $("<DIV style='text-align:right'><BUTTON class='button tiny'>Save</BUTTON>&nbsp;<BUTTON class='button tiny'>Cancel</BUTTON></DIV>")

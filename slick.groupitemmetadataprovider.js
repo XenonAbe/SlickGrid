@@ -34,7 +34,9 @@
       toggleCssClass: "slick-group-toggle",
       toggleExpandedCssClass: "expanded",
       toggleCollapsedCssClass: "collapsed",
-      enableExpandCollapse: true
+      enableExpandCollapse: true,
+      groupFormatter: defaultGroupCellFormatter,
+      totalsFormatter: defaultTotalsCellFormatter
     };
 
     options = $.extend(true, {}, _defaults, options);
@@ -132,7 +134,7 @@
         columns: {
           0: {
             colspan: "*",
-            formatter: defaultGroupCellFormatter,
+            formatter: options.groupFormatter,
             editor: null
           }
         }
@@ -144,7 +146,7 @@
         selectable: false,
         focusable: options.totalsFocusable,
         cssClasses: options.totalsCssClass,
-        formatter: defaultTotalsCellFormatter,
+        formatter: options.totalsFormatter,
         editor: null
       };
     }
