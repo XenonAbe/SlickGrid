@@ -45,7 +45,7 @@
           top: from.top,
           left: from.left,
           height: to.bottom - from.top - 2 * options.borderThickness,
-          width: to.right - from.left - 2 * options.borderThickness - 1 
+          width: to.right - from.left - 2 * options.borderThickness - 1
         };
       } else {
         // TBD
@@ -65,9 +65,9 @@
       } else {
         // remember our input range (clone!)
         _elem_range = {
-          fromRow: range.fromRow, 
+          fromRow: range.fromRow,
           fromCell: range.fromCell,
-          toRow: range.toRow, 
+          toRow: range.toRow,
           toCell: range.toCell
         };
       }

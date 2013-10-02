@@ -187,9 +187,9 @@ if (typeof Slick === "undefined") {
         throw new Error("SlickGrid requires a valid container, " + container + " does not exist in the DOM.");
       }
 
-	  if (!columns || !columns.length) {
-		  columns = [{}];
-	  }
+      if (!columns || !columns.length) {
+        columns = [{}];
+      }
 
       // calculate these only once and share between grid instances
       maxSupportedCssHeight = maxSupportedCssHeight || getMaxSupportedCssHeight();
@@ -676,9 +676,9 @@ if (typeof Slick === "undefined") {
     }
 
     function setupColumnReorder() {
-	  if (!(jQuery.isEmptyObject($.data( $headers, $headers.sortable.prototype.widgetFullName ) ))){
+      if (!(jQuery.isEmptyObject($.data( $headers, $headers.sortable.prototype.widgetFullName ) ))){
         $headers.filter(":ui-sortable").sortable("destroy");
-	  }
+      }
       $headers.sortable({
         containment: "parent",
         distance: 3,
@@ -1369,7 +1369,7 @@ if (typeof Slick === "undefined") {
       if (value == null) {
         return "";
       } else {
-	  	// Safari 6 fix: (value + "") instead of .toString()
+        // Safari 6 fix: (value + "") instead of .toString()
         return (value + "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
       }
     }

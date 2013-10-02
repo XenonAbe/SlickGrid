@@ -161,15 +161,15 @@
         destH = selectedRange.toRow - selectedRange.fromRow +1;
         destW = selectedRange.toCell - selectedRange.fromCell +1;
       }
-	  var availableRows = _grid.getData().length - activeRow;
-	  var addRows = 0;
-	  if(availableRows < destH) {
-		var d = _grid.getData();
-		for(addRows = 1; addRows <= destH - availableRows; addRows++)
-			d.push({});
-		_grid.setData(d);
-		_grid.render();
-	  }
+      var availableRows = _grid.getData().length - activeRow;
+      var addRows = 0;
+      if(availableRows < destH) {
+        var d = _grid.getData();
+        for(addRows = 1; addRows <= destH - availableRows; addRows++)
+            d.push({});
+        _grid.setData(d);
+        _grid.render();
+      }
       var clipCommand = {
         isClipboardCommand: true,
         clippedRange: clippedRange,

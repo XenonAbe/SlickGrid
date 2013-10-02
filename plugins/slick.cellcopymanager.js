@@ -33,7 +33,7 @@
           }
         }
 
-		// Control+C
+        // Control+C
         if (e.which == 67 && (e.ctrlKey || e.metaKey)) {
           ranges = _grid.getSelectionModel().getSelectedRanges();
           if (ranges.length != 0) {
@@ -44,7 +44,7 @@
           }
         }
 
-		// Control+V
+        // Control+V
         if (e.which == 86 && (e.ctrlKey || e.metaKey)) {
           if (_copiedRanges) {
             e.preventDefault();
