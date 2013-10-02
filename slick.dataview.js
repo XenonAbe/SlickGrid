@@ -28,6 +28,7 @@
 
     var defaults = {
       groupItemMetadataProvider: null,
+      globalItemMetadataProvider: null,
       flattenGroupedRows: flattenGroupedRows, // function (groups, level, groupingInfos, filteredItems, options) { return all_rows_you_want_to_see[]; }
       inlineFilters: false,
       idProperty: "id"
@@ -375,6 +376,11 @@
         return null;
       }
 
+      // global override for all rows
+      if (options.globalItemMetadataProvider) {
+        return options.globalItemMetadataProvider.getRowMetadata(item, i, rows);
+      }
+
       // overrides for grouping rows
       if (item.__group) {
         return options.groupItemMetadataProvider.getGroupRowMetadata(item);
@@ -383,6 +389,11 @@
       // overrides for totals rows
       if (item.__groupTotals) {
         return options.groupItemMetadataProvider.getTotalsRowMetadata(item);
+      }
+
+      /* overrides for rows with items that supply a custom meta data provider*/
+      if (item.itemMetadataProvider) {
+        return item.itemMetadataProvider.getRowMetadata(item);
       }
 
       return null;
@@ -456,7 +467,7 @@
       return groups;
     }
 
-    function extractGroups(rows, parentGroup) {
+    function extractGroups(rows, parentGroup, allFilteredItems) {
       var group;
       var val;
       var groups = [];
@@ -464,6 +475,10 @@
       var r;
       var level = parentGroup ? parentGroup.level + 1 : 0;
       var gi = groupingInfos[level];
+
+      if (gi.getGroupRows) {
+        rows = gi.getGroupRows.call(self, gi, rows, allFilteredItems, level, parentGroup);
+      }
 
       for (var i = 0, l = gi.predefinedValues.length; i < l; i++) {
         val = gi.predefinedValues[i];
@@ -497,7 +512,7 @@
       if (level < groupingInfos.length - 1) {
         for (var i = 0; i < groups.length; i++) {
           group = groups[i];
-          group.groups = extractGroups(group.rows, group);
+          group.groups = extractGroups(group.rows, group, allFilteredItems);
         }
       }
 
@@ -794,7 +809,7 @@
 
       groups = [];
       if (groupingInfos.length) {
-        groups = extractGroups(newRows);
+        groups = extractGroups(newRows, null, filteredItems);
         if (groups.length) {
           calculateTotals(groups);
           finalizeGroups(groups);

@@ -676,9 +676,9 @@ if (typeof Slick === "undefined") {
     }
 
     function setupColumnReorder() {
-  	  if (!(jQuery.isEmptyObject($.data( $headers, $headers.sortable.prototype.widgetFullName ) ))){
+	  if (!(jQuery.isEmptyObject($.data( $headers, $headers.sortable.prototype.widgetFullName ) ))){
         $headers.filter(":ui-sortable").sortable("destroy");
-	    }
+	  }
       $headers.sortable({
         containment: "parent",
         distance: 3,
@@ -2180,7 +2180,7 @@ if (typeof Slick === "undefined") {
             execNextFlashPhase(times - 1);
           });
         }
-        
+
         function execNextFlashPhase(times) {
           if (times <= 0) {
             return;
