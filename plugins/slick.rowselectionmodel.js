@@ -32,12 +32,12 @@
           
       if (_options.dragToMultiSelect) {
         if (_grid.getOptions().multiSelect) {
-        _handler.subscribe(_grid.onDragInit, handleDragInit)
-          .subscribe(_grid.onDragStart, handleDragStart)
-          .subscribe(_grid.onDrag, handleDrag)
-          .subscribe(_grid.onDragEnd, handleDragEnd);
-        _dragging=false;
-        _canvas = _grid.getCanvasNode(); 
+          _handler.subscribe(_grid.onDragInit, handleDragInit)
+            .subscribe(_grid.onDragStart, handleDragStart)
+            .subscribe(_grid.onDrag, handleDrag)
+            .subscribe(_grid.onDragEnd, handleDragEnd);
+          _dragging = false;
+          _canvas = _grid.getCanvasNode(); 
         } else {
           console.log("Can't do drag to Multi Select unless multiSelect is enabled for the grid");
         }
@@ -90,23 +90,27 @@
     
     function unionArrays(x, y) {
       var obj = {};
-      for (var i = x.length-1; i >= 0; -- i)
+      for (var i = x.length - 1; i >= 0; i--) {
         obj[x[i]] = x[i];
-      for (var i = y.length-1; i >= 0; -- i)
+      }
+      for (var i = y.length - 1; i >= 0; i--) {
         obj[y[i]] = y[i];
+      }
       var res = [];
       for (var k in obj) {
-        if (obj.hasOwnProperty(k))
+        if (obj.hasOwnProperty(k)) {
           res.push(obj[k]);
+        }
       }
       return res;
     }
     
     function xorArrays(x, y) {
       var obj = {};
-      for (var i = x.length-1; i >= 0; -- i)
-       obj[x[i]] = x[i];
-      for (var i = y.length-1; i >= 0; -- i) {
+      for (var i = x.length - 1; i >= 0; i--) {
+        obj[x[i]] = x[i];
+      }
+      for (var i = y.length - 1; i >= 0; i--) {
         if(obj.hasOwnProperty(y[i])){
           delete obj[y[i]];
         } else {
@@ -115,8 +119,9 @@
       }
       var res = [];
       for (var k in obj) {
-        if (obj.hasOwnProperty(k))
+        if (obj.hasOwnProperty(k)) {
           res.push(obj[k]);
+        }
       }
       return res;
     }
