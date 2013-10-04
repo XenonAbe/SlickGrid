@@ -88,7 +88,7 @@
       return rows;
     }
     
-    function union_arrays(x, y) {
+    function unionArrays(x, y) {
       var obj = {};
       for (var i = x.length-1; i >= 0; -- i)
         obj[x[i]] = x[i];
@@ -102,7 +102,7 @@
       return res;
     }
     
-    function xor_arrays(x,y) {
+    function xorArrays(x, y) {
       var obj = {};
       for (var i = x.length-1; i >= 0; -- i)
        obj[x[i]] = x[i];
@@ -149,7 +149,7 @@
       if (activeRow && e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && (e.which == 38 || e.which == 40)) {
         var selectedRows = getSelectedRows();
         selectedRows.sort(function (x, y) {
-          return x - y
+          return x - y;
         });
 
         if (!selectedRows.length) {
@@ -271,11 +271,11 @@
       }
       _grid.setActiveCell(end.row, end.cell);
       dd.range.end = end;
-      var rows = getRowsRange(dd.range.start.row,dd.range.end.row);
+      var rows = getRowsRange(dd.range.start.row, dd.range.end.row);
       if (dd.combinationMode==='union') {
-        rows=union_arrays(rows,dd.alreadySelectedRows);
+        rows=unionArrays(rows, dd.alreadySelectedRows);
       } else if (dd.combinationMode==='xor') {
-        rows=xor_arrays(rows,dd.alreadySelectedRows);
+        rows=xorArrays(rows, dd.alreadySelectedRows);
       }
       
       _ranges = rowsToRanges(rows);
