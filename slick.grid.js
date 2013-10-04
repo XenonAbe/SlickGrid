@@ -322,6 +322,10 @@ if (typeof Slick === "undefined") {
             .delegate(".slick-cell", "mouseleave", handleMouseLeave);
       }
     }
+    
+    function isInitialized() {
+      return initialized;
+    }
 
     function registerPlugin(plugin) {
       plugins.unshift(plugin);
@@ -1711,8 +1715,10 @@ if (typeof Slick === "undefined") {
         if (cacheEntry.cellRenderQueue.length) {
           var lastChild = cacheEntry.rowNode.lastChild;
           while (cacheEntry.cellRenderQueue.length) {
-            var columnIdx = cacheEntry.cellRenderQueue.pop();
-            cacheEntry.cellNodesByColumnIdx[columnIdx] = lastChild;
+            if (lastChild.className.indexOf('slick-cell') >= 0) {
+              var columnIdx = cacheEntry.cellRenderQueue.pop();
+              cacheEntry.cellNodesByColumnIdx[columnIdx] = lastChild;
+            }
             lastChild = lastChild.previousSibling;
           }
         }
@@ -1882,9 +1888,12 @@ if (typeof Slick === "undefined") {
       var x = document.createElement("div");
       x.innerHTML = stringArray.join("");
 
+      var rowNodes = [];
       for (var i = 0, ii = rows.length; i < ii; i++) {
         rowsCache[rows[i]].rowNode = parentNode.appendChild(x.firstChild);
+        rowNodes.push(rowsCache[rows[i]]);
       }
+      trigger(self.onRowsRendered, { rows: rows, nodes: rowNodes }); 
 
       if (needToReselectCell) {
         activeCellNode = getCellNode(activeRow, activeCell);
@@ -3289,6 +3298,7 @@ if (typeof Slick === "undefined") {
       "onDragEnd": new Slick.Event(),
       "onSelectedRowsChanged": new Slick.Event(),
       "onCellCssStylesChanged": new Slick.Event(),
+      "onRowsRendered": new Slick.Event(),
 
       // Methods
       "registerPlugin": registerPlugin,
@@ -3312,6 +3322,7 @@ if (typeof Slick === "undefined") {
       "getSelectedRows": getSelectedRows,
       "setSelectedRows": setSelectedRows,
       "getContainerNode": getContainerNode,
+      "isInitialized": isInitialized,
 
       "render": render,
       "invalidate": invalidate,
