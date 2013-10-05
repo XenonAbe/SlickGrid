@@ -1462,13 +1462,27 @@ if (typeof Slick === "undefined") {
       var cellCss = "slick-cell l" + cell + " r" + Math.min(columns.length - 1, cell + colspan - 1) +
           (m.cssClass ? " " + m.cssClass : "");
       if (row === activeRow && cell === activeCell) {
-        cellCss += (" active");
+        cellCss += " active";
       }
 
       // TODO:  merge them together in the setter
       for (var key in cellCssClasses) {
         if (cellCssClasses[key][row] && cellCssClasses[key][row][m.id]) {
-          cellCss += (" " + cellCssClasses[key][row][m.id]);
+          cellCss += " " + cellCssClasses[key][row][m.id];
+        }
+      }
+
+      // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
+      var fmt = "";
+      if (item) {
+        var value = getDataItemValueForColumn(item, m);
+        // allow the formatter to edit the outer cell's DIV CSS as well:
+        // this requires the formatter to return an OBJECT instead of a STRING!
+        fmt = getFormatter(row, m)(row, cell, value, m, item, colspan, cellCss);
+        // OBJECT: { html, cellCss }
+        if (fmt.cellCss) {
+          cellCss = fmt.cellCss;
+          fmt = fmt.html;          
         }
       }
 
@@ -1476,11 +1490,7 @@ if (typeof Slick === "undefined") {
                        "' aria-describedby='" + uid + m.id +
                        "' tabindex='-1' role='gridcell'>");
 
-      // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
-      if (item) {
-        var value = getDataItemValueForColumn(item, m);
-        stringArray.push(getFormatter(row, m)(row, cell, value, m, item));
-      }
+      stringArray.push(fmt);
 
       stringArray.push("</div>");
 
