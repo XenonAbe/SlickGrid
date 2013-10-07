@@ -1482,7 +1482,7 @@ if (typeof Slick === "undefined") {
         // OBJECT: { html, cellCss }
         if (fmt.cellCss) {
           cellCss = fmt.cellCss;
-          fmt = fmt.html;          
+          fmt = fmt.html;
         }
       }
 
@@ -1649,7 +1649,7 @@ if (typeof Slick === "undefined") {
       // this helps avoid redundant calls to .removeRow() when the size of the data decreased by thousands of rows
       var l = dataLengthIncludingAddNew - 1;
       for (var i in rowsCache) {
-        if (i > l) {
+        if (i >= l) {
           removeRowFromCache(i);
         }
       }

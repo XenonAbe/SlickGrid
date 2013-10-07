@@ -158,7 +158,7 @@
     var scope = this;
 
     this.init = function () {
-      $input = $("<INPUT type=text class='editor-text' />");
+      $input = $("<INPUT type='text' class='editor-text' />");
 
       $input.bind("keydown.nav", function (e) {
         if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
