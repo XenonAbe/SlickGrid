@@ -334,6 +334,10 @@ if (typeof Slick === "undefined") {
       return !!stylesheet;
     }
 
+    function isInitialized() {
+      return initialized;
+    }
+
     function registerPlugin(plugin) {
       plugins.unshift(plugin);
       plugin.init(self);
@@ -689,10 +693,15 @@ if (typeof Slick === "undefined") {
         placeholder: "slick-sortable-placeholder ui-state-default slick-header-column",
         start: function (e, ui) {
           ui.placeholder.width(ui.helper.outerWidth() - headerColumnWidthDiff);
+          trigger(self.onColumnsStartReorder, {e: e, ui: ui});
+
           $(ui.helper).addClass("slick-header-column-active");
         },
         beforeStop: function (e, ui) {
           $(ui.helper).removeClass("slick-header-column-active");
+        },
+		sort: function(e, ui) {
+          trigger(self.onColumnsReordering, {e:e, ui:ui});
         },
         stop: function (e) {
           if (!getEditorLock().commitCurrentEdit()) {
@@ -794,7 +803,7 @@ if (typeof Slick === "undefined") {
               }
               maxPageX = pageX + Math.min(shrinkLeewayOnRight, stretchLeewayOnLeft);
               minPageX = pageX - Math.min(shrinkLeewayOnLeft, stretchLeewayOnRight);
-              trigger(self.onColumnsResizeStart, {});
+			  trigger(self.onColumnsStartResize, {}); // onColumnsResizeStart
             })
             .bind("drag", function (e, dd) {
               var actualMinWidth, d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX, x;
@@ -880,9 +889,68 @@ if (typeof Slick === "undefined") {
               updateCanvasWidth(true);
               render();
               trigger(self.onColumnsResized, {});
+            })
+			.bind("dblclick", function(e) {
+                var columnId = $($(this).parent()).attr('id').replace(uid,'');
+                for (var j = 0; j < columns.length; j++) {
+                    if (columns[j].id == columnId) {
+                        var aux_width = calculateWordDimensions(columnElements[i].children[0].innerHTML).width;
+                        if (columns[j].values != undefined && columns[j].values.length > 0) {
+                            for (var k = 0; k < columns[j].values.length; k++) {
+                                if (calculateWordDimensions(columns[j].values[k].Description.toString()).width > aux_width) {
+                                    aux_width = calculateWordDimensions(columns[j].values[k].Description.toString()).width;
+                                }
+                            }
+                        } else {
+                            var data_col = $.map(data instanceof Array ? data : data.getItems(),function(e) {
+                                return e[columnId];
+                            });
+                            for (var k = 0; k < data_col.length; k++) {
+                                if (calculateWordDimensions(data_col[k].toString()).width > aux_width) {
+                                    aux_width = calculateWordDimensions(data_col[k].toString()).width;
+                                }
+                            }
+                        }
+                        columns[j].width = aux_width;
+                        break;
+                    }
+                }
+                applyColumnHeaderWidths();
+                updateCanvasWidth(true);
+                render();
+                trigger(self.onColumnsResized, {});
             });
       });
     }
+
+	function calculateWordDimensions(text, escape) {
+        if (escape === undefined) {
+            escape = true;
+        }
+
+        var div = document.createElement('div');
+		$(div).css({'position':'absolute','visibility':'hidden',
+					'height':'auto','width':'auto',
+					'white-space':'nowrap','font-family':'Verdana, Arial, sans-serif',
+					'font-size':'13px','border':'1px solid transparent',
+					'padding':'1px 4px 2px'})
+        if (escape) {
+            $(div).text(text);
+        } else {
+            div.innerHTML = text;
+        }
+
+        document.body.appendChild(div);
+
+        var dimensions = {
+            width : jQuery(div).outerWidth() + 30,
+            height : jQuery(div).outerHeight()
+        };
+
+        div.parentNode.removeChild(div);
+
+        return dimensions;
+	}
 
     function getVBoxDelta($el) {
       var p = ["borderTopWidth", "borderBottomWidth", "paddingTop", "paddingBottom"];
@@ -1755,8 +1823,10 @@ if (typeof Slick === "undefined") {
         if (cacheEntry.cellRenderQueue.length) {
           var lastChild = cacheEntry.rowNode.lastChild;
           while (cacheEntry.cellRenderQueue.length) {
-            var columnIdx = cacheEntry.cellRenderQueue.pop();
-            cacheEntry.cellNodesByColumnIdx[columnIdx] = lastChild;
+            if (lastChild.className.indexOf('slick-cell') >= 0) {
+              var columnIdx = cacheEntry.cellRenderQueue.pop();
+              cacheEntry.cellNodesByColumnIdx[columnIdx] = lastChild;
+            }
             lastChild = lastChild.previousSibling;
           }
         }
@@ -1926,9 +1996,12 @@ if (typeof Slick === "undefined") {
       var x = document.createElement("div");
       x.innerHTML = stringArray.join("");
 
+      var rowNodes = [];
       for (var i = 0, ii = rows.length; i < ii; i++) {
         rowsCache[rows[i]].rowNode = parentNode.appendChild(x.firstChild);
+        rowNodes.push(rowsCache[rows[i]]);
       }
+      trigger(self.onRowsRendered, { rows: rows, nodes: rowNodes });
 
       if (needToReselectCell) {
         activeCellNode = getCellNode(activeRow, activeCell);
@@ -3269,10 +3342,20 @@ if (typeof Slick === "undefined") {
                 execute: function () {
                   this.editor.applyValue(item, this.serializedValue);
                   updateRow(this.row);
+                  trigger(self.onCellChange, {
+                    row: activeRow,
+                    cell: activeCell,
+                    item: item
+                  });
                 },
                 undo: function () {
                   this.editor.applyValue(item, this.prevSerializedValue);
                   updateRow(this.row);
+                  trigger(self.onCellChange, {
+                    row: activeRow,
+                    cell: activeCell,
+                    item: item
+                  });
                 }
               };
 
@@ -3404,8 +3487,11 @@ if (typeof Slick === "undefined") {
       "onAddNewRow": new Slick.Event(),
       "onValidationError": new Slick.Event(),
       "onViewportChanged": new Slick.Event(),
+	  "onColumnsStartReorder": new Slick.Event(),
+      "onColumnsReordering": new Slick.Event(),
       "onColumnsReordered": new Slick.Event(),
-      "onColumnsResizeStart": new Slick.Event(),
+	  "onColumnsStartResize": new Slick.Event(), // onColumnsResizeStart
+	  "onColumnsResizing": new Slick.Event(),
       "onColumnsResized": new Slick.Event(),
       "onCellChange": new Slick.Event(),
       "onBeforeEditCell": new Slick.Event(),
@@ -3419,6 +3505,7 @@ if (typeof Slick === "undefined") {
       "onDragEnd": new Slick.Event(),
       "onSelectedRowsChanged": new Slick.Event(),
       "onCellCssStylesChanged": new Slick.Event(),
+      "onRowsRendered": new Slick.Event(),
 
       // Methods
       "registerPlugin": registerPlugin,
@@ -3442,6 +3529,7 @@ if (typeof Slick === "undefined") {
       "getSelectedRows": getSelectedRows,
       "setSelectedRows": setSelectedRows,
       "getContainerNode": getContainerNode,
+      "isInitialized": isInitialized,
 
       "render": render,
       "invalidate": invalidate,
