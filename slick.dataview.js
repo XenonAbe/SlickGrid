@@ -5,9 +5,12 @@
         DataView: DataView,
         Aggregators: {
           Avg: AvgAggregator,
+          Mde: MdeAggregator,
+          Mdn: MdnAggregator,
           Min: MinAggregator,
           Max: MaxAggregator,
-          Sum: SumAggregator
+          Sum: SumAggregator,
+          Std: StdAggregator
         }
       }
     }
@@ -25,12 +28,16 @@
 
     var defaults = {
       groupItemMetadataProvider: null,
-      inlineFilters: false
+      globalItemMetadataProvider: null,
+      flattenGroupedRows: flattenGroupedRows, // function (groups, level, groupingInfos, filteredItems, options) { return all_rows_you_want_to_see[]; }
+      inlineFilters: false,
+      idProperty: "id"
     };
 
+    options = $.extend(true, {}, defaults, options);
 
     // private
-    var idProperty = "id";  // property holding a unique row id
+    var idProperty = options.idProperty;  // property holding a unique row id
     var items = [];         // data by index
     var rows = [];          // data by row
     var idxById = {};       // indexes by id
@@ -75,9 +82,6 @@
     var onRowCountChanged = new Slick.Event();
     var onRowsChanged = new Slick.Event();
     var onPagingInfoChanged = new Slick.Event();
-
-    options = $.extend(true, {}, defaults, options);
-
 
     function beginUpdate() {
       suspend = true;
@@ -372,6 +376,11 @@
         return null;
       }
 
+      // global override for all rows
+      if (options.globalItemMetadataProvider) {
+        return options.globalItemMetadataProvider.getRowMetadata(item, i, rows);
+      }
+
       // overrides for grouping rows
       if (item.__group) {
         return options.groupItemMetadataProvider.getGroupRowMetadata(item);
@@ -380,6 +389,11 @@
       // overrides for totals rows
       if (item.__groupTotals) {
         return options.groupItemMetadataProvider.getTotalsRowMetadata(item);
+      }
+
+      /* overrides for rows with items that supply a custom meta data provider*/
+      if (item.itemMetadataProvider) {
+        return item.itemMetadataProvider.getRowMetadata(item);
       }
 
       return null;
@@ -453,7 +467,7 @@
       return groups;
     }
 
-    function extractGroups(rows, parentGroup) {
+    function extractGroups(rows, parentGroup, allFilteredItems) {
       var group;
       var val;
       var groups = [];
@@ -461,6 +475,10 @@
       var r;
       var level = parentGroup ? parentGroup.level + 1 : 0;
       var gi = groupingInfos[level];
+
+      if (gi.getGroupRows) {
+        rows = gi.getGroupRows.call(self, gi, rows, allFilteredItems, level, parentGroup);
+      }
 
       for (var i = 0, l = gi.predefinedValues.length; i < l; i++) {
         val = gi.predefinedValues[i];
@@ -494,9 +512,9 @@
       if (level < groupingInfos.length - 1) {
         for (var i = 0; i < groups.length; i++) {
           group = groups[i];
-          group.groups = extractGroups(group.rows, group);
+          group.groups = extractGroups(group.rows, group, allFilteredItems);
         }
-      }      
+      }
 
       groups.sort(groupingInfos[level].comparer);
 
@@ -512,7 +530,7 @@
       var agg, idx = gi.aggregators.length;
       while (idx--) {
         agg = gi.aggregators[idx];
-        agg.init();
+        agg.init(gi, group, totals);
         gi.compiledAccumulators[idx].call(agg,
             (!isLeafLevel && gi.aggregateChildGroups) ? group.groups : group.rows);
         agg.storeResult(totals);
@@ -565,8 +583,8 @@
       }
     }
 
-    function flattenGroupedRows(groups, level) {
-      level = level || 0;
+    function flattenGroupedRows(groups, level, groupingInfos, filteredItems, options) {
+      //level = level || 0;
       var gi = groupingInfos[level];
       var groupedRows = [], rows, gl = 0, g;
       for (var i = 0, l = groups.length; i < l; i++) {
@@ -574,7 +592,7 @@
         groupedRows[gl++] = g;
 
         if (!g.collapsed) {
-          rows = g.groups ? flattenGroupedRows(g.groups, level + 1) : g.rows;
+          rows = g.groups ? options.flattenGroupedRows(g.groups, level + 1, groupingInfos, filteredItems, options) : g.rows;
           for (var j = 0, jj = rows.length; j < jj; j++) {
             groupedRows[gl++] = rows[j];
           }
@@ -791,11 +809,11 @@
 
       groups = [];
       if (groupingInfos.length) {
-        groups = extractGroups(newRows);
+        groups = extractGroups(newRows, null, filteredItems);
         if (groups.length) {
           calculateTotals(groups);
           finalizeGroups(groups);
-          newRows = flattenGroupedRows(groups);
+          newRows = options.flattenGroupedRows(groups, 0, groupingInfos, filteredItems, options);
         }
       }
 
@@ -971,7 +989,7 @@
     this.accumulate = function (item) {
       var val = item[this.field_];
       this.count_++;
-      if (val != null && val !== "" && val !== NaN) {
+      if (val != null && val !== "" && isFinite(val)) {
         this.nonNullCount_++;
         this.sum_ += parseFloat(val);
       }
@@ -996,7 +1014,7 @@
 
     this.accumulate = function (item) {
       var val = item[this.field_];
-      if (val != null && val !== "" && val !== NaN) {
+      if (val != null && val !== "" && isFinite(val)) {
         if (this.min_ == null || val < this.min_) {
           this.min_ = val;
         }
@@ -1020,7 +1038,7 @@
 
     this.accumulate = function (item) {
       var val = item[this.field_];
-      if (val != null && val !== "" && val !== NaN) {
+      if (val != null && val !== "" && isFinite(val)) {
         if (this.max_ == null || val > this.max_) {
           this.max_ = val;
         }
@@ -1044,7 +1062,7 @@
 
     this.accumulate = function (item) {
       var val = item[this.field_];
-      if (val != null && val !== "" && val !== NaN) {
+      if (val != null && val !== "" && isFinite(val)) {
         this.sum_ += parseFloat(val);
       }
     };
@@ -1055,6 +1073,112 @@
       }
       groupTotals.sum[this.field_] = this.sum_;
     }
+  }
+
+  function MdeAggregator(field) {
+    this.field_ = field;
+
+    this.init = function () {
+      this.pairs_ = [];
+    };
+
+    this.accumulate = function (item) {
+      var val = item[this.field_];
+      var found = false;
+      if (val != null && val !== "" && val !== NaN) {
+        for (var i = 0; i < this.pairs_.length; i++) {
+          if (this.pairs_[i].value == val) {
+            this.pairs_[i].count++;
+            found = true;
+            break;
+          }
+        }
+        if (!found) this.pairs_.push({value: val, count: 1});
+      }
+    };
+
+    this.storeResult = function (groupTotals) {
+      if (!groupTotals.mde) {
+        groupTotals.mde = {};
+      }
+      var maxCountI = 0;
+      for (var i = 0; i < this.pairs_.length; i++) {
+        if ((this.pairs_[i].count > this.pairs_[maxCountI].count) || ((this.pairs_[i].count === this.pairs_[maxCountI].count) && (this.pairs_[i].value < this.pairs_[maxCountI].value))) {
+          maxCountI = i;
+        }
+      }
+      if (typeof this.pairs_[maxCountI] !== "undefined") {
+        groupTotals.mde[this.field_] = this.pairs_[maxCountI].value;
+      }
+    };
+  }
+
+  function MdnAggregator(field) {
+    this.field_ = field;
+
+    this.init = function () {
+      this.sorted_ = [];
+    };
+
+    this.accumulate = function (item) {
+      var val = item[this.field_];
+      var spliced = false;
+      if (val != null && val !== "" && val !== NaN) {
+        for (var i = 0; i < this.sorted_.length; i++) {
+          if (val < this.sorted_[i]) {
+            this.sorted_.splice(i,0,val);
+            spliced = true;
+            break;
+          }
+        }
+        if (!spliced) this.sorted_.push(val);
+      }
+    };
+
+    this.storeResult = function (groupTotals) {
+      if (!groupTotals.mdn) {
+        groupTotals.mdn = {};
+      }
+      var n = this.sorted_.length;
+      if (n%2 == 1) {
+        groupTotals.mdn[this.field_] = this.sorted_[(n-1)/2];
+      } else {
+        var i = n/2;
+        groupTotals.mdn[this.field_] = 0.5*(this.sorted_[i]+this.sorted_[i-1]);
+      }
+    };
+  }
+
+  function StdAggregator(field) {
+    this.field_ = field;
+
+    this.init = function () {
+      this.nonNullCount_ = 0;
+      this.Mk_ = null;
+      this.Qk_ = 0;
+    };
+
+    this.accumulate = function (item) {
+      var val = item[this.field_];
+      if (val != null && val !== "" && val !== NaN) {
+        this.nonNullCount_++;
+        if (this.Mk_ != null) {
+          this.Qk_ = this.Qk_+(this.nonNullCount_-1)*Math.pow((val-this.Mk_),2)/this.nonNullCount_;
+          this.Mk_ = this.Mk_+(val-this.Mk_)/this.nonNullCount_;
+        } else {
+          this.Mk_ = val;
+        }
+      }
+    };
+
+    this.storeResult = function (groupTotals) {
+      if (!groupTotals.std) {
+        groupTotals.std = {};
+      }
+      if (this.nonNullCount_ != 0) {
+        groupTotals.std[this.field_] = Math.sqrt(this.Qk_/this.nonNullCount_);
+      }
+    };
   }
 
   // TODO:  add more built-in aggregators

@@ -19,7 +19,9 @@
    */
   function CellRangeDecorator(grid, options) {
     var _elem;
+    var _elem_range;
     var _defaults = {
+      borderThickness: 2,
       selectionCssClass: 'slick-range-decorator',
       selectionCss: {
         "zIndex": "9999",
@@ -29,6 +31,27 @@
 
     options = $.extend(true, {}, _defaults, options);
 
+    function calcRangeBox(range) {
+      if (!range) {
+        return null;
+      }
+      var from = grid.getCellNodeBox(range.fromRow, range.fromCell);
+      var to = grid.getCellNodeBox(range.toRow, range.toCell);
+
+      // prevent JS crash when trying to decorate header cells, as those would
+      // produce from/to == null as .fromRow/.toRow would be < 0:
+      if (from && to) {
+        return {
+          top: from.top,
+          left: from.left,
+          height: to.bottom - from.top - 2 * options.borderThickness,
+          width: to.right - from.left - 2 * options.borderThickness - 1
+        };
+      } else {
+        // TBD
+        return null;
+      }
+    }
 
     function show(range) {
       if (!_elem) {
@@ -37,16 +60,27 @@
             .css("position", "absolute")
             .appendTo(grid.getCanvasNode());
       }
+      if (!range) {
+        range = _elem_range;
+      } else {
+        // remember our input range (clone!)
+        _elem_range = {
+          fromRow: range.fromRow,
+          fromCell: range.fromCell,
+          toRow: range.toRow,
+          toCell: range.toCell
+        };
+      }
 
-      var from = grid.getCellNodeBox(range.fromRow, range.fromCell);
-      var to = grid.getCellNodeBox(range.toRow, range.toCell);
-
-      _elem.css({
-        top: from.top - 1,
-        left: from.left - 1,
-        height: to.bottom - from.top - 2,
-        width: to.right - from.left - 2
-      });
+      var box;
+      if (range) {
+        box = calcRangeBox(range);
+      }
+      if (box) {
+        _elem.css(box);
+      } else {
+        // TBD
+      }
 
       return _elem;
     }
@@ -58,9 +92,18 @@
       }
     }
 
+    function getInfo() {
+      return {
+        el: _elem,
+        range: _elem_range,
+        gridRect: calcRangeBox(_elem_range)
+      };
+    }
+
     $.extend(this, {
       "show": show,
-      "hide": hide
+      "hide": hide,
+      "getInfo": getInfo
     });
   }
 })(jQuery);

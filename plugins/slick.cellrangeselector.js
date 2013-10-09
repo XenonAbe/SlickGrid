@@ -61,6 +61,7 @@
           dd.startY - $(_canvas).offset().top);
 
       dd.range = {start: start, end: {}};
+      dd.currentCell = cell;
 
       return _decorator.show(new Slick.Range(start.row, start.cell));
     }
@@ -75,12 +76,18 @@
           e.pageX - $(_canvas).offset().left,
           e.pageY - $(_canvas).offset().top);
 
-      if (!_grid.canCellBeSelected(end.row, end.cell)) {
+      var eventData = {
+          range: dd.range,
+          currentCell: end
+      };
+      if (_self.onCellRangeSelectionOngoing.notify(eventData) ||
+          !eventData.currentCell ||
+          !_grid.canCellBeSelected(eventData.currentCell.row, eventData.currentCell.cell)) {
         return;
       }
 
-      dd.range.end = end;
-      _decorator.show(new Slick.Range(dd.range.start.row, dd.range.start.cell, end.row, end.cell));
+      dd.range.end = eventData.currentCell;
+      _decorator.show(new Slick.Range(dd.range.start.row, dd.range.start.cell, dd.range.end.row, dd.range.end.cell));
     }
 
     function handleDragEnd(e, dd) {
@@ -107,6 +114,7 @@
       "destroy": destroy,
 
       "onBeforeCellRangeSelected": new Slick.Event(),
+      "onCellRangeSelectionOngoing": new Slick.Event(),
       "onCellRangeSelected": new Slick.Event()
     });
   }
