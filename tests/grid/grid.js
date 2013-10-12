@@ -61,9 +61,9 @@
     equal(cols[0].width, oldWidth+100-1, "columns array is updated");
   });
   
-test("onColumnsResizeStart is fired on column resize", function() {
+test("onColumnsStartResize is fired on column resize", function() {
     expect(2);
-    grid.onColumnsResizeStart = function() { ok(true,"onColumnsResizeStart called"); };
+    grid.onColumnsStartResize = function() { ok(true,"onColumnsStartResize called"); };
     var oldWidth = cols[0].width;
     $("#container .slick-resizable-handle:first").simulate("drag", {dx:100,dy:0});
     equal(cols[0].width, oldWidth+100-1, "columns array is updated");
