@@ -40,7 +40,7 @@
       var selectableRowCount = 0;
       var lookup = {}, row, i, rowSelectable;
       for (i = 0; i < _grid.getDataLength(); i++) {
-        rowSelectable = data.getItemMetadata(i).selectable != false;
+        rowSelectable = isRowSelectable(data, i);
         if (rowSelectable) {
           selectableRowCount += 1;
         }
@@ -96,13 +96,12 @@
     }
 
     function toggleRowSelection(row) {
-      var data = _grid.getData(),
-          rowSelectable = data.getItemMetadata(row).selectable != false;
+      var data = _grid.getData();
       if (_selectedRowsLookup[row]) {
         _grid.setSelectedRows($.grep(_grid.getSelectedRows(), function (n) {
-          return n != row
+          return n != row;
         }));
-      } else if (rowSelectable) {
+      } else if (isRowSelectable(data, row)) {
         _grid.setSelectedRows(_grid.getSelectedRows().concat(row));
       }
     }
@@ -121,7 +120,7 @@
               data = _grid.getData(),
               rowSelectable;
           for (var i = 0; i < _grid.getDataLength(); i++) {
-            rowSelectable = data.getItemMetadata(i).selectable != false;
+            rowSelectable = isRowSelectable(data, i);
             if (rowSelectable) {
               rows.push(i);
             }
@@ -156,6 +155,15 @@
             : "<input type='checkbox'>";
       }
       return null;
+    }
+
+    function isRowSelectable(data, row) {
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
+      if (rowMetadata) {
+        return rowMetadata.selectable;
+      }
+      // when your data[] is not a DataView (or at least does not provide the getItemMetaData API method) then assume answer 'YES' for this question
+      return true;
     }
 
     $.extend(this, {
