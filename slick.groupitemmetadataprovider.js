@@ -111,7 +111,7 @@
       }
     }
 
-    function getGroupRowMetadata(item) {
+    function getGroupRowMetadata(item, row, cell, rows) {
       return {
         selectable: options.groupSelectable,
         focusable: options.groupFocusable,
@@ -126,7 +126,7 @@
       };
     }
 
-    function getTotalsRowMetadata(item) {
+    function getTotalsRowMetadata(item, row, cell, rows) {
       return {
         selectable: false,
         focusable: options.totalsFocusable,

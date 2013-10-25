@@ -40,8 +40,8 @@
     var self = this;
 
     var defaults = {
-      groupItemMetadataProvider: null,
-      globalItemMetadataProvider: null,
+      groupItemMetadataProvider: null,        // { getGroupRowMetadata: function(rowData, row, cell /* may be FALSE */, dataRows) , getTotalsRowMetadata: function(rowData, row, cell /* may be FALSE */, dataRows) }
+      globalItemMetadataProvider: null,       // { getRowMetadata: function(rowData, row, cell /* may be FALSE */, dataRows) }
       flattenGroupedRows: flattenGroupedRows, // function (groups, level, groupingInfos, filteredItems, options) { return all_rows_you_want_to_see[]; }
       showExpandedGroupRows: true,
       inlineFilters: false,
@@ -391,21 +391,21 @@
       }
 
       // global override for all rows
-      if (options.globalItemMetadataProvider) {
+      if (options.globalItemMetadataProvider && options.globalItemMetadataProvider.getRowMetadata) {
         return options.globalItemMetadataProvider.getRowMetadata(item, row, cell, rows);
       }
 
       // overrides for grouping rows
-      if (item.__group) {
+      if (item.__group && options.groupItemMetadataProvider && options.groupItemMetadataProvider.getGroupRowMetadata) {
         return options.groupItemMetadataProvider.getGroupRowMetadata(item, row, cell, rows);
       }
 
       // overrides for totals rows
-      if (item.__groupTotals) {
+      if (item.__groupTotals && options.groupItemMetadataProvider && options.groupItemMetadataProvider.getTotalsRowMetadata) {
         return options.groupItemMetadataProvider.getTotalsRowMetadata(item, row, cell, rows);
       }
 
-      /* overrides for rows with items that supply a custom meta data provider*/
+      /* overrides for rows with items that supply a custom meta data provider */
       if (item.itemMetadataProvider && item.itemMetadataProvider.getRowMetadata) {
         return item.itemMetadataProvider.getRowMetadata(item, row, cell, rows);
       }
