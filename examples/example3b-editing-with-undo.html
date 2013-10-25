@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
 
-
   <style>
     .cell-title {
       font-weight: bold;
@@ -25,7 +24,9 @@
   </div>
 
   <div class="options-panel">
-    <h2>Demonstrates:</h2>
+    <h2>About</h2>
+    This example shows SlickGrid editing with undo / redo.
+    <h2>Demonstrates</h2>
     <ul>
       <li>Using "editCommandHandler" option to intercept edit commands and implement undo support</li>
     </ul>
@@ -34,10 +35,10 @@
     <button onclick="undo()"><img src="../images/arrow_undo.png" align="absmiddle"> Undo</button>
 
     <h2>View Source:</h2>
-    <ul>
-      <li id="viewsource">View Source Code</li>
-      <div id="displaycode"></div>
-    </ul>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
+      </ul>
   </div>
 </div>
 
@@ -51,10 +52,11 @@
 <script src="../slick.formatters.js"></script>
 <script src="../slick.editors.js"></script>
 <script src="../slick.grid.js"></script>
+
 <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
 <script src="examples.showcode.js"></script>
 
-<script  id="script_tag_example">
+<script id="script_tag_example" type="text/javascript">
   function requiredFieldValidator(value) {
     if (value == null || value == undefined || !value.length) {
       return {valid: false, msg: "This is a required field"};

@@ -93,12 +93,19 @@
         <li>You can paste the tabular data into Excel</li>
     </ul>
 
-    <h2>Undo/redo support :</h2>
+    <h2>Undo/redo support:</h2>
     <ul>
       <li>Use buttons to undo/redo copy/paste</li>
     </ul>
     <button onclick="undoRedoBuffer.undo()"><img src="../images/arrow_undo.png" align="absmiddle"> Undo</button>
     <button onclick="undoRedoBuffer.redo()"><img src="../images/arrow_redo.png" align="absmiddle"> Redo</button>
+
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
+      </ul>
   </div>
 </div>
 
@@ -118,7 +125,10 @@
 <script src="../slick.formatters.js"></script>
 <script src="../slick.grid.js"></script>
 
-<script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
   var grid;
   var grid2;
   var data = [];
@@ -241,7 +251,7 @@
     grid2.setSelectionModel(new Slick.CellSelectionModel());
     
     grid2.registerPlugin(new Slick.CellExternalCopyManager(pluginOptions));
-  })
+  });
 </script>
 </body>
 </html>

@@ -5,7 +5,6 @@
   <title>SlickGrid example 3a: Advanced Editing</title>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
-  <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
@@ -14,14 +13,15 @@
   </style>
 </head>
 <body>
-
 <div style="position:relative">
   <div style="width:600px;">
     <div id="myGrid" style="width:100%;height:500px;"></div>
   </div>
 
   <div class="options-panel">
-    <h2>Demonstrates:</h2>
+    <h2>About</h2>
+    This example shows how to use the SlickGrid (compound) cell editors.
+    <h2>Demonstrates</h2>
     <ul>
       <li>compound cell editors driving multiple fields from one cell</li>
       <li>providing validation from the editor</li>
@@ -29,10 +29,10 @@
     </ul>
 
     <h2>View Source:</h2>
-    <ul>
-      <li id="viewsource">View Source Code</li>
-	 <div id="displaycode"></div>
-    </ul>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
+      </ul>
   </div>
 </div>
 
@@ -45,9 +45,11 @@
 <script src="../slick.core.js"></script>
 <script src="../slick.editors.js"></script>
 <script src="../slick.grid.js"></script>
+
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
 <script src="examples.showcode.js"></script>
 
-<script id="script_tag_example">
+<script id="script_tag_example" type="text/javascript">
   var grid;
   var data = [];
   var columns = [

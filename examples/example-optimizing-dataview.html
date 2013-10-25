@@ -48,11 +48,13 @@
     </div>
     <br/>
 
+    <h2>Demonstrates</h2>
     <p>
       This page demonstrates various techniques for optimizing DataView performance
       for large client-side datasets. This page displays an interactive grid with
       500'000 rows with real-time filtering.<br/>
       This is achieved by:
+    </p>
     <ul>
       <li>Inlining filter function to cut down on the cost of function calls.</li>
       <li>Providing hints to indicate whether a filtering operation will result in
@@ -60,8 +62,9 @@
       </li>
       <li>Providing a range of rows for which onRowsChanged even should be fired.</li>
     </ul>
-    </p>
-      <h2>View Source:</h2>
+
+
+    <h2>View Source:</h2>
       <ul>
           <li id="viewsource">View Source Code</li>
           <div id="displaycode"></div>
@@ -69,6 +72,7 @@
   </div>
 </div>
 
+<script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui.js"></script>
@@ -83,7 +87,7 @@
 <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
 <script src="examples.showcode.js"></script>
 
-<script id="script_tag_example">
+<script id="script_tag_example" type="text/javascript">
   var dataView;
   var grid;
   var data = [];
@@ -180,7 +184,7 @@
     dataView.setFilter(myFilter);
     dataView.setFilterArgs(0);
     dataView.endUpdate();
-  })
+  });
 </script>
 </body>
 </html>
