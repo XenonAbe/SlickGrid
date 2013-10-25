@@ -21,6 +21,7 @@
     var _elem;
     var _elem_range;
     var _defaults = {
+      selectionCssClass: 'slick-range-decorator',
       borderThickness: 2,
       selectionCss: {
         "zIndex": "9999",
@@ -55,6 +56,7 @@
     function show(range) {
       if (!_elem) {
         _elem = $("<div></div>", {css: options.selectionCss})
+            .addClass(options.selectionCssClass)
             .css("position", "absolute")
             .appendTo(grid.getCanvasNode());
       }
