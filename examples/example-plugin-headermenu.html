@@ -56,19 +56,24 @@
     </p>
       <h2>View Source:</h2>
       <ul>
-          <li><A href="https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example-plugin-headermenu.html" target="_sourcewindow"> View the source for this example on Github</a></li>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
       </ul>
   </div>
 </div>
 
-<script src="../lib/jquery-1.7.min.js"></script>
-<script src="../lib/jquery.event.drag-2.2.js"></script>
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-ui.js"></script>
+<script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
 <script src="../plugins/slick.headermenu.js"></script>
 
-<script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example">
   var grid;
   var columns = [
     {id: "title", name: "Title", field: "title"},
