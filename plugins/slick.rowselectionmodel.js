@@ -111,7 +111,7 @@
         obj[x[i]] = x[i];
       }
       for (var i = y.length - 1; i >= 0; i--) {
-        if(obj.hasOwnProperty(y[i])){
+        if (obj.hasOwnProperty(y[i])) {
           delete obj[y[i]];
         } else {
           obj[y[i]] = y[i];
@@ -246,19 +246,20 @@
 
       var start = _grid.getCellFromPoint(
           dd.startX - $(_canvas).offset().left,
-          dd.startY - $(_canvas).offset().top);
+          dd.startY - $(_canvas).offset().top
+	  );
 
-      var combinationMode='replace';
+      var combinationMode = 'replace';
       if (e.shiftKey) {
-        combinationMode='union';
+        combinationMode = 'union';
       }
       if (e.ctrlKey || e.metaKey) {
-        combinationMode='xor';
+        combinationMode = 'xor';
       }
 
       dd.range = {start: start, end: {}};
-      dd.alreadySelectedRows=rangesToRows(_ranges);
-      dd.combinationMode=combinationMode;
+      dd.alreadySelectedRows = rangesToRows(_ranges);
+      dd.combinationMode = combinationMode;
     }
 
     function handleDrag(e, dd) {
@@ -277,10 +278,10 @@
       _grid.setActiveCell(end.row, end.cell);
       dd.range.end = end;
       var rows = getRowsRange(dd.range.start.row, dd.range.end.row);
-      if (dd.combinationMode==='union') {
-        rows=unionArrays(rows, dd.alreadySelectedRows);
-      } else if (dd.combinationMode==='xor') {
-        rows=xorArrays(rows, dd.alreadySelectedRows);
+      if (dd.combinationMode === 'union') {
+        rows = unionArrays(rows, dd.alreadySelectedRows);
+      } else if (dd.combinationMode === 'xor') {
+        rows = xorArrays(rows, dd.alreadySelectedRows);
       }
 
       _ranges = rowsToRanges(rows);
