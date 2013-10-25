@@ -1545,6 +1545,7 @@ if (typeof Slick === "undefined") {
     }
 
     function getFormatter(row, cell) {
+      var column = columns[cell];
       var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
 
       // look up by id, then index
