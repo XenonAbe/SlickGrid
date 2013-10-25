@@ -384,30 +384,30 @@
       return rows[i];
     }
 
-    function getItemMetadata(i) {
-      var item = rows[i];
+    function getItemMetadata(row, cell) {
+      var item = rows[row];
       if (item === undefined) {
         return null;
       }
 
       // global override for all rows
       if (options.globalItemMetadataProvider) {
-        return options.globalItemMetadataProvider.getRowMetadata(item, i, rows);
+        return options.globalItemMetadataProvider.getRowMetadata(item, row, cell, rows);
       }
 
       // overrides for grouping rows
       if (item.__group) {
-        return options.groupItemMetadataProvider.getGroupRowMetadata(item);
+        return options.groupItemMetadataProvider.getGroupRowMetadata(item, row, cell, rows);
       }
 
       // overrides for totals rows
       if (item.__groupTotals) {
-        return options.groupItemMetadataProvider.getTotalsRowMetadata(item);
+        return options.groupItemMetadataProvider.getTotalsRowMetadata(item, row, cell, rows);
       }
 
       /* overrides for rows with items that supply a custom meta data provider*/
-      if (item.itemMetadataProvider) {
-        return item.itemMetadataProvider.getRowMetadata(item);
+      if (item.itemMetadataProvider && item.itemMetadataProvider.getRowMetadata) {
+        return item.itemMetadataProvider.getRowMetadata(item, row, cell, rows);
       }
 
       return null;

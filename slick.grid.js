@@ -62,11 +62,16 @@ if (typeof Slick === "undefined") {
    *    {Object} implementing the data-access functions:
    *      getLength()         Returns the number of data items (analogous to data.length)
    *      getItem(i)          Returns the ith data item (analogous to data[i])
-   *      getItemMetadata(i)  Returns the metadata for the ith row
+   *      getItemMetadata(row, cell)
+   *                          Returns the metadata for the given row index.
+   *                          `cell` may be FALSE or an index number of the cell currently
+   *                          receiving attention -- this is handy when the metadata is
+   *                          generated on the fly and the grid is very large/complex,
+   *                          i.e. it is costly to cache all row/column metadata.
    *    Slick.DataView is an example of an Object which provides this API. It is essentially
    *    a wrapper around an {Array} of data items which provides additional data manipulation
    *    features, such as filtering and sorting.
-   *      
+   *
    *  columns: Array of objects which specify details about the columns
    *      id:                 {String}    A unique ID for the column
    *      name:               {String}    The name of the column, displayed in column header cell
@@ -78,7 +83,7 @@ if (typeof Slick === "undefined") {
    *      formatter:          {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowItem)
    *      editor:             {Function}  The constructor function for the class to use for editing
    *      validator:          {Function}  A function to be called when validating user-entered values
-   *      cannotTriggerInsert:{Boolean}   
+   *      cannotTriggerInsert:{Boolean}
    *      resizable:          {Boolean}   Whether this column can be resized
    *      selectable:         {Boolean}   Whether this column can be selected
    *      sortable:           {Boolean}   Whether the grid rows can be sorted by this column
@@ -103,7 +108,7 @@ if (typeof Slick === "undefined") {
    *                          {Boolean}   Should text selection be allowed in cells?
    *      forceFitColumns:    {Boolean}   Should column widths be automatically resized to fit?
    *      syncColumnCellResize:{Boolean}  Should the grid width be changed dynamically during a drag
-   *                                      to change column widths, or only once the mouse is released? 
+   *                                      to change column widths, or only once the mouse is released?
    *      dataItemColumnValueExtractor(item, columnDef):
    *                          {Function}  If present, will be called to retrieve a data value from the
    *                                      specified item for the corresponding column.
@@ -112,11 +117,11 @@ if (typeof Slick === "undefined") {
    *                                      to retrieve a formatter for the specified cell
    *      selectedCellCssClass:{Object?}  (?)Object used to specify CSS class for selected cells
    *      cellFlashingCssClass:{Object?}  (?)Object used to specify CSS class for flashing cells
-   *      enableAsyncPostRender:{Boolean} 
+   *      enableAsyncPostRender:{Boolean}
    *      asyncPostRenderDelay:{Number}   Delay passed to setTimeout in milliseconds
    *      editable:           {Boolean}   Is editing table cells supported?
    *      autoEdit:           {Boolean}   (?)Should editing be initiated automatically on click in cell?
-   *      editorFactory:      {Object}    If present, its getEditor(column) method will be called 
+   *      editorFactory:      {Object}    If present, its getEditor(column) method will be called
    *                                      to retrieve an editor for the specified cell,
    *                                      unless column.editor is specified, which will be used.
    *      editorLock:
@@ -498,7 +503,7 @@ if (typeof Slick === "undefined") {
 
       // see https://github.com/mleibman/SlickGrid/issues/477
       viewportHasHScroll = (canvasWidth > viewportW - scrollbarDimensions.width);
-      
+
       if (canvasWidth != oldCanvasWidth) {
         $canvas.width(canvasWidth);
         $headerRow.width(canvasWidth);
@@ -1539,13 +1544,13 @@ if (typeof Slick === "undefined") {
       }
     }
 
-    function getFormatter(row, column) {
-      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
+    function getFormatter(row, cell) {
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
 
       // look up by id, then index
       var columnOverrides = rowMetadata &&
           rowMetadata.columns &&
-          (rowMetadata.columns[column.id] || rowMetadata.columns[getColumnIndex(column.id)]);
+          (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
 
       return (columnOverrides && columnOverrides.formatter) ||
           (rowMetadata && rowMetadata.formatter) ||
@@ -1556,7 +1561,7 @@ if (typeof Slick === "undefined") {
 
     function getEditor(row, cell) {
       var column = columns[cell];
-      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
       var columnMetadata = rowMetadata && rowMetadata.columns;
 
       if (columnMetadata && columnMetadata[column.id] && columnMetadata[column.id].editor !== undefined) {
@@ -1584,7 +1589,7 @@ if (typeof Slick === "undefined") {
           (row === activeRow ? " active" : "") +
           (row % 2 == 1 ? " odd" : " even");
 
-      var metadata = data.getItemMetadata && data.getItemMetadata(row, d);
+      var metadata = data.getItemMetadata && data.getItemMetadata(row, false);
 
       if (metadata && metadata.cssClasses) {
         rowCss += " " + metadata.cssClasses;
@@ -1643,7 +1648,7 @@ if (typeof Slick === "undefined") {
         var value = getDataItemValueForColumn(item, m);
         // allow the formatter to edit the outer cell's DIV CSS as well:
         // this requires the formatter to return an OBJECT instead of a STRING!
-        fmt = getFormatter(row, m)(row, cell, value, m, item, colspan, cellCss);
+        fmt = getFormatter(row, cell)(row, cell, value, m, item, colspan, cellCss);
         // OBJECT: { html, cellCss }
         if (fmt.cellCss) {
           cellCss = fmt.cellCss;
@@ -1729,7 +1734,7 @@ if (typeof Slick === "undefined") {
       if (currentEditor && activeRow === row && activeCell === cell) {
         currentEditor.loadValue(d);
       } else {
-        cellNode.innerHTML = d ? getFormatter(row, m)(row, cell, getDataItemValueForColumn(d, m), m, d) : "";
+        cellNode.innerHTML = d ? getFormatter(row, cell)(row, cell, getDataItemValueForColumn(d, m), m, d) : "";
         invalidatePostProcessingResults(row);
       }
     }
@@ -1756,7 +1761,7 @@ if (typeof Slick === "undefined") {
         if (row === activeRow && columnIdx === activeCell && currentEditor) {
           currentEditor.loadValue(d);
         } else if (d) {
-          node.innerHTML = getFormatter(row, m)(row, columnIdx, getDataItemValueForColumn(d, m), m, d);
+          node.innerHTML = getFormatter(row, columnIdx)(row, columnIdx, getDataItemValueForColumn(d, m), m, d);
         } else {
           node.innerHTML = "";
         }
@@ -1784,7 +1789,7 @@ if (typeof Slick === "undefined") {
           contentHeight = canvasHeight + (hasHScroll ? scrollbarDimensions.height : 0);
       return { width: contentWidth, height: contentHeight };
     }
-    
+
     // Returns the size of the visible area, i.e. between the scroll bars
     function getVisibleSize() {
       var width = $viewport.width(),
@@ -2011,7 +2016,7 @@ if (typeof Slick === "undefined") {
         // Render missing cells.
         cellsAdded = 0;
 
-        var metadata = data.getItemMetadata && data.getItemMetadata(row);
+        var metadata = data.getItemMetadata && data.getItemMetadata(row, false);
         metadata = metadata && metadata.columns;
 
         var d = getDataItem(row);
@@ -2450,7 +2455,7 @@ if (typeof Slick === "undefined") {
     function handleHeaderDragEnd(e, dd) {
       trigger(self.onHeaderDragEnd, dd, e);
     }
-    
+
     function handleDragInit(e, dd) {
       var cell = getCellFromEvent(e);
       if (!cell || !cellExists(cell.row, cell.cell)) {
@@ -2855,7 +2860,7 @@ if (typeof Slick === "undefined") {
         $(activeCellNode).removeClass("editable invalid");
         if (d) {
           var column = columns[activeCell];
-          var formatter = getFormatter(activeRow, column);
+          var formatter = getFormatter(activeRow, activeCell);
           activeCellNode.innerHTML = formatter(activeRow, activeCell, getDataItemValueForColumn(d, column), column, d);
           invalidatePostProcessingResults(activeRow);
         }
@@ -3129,7 +3134,7 @@ if (typeof Slick === "undefined") {
     }
 
     function getColspan(row, cell) {
-      var metadata = data.getItemMetadata && data.getItemMetadata(row);
+      var metadata = data.getItemMetadata && data.getItemMetadata(row, cell);
       if (!metadata || !metadata.columns) {
         return 1;
       }
@@ -3430,20 +3435,21 @@ if (typeof Slick === "undefined") {
     function canCellBeActive(row, cell) {
       // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
       if (options.enableCellNavigation && row < getDataLengthIncludingAddNew() && row >= 0 && cell < columns.length && cell >= 0) {
-        var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
+        var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
         if (rowMetadata && typeof rowMetadata.focusable === "boolean") {
           return rowMetadata.focusable;
         }
 
+        var column = columns[cell];
         var columnMetadata = rowMetadata && rowMetadata.columns;
-        if (columnMetadata && columnMetadata[columns[cell].id] && typeof columnMetadata[columns[cell].id].focusable === "boolean") {
-          return columnMetadata[columns[cell].id].focusable;
+        if (columnMetadata && columnMetadata[column.id] && typeof columnMetadata[column.id].focusable === "boolean") {
+          return columnMetadata[column.id].focusable;
         }
         if (columnMetadata && columnMetadata[cell] && typeof columnMetadata[cell].focusable === "boolean") {
           return columnMetadata[cell].focusable;
         }
 
-        return columns[cell].focusable;
+        return column.focusable;
       }
       return false;
     }
@@ -3451,17 +3457,18 @@ if (typeof Slick === "undefined") {
     function canCellBeSelected(row, cell) {
       // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
       if (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0) {
-        var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
+        var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
         if (rowMetadata && typeof rowMetadata.selectable === "boolean") {
           return rowMetadata.selectable;
         }
 
-        var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[columns[cell].id] || rowMetadata.columns[cell]);
+        var column = columns[cell];
+        var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
         if (columnMetadata && typeof columnMetadata.selectable === "boolean") {
           return columnMetadata.selectable;
         }
 
-        return columns[cell].selectable;
+        return column.selectable;
       }
       return false;
     }

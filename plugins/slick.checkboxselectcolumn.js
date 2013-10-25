@@ -158,7 +158,7 @@
     }
 
     function isRowSelectable(data, row) {
-      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row);
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, false);
       if (rowMetadata) {
         return rowMetadata.selectable;
       }
