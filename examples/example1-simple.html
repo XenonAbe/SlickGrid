@@ -6,8 +6,6 @@
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
-
-  <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
 </head>
 <body>
 <table width="100%">
@@ -20,29 +18,21 @@
       <ul>
         <li>basic grid with minimal configuration</li>
       </ul>
-
-
-      <h2>Source Code:</h2>
-      <ul>
-        <li id="viewsource">View Source for this Example</li>
-      </ul>
-	  <div id="displaycode" >
-
-      </div>	
+        <h2>View Source:</h2>
+        <ul>
+            <li><A href="https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example1-simple.html" target="_sourcewindow"> View the source for this example on Github</a></li>
+        </ul>
     </td>
-
-
   </tr>
-   
 </table>
 
-<script src="../lib/jquery.js"></script>
-<script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/jquery-1.7.min.js"></script>
+<script src="../lib/jquery.event.drag-2.2.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
 
-<script id="script_tag_example" type="text/javascript">
+<script>
   var grid;
   var columns = [
     {id: "title", name: "Title", field: "title"},
@@ -55,8 +45,7 @@
 
   var options = {
     enableCellNavigation: true,
-    enableColumnReorder: false,
-    enableTextSelectionOnCells: true
+    enableColumnReorder: false
   };
 
   $(function () {
@@ -74,15 +63,6 @@
 
     grid = new Slick.Grid("#myGrid", data, columns, options);
   })
-</script>
-<script>
-	$('#viewsource').on('click',function(){
-      var scripthtml = $('#script_tag_example').html();
-	  var pretag = $('#displaycode');
-      pretag.html('<pre class=class="prettyprint language-js"><code class="prettyprint">' + scripthtml + '</code></pre>');
-	  $('.prettyprinted').removeClass('prettyprinted');
-	  PR.prettyPrint();
-      });
 </script>
 </body>
 </html>

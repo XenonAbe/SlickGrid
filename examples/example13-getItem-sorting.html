@@ -6,7 +6,6 @@
   <title>SlickGrid example 13: Indexed Sorting using Functional Data Provider</title>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
-  <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
   <style>
     html, body {
       margin: 0;
@@ -31,7 +30,7 @@
       position: fixed;
       top: 30px;
       right: 30px;
-      width: 40em;
+      width: 25em;
       background-color: beige;
       border: solid 1px gray;
       z-index: 1000;
@@ -50,22 +49,18 @@
     <li>Sorting grid items by an index</li>
     <li>Using the getItem method to provide data</li>
   </ul>
-
-      <h2>Source Code:</h2>
-      <ul>
-        <li id="viewsource">View Source for this Example</li>
-      </ul>
-	  <div id="displaycode" ></div>
+    <h2>View Source:</h2>
+    <ul>
+        <li><A href="https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example13-getItem-sorting.html" target="_sourcewindow"> View the source for this example on Github</a></li>
+    </ul>
 </div>
 
-<script src="../lib/jquery.js"></script>
-<script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/jquery-1.7.min.js"></script>
+<script src="../lib/jquery.event.drag-2.2.js"></script>
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
-<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
-<script src="examples.showcode.js"></script>
 
-<script id="script_tag_example">
+<script>
   var grid,
       data = [],
       columns = [
@@ -126,7 +121,5 @@
     grid.render();
   });
 </script>
-
-
 </body>
 </html>
