@@ -28,6 +28,7 @@
       groupCssClass: "slick-group",
       groupTitleCssClass: "slick-group-title",
       totalsCssClass: "slick-group-totals",
+      groupSelectable: false,
       groupFocusable: true,
       totalsFocusable: false,
       toggleCssClass: "slick-group-toggle",
@@ -112,7 +113,7 @@
 
     function getGroupRowMetadata(item) {
       return {
-        selectable: false,
+        selectable: options.groupSelectable,
         focusable: options.groupFocusable,
         cssClasses: options.groupCssClass,
         columns: {

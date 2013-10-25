@@ -22,6 +22,19 @@
    * Provides a filtered view of the underlying data.
    *
    * Relies on the data item having an "id" property uniquely identifying it.
+   *
+   *  @param  {Object}      options
+   *          {Slick.Data.GroupItemMetadataProvider}
+   *                        .groupItemMetadataProvider      Grouping helper
+   *          {Boolean}     .inlineFilters                  True if the filter expression should
+   *                                                        be "inlined" internally for performance.
+   *                                                        Inlining should lead to better performance,
+   *                                                        but may not work in some circumstances.
+   *          {Boolean}     .showExpandedGroupRows [KCPT]   If true, group header rows are shown
+   *                                                        for expanded groups as well as
+   *                                                        collapsed groups. If false, group
+   *                                                        header rows are shown only for
+   *                                                        collapsed groups.
    */
   function DataView(options) {
     var self = this;
@@ -30,6 +43,7 @@
       groupItemMetadataProvider: null,
       globalItemMetadataProvider: null,
       flattenGroupedRows: flattenGroupedRows, // function (groups, level, groupingInfos, filteredItems, options) { return all_rows_you_want_to_see[]; }
+      showExpandedGroupRows: true,
       inlineFilters: false,
       idProperty: "id"
     };
@@ -433,6 +447,27 @@
 
     /**
      * @param varArgs Either a Slick.Group's "groupingKey" property, or a
+     *     variable argument list of grouping values denoting a unique path to the row.
+     *     For example, calling isGroupCollapsed('high', '10%') will return whether the
+     *     collapse the '10%' subgroup of the 'high' setGrouping is collapsed.
+     */
+    function isGroupCollapsed(groupingValue) {
+      var args = Array.prototype.slice.call(arguments);
+      var arg0 = args[0];
+      var level;
+      var groupingKey;
+      if (args.length == 1 && arg0.indexOf(groupingDelimiter) != -1) {
+        level = arg0.split(groupingDelimiter).length - 1;
+        groupingKey = arg0;
+      } else {
+        level = args.length - 1;
+        groupingKey = args.join(groupingDelimiter);
+      }
+      return toggledGroupsByLevel[level][groupingKey];
+    }
+    
+    /**
+     * @param varArgs Either a Slick.Group's "groupingKey" property, or a
      *     variable argument list of grouping values denoting a unique path to the row.  For
      *     example, calling collapseGroup('high', '10%') will collapse the '10%' subgroup of
      *     the 'high' setGrouping.
@@ -589,7 +624,9 @@
       var groupedRows = [], rows, gl = 0, g;
       for (var i = 0, l = groups.length; i < l; i++) {
         g = groups[i];
-        groupedRows[gl++] = g;
+                
+        if (options.showExpandedGroupRows || g.collapsed)
+          groupedRows[gl++] = g;
 
         if (!g.collapsed) {
           rows = g.groups ? options.flattenGroupedRows(g.groups, level + 1, groupingInfos, filteredItems, options) : g.rows;
@@ -946,6 +983,7 @@
       "setAggregators": setAggregators,
       "collapseAllGroups": collapseAllGroups,
       "expandAllGroups": expandAllGroups,
+      "isGroupCollapsed": isGroupCollapsed,
       "collapseGroup": collapseGroup,
       "expandGroup": expandGroup,
       "getGroups": getGroups,
