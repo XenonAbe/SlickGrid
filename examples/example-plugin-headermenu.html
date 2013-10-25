@@ -56,7 +56,8 @@
     </p>
       <h2>View Source:</h2>
       <ul>
-          <li><A href="https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example-plugin-headermenu.html" target="_sourcewindow"> View the source for this example on Github</a></li>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
       </ul>
   </div>
 </div>
@@ -69,7 +70,10 @@
 <script src="../slick.grid.js"></script>
 <script src="../plugins/slick.headermenu.js"></script>
 
-<script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example">
   var grid;
   var columns = [
     {id: "title", name: "Title", field: "title"},

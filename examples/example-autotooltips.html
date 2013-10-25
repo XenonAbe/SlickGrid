@@ -25,9 +25,10 @@
 grid.registerPlugin(plugin);
 grid.render();</pre>
 
-        <h2>View Source:</h2>
+      <h2>View Source:</h2>
         <ul>
-            <li><A href="https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example-autotooltips.html" target="_sourcewindow"> View the source for this example on Github</a></li>
+            <li id="viewsource">View Source Code</li>
+            <div id="displaycode"></div>
         </ul>
     </td>
   </tr>
@@ -40,7 +41,10 @@ grid.render();</pre>
 <script src="../slick.grid.js"></script>
 <script src="../plugins/slick.autotooltips.js"></script>
 
-<script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example">
   var grid;
   var columns = [
     {id: "title", name: "Title", field: "title"},
