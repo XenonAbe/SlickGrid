@@ -101,7 +101,7 @@ if (typeof Slick === "undefined") {
    *      leaveSpaceForNewRows:{Boolean}  Should space be left for a new/data entry row at bottom?
    *      showTopPanel:       {Boolean}   Should the top panel be shown?
    *      topPanelHeight:     {Number}    Height of the top panel in pixels
-   *      showHeaderRow:      {Boolean}   Should the header row be shown?
+   *      showHeaderRow:      {Boolean}   Should the extra header row be shown?
    *      headerRowHeight:    {Number}    Height of the header row in pixels
    *      enableCellNavigation:{Boolean}  Should arrow keys navigate between cells?
    *      enableTextSelectionOnCells:
@@ -586,10 +586,10 @@ if (typeof Slick === "undefined") {
       var $header = $headers.children().eq(idx);
       if ($header) {
         if (title !== undefined) {
-          columns[idx].name = title;
+          columnDef.name = title;
         }
         if (toolTip !== undefined) {
-          columns[idx].toolTip = toolTip;
+          columnDef.toolTip = toolTip;
         }
 
         trigger(self.onBeforeHeaderCellDestroy, {
@@ -1027,26 +1027,26 @@ if (typeof Slick === "undefined") {
 
 	function calculateWordDimensions(text, escape) {
         if (escape === undefined) {
-            escape = true;
+          escape = true;
         }
 
         var div = document.createElement('div');
-		$(div).css({'position':'absolute','visibility':'hidden',
+		  $(div).css({'position':'absolute','visibility':'hidden',
 					'height':'auto','width':'auto',
 					'white-space':'nowrap','font-family':'Verdana, Arial, sans-serif',
 					'font-size':'13px','border':'1px solid transparent',
 					'padding':'1px 4px 2px'})
         if (escape) {
-            $(div).text(text);
+          $(div).text(text);
         } else {
-            div.innerHTML = text;
+          div.innerHTML = text;
         }
 
         document.body.appendChild(div);
 
         var dimensions = {
-            width : jQuery(div).outerWidth() + 30,
-            height : jQuery(div).outerHeight()
+          width: jQuery(div).outerWidth() + 30,
+          height: jQuery(div).outerHeight()
         };
 
         div.parentNode.removeChild(div);
@@ -1565,6 +1565,7 @@ if (typeof Slick === "undefined") {
       var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
       var columnMetadata = rowMetadata && rowMetadata.columns;
 
+      // look up by id, then index
       if (columnMetadata && columnMetadata[column.id] && columnMetadata[column.id].editor !== undefined) {
         return columnMetadata[column.id].editor;
       }
@@ -1603,6 +1604,7 @@ if (typeof Slick === "undefined") {
         m = columns[i];
         colspan = 1;
         if (metadata && metadata.columns) {
+          // look up by id, then index
           var columnData = metadata.columns[m.id] || metadata.columns[i];
           colspan = (columnData && columnData.colspan) || 1;
           if (colspan === "*") {
@@ -2037,6 +2039,7 @@ if (typeof Slick === "undefined") {
 
           colspan = 1;
           if (metadata) {
+            // look up by id, then index
             var columnData = metadata[columns[i].id] || metadata[i];
             colspan = (columnData && columnData.colspan) || 1;
             if (colspan === "*") {
@@ -3140,6 +3143,7 @@ if (typeof Slick === "undefined") {
         return 1;
       }
 
+      // look up by id, then index
       var columnData = metadata.columns[columns[cell].id] || metadata.columns[cell];
       var colspan = (columnData && columnData.colspan);
       if (colspan === "*") {
@@ -3443,6 +3447,7 @@ if (typeof Slick === "undefined") {
 
         var column = columns[cell];
         var columnMetadata = rowMetadata && rowMetadata.columns;
+        // look up by id, then index
         if (columnMetadata && columnMetadata[column.id] && typeof columnMetadata[column.id].focusable === "boolean") {
           return columnMetadata[column.id].focusable;
         }
@@ -3464,6 +3469,7 @@ if (typeof Slick === "undefined") {
         }
 
         var column = columns[cell];
+        // look up by id, then index
         var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
         if (columnMetadata && typeof columnMetadata.selectable === "boolean") {
           return columnMetadata.selectable;
