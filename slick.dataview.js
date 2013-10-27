@@ -465,7 +465,7 @@
       }
       return toggledGroupsByLevel[level][groupingKey];
     }
-    
+
     /**
      * @param varArgs Either a Slick.Group's "groupingKey" property, or a
      *     variable argument list of grouping values denoting a unique path to the row.  For
@@ -624,7 +624,7 @@
       var groupedRows = [], rows, gl = 0, g;
       for (var i = 0, l = groups.length; i < l; i++) {
         g = groups[i];
-                
+
         if (options.showExpandedGroupRows || g.collapsed)
           groupedRows[gl++] = g;
 

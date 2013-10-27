@@ -792,7 +792,7 @@ if (typeof Slick === "undefined") {
         beforeStop: function (e, ui) {
           $(ui.helper).removeClass("slick-header-column-active");
         },
-		sort: function(e, ui) {
+        sort: function(e, ui) {
           trigger(self.onColumnsReordering, {e:e, ui:ui});
         },
         stop: function (e) {
@@ -904,7 +904,7 @@ if (typeof Slick === "undefined") {
               }
               maxPageX = pageX + Math.min(shrinkLeewayOnRight, stretchLeewayOnLeft);
               minPageX = pageX - Math.min(shrinkLeewayOnLeft, stretchLeewayOnRight);
-			  trigger(self.onColumnsStartResize, {}); // onColumnsResizeStart
+              trigger(self.onColumnsStartResize, {}); // onColumnsResizeStart
             })
             .bind("drag touchmove", function (e, dd) {
               var actualMinWidth, d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX, x;
@@ -992,7 +992,7 @@ if (typeof Slick === "undefined") {
               render();
               trigger(self.onColumnsResized, {});
             })
-			.bind("dblclick", function(e) {
+            .bind("dblclick", function(e) {
                 var columnId = $($(this).parent()).attr('id').replace(uid,'');
                 for (var j = 0; j < columns.length; j++) {
                     if (columns[j].id == columnId) {
@@ -1025,17 +1025,17 @@ if (typeof Slick === "undefined") {
       });
     }
 
-	function calculateWordDimensions(text, escape) {
+    function calculateWordDimensions(text, escape) {
         if (escape === undefined) {
           escape = true;
         }
 
         var div = document.createElement('div');
-		  $(div).css({'position':'absolute','visibility':'hidden',
-					'height':'auto','width':'auto',
-					'white-space':'nowrap','font-family':'Verdana, Arial, sans-serif',
-					'font-size':'13px','border':'1px solid transparent',
-					'padding':'1px 4px 2px'})
+        $(div).css({'position':'absolute','visibility':'hidden',
+                    'height':'auto','width':'auto',
+                    'white-space':'nowrap','font-family':'Verdana, Arial, sans-serif',
+                    'font-size':'13px','border':'1px solid transparent',
+                    'padding':'1px 4px 2px'});
         if (escape) {
           $(div).text(text);
         } else {
@@ -1052,7 +1052,7 @@ if (typeof Slick === "undefined") {
         div.parentNode.removeChild(div);
 
         return dimensions;
-	}
+    }
 
     function getVBoxDelta($el) {
       var p = ["borderTopWidth", "borderBottomWidth", "paddingTop", "paddingBottom"];
@@ -3672,11 +3672,11 @@ if (typeof Slick === "undefined") {
       "onValidationError": new Slick.Event(),
       "onCanvasWidthChanged": new Slick.Event(),
       "onViewportChanged": new Slick.Event(),
-	  "onColumnsStartReorder": new Slick.Event(),
+      "onColumnsStartReorder": new Slick.Event(),
       "onColumnsReordering": new Slick.Event(),
       "onColumnsReordered": new Slick.Event(),
-	  "onColumnsStartResize": new Slick.Event(), // onColumnsResizeStart
-	  "onColumnsResizing": new Slick.Event(),
+      "onColumnsStartResize": new Slick.Event(), // onColumnsResizeStart
+      "onColumnsResizing": new Slick.Event(),
       "onColumnsResized": new Slick.Event(),
       "onCellChange": new Slick.Event(),
       "onBeforeEditCell": new Slick.Event(),

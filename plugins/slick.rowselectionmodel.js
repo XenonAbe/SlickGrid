@@ -247,7 +247,7 @@
       var start = _grid.getCellFromPoint(
           dd.startX - $(_canvas).offset().left,
           dd.startY - $(_canvas).offset().top
-	  );
+      );
 
       var combinationMode = 'replace';
       if (e.shiftKey) {
