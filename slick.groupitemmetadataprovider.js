@@ -28,12 +28,15 @@
       groupCssClass: "slick-group",
       groupTitleCssClass: "slick-group-title",
       totalsCssClass: "slick-group-totals",
+      groupSelectable: false,
       groupFocusable: true,
       totalsFocusable: false,
       toggleCssClass: "slick-group-toggle",
       toggleExpandedCssClass: "expanded",
       toggleCollapsedCssClass: "collapsed",
-      enableExpandCollapse: true
+      enableExpandCollapse: true,
+      groupFormatter: defaultGroupCellFormatter,
+      totalsFormatter: defaultTotalsCellFormatter
     };
 
     options = $.extend(true, {}, _defaults, options);
@@ -108,44 +111,44 @@
       }
     }
 
-        function getRowMetadata(item) {
-            if (options.getRowMetadata) {
-                return options.getRowMetadata(item);
-            }
-
-            return null;
-        }
-
-    function getGroupRowMetadata(item) {
+    function getGroupRowMetadata(item, row, cell, rows) {
       return {
-        selectable: false,
+        selectable: options.groupSelectable,
         focusable: options.groupFocusable,
         cssClasses: options.groupCssClass,
         columns: {
           0: {
             colspan: "*",
-            formatter: defaultGroupCellFormatter,
+            formatter: options.groupFormatter,
             editor: null
           }
         }
       };
     }
 
-    function getTotalsRowMetadata(item) {
+    function getTotalsRowMetadata(item, row, cell, rows) {
       return {
         selectable: false,
         focusable: options.totalsFocusable,
         cssClasses: options.totalsCssClass,
-        formatter: defaultTotalsCellFormatter,
+        formatter: options.totalsFormatter,
         editor: null
       };
+    }
+
+    function getRowMetadata(item) {
+      if (options.getRowMetadata) {
+        return options.getRowMetadata(item);
+      }
+
+      return null;
     }
 
 
     return {
       "init": init,
       "destroy": destroy,
-            "getRowMetadata":       getRowMetadata,
+      "getRowMetadata": getRowMetadata,
       "getGroupRowMetadata": getGroupRowMetadata,
       "getTotalsRowMetadata": getTotalsRowMetadata
     };

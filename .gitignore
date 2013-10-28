@@ -8,3 +8,7 @@
 .idea
 
 /*.user
+
+# Editor backup files
+*~
+*.bak
