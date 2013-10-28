@@ -279,7 +279,7 @@ if (typeof Slick === "undefined") {
     var nestedColumns = null;
 
     var isFixedColumnsRendered = false;
-    var fixedColumnCellCount = 0;
+    var fixedColumnRowCount = 0;
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Initialization
@@ -359,7 +359,13 @@ if (typeof Slick === "undefined") {
         $headerRowScroller.hide();
       }
 
-      $viewport = $("<div class='slick-viewport' style='width:100%;overflow:auto;outline:0;position:relative;;'>").appendTo($container);
+      if (options.fixedColumn) {
+        $fixedColumnPanel = $('<div class="slick-fixed-panel"></div>');
+        $fixedColumn = $('<div class="slick-fixed-column ' + uid + '_slick-fixed-column"></div>').appendTo($fixedColumnPanel);
+        $fixedColumnPanel.appendTo($container);
+      }
+
+      $viewport = $("<div class='slick-viewport' style='width:100%;overflow:auto;outline:0;position:relative;'>").appendTo($container);
       $viewport.css("overflow-y", options.autoHeight ? "hidden" : "auto");
 
       $canvas = $("<div class='grid-canvas' />").appendTo($viewport);
@@ -2083,7 +2089,7 @@ if (typeof Slick === "undefined") {
         }
       }
 
-      for (row = Math.min(invalidateFrom, invalidateTopFrom) ; row <= invalidateTo; row++) {
+      for (row = Math.min(invalidateFrom, invalidateTopFrom); row <= invalidateTo; row++) {
         if (row >= invalidateTopFrom) {
           delete rowPositionCache[row].top;
         }
@@ -2634,13 +2640,11 @@ if (typeof Slick === "undefined") {
       }
 
       if (vScrollDist) {
-
         // scroll fixed columns with content
         if (isFixedColumnsRendered) {
-          $fixedColumn[0].style.marginTop = -scrollTop + 'px';
-          /*$fixedColumn.css({
-            'margin-top': -scrollTop
-          });*/
+          $fixedColumn.css({
+            'top': -scrollTop
+          });
         }
 
         vScrollDir = prevScrollTop < scrollTop ? 1 : -1;
@@ -2849,37 +2853,29 @@ if (typeof Slick === "undefined") {
 
     function clearFixedColumn(fromRow) {
       if ($fixedColumn) {
-        if (!(fromRow >= 0)) { fromRow = 0; }
-        if (fromRow === 0) {
+        if (fromRow == 0) {
           $fixedColumn.empty();
         } else {
-          var i = fixedColumnCellCount;
+          var i = fixedColumnRowCount;
           var column = $fixedColumn[0];
           while (--i >= fromRow) {
             column.removeChild(column.lastChild);
           }
         }
-        fixedColumnCellCount = fromRow;
+        fixedColumnRowCount = fromRow;
       }
     }
 
     function renderFixedColumns() {
       if (options.fixedColumn && !isFixedColumnsRendered) {
-        if ($fixedColumnPanel) {
-          $fixedColumn.empty();
-        } else {
-          $fixedColumnPanel = $('<div class="slick-fixed-panel"></div>');
-          $fixedColumn = $('<div class="slick-fixed-column ' + uid + '_slick-fixed-column"></div>');
-          $fixedColumnPanel.append($fixedColumn);
-          $container.parent().append($fixedColumnPanel, $container);
-        }
+        $fixedColumn.empty();
 
-        //  append columns
+        // append columns
         appendFixedColumns();
 
-        //  set default position, alignment with 'viewport' by top
+        // set default position, alignment with 'viewport' by top
         $fixedColumnPanel.css({
-          'margin-top': $viewport[0].offsetTop - 1,
+          'top': $viewport[0].offsetTop - 1,
           'height': $viewport[0].clientHeight
         });
 
@@ -2894,7 +2890,7 @@ if (typeof Slick === "undefined") {
 
       if (field && $fixedColumn) {
         var formatter = fixedColumnDef.formatter || defaultFormatter;
-        var rowCount = fixedColumnCellCount;
+        var rowCount = fixedColumnRowCount;
         var index;
 
         // determine upper row index to render fixed column cell for
@@ -2905,19 +2901,25 @@ if (typeof Slick === "undefined") {
           }
         }
 
-        if (rowCount > fixedColumnCellCount) {
+        if (rowCount > fixedColumnRowCount) {
           var html = [];
+          var value;
 
-          for (var r = fixedColumnCellCount; r < rowCount; r++) {
+          for (var r = fixedColumnRowCount; r < rowCount; r++) {
             rowData = getDataItem(r);
-            content = formatter(r, -1, rowData && rowData[field] || '', fixedColumnDef, rowData);
+            if (rowData) {
+              value = rowData[field];
+            } else {
+              value = '';
+            }
+            content = formatter(r, -1, value, fixedColumnDef, rowData);
             html.push('<div class="slick-fixed-cell ' + (r % 2 != 0 ? 'alt' : 'even') + '" style="height:' +
                 (getRowHeight(r) - cellMetrics.borderBottomWidth) +
                 'px"><div class="slick-fixed-content">' + content + '</div></div>');
           }
 
           $fixedColumn.append(html.join(''));
-          fixedColumnCellCount = rowCount;
+          fixedColumnRowCount = rowCount;
         }
       }
     }

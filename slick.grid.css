@@ -183,15 +183,13 @@ classes should alter those!
   border-top: 1px solid #C0C0C0;
   border-right: 1px solid transparent;
   background-color: white;
-  float:left;
   overflow:hidden;
   margin-right:-1px;
-  z-index:1;
-  position:relative;
+  position:absolute;
+  left: 0px;
 }
 
 .slick-fixed-column {
-  clear: both;
 }
 
 .slick-fixed-cell {
@@ -211,4 +209,5 @@ classes should alter those!
   padding-top: 5px;
   margin-left: 5px;
 }
+
 /*  Fixed panel and columns styles END  */
