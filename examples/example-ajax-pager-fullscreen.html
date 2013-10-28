@@ -30,32 +30,32 @@
       padding-left: 0.5em;
     }
 
-	#container {
-	  height: 100%;
-	  width: 100%;
-	}
+    #container {
+      height: 100%;
+      width: 100%;
+    }
 
-	#grid	{
-	  width: 100%;
-	  border: 1px solid gray;
-	}
-    
+    #grid   {
+      width: 100%;
+      border: 1px solid gray;
+    }
+
   </style>
 </head>
 <body>
 <div id="container">
-	<div id="header" class="grid-header" style="width:100%">
-	  <label>StackOverflow questions</label>
+    <div id="header" class="grid-header" style="width:100%">
+      <label>StackOverflow questions</label>
     <span style="float:right" class="ui-icon ui-icon-search" title="Search" onclick="getData()"></span>
-	  <span style="float:right;display:inline-block;">
-			Tagged:
-			<input type="text" id="txtSearch" value="slickgrid">
+      <span style="float:right;display:inline-block;">
+            Tagged:
+            <input type="text" id="txtSearch" value="slickgrid">
     </span>
-	</div>
-	
-	<div id="grid"></div>
-	
-	<div id="pager"></div>	 
+    </div>
+
+    <div id="grid"></div>
+
+    <div id="pager"></div>
 </div>
 
 <div id="description">
@@ -110,14 +110,14 @@ $(document).ready(function () {
   grid.resizeCanvas();
 
   $(".grid-header .ui-icon")
-	  .addClass("ui-state-default ui-corner-all")
-	  .mouseover(function (e) {
-	    $(e.target).addClass("ui-state-hover")
-	  })
-	  .mouseout(function (e) {
-	    $(e.target).removeClass("ui-state-hover")
-	  });
-  
+      .addClass("ui-state-default ui-corner-all")
+      .mouseover(function (e) {
+        $(e.target).addClass("ui-state-hover")
+      })
+      .mouseout(function (e) {
+        $(e.target).removeClass("ui-state-hover")
+      });
+
   dataView.onRowCountChanged.subscribe(function (e, args) {
     grid.updateRowCount();
     grid.render();
@@ -127,7 +127,7 @@ $(document).ready(function () {
     grid.invalidateRows(args.rows);
     grid.render();
   });
-  
+
   getData();
 });
 
@@ -137,7 +137,7 @@ function getData() {
   $.get(URL + $("#txtSearch").val(), function(data) {
     dataView.beginUpdate();
     dataView.setItems(data.items);
-    dataView.endUpdate();    
+    dataView.endUpdate();
   }, "jsonp");
 }
 </script>

@@ -29,7 +29,7 @@
           wrapHandler(handleKeyDown));
       _handler.subscribe(_grid.onClick,
           wrapHandler(handleClick));
-          
+
       if (_options.dragToMultiSelect) {
         if (_grid.getOptions().multiSelect) {
           _handler.subscribe(_grid.onDragInit, handleDragInit)
@@ -37,7 +37,7 @@
             .subscribe(_grid.onDrag, handleDrag)
             .subscribe(_grid.onDragEnd, handleDragEnd);
           _dragging = false;
-          _canvas = _grid.getCanvasNode(); 
+          _canvas = _grid.getCanvasNode();
         } else {
           console.log("Can't do drag to Multi Select unless multiSelect is enabled for the grid");
         }
@@ -87,7 +87,7 @@
       }
       return rows;
     }
-    
+
     function unionArrays(x, y) {
       var obj = {};
       for (var i = x.length - 1; i >= 0; i--) {
@@ -104,7 +104,7 @@
       }
       return res;
     }
-    
+
     function xorArrays(x, y) {
       var obj = {};
       for (var i = x.length - 1; i >= 0; i--) {
@@ -224,7 +224,7 @@
 
       return true;
     }
-    
+
     function handleDragInit(e, dd) {
       // prevent the grid from cancelling drag'n'drop by default
       e.stopImmediatePropagation();
@@ -247,7 +247,7 @@
       var start = _grid.getCellFromPoint(
           dd.startX - $(_canvas).offset().left,
           dd.startY - $(_canvas).offset().top);
-      
+
       var combinationMode='replace';
       if (e.shiftKey) {
         combinationMode='union';
@@ -255,7 +255,7 @@
       if (e.ctrlKey || e.metaKey) {
         combinationMode='xor';
       }
-      
+
       dd.range = {start: start, end: {}};
       dd.alreadySelectedRows=rangesToRows(_ranges);
       dd.combinationMode=combinationMode;
@@ -282,7 +282,7 @@
       } else if (dd.combinationMode==='xor') {
         rows=xorArrays(rows, dd.alreadySelectedRows);
       }
-      
+
       _ranges = rowsToRanges(rows);
       setSelectedRanges(_ranges);
       return true;
