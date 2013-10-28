@@ -451,7 +451,7 @@ function isValidModifier(v) {
       $input.datepicker({
         showOn: "button",
         buttonImageOnly: true,
-        buttonImage: args.dateButtonImage || (getHost() + "images/calendar.png"),
+        buttonImage: args.dateButtonImage || "../images/calendar.gif",
         beforeShow: function () {
           calendarOpen = true
         },
@@ -495,7 +495,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      defaultValue = parseISODate(item[args.column.field]);
+      defaultValue = /* parseISODate( */ item[args.column.field] /* ) */;
       $input.val(defaultValue);
       $input[0].defaultValue = defaultValue;
       $input.select();
@@ -506,7 +506,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state.format('isoDate');
+      item[args.column.field] = state.toString(); // state.format('isoDate');     // TODO: fix this serialization + deserialization!
     };
 
     this.isValueChanged = function () {
