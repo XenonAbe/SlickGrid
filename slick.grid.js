@@ -1704,7 +1704,7 @@ if (typeof Slick === "undefined") {
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Rendering / Scrolling
-    
+
     function cacheRowPositions(start) {
       for (var i = typeof start == "number" ? start : 0; i <= getDataLength() ; i++) {
         getRowPosition(i);
@@ -1731,11 +1731,11 @@ if (typeof Slick === "undefined") {
       }
       return pos;
     }
-    
+
     function getRowTop(row) {
       return getRowPosition(row).top;
     }
-    
+
     function getRowHeight(row) {
       return getRowPosition(row).height;
     }
@@ -1840,8 +1840,8 @@ if (typeof Slick === "undefined") {
         return options.dataItemColumnValueExtractor(item, columnDef);
       }
       return item[columnDef.field];
-    }                                                                                                                                                                                                                                      
-	
+    }
+
     function appendRowHtml(stringArray, row, range, dataLength) {
       var d = getDataItem(row);
       var dataLoading = row < dataLength && !d;
@@ -1868,7 +1868,7 @@ if (typeof Slick === "undefined") {
         m = columns[i];
         colspan = getColspan(row, i);
         /*
-		colspan = 1;
+        colspan = 1;
         if (metadata && metadata.columns) {
           // look up by id, then index
           var columnData = metadata.columns[m.id] || metadata.columns[i];
@@ -1877,8 +1877,8 @@ if (typeof Slick === "undefined") {
             colspan = ii - i;
           }
         }
-		*/
-        
+        */
+
         // look up by id, then index
         if (getSpanRow(row, i) < row) {
           continue;
@@ -1898,7 +1898,7 @@ if (typeof Slick === "undefined") {
 
       stringArray.push("</div>");
     }
-    
+
     function appendCellHtml(stringArray, row, cell, colspan, columnData, item) {
       var m = columns[cell];
       var colspan = getColspan(row, cell);
@@ -1942,7 +1942,7 @@ if (typeof Slick === "undefined") {
       if (cellHeight != options.rowHeight - cellHeightDiff) {
         stringArray.push(" style='height:" + cellHeight + "px'");
       }
-      
+
       appendMetadataAttributes(stringArray, columnData);
 
       stringArray.push(">");
@@ -1953,7 +1953,7 @@ if (typeof Slick === "undefined") {
 
       rowsCache[row].cellRenderQueue.push(cell);
     }
-    
+
     function appendMetadataAttributes(stringArray, metadata) {
       if (metadata) {
         for (var attr in metadata.attributes) {
@@ -1981,7 +1981,7 @@ if (typeof Slick === "undefined") {
 
     function invalidate() {
       invalidateAllRows();
-      updateRowCount();			// why was this moved PAST invalidate?
+      updateRowCount();         // why was this moved PAST invalidate?
       render();
     }
 
@@ -2169,7 +2169,7 @@ if (typeof Slick === "undefined") {
 
       invalidatePostProcessingResults(row);
     }
-    
+
     function getCellHeight(row, rowspan) {
       var cellHeight = options.rowHeight;
       if (rowspan > 1) {
@@ -2453,7 +2453,7 @@ if (typeof Slick === "undefined") {
           if (spanRow != row) {
             continue;
           }
-          
+
           // Already rendered.
           if (cacheEntry.cellNodesByColumnIdx[i] != null) {
             continue;
@@ -2500,7 +2500,7 @@ if (typeof Slick === "undefined") {
           needToReselectCell = false,
           i, ii, colspan,
           dataLength = getDataLength();
-      
+
       // collect rows with cell rowspans > 1 and overlapping the range top
       for (ii = 0; ii < columns.length; ii += colspan) {
         i = getSpanRow(range.top, ii);
@@ -2531,7 +2531,7 @@ if (typeof Slick === "undefined") {
           // end of the row.
           "cellRenderQueue": []
         };
-        
+
         appendRowHtml(stringArray, i, range, dataLength);
         if (activeCellNode && activeRow === i) {
           needToReselectCell = true;
@@ -2561,7 +2561,7 @@ if (typeof Slick === "undefined") {
       // append new fixed columns from newly added rows
       appendFixedColumns();
     }
-    
+
     function startPostProcessing() {
       if (!options.enableAsyncPostRender) {
         return;
@@ -2578,13 +2578,13 @@ if (typeof Slick === "undefined") {
     }
 
     /*
-	function updateRowPositions() {
+    function updateRowPositions() {
       for (var row in rowsCache) {
         rowsCache[row].rowNode.style.top = getRowTop(row) + "px";
       }
     }
-	*/
-	
+    */
+
     function render() {
       if (!initialized) { return; }
       var visible = getVisibleRange();
@@ -2846,7 +2846,7 @@ if (typeof Slick === "undefined") {
         toggleCellClass(times | 0);
       }
     }
-    
+
     function clearFixedColumn(fromRow) {
       if ($fixedColumn) {
         if (!(fromRow >= 0)) { fromRow = 0; }
@@ -2891,7 +2891,7 @@ if (typeof Slick === "undefined") {
       var rowData, content;
       var fixedColumnDef = options.fixedColumn;
       var field = fixedColumnDef && fixedColumnDef.id;
-      
+
       if (field && $fixedColumn) {
         var formatter = fixedColumnDef.formatter || defaultFormatter;
         var rowCount = fixedColumnCellCount;
@@ -3605,7 +3605,7 @@ if (typeof Slick === "undefined") {
       scrollTo(getRowTop(row));
       render();
     }
-    
+
     function scrollPage(dir) {
       var deltaRows = dir * numVisibleRows;
       scrollTo((getRowFromPosition(scrollTop) + deltaRows) * options.rowHeight);
@@ -3665,34 +3665,34 @@ if (typeof Slick === "undefined") {
 
       for (rowI = cellSpans.length, rowU = row; rowI <= rowU; rowI++) {
         metadata = data.getItemMetadata(rowI, cell);
-        
+
         // current row migth have cell spans filled in prev row iterations
         iRowSpans = cellSpans[rowI] || (cellSpans[rowI] = {
           maxRowSpan: 1
         });
-        
+
         if (!metadata || !metadata.columns) {
           continue;
         }
-        
+
         for (var ci = 0; ci < colCount; ci += colspan) {
           col = columns[ci];
-          
+
           iCellSpans = iRowSpans[ci];
-          
+
           // the ci-th cell is occupied by a prev cell with row and/or cell span > 1
           if (iCellSpans) {
             colspan = ci - iCellSpans[1] + iCellSpans[3];
             continue;
           }
-		  
+
           // look up by id, then index
           columnData = metadata.columns[col.id] || metadata.columns[ci];
           if (!columnData) {
             colspan = 1;
             continue;
           }
-          
+
           colspan = columnData.colspan || 1;
           rowspan = columnData.rowspan || 1;
           if (rowspan > dataLength - rowI) {
@@ -3707,7 +3707,7 @@ if (typeof Slick === "undefined") {
 
           if (rowspan > 1 || colspan > 1) {
             iCellSpans = [rowI, ci, rowspan, colspan];
-            // save pointers to span head cell and 
+            // save pointers to span head cell and
             var rowSpanU = rowI + rowspan - 1;
             for (var rs = rowI; rs <= rowSpanU; rs++) {
               for (var cs = ci; cs < ci + colspan; cs++) {
@@ -3721,7 +3721,7 @@ if (typeof Slick === "undefined") {
           }
         }
       }
-      
+
       return cellSpans[row] && cellSpans[row][cell];
     }
 
@@ -3734,7 +3734,7 @@ if (typeof Slick === "undefined") {
       var spans = getSpans(row, cell);
       return spans ? (spans[2] || 1) - row + spans[0] : 1;
     }
-    
+
     /** Returns the row index of the cell that spans to the cell specified by `row` and `cell`. */
     function getSpanRow(row, cell) {
       var spans = getSpans(row, cell);
@@ -3804,7 +3804,7 @@ if (typeof Slick === "undefined") {
         cell = getSpanCell(posY, cell - 1);
         row = getSpanRow(posY, cell);
       } while (cell >= 0 && !canCellBeActive(row, cell));
-      
+
       if (cell >= 0) {
         return {
           "row": row,
@@ -3900,7 +3900,7 @@ if (typeof Slick === "undefined") {
           };
         }
       }
-      
+
       var pos = gotoLeft(row, cell, posY, posX);
       if (!pos) {
         var lastSelectableCell;

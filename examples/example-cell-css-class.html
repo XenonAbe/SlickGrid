@@ -15,9 +15,9 @@
       text-align: center;
     }
 
-	.cell-just-started {
-		background-color: #ffa500;
-	}
+    .cell-just-started {
+        background-color: #ffa500;
+    }
   </style>
 </head>
 <body>
@@ -52,56 +52,56 @@
 <script src="../slick.grid.js"></script>
 
 <script>
-	(function(window, $, undefined) {
-		"use strict";
+    (function(window, $, undefined) {
+        "use strict";
 
-		function formatter(row, cell, value, columnDef, dataContext) {
-			return value;
-		}
-		
-		var grid;
-		var data = [];
-		data.getItemMetadata = function (row) {
-			var item = this[row];
-			return !item ? null :
-				{
-					columns: {
-						"finish": {
-							cssClass: item.percentComplete < 30 ? "cell-just-started" : ""
-						}
-					}
-				};
-		};
-		var columns = [
-			{id: "title", name: "Title", field: "title", width: 120, cssClass: "cell-title", formatter: formatter},
-			{id: "duration", name: "Duration", field: "duration"},
-			{id: "%", name: "% Complete", field: "percentComplete", width: 80, resizable: false, formatter: Slick.Formatters.PercentCompleteBar},
-			{id: "start", name: "Start", field: "start", minWidth: 60},
-			{id: "finish", name: "Finish", field: "finish", minWidth: 60},
-			{id: "effort-driven", name: "Effort Driven", sortable: false, width: 80, minWidth: 20, maxWidth: 80, cssClass: "cell-effort-driven", field: "effortDriven", formatter: Slick.Formatters.Checkmark}
-		];
+        function formatter(row, cell, value, columnDef, dataContext) {
+            return value;
+        }
 
-		var options = {
-			editable: false,
-			enableAddRow: false,
-			enableCellNavigation: true
-		};
+        var grid;
+        var data = [];
+        data.getItemMetadata = function (row) {
+            var item = this[row];
+            return !item ? null :
+                {
+                    columns: {
+                        "finish": {
+                            cssClass: item.percentComplete < 30 ? "cell-just-started" : ""
+                        }
+                    }
+                };
+        };
+        var columns = [
+            {id: "title", name: "Title", field: "title", width: 120, cssClass: "cell-title", formatter: formatter},
+            {id: "duration", name: "Duration", field: "duration"},
+            {id: "%", name: "% Complete", field: "percentComplete", width: 80, resizable: false, formatter: Slick.Formatters.PercentCompleteBar},
+            {id: "start", name: "Start", field: "start", minWidth: 60},
+            {id: "finish", name: "Finish", field: "finish", minWidth: 60},
+            {id: "effort-driven", name: "Effort Driven", sortable: false, width: 80, minWidth: 20, maxWidth: 80, cssClass: "cell-effort-driven", field: "effortDriven", formatter: Slick.Formatters.Checkmark}
+        ];
 
-		$(function() {
-			for (var i = 0; i < 500; i++) {
-				var d = (data[i] = {});
+        var options = {
+            editable: false,
+            enableAddRow: false,
+            enableCellNavigation: true
+        };
 
-				d["title"] = "<a href='#' tabindex='0'>Task</a> " + i;
-				d["duration"] = "5 days";
-				d["percentComplete"] = Math.min(100, Math.round(Math.random() * 110));
-				d["start"] = "01/01/2009";
-				d["finish"] = "01/05/2009";
-				d["effortDriven"] = (i % 5 == 0);
-			}
+        $(function() {
+            for (var i = 0; i < 500; i++) {
+                var d = (data[i] = {});
 
-			grid = new Slick.Grid("#myGrid", data, columns, options);
-		});
-	})(window, $);
+                d["title"] = "<a href='#' tabindex='0'>Task</a> " + i;
+                d["duration"] = "5 days";
+                d["percentComplete"] = Math.min(100, Math.round(Math.random() * 110));
+                d["start"] = "01/01/2009";
+                d["finish"] = "01/05/2009";
+                d["effortDriven"] = (i % 5 == 0);
+            }
+
+            grid = new Slick.Grid("#myGrid", data, columns, options);
+        });
+    })(window, $);
 </script>
 </body>
 </html>

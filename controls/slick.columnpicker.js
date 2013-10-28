@@ -127,7 +127,7 @@
 
         grid.setColumns(visibleColumns);
 
-				_self.onColumnChanged.notify();
+                _self.onColumnChanged.notify();
       }
     }
 

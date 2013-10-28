@@ -1,164 +1,164 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+    <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 
-	<title>SlickGrid Row Spans: Basic Grid</title>
-	<link rel="stylesheet" href="../slick.grid.css" type="text/css">
-	<link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css">
-	<link rel="stylesheet" href="examples.css" type="text/css">
-	<style type="text/css">
-		.slick-row .slick-cell.cell-very-high {
-			background: #F0FFE0;
-		}
-		.slick-row .slick-cell.cell-var-span {
-			background: #87ceeb;
-		}
-	</style>
+    <title>SlickGrid Row Spans: Basic Grid</title>
+    <link rel="stylesheet" href="../slick.grid.css" type="text/css">
+    <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css">
+    <link rel="stylesheet" href="examples.css" type="text/css">
+    <style type="text/css">
+        .slick-row .slick-cell.cell-very-high {
+            background: #F0FFE0;
+        }
+        .slick-row .slick-cell.cell-var-span {
+            background: #87ceeb;
+        }
+    </style>
 </head>
 
 <body>
-	<table width="100%">
-		<tr>
-			<td valign="top" width="50%">
-				<div id="myGrid" style="width: 600px; height: 350px;"></div>
-			</td>
+    <table width="100%">
+        <tr>
+            <td valign="top" width="50%">
+                <div id="myGrid" style="width: 600px; height: 350px;"></div>
+            </td>
 
-			<td valign="top">
-				<h2>Demonstrates:</h2>
+            <td valign="top">
+                <h2>Demonstrates:</h2>
 
-				<ul>
-					<li>basic grid with minimal configuration</li>
-					<li>Cells with rowspan > 1</li>
-					<li>Row with custom height: 6</li>
+                <ul>
+                    <li>basic grid with minimal configuration</li>
+                    <li>Cells with rowspan > 1</li>
+                    <li>Row with custom height: 6</li>
 
-					<li><button id='scrollTo'>Scroll To Row</button><input id="nRow" type="text" value="100" style="width: 50px;" /></li>
-					<li><button id='toggleHeight'>Toggle row #6 height</button></li>
-					<li><button id='toggleSpans'>Toggle blue cell colspan &amp; rowspan</button></li>
-				</ul>
-			</td>
-		</tr>
-	</table>
-	<!--<pre style="padding:5px;background: #fff;width:450px;height:400px;overflow:auto;float:right" id="logg"></pre>-->
-	<script src="../lib/jquery-1.7.min.js" type="text/javascript"></script>
-	<script src="../lib/jquery.event.drag-2.2.js" type="text/javascript"></script>
-	<script src="../lib/jquery-ui-1.8.16.custom.min.js" type="text/javascript"></script>
-	<script src="../slick.core.js" type="text/javascript"></script>
-	<script src="../slick.grid.js" type="text/javascript"></script>
-	<script type="text/javascript">
-		var grid;
-		var columns = [{
-			id: "title",
-			name: "Title",
-			field: "title"
-		}, {
-			id: "duration",
-			name: "Duration",
-			field: "duration"
-		}, {
-			id: "%",
-			name: "% Complete",
-			sortable: true,
-			field: "percentComplete"
-		}, {
-			id: "start",
-			name: "Start",
-			field: "start"
-		}, {
-			id: "finish",
-			name: "Finish",
-			field: "finish"
-		}, {
-			id: "effort-driven",
-			name: "Effort Driven",
-			field: "effortDriven"
-		}];
+                    <li><button id='scrollTo'>Scroll To Row</button><input id="nRow" type="text" value="100" style="width: 50px;" /></li>
+                    <li><button id='toggleHeight'>Toggle row #6 height</button></li>
+                    <li><button id='toggleSpans'>Toggle blue cell colspan &amp; rowspan</button></li>
+                </ul>
+            </td>
+        </tr>
+    </table>
+    <!--<pre style="padding:5px;background: #fff;width:450px;height:400px;overflow:auto;float:right" id="logg"></pre>-->
+    <script src="../lib/jquery-1.7.min.js" type="text/javascript"></script>
+    <script src="../lib/jquery.event.drag-2.2.js" type="text/javascript"></script>
+    <script src="../lib/jquery-ui-1.8.16.custom.min.js" type="text/javascript"></script>
+    <script src="../slick.core.js" type="text/javascript"></script>
+    <script src="../slick.grid.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        var grid;
+        var columns = [{
+            id: "title",
+            name: "Title",
+            field: "title"
+        }, {
+            id: "duration",
+            name: "Duration",
+            field: "duration"
+        }, {
+            id: "%",
+            name: "% Complete",
+            sortable: true,
+            field: "percentComplete"
+        }, {
+            id: "start",
+            name: "Start",
+            field: "start"
+        }, {
+            id: "finish",
+            name: "Finish",
+            field: "finish"
+        }, {
+            id: "effort-driven",
+            name: "Effort Driven",
+            field: "effortDriven"
+        }];
 
-		var options = {
-			//enableAddRow: true,
-			enableCellNavigation: true,
-			enableColumnReorder: true
-		};
+        var options = {
+            //enableAddRow: true,
+            enableCellNavigation: true,
+            enableColumnReorder: true
+        };
 
-		var rowHeights = [40, 60];
+        var rowHeights = [40, 60];
 
-		$(function () {
-			var data = [];
-			var metadata = {
-				2: {
-					columns: {
-						0: { rowspan: 3 },
-						3: { colspan: 2 }
-					}
-				},
-				3: {
-					columns: {
-						1: { rowspan: 5, colspan: 1, cssClass: "cell-var-span" }
-					}
-				},
-				4: {
-					columns: {
-						3: { rowspan: 1999, colspan: 2, cssClass: "cell-very-high" }
-					}
-				},
-				6: {
-					height: rowHeights[0]
-				}
-			};
+        $(function () {
+            var data = [];
+            var metadata = {
+                2: {
+                    columns: {
+                        0: { rowspan: 3 },
+                        3: { colspan: 2 }
+                    }
+                },
+                3: {
+                    columns: {
+                        1: { rowspan: 5, colspan: 1, cssClass: "cell-var-span" }
+                    }
+                },
+                4: {
+                    columns: {
+                        3: { rowspan: 1999, colspan: 2, cssClass: "cell-very-high" }
+                    }
+                },
+                6: {
+                    height: rowHeights[0]
+                }
+            };
 
-			for (var i = 0; i < 500; i++) {
-				data[i] = {
-					title: "Task " + i,
-					duration: "5 days",
-					percentComplete: Math.round(Math.random() * 100),
-					start: "01/01/2009",
-					finish: "01/05/2009",
-					effortDriven: (i % 5 == 0)
-				};
-			}
+            for (var i = 0; i < 500; i++) {
+                data[i] = {
+                    title: "Task " + i,
+                    duration: "5 days",
+                    percentComplete: Math.round(Math.random() * 100),
+                    start: "01/01/2009",
+                    finish: "01/05/2009",
+                    effortDriven: (i % 5 == 0)
+                };
+            }
 
-			var dataView = {
-				getItem: function(row) {
-					return data[row];
-				},
-				getLength: function() {
-					return data.length;
-				},
-				getItemMetadata: function(row) {
-					return metadata[row];
-				}
-			};
+            var dataView = {
+                getItem: function(row) {
+                    return data[row];
+                },
+                getLength: function() {
+                    return data.length;
+                },
+                getItemMetadata: function(row) {
+                    return metadata[row];
+                }
+            };
 
-			grid = new Slick.Grid("#myGrid", dataView, columns, options);
+            grid = new Slick.Grid("#myGrid", dataView, columns, options);
 
-			$('#toggleSpans').click(function (e) {
-				var cell = metadata[3].columns[1];
-				if (cell.colspan === 1) {
-					cell.rowspan = 3;
-					cell.colspan = 2;
-				} else {
-					cell.rowspan = 5;
-					cell.colspan = 1;
-				}
-				grid.invalidateRow(3);
-				grid.render();
-			});
-			
-			$('#toggleHeight').click(function (e) {
-				metadata[6].height = metadata[6].height === rowHeights[0] ? rowHeights[1] : rowHeights[0];
-				grid.invalidateRow(6);
-				grid.render();
-			});
-			
-			$('#scrollTo').click(function (e) {
-				grid.scrollRowToTop($('#nRow').val());
-			});
-			
-			$('#nRow').keydown(function (e) {
-				if (e.keyCode == 13)
-					$('#scrollTo').click();
-			});
-		});
-	</script>
+            $('#toggleSpans').click(function (e) {
+                var cell = metadata[3].columns[1];
+                if (cell.colspan === 1) {
+                    cell.rowspan = 3;
+                    cell.colspan = 2;
+                } else {
+                    cell.rowspan = 5;
+                    cell.colspan = 1;
+                }
+                grid.invalidateRow(3);
+                grid.render();
+            });
+
+            $('#toggleHeight').click(function (e) {
+                metadata[6].height = metadata[6].height === rowHeights[0] ? rowHeights[1] : rowHeights[0];
+                grid.invalidateRow(6);
+                grid.render();
+            });
+
+            $('#scrollTo').click(function (e) {
+                grid.scrollRowToTop($('#nRow').val());
+            });
+
+            $('#nRow').keydown(function (e) {
+                if (e.keyCode == 13)
+                    $('#scrollTo').click();
+            });
+        });
+    </script>
 </body>
 </html>
