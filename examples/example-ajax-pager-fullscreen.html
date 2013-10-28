@@ -3,15 +3,11 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
   <title>SlickGrid example: Full screen with paging and AJAX-loading</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../controls/slick.pager.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    html, body {
-      height:99%;
-    }
-
     body {
       overflow: auto;
     }
@@ -44,7 +40,7 @@
 </head>
 <body>
 <div id="container">
-  <div id="header" class="grid-header" style="width:100%">
+  <div id="header" class="grid-header">
     <label>StackOverflow questions</label>
     <span style="float:right" class="ui-icon ui-icon-search" title="Search" onclick="getData()"></span>
     <span style="float:right;display:inline-block;">
@@ -66,7 +62,6 @@
     <li>Filling whole window when creating</li>
   </ul>
 
-
     <h2>View Source:</h2>
       <ul>
           <li id="viewsource">View Source Code</li>
@@ -76,6 +71,8 @@
 
 <script src="../lib/jquery.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/jquery.sizes.js"></script>
+<script src="../lib/verge.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
@@ -106,7 +103,19 @@ $(document).ready(function () {
   grid = new Slick.Grid("#grid", dataView, columns, options);
   var pager = new Slick.Controls.Pager(dataView, grid, $("#pager"));
 
-  $(".slick-viewport").height($("#container").height()-$("#header").height()-$("#pager").height()-$(".slick-header").height());
+  //$(".slick-viewport").height($("#container").height() - $("#header").height() - $("#pager").height() - $(".slick-header").height());
+  
+  // use VERGE to determine the viewport size:
+  var vh = verge.viewportH();
+  // and see how much we need to grow the viewport div:
+  var bh = $(document.body).height();
+  var bodymargin = $(document.body).margin();
+  var vph = $(".slick-viewport").height();
+  
+  vph += vh - bh - bodymargin.top - bodymargin.bottom;
+  
+  $(".slick-viewport").height(vph);
+  
   grid.resizeCanvas();
 
   $(".grid-header .ui-icon")
