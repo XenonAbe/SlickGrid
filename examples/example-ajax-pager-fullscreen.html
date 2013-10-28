@@ -59,23 +59,33 @@
 </div>
 
 <div id="description">
-  <h2>Demonstrates:</h2>
+  <h2>Demonstrates</h2>
   <ul>
     <li>Using AJAX-loading</li>
     <li>Using paging</li>
     <li>Filling whole window when creating</li>
   </ul>
+
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
+      </ul>
 </div>
 
-<script src="../lib/jquery-1.7.min.js"></script>
-<script src="../lib/jquery.event.drag-2.0.min.js"></script>
+<script src="../lib/jquery.js"></script>
+<script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
 <script src="../slick.dataview.js"></script>
 <script src="../controls/slick.pager.js"></script>
 
-<script type="text/javascript">
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
 var columns =
 [ { id: "number", name: "#",     field: "question_id", minWidth: 50, maxWidth: 50 }
 , { id: "title",  name: "Title", field: "title"}

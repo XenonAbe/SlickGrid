@@ -21,7 +21,7 @@
   </div>
 
   <div class="options-panel">
-    <h2>Demonstrates:</h2>
+    <h2>Demonstrates</h2>
     <ul>
       <li>Virtual scrolling on both rows and columns.</li>
       <li>Select a range of cells with a mouse</li>
@@ -29,7 +29,9 @@
       <li>Use Esc to cancel a copy and paste operation</li>
       <li>Edit the cell and select a cell range to paste the range</li>
     </ul>
-      <h2>View Source:</h2>
+
+
+    <h2>View Source:</h2>
       <ul>
           <li id="viewsource">View Source Code</li>
           <div id="displaycode"></div>
@@ -52,7 +54,10 @@
 <script src="../slick.editors.js"></script>
 <script src="../slick.grid.js"></script>
 
-<script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
   var grid;
   var data = [];
   var options = {
@@ -170,7 +175,7 @@
       grid.updateRowCount();
       grid.render();
     });
-  })
+  });
 </script>
 </body>
 </html>

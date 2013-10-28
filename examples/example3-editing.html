@@ -23,7 +23,9 @@
   </div>
 
   <div class="options-panel">
-    <h2>Demonstrates:</h2>
+    <h2>About</h2>
+    This example shows SlickGrid cell editing.
+    <h2>Demonstrates</h2>
     <ul>
       <li>adding basic keyboard navigation and editing</li>
       <li>custom editors and validators</li>
@@ -34,6 +36,13 @@
     <button onclick="grid.setOptions({autoEdit:true})">Auto-edit ON</button>
     &nbsp;
     <button onclick="grid.setOptions({autoEdit:false})">Auto-edit OFF</button>
+
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
+      </ul>
   </div>
 </div>
 
@@ -51,7 +60,10 @@
 <script src="../slick.editors.js"></script>
 <script src="../slick.grid.js"></script>
 
-<script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
   function requiredFieldValidator(value) {
     if (value == null || value == undefined || !value.length) {
       return {valid: false, msg: "This is a required field"};

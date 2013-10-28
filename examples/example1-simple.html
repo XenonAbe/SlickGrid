@@ -6,37 +6,40 @@
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
-
-  <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
 </head>
 <body>
-<table width="100%">
-  <tr>
-    <td valign="top" width="50%">
-      <div id="myGrid" style="width:600px;height:450px;"></div>
-    </td>
-    <td valign="top">
-      <h2>Demonstrates:</h2>
+<div style="position:relative">
+  <div style="width:520px;">
+    <div id="myGrid" style="width:100%;height:500px;"></div>
+  </div>
+
+  <div class="options-panel">
+    <h2>About</h2>
+    This example shows the fundamental SlickGrid grid.
+    <h2>Demonstrates</h2>
       <ul>
         <li>basic grid with minimal configuration</li>
       </ul>
 
 
-      <h2>Source Code:</h2>
+    <h2>View Source:</h2>
       <ul>
-        <li id="viewsource">View Source for this Example</li>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
       </ul>
-      <div id="displaycode">
-      </div>
-    </td>
-  </tr>
-</table>
+  </div>
+</div>
+
+<script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
+
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
   var grid;
@@ -51,8 +54,7 @@
 
   var options = {
     enableCellNavigation: true,
-    enableColumnReorder: false,
-    enableTextSelectionOnCells: true
+    enableColumnReorder: false
   };
 
   $(function () {
@@ -69,7 +71,7 @@
     }
 
     grid = new Slick.Grid("#myGrid", data, columns, options);
-  })
+  });
 </script>
 </body>
 </html>
