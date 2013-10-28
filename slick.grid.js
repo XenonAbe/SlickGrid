@@ -1856,7 +1856,7 @@ if (typeof Slick === "undefined") {
         rowCss += " " + metadata.cssClasses;
       }
 
-      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px") +
+      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px" +
         (getRowHeight(row) !== options.rowHeight ? "; height:" + getRowHeight(row) + "px" : "") + "' role='row'");
 
       appendMetadataAttributes(stringArray, metadata);
@@ -2406,7 +2406,6 @@ if (typeof Slick === "undefined") {
       var cellToRemove;
       while ((cellToRemove = cellsToRemove.pop()) != null) {
         cacheEntry.rowNode.removeChild(cacheEntry.cellNodesByColumnIdx[cellToRemove]);
-        //delete cacheEntry.cellColSpans[cellToRemove];                                  ???
         delete cacheEntry.cellNodesByColumnIdx[cellToRemove];
         if (postProcessedRows[row]) {
           delete postProcessedRows[row][cellToRemove];
