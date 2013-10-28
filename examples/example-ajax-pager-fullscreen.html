@@ -44,18 +44,18 @@
 </head>
 <body>
 <div id="container">
-    <div id="header" class="grid-header" style="width:100%">
-      <label>StackOverflow questions</label>
+  <div id="header" class="grid-header" style="width:100%">
+    <label>StackOverflow questions</label>
     <span style="float:right" class="ui-icon ui-icon-search" title="Search" onclick="getData()"></span>
-      <span style="float:right;display:inline-block;">
-            Tagged:
-            <input type="text" id="txtSearch" value="slickgrid">
+    <span style="float:right;display:inline-block;">
+      Tagged:
+      <input type="text" id="txtSearch" value="slickgrid">
     </span>
-    </div>
+  </div>
 
-    <div id="grid"></div>
+  <div id="grid"></div>
 
-    <div id="pager"></div>
+  <div id="pager"></div>
 </div>
 
 <div id="description">
@@ -110,13 +110,13 @@ $(document).ready(function () {
   grid.resizeCanvas();
 
   $(".grid-header .ui-icon")
-      .addClass("ui-state-default ui-corner-all")
-      .mouseover(function (e) {
-        $(e.target).addClass("ui-state-hover")
-      })
-      .mouseout(function (e) {
-        $(e.target).removeClass("ui-state-hover")
-      });
+    .addClass("ui-state-default ui-corner-all")
+    .mouseover(function (e) {
+      $(e.target).addClass("ui-state-hover")
+    })
+    .mouseout(function (e) {
+      $(e.target).removeClass("ui-state-hover")
+    });
 
   dataView.onRowCountChanged.subscribe(function (e, args) {
     grid.updateRowCount();

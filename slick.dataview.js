@@ -22,14 +22,28 @@
    * Provides a filtered view of the underlying data.
    *
    * Relies on the data item having an "id" property uniquely identifying it.
+   *
+   *  @param  {Object}      options
+   *          {Slick.Data.GroupItemMetadataProvider}
+   *                        .groupItemMetadataProvider      Grouping helper
+   *          {Boolean}     .inlineFilters                  True if the filter expression should
+   *                                                        be "inlined" internally for performance.
+   *                                                        Inlining should lead to better performance,
+   *                                                        but may not work in some circumstances.
+   *          {Boolean}     .showExpandedGroupRows [KCPT]   If true, group header rows are shown
+   *                                                        for expanded groups as well as
+   *                                                        collapsed groups. If false, group
+   *                                                        header rows are shown only for
+   *                                                        collapsed groups.
    */
   function DataView(options) {
     var self = this;
 
     var defaults = {
-      groupItemMetadataProvider: null,
-      globalItemMetadataProvider: null,
+      groupItemMetadataProvider: null,        // { getGroupRowMetadata: function(rowData, row, cell /* may be FALSE */, dataRows) , getTotalsRowMetadata: function(rowData, row, cell /* may be FALSE */, dataRows) }
+      globalItemMetadataProvider: null,       // { getRowMetadata: function(rowData, row, cell /* may be FALSE */, dataRows) }
       flattenGroupedRows: flattenGroupedRows, // function (groups, level, groupingInfos, filteredItems, options) { return all_rows_you_want_to_see[]; }
+      showExpandedGroupRows: true,
       inlineFilters: false,
       idProperty: "id"
     };
@@ -370,30 +384,30 @@
       return rows[i];
     }
 
-    function getItemMetadata(i) {
-      var item = rows[i];
+    function getItemMetadata(row, cell) {
+      var item = rows[row];
       if (item === undefined) {
         return null;
       }
 
       // global override for all rows
-      if (options.globalItemMetadataProvider) {
-        return options.globalItemMetadataProvider.getRowMetadata(item, i, rows);
+      if (options.globalItemMetadataProvider && options.globalItemMetadataProvider.getRowMetadata) {
+        return options.globalItemMetadataProvider.getRowMetadata(item, row, cell, rows);
       }
 
       // overrides for grouping rows
-      if (item.__group) {
-        return options.groupItemMetadataProvider.getGroupRowMetadata(item);
+      if (item.__group && options.groupItemMetadataProvider && options.groupItemMetadataProvider.getGroupRowMetadata) {
+        return options.groupItemMetadataProvider.getGroupRowMetadata(item, row, cell, rows);
       }
 
       // overrides for totals rows
-      if (item.__groupTotals) {
-        return options.groupItemMetadataProvider.getTotalsRowMetadata(item);
+      if (item.__groupTotals && options.groupItemMetadataProvider && options.groupItemMetadataProvider.getTotalsRowMetadata) {
+        return options.groupItemMetadataProvider.getTotalsRowMetadata(item, row, cell, rows);
       }
 
-      /* overrides for rows with items that supply a custom meta data provider*/
-      if (item.itemMetadataProvider) {
-        return item.itemMetadataProvider.getRowMetadata(item);
+      /* overrides for rows with items that supply a custom meta data provider */
+      if (item.itemMetadataProvider && item.itemMetadataProvider.getRowMetadata) {
+        return item.itemMetadataProvider.getRowMetadata(item, row, cell, rows);
       }
 
       return null;
@@ -429,6 +443,27 @@
     function expandCollapseGroup(level, groupingKey, collapse) {
       toggledGroupsByLevel[level][groupingKey] = groupingInfos[level].collapsed ^ collapse;
       refresh();
+    }
+
+    /**
+     * @param varArgs Either a Slick.Group's "groupingKey" property, or a
+     *     variable argument list of grouping values denoting a unique path to the row.
+     *     For example, calling isGroupCollapsed('high', '10%') will return whether the
+     *     collapse the '10%' subgroup of the 'high' setGrouping is collapsed.
+     */
+    function isGroupCollapsed(groupingValue) {
+      var args = Array.prototype.slice.call(arguments);
+      var arg0 = args[0];
+      var level;
+      var groupingKey;
+      if (args.length == 1 && arg0.indexOf(groupingDelimiter) != -1) {
+        level = arg0.split(groupingDelimiter).length - 1;
+        groupingKey = arg0;
+      } else {
+        level = args.length - 1;
+        groupingKey = args.join(groupingDelimiter);
+      }
+      return toggledGroupsByLevel[level][groupingKey];
     }
 
     /**
@@ -589,7 +624,9 @@
       var groupedRows = [], rows, gl = 0, g;
       for (var i = 0, l = groups.length; i < l; i++) {
         g = groups[i];
-        groupedRows[gl++] = g;
+
+        if (options.showExpandedGroupRows || g.collapsed)
+          groupedRows[gl++] = g;
 
         if (!g.collapsed) {
           rows = g.groups ? options.flattenGroupedRows(g.groups, level + 1, groupingInfos, filteredItems, options) : g.rows;
@@ -946,6 +983,7 @@
       "setAggregators": setAggregators,
       "collapseAllGroups": collapseAllGroups,
       "expandAllGroups": expandAllGroups,
+      "isGroupCollapsed": isGroupCollapsed,
       "collapseGroup": collapseGroup,
       "expandGroup": expandGroup,
       "getGroups": getGroups,

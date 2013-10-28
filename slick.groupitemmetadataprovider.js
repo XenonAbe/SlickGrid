@@ -28,6 +28,7 @@
       groupCssClass: "slick-group",
       groupTitleCssClass: "slick-group-title",
       totalsCssClass: "slick-group-totals",
+      groupSelectable: false,
       groupFocusable: true,
       totalsFocusable: false,
       toggleCssClass: "slick-group-toggle",
@@ -110,9 +111,9 @@
       }
     }
 
-    function getGroupRowMetadata(item) {
+    function getGroupRowMetadata(item, row, cell, rows) {
       return {
-        selectable: false,
+        selectable: options.groupSelectable,
         focusable: options.groupFocusable,
         cssClasses: options.groupCssClass,
         columns: {
@@ -125,7 +126,7 @@
       };
     }
 
-    function getTotalsRowMetadata(item) {
+    function getTotalsRowMetadata(item, row, cell, rows) {
       return {
         selectable: false,
         focusable: options.totalsFocusable,

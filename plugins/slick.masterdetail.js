@@ -77,34 +77,34 @@
             var gridCanvas = $(_grid.getCanvasNode());
             var gridRowHeight = _grid.getOptions().rowHeight;
             gridCanvas
-                    .children(".slick-row")
-                    .each(function() {
-                        var parentRow = $(this);
-                        var rowIndex = parentRow.index();
-                        var height = gridRowHeight;
-                        var expanded = (_expandedRows[rowIndex] == rowIndex);
-                        var childRowDetails = parentRow.children('.slick-row-details');
+                .children(".slick-row")
+                .each(function() {
+                    var parentRow = $(this);
+                    var rowIndex = parentRow.index();
+                    var height = gridRowHeight;
+                    var expanded = (_expandedRows[rowIndex] == rowIndex);
+                    var childRowDetails = parentRow.children('.slick-row-details');
 
-                        if (expanded) {
-                            parentRow.addClass('expanded');
-                            height += childRowDetails.outerHeight();
+                    if (expanded) {
+                        parentRow.addClass('expanded');
+                        height += childRowDetails.outerHeight();
 
-                            childRowDetails.css({
-                                "margin-top" : gridRowHeight,
-                                "width" : "100%"
-                            });
-
-                        } else {
-                            parentRow.removeClass('expanded');
-                        }
-
-                        parentRow.css({
-                            "height" : height,
-                            "top" : top
+                        childRowDetails.css({
+                            "margin-top" : gridRowHeight,
+                            "width" : "100%"
                         });
 
-                        top += height;
+                    } else {
+                        parentRow.removeClass('expanded');
+                    }
+
+                    parentRow.css({
+                        "height" : height,
+                        "top" : top
                     });
+
+                    top += height;
+                });
 
             gridCanvas.height(top);
             return;
@@ -142,45 +142,44 @@
             var gridRowHeight = _grid.getOptions().rowHeight;
 
             gridCanvas.children(".slick-row")
-                    .each(
-                            function() {
+                .each(function() {
 
-                                var parentRow = $(this);
-                                var top = parseInt(parentRow.css('top'))
-                                        + heightOffset;
-                                var rowIndex = parentRow.index();
+                    var parentRow = $(this);
+                    var top = parseInt(parentRow.css('top'))
+                            + heightOffset;
+                    var rowIndex = parentRow.index();
 
-                                var childRowDetails = parentRow
-                                        .children('.slick-row-details');
-                                if (childRowDetails.size() > 0
-                                        && !parentRow.hasClass('expanded')) {
-                                    parentRow.addClass('expanded');
+                    var childRowDetails = parentRow
+                            .children('.slick-row-details');
+                    if (childRowDetails.size() > 0
+                            && !parentRow.hasClass('expanded')) {
+                        parentRow.addClass('expanded');
 
-                                    var e = new Slick.EventData();
-                                    _grid.onDetailsRowExpanded.notify({
-                                        "grid" : _grid,
-                                        "row" : rowIndex,
-                                        "expanded" : true,
-                                        "target" : childRowDetails
-                                    }, e, _self);
+                        var e = new Slick.EventData();
+                        _grid.onDetailsRowExpanded.notify({
+                            "grid" : _grid,
+                            "row" : rowIndex,
+                            "expanded" : true,
+                            "target" : childRowDetails
+                        }, e, _self);
 
-                                    childRowDetails.css({
-                                        "margin-top" : gridRowHeight
-                                    });
+                        childRowDetails.css({
+                            "margin-top" : gridRowHeight
+                        });
 
-                                    var height = childRowDetails.outerHeight();
-                                    parentRow.css({
-                                        "height" : gridRowHeight + height,
-                                        "top" : top
-                                    });
-                                    heightOffset += height;
-                                    _expandedRows[rowIndex] = rowIndex;
-                                } else {
-                                    parentRow.css({
-                                        "top" : top
-                                    });
-                                }
-                            });
+                        var height = childRowDetails.outerHeight();
+                        parentRow.css({
+                            "height" : gridRowHeight + height,
+                            "top" : top
+                        });
+                        heightOffset += height;
+                        _expandedRows[rowIndex] = rowIndex;
+                    } else {
+                        parentRow.css({
+                            "top" : top
+                        });
+                    }
+                });
 
             gridCanvas.height(gridCanvas.height() + heightOffset);
         }

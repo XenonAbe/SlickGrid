@@ -16,7 +16,9 @@
         "PercentComplete": PercentCompleteFormatter,
         "PercentCompleteBar": PercentCompleteBarFormatter,
         "YesNo": YesNoFormatter,
-        "Checkmark": CheckmarkFormatter
+        "Checkmark": CheckmarkFormatter,
+        "Color": ColorFormatter,
+        "BackColor": BackColorFormatter
       }
     }
   });
@@ -55,5 +57,13 @@
 
   function CheckmarkFormatter(row, cell, value, columnDef, dataContext) {
     return value ? "<img src='../images/tick.png'>" : "";
+  }
+
+  function ColorFormatter(row, cell, value, columnDef, dataContext) {
+      return "<span style='color:" + value  + "'>" + value + "</span>";
+  }
+
+  function BackColorFormatter(row, cell, value, columnDef, dataContext) {
+      return "<span style='background:" + value  + "'>" + value + "</span>";
   }
 })(jQuery);
