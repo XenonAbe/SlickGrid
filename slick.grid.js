@@ -105,7 +105,7 @@ if (typeof Slick === "undefined") {
    *      headerRowHeight:    {Number}    Height of the header row in pixels
    *      enableCellNavigation:{Boolean}  Should arrow keys navigate between cells?
    *      enableTextSelectionOnCells:
-   *                          {Boolean}   Should text selection be allowed in cells?
+   *                          {Boolean}   Should text selection be allowed in cells? (This is MSIE specific; other browsers always assume 'true')
    *      forceFitColumns:    {Boolean}   Should column widths be automatically resized to fit?
    *      syncColumnCellResize:{Boolean}  Should the grid width be changed dynamically during a drag
    *                                      to change column widths, or only once the mouse is released?
@@ -166,7 +166,7 @@ if (typeof Slick === "undefined") {
       cellFlashingCssClass: "flashing",
       selectedCellCssClass: "selected",
       multiSelect: true,
-      enableTextSelectionOnCells: false,
+      enableTextSelectionOnCells: true,
       dataItemColumnValueExtractor: null,
       fullWidthRows: false,
       multiColumnSort: false,
