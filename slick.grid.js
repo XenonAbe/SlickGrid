@@ -171,8 +171,7 @@ if (typeof Slick === "undefined") {
       fullWidthRows: false,
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
-      forceSyncScrolling: false,
-      addRowClass: null
+      forceSyncScrolling: false
     };
 
     var columnDefaults = {
@@ -1590,8 +1589,7 @@ if (typeof Slick === "undefined") {
       var rowCss = "slick-row" +
           (dataLoading ? " loading" : "") +
           (row === activeRow ? " active" : "") +
-          (row % 2 == 1 ? " odd" : " even") +
-          (!d && options.addRowClass ? " " + options.addRowClass : "");
+          (row % 2 == 1 ? " odd" : " even");
 
       var metadata = data.getItemMetadata && data.getItemMetadata(row, false);
 
