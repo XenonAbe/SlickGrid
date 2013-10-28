@@ -1,13 +1,13 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example: Grouping</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../controls/slick.pager.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
-  <link rel="stylesheet" href="examples.css" type="text/css"/>
   <link rel="stylesheet" href="../controls/slick.columnpicker.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-effort-driven {
       text-align: center;
@@ -25,22 +25,22 @@
       font-style: italic;
     }
 
-        .row-green {
-            background-color: #C3FDB8
-        }
+    .row-green {
+        background-color: #C3FDB8
+    }
   </style>
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:600px;">
-    <div class="grid-header" style="width:100%">
+  <div class="grid-outer-wrapper">
+    <div class="grid-header">
       <label>SlickGrid</label>
     </div>
-    <div id="myGrid" style="width:100%;height:500px;"></div>
-    <div id="pager" style="width:100%;height:20px;"></div>
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+    <div id="pager" class="grid-pager"></div>
   </div>
 
-  <div class="options-panel" style="width:450px;">
+  <div class="options-panel">
     <b>Options:</b>
     <hr/>
     <div style="padding:6px;">
@@ -84,7 +84,6 @@
         Personally, this is just the coolest slickest thing I've ever seen done with DHTML grids!
       </li>
     </ul>
-
 
     <h2>View Source:</h2>
       <ul>
@@ -284,17 +283,17 @@ function loadData(count) {
   dataView.setItems(data);
 }
 
-            function myRowCss(item) {
-                if (item.effortDriven) {
-                    return {
-                        cssClasses: "row-green"
-                    }
-                }
-            }
+function myRowCss(item) {
+    if (item.effortDriven) {
+        return {
+            cssClasses: "row-green"
+        }
+    }
+}
 
-            var groupItemMetadataProvider = new Slick.Data.GroupItemMetadataProvider({
-                getRowMetadata: myRowCss
-            });
+var groupItemMetadataProvider = new Slick.Data.GroupItemMetadataProvider({
+    getRowMetadata: myRowCss
+});
 
 $(".grid-header .ui-icon")
     .addClass("ui-state-default ui-corner-all")
@@ -341,8 +340,7 @@ $(function () {
 
       // use numeric sort of % and lexicographic for everything else
       dataView.fastSort((sortcol == "percentComplete") ? percentCompleteValueFn : sortcol, args.sortAsc);
-    }
-    else {
+    } else {
       // using native sort with comparer
       // preferred method but can be very slow in IE with huge datasets
       dataView.sort(comparer, args.sortAsc);

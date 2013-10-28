@@ -5,6 +5,10 @@
   font-size: 8pt;
 }
 
+pre {
+  font-family: Consolas, monospace;
+}
+
 body {
   background: beige;
   padding: 0;
@@ -30,10 +34,27 @@ li {
   margin: 0;
 }
 
-#myGrid {
+.grid-outer-wrapper {
+  width: 600px;
+  float: left;
+
+  background-color: white;
+  border: 1px solid #CCCCCC;
+  padding: 1px;
+}
+
+.grid-inner-wrapper {
   background: white;
   outline: 0;
   /*border: 1px solid gray;*/
+
+  width: 100%;
+  height: 450px;
+}
+
+.grid-pager {
+  width: 100%;
+  height: 20px;
 }
 
 .grid-header {
@@ -75,12 +96,17 @@ li {
   -webkit-border-radius: 6px;
   border: 1px solid silver;
   background: #f0f0f0;
-  padding: 4px;
+  padding: 10px;
   margin-bottom: 20px;
-  width: 450px;
-  position: absolute;
-  top: 0px;
-  left: 650px;
+
+  float: left;
+  margin-left: 10px;
+  padding: 10px;
+}
+
+#viewsource {
+  cursor: pointer;
+  color: darkblue;
 }
 
 /* Individual cell styles */
@@ -237,7 +263,5 @@ input.editor-checkbox {
   background-color : #ffffff;
   overflow:scroll;
   height:500px;
-
-
 }
 

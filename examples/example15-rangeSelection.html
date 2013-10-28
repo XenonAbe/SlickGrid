@@ -1,39 +1,48 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-        <title>SlickGrid example 15: Range Selection</title>
-        <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css" media="screen" charset="utf-8" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example 15: Range Selection</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick.columnpicker.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
+</head>
+<body>
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+  </div>
 
-        <link rel="stylesheet" href="../slick.grid.css" type="text/css" media="screen" charset="utf-8" />
-        <link rel="stylesheet" href="../slick.columnpicker.css" type="text/css" media="screen" charset="utf-8" />
-        <link rel="stylesheet" href="examples.css" type="text/css" media="screen" charset="utf-8" />
-    </head>
-    <body>
-        <table width="100%">
-        <tr>
-            <td valign="top" width="50%">
-                <div id="myGrid" style="width:600px;height:500px;"></div>
-            </td>
-            <td valign="top">
-                <h2>Demonstrates:</h2>
-                <ul>
+  <div class="options-panel">
+    <h2>Demonstrates</h2>
+      <ul>
                     <li>basic grid with enableCellRangeSelection and forceFitColumns</li>
-                </ul>
-            </td>
-        </tr>
-        </table>
+      </ul>
 
-        <script language="JavaScript" src="../lib/jquery-1.7.min.js"></script>
-        <script language="JavaScript" src="../lib/jquery-ui-1.8.16.custom.min.js"></script>
-        <script language="JavaScript" src="../lib/jquery.event.drag-2.2.js"></script>
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
+      </ul>
+  </div>
+</div>
 
-        <script src="../slick.core.js"></script>
-        <script src="../slick.grid.js"></script>
-        <script src="../controls/slick.columnpicker.js"></script>
 
-        <script>
+<script src="../lib/firebugx.js"></script>
 
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-ui.js"></script>
+<script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+
+<script src="../slick.core.js"></script>
+<script src="../slick.grid.js"></script>
+<script src="../controls/slick.columnpicker.js"></script>
+
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
         var grid;
         var selectedRange = {};
 
@@ -74,7 +83,7 @@
             grid.onCellRangeSelected = function( range ) {
                 selectedRange = range;
             };
-        })
+        });
 
         </script>
 

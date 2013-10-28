@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  <title>SlickGrid example 18: Demo</title>
+  <title>SlickGrid example 16b: Nested headers with Virtual Scrolling</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
@@ -13,7 +13,6 @@
       -webkit-transition: 0.5s background;
     }
   </style>
-</head>
 <body>
 <div style="position:relative">
   <div class="grid-outer-wrapper">
@@ -28,13 +27,7 @@
       <li>Use Ctrl-C and Ctrl-V keyboard shortcuts to cut and paste cells</li>
       <li>Use Esc to cancel a copy and paste operation</li>
       <li>Edit the cell and select a cell range to paste the range</li>
-      </ul>
-
-    <h2>View Source:</h2>
-      <ul>
-          <li id="viewsource">View Source Code</li>
-          <div id="displaycode"></div>
-      </ul>
+    </ul>
   </div>
 </div>
 
@@ -58,115 +51,92 @@
 
 <script id="script_tag_example" type="text/javascript">
     var grid;
+    var data = [];
     var options = {
         editable: true,
         enableAddRow: true,
         enableCellNavigation: true,
         asyncEditorLoading: false,
         autoEdit: false,
+        //forceFitColumns: true,
         enableColumnReorder: false,
-        fixedColumn: { id: 'time' }
     };
 
-    function renderCell(row, cell, value, columnDef, dataContext) {
-        return dataContext.cells[cell].meeting;
+    var columns = [
+      {
+        id: "selector",
+        name: "",
+        field: "num",
+        width: 30
+
+      }
+    ];
+
+
+    var children = [];
+    for (var i = 0; i < 24; i++) {
+        children.push({ id: "cell" + i, name: i, field: i });
+    }
+    columns.push({
+        id: "Today",
+        name: "Today",
+        field: "Today",
+        width: 160,
+        editor: FormulaEditor,
+        children: children
+    });
+    /***
+     * A proof-of-concept cell editor with Excel-like range selection and insertion.
+     */
+    function FormulaEditor(args) {
+        var _self = this;
+        var _editor = new Slick.Editors.Text(args);
+        var _selector;
+
+        $.extend(this, _editor);
+
+        function init() {
+            // register a plugin to select a range and append it to the textbox
+            // since events are fired in reverse order (most recently added are executed first),
+            // this will override other plugins like moverows or selection model and will
+            // not require the grid to not be in the edit mode
+            _selector = new Slick.CellRangeSelector();
+            _selector.onCellRangeSelected.subscribe(_self.handleCellRangeSelected);
+            args.grid.registerPlugin(_selector);
+        }
+
+        this.destroy = function () {
+            _selector.onCellRangeSelected.unsubscribe(_self.handleCellRangeSelected);
+            grid.unregisterPlugin(_selector);
+            _editor.destroy();
+        };
+
+        this.handleCellRangeSelected = function (e, args) {
+            _editor.setValue(
+                _editor.getValue() +
+                    grid.getColumns()[args.range.fromCell].name +
+                    args.range.fromRow +
+                    ":" +
+                    grid.getColumns()[args.range.toCell].name +
+                    args.range.toRow
+            );
+        };
+
+
+        init();
     }
 
 
-    $(function() {
-
-        var rawData = [];
-
-        for (var i = 0; i < 5; i++) {
-            var day = {
-                day: 'day' + (i+1),
-                companies: []
-            };
-
-            for (var i1 = 0; i1 < 5; i1++) {
-                var company = {
-                    id: i1,
-                    title:'company' + (i1 + 1),
-                    name: 'c' + (i1 + 1),
-                    time: i1,
-                    meetings: []
-                };
-
-                for (var i2 = 0; i2 < 24; i2++) {
-                    var meeting = {
-                        id: i2,
-                        name: 'm' + (i2 + 1)
-                    };
-
-                    company.meetings.push(meeting);
-                }
-
-                day.companies.push(company);
-            }
-
-            rawData.push(day);
-        }
-
-
-        var columns = [];
-
-        for (var j = 0; j < rawData.length; j++) {
-
-            var header = {
-                id: 'day',
-                name: rawData[j].day,
-                children:[]
-            };
-
-            for (var j1 = 0; j1 < rawData[j].companies.length; j1++) {
-
-                var subHeader = {
-                    id: 'company',
-                    name: rawData[j].companies[j1].title,
-                    field: 'meeting',
-                    formatter: renderCell
-                };
-
-                header.children.push(subHeader);
-            }
-
-
-            columns.push(header);
-        }
-
-
-
-        var data = [];
-
-        for (var i = 0; i < rawData[0].companies[0].meetings.length; i++) {
-
-            var row = {
-                time: i + ' : 00',
-                cells: [],
-            };
-
-            for (var i1 = 0; i1 < rawData.length; i1++) {
-
-                for (var i2 = 0; i2 < rawData[i1].companies.length; i2++) {
-
-                    var company = {
-                        time: rawData[i1].companies[i2].time,
-                        meeting: rawData[i1].day + rawData[i1].companies[i2].name + rawData[i1].companies[i2].meetings[i].name,
-                    };
-
-                    row.cells.push(company);
-                }
-            }
-
-            data.push(row);
+    $(function () {
+        for (var i = 0; i < 100; i++) {
+            var d = (data[i] = {});
+            d["num"] = i;
         }
 
         grid = new Slick.Grid("#myGrid", data, columns, options);
 
         grid.setSelectionModel(new Slick.CellSelectionModel());
         grid.registerPlugin(new Slick.AutoTooltips());
-
-
 
         // set keyboard focus on the grid
         grid.getCanvasNode().focus();

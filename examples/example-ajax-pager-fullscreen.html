@@ -1,7 +1,7 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example: Full screen with paging and AJAX-loading</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
@@ -12,7 +12,7 @@
       overflow: auto;
     }
 
-    #description {
+    .options-panel {
       position: fixed;
       top: 50%;
       right: 30px;
@@ -22,52 +22,56 @@
       z-index: 1000;
     }
 
-    #description h2 {
+    .options-panel h2 {
       padding-left: 0.5em;
     }
 
-    #container {
-      height: 100%;
+    div.grid-outer-wrapper {
       width: 100%;
     }
 
-    #grid   {
+    #myGrid {
       width: 100%;
       border: 1px solid gray;
     }
 
+    .grid-outer-wrapper {
+      float: none !important;
+    }
   </style>
 </head>
 <body>
-<div id="container">
-  <div id="header" class="grid-header">
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div class="grid-header">
     <label>StackOverflow questions</label>
     <span style="float:right" class="ui-icon ui-icon-search" title="Search" onclick="getData()"></span>
     <span style="float:right;display:inline-block;">
       Tagged:
       <input type="text" id="txtSearch" value="slickgrid">
     </span>
+    </div>
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+    <div id="pager" class="grid-pager"></div>
   </div>
 
-  <div id="grid"></div>
-
-  <div id="pager"></div>
-</div>
-
-<div id="description">
-  <h2>Demonstrates</h2>
-  <ul>
-    <li>Using AJAX-loading</li>
-    <li>Using paging</li>
-    <li>Filling whole window when creating</li>
-  </ul>
+  <div class="options-panel">
+    <h2>Demonstrates</h2>
+      <ul>
+	    <li>Using AJAX-loading</li>
+	    <li>Using paging</li>
+	    <li>Filling whole window when creating</li>
+      </ul>
 
     <h2>View Source:</h2>
       <ul>
           <li id="viewsource">View Source Code</li>
           <div id="displaycode"></div>
       </ul>
+  </div>
 </div>
+
+<script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
@@ -100,21 +104,22 @@ var dataView, grid;
 
 $(document).ready(function () {
   dataView = new Slick.Data.DataView({inlineFilters: true, idProperty: "question_id"});
-  grid = new Slick.Grid("#grid", dataView, columns, options);
+  grid = new Slick.Grid("#myGrid", dataView, columns, options);
   var pager = new Slick.Controls.Pager(dataView, grid, $("#pager"));
 
   //$(".slick-viewport").height($("#container").height() - $("#header").height() - $("#pager").height() - $(".slick-header").height());
   
   // use VERGE to determine the viewport size:
   var vh = verge.viewportH();
-  // and see how much we need to grow the viewport div:
+  // and see how much we need to grow the grid:
   var bh = $(document.body).height();
   var bodymargin = $(document.body).margin();
-  var vph = $(".slick-viewport").height();
+  var $container = $(grid.getContainerNode());
+  var vph = $container.height();
   
   vph += vh - bh - bodymargin.top - bodymargin.bottom;
   
-  $(".slick-viewport").height(vph);
+  $container.height(vph);     // you must adjust the size of the $container for grid.resizeCanvas() to pick up the size change
   
   grid.resizeCanvas();
 

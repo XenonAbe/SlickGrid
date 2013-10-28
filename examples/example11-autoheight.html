@@ -1,52 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example 11: No vertical scrolling (autoHeight)</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: auto;
-    }
-
-    body {
-      font: 11px Helvetica, Arial, sans-serif;
-    }
-
-    #container {
-      margin: 10px;
-      border: solid 1px gray;
-      width: 480px;
-      background: white;
-    }
-
-    #description {
-      position: fixed;
-      top: 30px;
-      right: 30px;
-      width: 25em;
-    }
   </style>
 </head>
 <body>
-<div id="container"></div>
-<div id="description">
-  <h2>Demonstrates</h2>
-  <ul>
-    <li>autoHeight:true grid option</li>
-  </ul>
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+  </div>
 
+  <div class="options-panel">
+    <h2>Demonstrates</h2>
+      <ul>
+        <li>autoHeight:true grid option</li>
+      </ul>
 
     <h2>View Source:</h2>
       <ul>
           <li id="viewsource">View Source Code</li>
           <div id="displaycode"></div>
       </ul>
+  </div>
 </div>
+
+<script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui.js"></script>
@@ -87,7 +70,7 @@
     };
   }
 
-  grid = new Slick.Grid("#container", data, columns, options);
+  grid = new Slick.Grid("#myGrid", data, columns, options);
 </script>
 </body>
 </html>
