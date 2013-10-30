@@ -842,12 +842,18 @@
       var self = this;
       var selectedRowIds = self.mapRowsToIds(grid.getSelectedRows());;
       var inHandler;
+      var newSelectedRowIds;
 
       function update() {
-        if (selectedRowIds.length > 0) {
+        if (newSelectedRowIds.length > 0) {
           inHandler = true;
           var selectedRows = self.mapIdsToRows(selectedRowIds);
-          if (!preserveHidden) {
+          if (preserveHidden) {
+            //TODO :  add code to remove duplicates 
+            selectedRowIds = selectedRowIds.concat(newSelectedRowIds);
+            selectedRows = self.mapIdsToRows(selectedRowIds);
+          }
+          else{
             selectedRowIds = self.mapRowsToIds(selectedRows);
           }
           grid.setSelectedRows(selectedRows);
@@ -857,7 +863,7 @@
 
       grid.onSelectedRowsChanged.subscribe(function(e, args) {
         if (inHandler) { return; }
-        selectedRowIds = self.mapRowsToIds(grid.getSelectedRows());
+        newSelectedRowIds = self.mapRowsToIds(grid.getSelectedRows());
       });
 
       this.onRowsChanged.subscribe(update);
