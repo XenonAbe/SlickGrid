@@ -663,7 +663,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      defaultValue = stringToBoolean(item[args.column.field]);
+      defaultValue = item[args.column.field];
       if (defaultValue) {
         $select.prop('checked', true);
       } else {
