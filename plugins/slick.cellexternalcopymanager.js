@@ -27,16 +27,21 @@
     */
     var _grid;
     var _self = this;
-    var _copiedRanges;
+    var _copiedRanges;    // keeps track of the last marked (Ctrl-C copied) range
+    var _copyFingerPrint; // keeps the 'fingerprint' text associated with that last (INTERNAL) copy, so we can discern between external/internal PASTE activity later on.
     var _options = options || {};
     var _copiedCellStyleLayerKey = _options.copiedCellStyleLayerKey || "copy-manager";
     var _copiedCellStyle = _options.copiedCellStyle || "copied";
+    var _copiedCellStyleExternalHelperKey = _options.copiedCellStyleExternalHelperKey || "copy-manager-external-helper";
+    var _unmarkSelectionAfterTimeout = _options.unmarkSelectionAfterTimeout || 2000;
     var _clearCopyTI = 0;
+    var _externalCopyActionWrapupDelay = 100;
     var _bodyElement = _options.bodyElement || document.body;
 
     var keyCodes = {
       'C':67,
       'V':86,
+      'X':88,
       'ESC':27
     }
 
@@ -51,7 +56,7 @@
       }
       // we give focus on the grid when a selection is done on it.
       // without this, if the user selects a range of cell without giving focus on a particular cell, the grid doesn't get the focus and key stroke handles (ctrl+c) don't work
-      cellSelectionModel.onSelectedRangesChanged.subscribe(function(e, args){
+      cellSelectionModel.onSelectedRangesChanged.subscribe(function(e, args) {
         _grid.focus();
       });
     }
@@ -60,12 +65,14 @@
       _grid.onKeyDown.unsubscribe(handleKeyDown);
     }
 
-    function getDataItemValueForColumn(item, columnDef) {
+    function getDataItemValueForColumn(row_item, columnDef, dstY, dstX, srcY, srcX) {
       if (_options.dataItemColumnValueExtractor) {
-        return _options.dataItemColumnValueExtractor(item, columnDef);
+        return _options.dataItemColumnValueExtractor(row_item, columnDef, dstY, dstX, srcY, srcX);
       }
 
-      var retVal = '';
+      assert(columnDef.field !== undefined);
+      assert(columnDef.field !== null);
+      var retVal = row_item[columnDef.field];
 
       // use formatter if available; much faster than editor
       if (columnDef.formatter) {
@@ -75,47 +82,45 @@
       // if a custom getter is not defined, we call serializeValue of the editor to serialize
       if (columnDef.editor) {
         var editorArgs = {
-          'container':$("body"),  // a dummy container
-          'column':columnDef,
-          'position':{'top':0, 'left':0}  // a dummy position required by some editors
+          'container': $(document),  // a dummy container
+          'column': columnDef,
+          'position': {'top':0, 'left':0}  // a dummy position required by some editors
         };
         var editor = new columnDef.editor(editorArgs);
-        editor.loadValue(item);
+        editor.loadValue(row_item);
         retVal = editor.serializeValue();
         editor.destroy();
-      }
-      else {
-        retVal = item[columnDef.field];
       }
 
       return retVal;
     }
 
-    function setDataItemValueForColumn(item, columnDef, value) {
+    function setDataItemValueForColumn(row_item, columnDef, value, dstY, dstX, srcY, srcX) {
       if (_options.dataItemColumnValueSetter) {
-        return _options.dataItemColumnValueSetter(item, columnDef, value);
+        return _options.dataItemColumnValueSetter(row_item, columnDef, value, dstY, dstX, srcY, srcX);
       }
 
       // if a custom setter is not defined, we call applyValue of the editor to unserialize
-      if (columnDef.editor){
+      if (columnDef.editor) {
         var editorArgs = {
-          'container':$("body"),  // a dummy container
-          'column':columnDef,
-          'position':{'top':0, 'left':0}  // a dummy position required by some editors
+          'container': $(document),  // a dummy container
+          'column': columnDef,
+          'position': {'top':0, 'left':0}  // a dummy position required by some editors
         };
         var editor = new columnDef.editor(editorArgs);
-        editor.loadValue(item);
-        editor.applyValue(item, value);
+        editor.loadValue(row_item);
+        editor.applyValue(row_item, value);
         editor.destroy();
       }
     }
 
 
-    function _createTextBox(innerText){
+    function _createTextBox(innerText) {
       var ta = document.createElement('textarea');
       ta.style.position = 'absolute';
       ta.style.left = '-1000px';
       ta.style.top = document.body.scrollTop + 'px';
+      ta.className = _copiedCellStyleExternalHelperKey;
       ta.value = innerText;
       _bodyElement.appendChild(ta);
       ta.select();
@@ -123,7 +128,14 @@
       return ta;
     }
 
-    function _decodeTabularData(_grid, ta){
+    function _decodeTabularData(_grid, ta) {
+      // stuff has been pasted into ta=textarea; now allow user to preprocess the pasted data.
+      _self.onPasteCellsPrepare.notify({
+        helperDOMelement: ta,
+        rangeIsCopied: true /* outside source coming in: always regarded as COPY rather than CUT */,
+        rangeDataFromExternalSource: true
+      });
+
       var columns = _grid.getColumns();
       var clipText = ta.value;
       var clipRows = clipText.split(/[\n\f\r]/);
@@ -131,9 +143,10 @@
 
       _bodyElement.removeChild(ta);
 
-      for (var i=0; i<clipRows.length; i++) {
-        if (clipRows[i]!="")
+      for (var i = 0; i < clipRows.length; i++) {
+        if (clipRows[i] != "") {
           clippedRange[i] = clipRows[i].split("\t");
+        }
       }
 
       var selectedCell = _grid.getActiveCell();
@@ -156,20 +169,16 @@
       var oneCellToMultiple = false;
       var destH = clippedRange.length;
       var destW = clippedRange.length ? clippedRange[0].length : 0;
-      if (clippedRange.length == 1 && clippedRange[0].length == 1 && selectedRange){
-        oneCellToMultiple = true;
-        destH = selectedRange.toRow - selectedRange.fromRow +1;
-        destW = selectedRange.toCell - selectedRange.fromCell +1;
+      assert(destH >= 1);
+      assert(destW >= 1);
+      if (destH == 1 && destW == 1 && selectedRange) {
+        oneCellToMultiple = !selectedRange.isSingleCell();
+        destH = selectedRange.toRow - selectedRange.fromRow + 1;
+        destW = selectedRange.toCell - selectedRange.fromCell + 1;
+        assert(oneCellToMultiple || destH === 1);
+        assert(oneCellToMultiple || destW === 1);
       }
-      var availableRows = _grid.getData().length - activeRow;
-      var addRows = 0;
-      if(availableRows < destH) {
-        var d = _grid.getData();
-        for(addRows = 1; addRows <= destH - availableRows; addRows++)
-            d.push({});
-        _grid.setData(d);
-        _grid.render();
-      }
+
       var clipCommand = {
         isClipboardCommand: true,
         clippedRange: clippedRange,
@@ -183,82 +192,113 @@
         activeCell: activeCell,
         destH: destH,
         destW: destW,
-        desty: activeRow,
-        destx: activeCell,
+        destY: activeRow,
+        destX: activeCell,
         maxDestY: _grid.getDataLength(),
         maxDestX: _grid.getColumns().length,
-        h: 0,
-        w: 0,
+        addedRows: null,
+        oldRowCount: null,
 
         execute: function() {
-          this.h = 0;
-          for (var y = 0; y < destH; y++) {
+          assert(this.destH >= 1);
+          assert(this.destX >= 1);
+
+          // check whether we need to add additional rows at the bottom of the grid for the entire pasted range to fit into the grid:
+          this.oldRowCount = _grid.getDataLength();
+          var availableRows = this.oldRowCount - this.destY;
+          var addRows = 0;
+          if (availableRows < this.destH) {
+            var d = _grid.getData();
+            for (addRows = 1; addRows <= this.destH - availableRows; addRows++)
+                d.push({});
+            _grid.setData(d);
+            _grid.render();
+          }
+          this.addedRows = addRows;
+
+          for (var y = 0; y < this.destH; y++) {
             this.oldValues[y] = [];
-            this.w = 0;
-            this.h++;
-            for (var x = 0; x < destW; x++) {
-              this.w++;
-              var desty = activeRow + y;
-              var destx = activeCell + x;
+            for (var x = 0; x < this.destW; x++) {
+              var desty = this.destY + y;
+              var destx = this.destX + x;
 
               if (desty < this.maxDestY && destx < this.maxDestX) {
                 var nd = _grid.getCellNode(desty, destx);
                 var dt = _grid.getDataItem(desty);
-                this.oldValues[y][x] = dt[columns[destx]['id']];
-                if (oneCellToMultiple)
-                  this.setDataItemValueForColumn(dt, columns[destx], clippedRange[0][0]);
-                else
-                  this.setDataItemValueForColumn(dt, columns[destx], clippedRange[y] ? clippedRange[y][x] : '');
+                this.oldValues[y][x] = dt[columns[destx]['id']]; // function getDataItemValueForColumn(item, columnDef)
+                if (this.oneCellToMultiple) {
+                  this.setDataItemValueForColumn(dt, columns[destx], clippedRange[0][0], desty, destx, 0, 0);
+                } else {
+                  this.setDataItemValueForColumn(dt, columns[destx], clippedRange[y][x], desty, destx, y, x);
+                }
                 _grid.updateCell(desty, destx);
               }
             }
           }
 
           var bRange = {
-            'fromCell': activeCell,
-            'fromRow': activeRow,
-            'toCell': activeCell+this.w-1,
-            'toRow': activeRow+this.h-1
+            'fromCell': this.destX,
+            'fromRow': this.destY,
+            'toCell': this.destX + this.destW - 1,
+            'toRow': this.destY + this.destH - 1
           }
 
           this.markCopySelection([bRange]);
           _grid.getSelectionModel().setSelectedRanges([bRange]);
-          this.cellExternalCopyManager.onPasteCells.notify({ranges: [bRange]});
+          _self.onPasteCells.notify({
+            ranges: [bRange],
+            rangeIsCopied: true, // outside source coming in: always regarded as COPY rather than CUT
+            rangeDataFromExternalSource: true,
+            oneCellToMultiple: this.oneCellToMultiple,
+            externalDataSet: this.clippedRange,
+            clipCommand: this
+          });
         },
 
         undo: function() {
-          for (var y = 0; y < destH; y++) {
-            for (var x = 0; x < destW; x++) {
-              var desty = activeRow + y;
-              var destx = activeCell + x;
+          assert(this.destH >= 1);
+          assert(this.destX >= 1);
 
-              if (desty < this.maxDestY && destx < this.maxDestX ) {
+          for (var y = 0; y < this.destH; y++) {
+            for (var x = 0; x < this.destW; x++) {
+              var desty = this.destY + y;
+              var destx = this.destX + x;
+
+              if (desty < this.maxDestY && destx < this.maxDestX) {
                 var nd = _grid.getCellNode(desty, destx);
                 var dt = _grid.getDataItem(desty);
-                if (oneCellToMultiple)
-                  this.setDataItemValueForColumn(dt, columns[destx], this.oldValues[0][0]);
-                else
-                  this.setDataItemValueForColumn(dt, columns[destx], this.oldValues[y][x]);
+                if (this.oneCellToMultiple) {
+                  this.setDataItemValueForColumn(dt, columns[destx], this.oldValues[0][0], desty, destx, 0, 0);
+                } else {
+                  this.setDataItemValueForColumn(dt, columns[destx], this.oldValues[y][x], desty, destx, y, x);
+                }
                 _grid.updateCell(desty, destx);
               }
             }
           }
 
           var bRange = {
-            'fromCell': activeCell,
-            'fromRow': activeRow,
-            'toCell': activeCell + this.w - 1,
-            'toRow': activeRow + this.h - 1
+            'fromCell': this.destX,
+            'fromRow': this.destY,
+            'toCell': this.destX + this.destW - 1,
+            'toRow': this.destY + this.destH - 1
           }
 
           this.markCopySelection([bRange]);
           _grid.getSelectionModel().setSelectedRanges([bRange]);
-          this.cellExternalCopyManager.onPasteCells.notify({ranges: [bRange]});
+          _self.onUndoPasteCells.notify({
+            ranges: [bRange],
+            rangeIsCopied: true, // outside source coming in: always regarded as COPY rather than CUT
+            rangeDataFromExternalSource: true,
+            oneCellToMultiple: this.oneCellToMultiple,
+            externalDataSet: this.clippedRange,
+            clipCommand: this
+          });
 
-          if (addRows > 1) {
+          // only discard the added rows when nothing changed between the time when we invoked .execute() and this .undo():
+          if (this.addedRows > 0 && this.oldRowCount === _grid.getDataLength()) {
             var d = _grid.getData();
-            for ( ; addRows > 1; addRows--)
-              d.splice(d.length - 1, 1);
+             d.splice(this.oldRowCount, this.addedRows);
             _grid.setData(d);
             _grid.render();
           }
@@ -276,77 +316,131 @@
 
     function handleKeyDown(e, args) {
       var ranges;
-      if (!_grid.getEditorLock().isActive() || _grid.getOptions().autoEdit) {
+      if (!_grid.getEditorLock().isActive()) {
         if (e.which == keyCodes.ESC) {
-          if (_copiedRanges) {
+          if (_copyFingerPrint) {
+            assert(_copiedRanges);
             e.preventDefault();
             clearCopySelection();
-            _self.onCopyCancelled.notify({ranges: _copiedRanges});
+            _self.onCopyCancelled.notify({
+              ranges: _copiedRanges,
+              rangeIsCopied: _copiedRanges.copy
+            });
             _copiedRanges = null;
+            _copyFingerPrint = null;
           }
         }
 
-        if (e.which == keyCodes.C && (e.ctrlKey || e.metaKey)) {    // CTRL + C
+        // Control+C / Control+X  -- these have the same effect on initial range
+        if ((e.which == keyCodes.C || e.which == keyCodes.X) && (e.ctrlKey || e.metaKey)) {
           ranges = _grid.getSelectionModel().getSelectedRanges();
+
+          // also remember whether this was Ctrl-C (copy) or Ctrl-X (cut):
+          ranges.copy = (e.which == keyCodes.C);
+
           if (ranges.length != 0) {
             _copiedRanges = ranges;
             markCopySelection(ranges);
-            _self.onCopyCells.notify({ranges: ranges});
+            _self.onCopyCells.notify({ranges: ranges, rangeIsCopied: ranges.copy });
 
             var columns = _grid.getColumns();
-            var clipText = "";
+            var clipTextArr = [];
+
+            // Note: this feature only works well when you have either a single range or all ranges address the same columns
+            if (_options.includeHeaderWhenCopying) {
+                var clipTextHeaders = [];
+                var range = ranges[0];
+
+                for (var j = range.fromCell; j < range.toCell + 1; j++) {
+                    clipTextHeaders.push(columns[j].name || '');
+                }
+                clipTextArr.push(clipTextHeaders.join("\t") + "\r\n");
+            }
 
             for (var rg = 0; rg < ranges.length; rg++) {
                 var range = ranges[rg];
                 var clipTextRows = [];
-                for (var i = range.fromRow; i < range.toRow+1 ; i++) {
+                for (var i = range.fromRow; i < range.toRow + 1; i++) {
                     var clipTextCells = [];
                     var dt = _grid.getDataItem(i);
 
-                    if (clipText == "" && _options.includeHeaderWhenCopying) {
-                        var clipTextHeaders = [];
-                        for (var j = range.fromCell; j < range.toCell + 1 ; j++) {
-                            if (columns[j].name.length > 0)
-                                clipTextHeaders.push(columns[j].name);
-                        }
-                        clipTextRows.push(clipTextHeaders.join("\t"));
-                    }
-
-                    for (var j=range.fromCell; j< range.toCell+1 ; j++){
-                        clipTextCells.push(getDataItemValueForColumn(dt, columns[j]));
+                    for (var j = range.fromCell; j < range.toCell + 1; j++) {
+                        clipTextCells.push(getDataItemValueForColumn(dt, columns[j], clipTextRows.length, clipTextCells.length, i, j));
                     }
                     clipTextRows.push(clipTextCells.join("\t"));
                 }
-                clipText += clipTextRows.join("\r\n") + "\r\n";
+                clipTextArr.push(clipTextRows.join("\r\n"));
             }
+            var clipText = clipTextArr.join('');
+            _copyFingerPrint = clipText.replace(/\r/g, "");
 
-            var $focus = $(_grid.getActiveCellNode());
+            var activeCell = _grid.getActiveCell();
             var ta = _createTextBox(clipText);
 
-            ta.focus();
+            ta.select(); // .focus();
 
-            setTimeout(function(){
+            setTimeout(function() {
                 _bodyElement.removeChild(ta);
                 // restore focus
-                if ($focus && $focus.length > 0) {
-                    $focus.attr('tabIndex', '-1');
-                    $focus.focus();
-                    $focus.removeAttr('tabIndex');
+                if (activeCell) {
+                    //$focus.attr('tabIndex', '-1');
+                    //$focus.focus();
+                    //$focus.removeAttr('tabIndex');
+                    _grid.setActiveCell(activeCell.row, activeCell.cell);
                 }
-            }, 100);
+            }, _externalCopyActionWrapupDelay);
 
             return false;
           }
         }
 
-        if (e.which == keyCodes.V && (e.ctrlKey || e.metaKey)) {    // CTRL + V
-            var ta = _createTextBox('');
+        // Control+V
+        if (e.which == keyCodes.V && (e.ctrlKey || e.metaKey)) {
+          /*
+           * We have a slightly different behaviour than the regular 'copy manager' here:
+           *
+           * We do the 'fetch copy from external app' treatment always, but only follow through on it
+           * when we do NOT have marked a cell range for ourselves during a previous Ctrl-C/X:
+           * that would mean we are doing an INTERNAL copy/paste -- or at least PASTE -- anyhow.
+           */
+          var ta = _createTextBox('');
 
-            setTimeout(function() {
-                _decodeTabularData(_grid, ta);
-            }, 100);
+          setTimeout(function() {
+            // check the 'copy fingerprint' to detect if we are copying/pasting cell data 'internally' i.e. within the same slickgrid grid:
+            var fp = ta.value;
+            assert(typeof fp === 'string');
+            fp = fp.replace(/\r/g, "");
+            if (_copyFingerPrint === fp) {
+              assert(_copiedRanges);
 
-            return false;
+              ranges = _grid.getSelectionModel().getSelectedRanges();
+              _self.onPasteCells.notify({
+                from: _copiedRanges,
+                to: ranges,
+                rangeIsCopied: _copiedRanges.copy,
+                rangeDataFromExternalSource: false
+              });
+              // allow for Ctrl-C, Ctrl-V, Ctrl-V, ... repeated paste sequences to be all 'internal' based on that single Ctrl-C copied range!
+              //
+              // the ctrl-X effect is to delete original range at the first ctrl-V, so no repeat performance for that one though!
+              if (!_copiedRanges.copy) {
+                clearCopySelection();
+                _copiedRanges = null;
+                _copyFingerPrint = null;
+              }
+            } else {
+              // pasting externally obtained data: nuke the internal Ctrl-C range buffer et al:
+              clearCopySelection();
+              _copiedRanges = null;
+              _copyFingerPrint = null;
+
+              _decodeTabularData(_grid, ta);
+            }
+          }, _externalCopyActionWrapupDelay);
+
+          //e.preventDefault(); <-- DO exec the default behaviour as that will fill the textbox we just created!
+
+          return false;
         }
       }
     }
@@ -359,16 +453,19 @@
       for (var i = 0; i < ranges.length; i++) {
         for (var j = ranges[i].fromRow; j <= ranges[i].toRow; j++) {
           hash[j] = {};
-          for (var k = ranges[i].fromCell; k <= ranges[i].toCell && k<columns.length; k++) {
+          for (var k = ranges[i].fromCell; k <= ranges[i].toCell && k < columns.length; k++) {
             hash[j][columns[k].id] = _copiedCellStyle;
           }
         }
       }
       _grid.setCellCssStyles(_copiedCellStyleLayerKey, hash);
-      clearTimeout(_clearCopyTI);
-      _clearCopyTI = setTimeout(function() {
-        _self.clearCopySelection();
-      }, 2000);
+      if (_clearCopyTI) clearTimeout(_clearCopyTI);
+      if (_unmarkSelectionAfterTimeout > 0) {
+        _clearCopyTI = setTimeout(function() {
+          clearCopySelection();
+          _clearCopyTI = 0;
+        }, _unmarkSelectionAfterTimeout);
+      }
     }
 
     function clearCopySelection() {
@@ -379,11 +476,13 @@
       "init": init,
       "destroy": destroy,
       "clearCopySelection": clearCopySelection,
-      "handleKeyDown":handleKeyDown,
+      "handleKeyDown": handleKeyDown,
 
       "onCopyCells": new Slick.Event(),
       "onCopyCancelled": new Slick.Event(),
-      "onPasteCells": new Slick.Event()
+      "onPasteCells": new Slick.Event(),
+      "onPasteCellsPrepare": new Slick.Event(),       // only invoked when executing an external data PASTE operation
+      "onUndoPasteCells": new Slick.Event()
     });
   }
 })(jQuery);

@@ -16,7 +16,10 @@
       columnId: "_checkbox_selector",
       cssClass: null,
       toolTip: "Select/Deselect All",
-      width: 30
+      field: "sel",
+      width: 30,
+      resizable: true,
+      sortable: false
     };
 
     var _options = $.extend(true, {}, _defaults, options);
@@ -139,10 +142,10 @@
         id: _options.columnId,
         name: "<input type='checkbox'>",
         toolTip: _options.toolTip,
-        field: "sel",
+        field: _options.field,
         width: _options.width,
-        resizable: false,
-        sortable: false,
+        resizable: _options.resizable,
+        sortable: _options.sortable,
         cssClass: _options.cssClass,
         formatter: checkboxSelectionFormatter
       };
