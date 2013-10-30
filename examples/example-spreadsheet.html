@@ -7,11 +7,30 @@
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    .slick-cell.copied {
+    /* use 5-level selector to 'win' and thus override the 4-level '.slick-row.odd .slick-cell.selected' CSS styled background */
+    div.slick-row .slick-cell.copied {
       background: blue;
       background: rgba(0, 0, 255, 0.2);
       -webkit-transition: 0.5s background;
     }
+    div.slick-row.odd .slick-cell.copied {
+      background: rgb(0, 0, 214);
+      background: rgba(0, 0, 194, 0.2);
+      -webkit-transition: 0.5s background;
+    }
+
+    /* and help us view when copied and selected ranges overlap */
+    div.slick-row .slick-cell.copied.selected {
+      background: rgb(3, 83, 226);
+      background: rgba(37, 98, 255, 0.2);
+      -webkit-transition: 0.5s background;
+    }
+    div.slick-row.odd .slick-cell.copied.selected {
+      background: rgb(0, 92, 255);
+      background: rgba(0, 71, 255, 0.2);
+      -webkit-transition: 0.5s background;
+    }
+
   </style>
 </head>
 <body>
