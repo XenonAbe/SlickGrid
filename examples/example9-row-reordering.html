@@ -11,9 +11,18 @@
       text-align: center;
     }
 
-    .cell-reorder {
+    /* make sure the background is overriding the default template */
+    .slick-row .slick-cell.cell-reorder {
       cursor: move;
-      background: url("../images/drag-handle.png") no-repeat center center;
+      background-image: url("../images/drag-handle.png");
+      background-repeat: no-repeat;
+      background-position: center center;
+    }
+    .slick-row.odd .slick-cell.cell-reorder {
+      cursor: move;
+      background-image: url("../images/drag-handle.png");
+      background-repeat: no-repeat;
+      background-position: center center;
     }
 
     .cell-selection {
