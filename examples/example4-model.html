@@ -98,6 +98,8 @@
 <script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/jquery.browser.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.formatters.js"></script>
@@ -296,7 +298,8 @@ $(function () {
   var h_runfilters = null;
 
   // wire up the slider to apply the filter to the model
-  $("#pcSlider,#pcSlider2").slider({
+  var $sliders = $("#pcSlider,#pcSlider2");
+  $sliders.slider({
     "range": "min",
     "slide": function (event, ui) {
       Slick.GlobalEditorLock.cancelCurrentEdit();
@@ -305,13 +308,17 @@ $(function () {
         window.clearTimeout(h_runfilters);
         h_runfilters = window.setTimeout(updateFilter, 10);
         percentCompleteThreshold = ui.value;
+
+        // and make sure to sync both sliders:
+        $sliders.slider("value", percentCompleteThreshold);
       }
     }
   });
 
 
   // wire up the search textbox to apply the filter to the model
-  $("#txtSearch,#txtSearch2").keyup(function (e) {
+  var $textsearch = $("#txtSearch,#txtSearch2");
+  $textsearch.keyup(function (e) {
     Slick.GlobalEditorLock.cancelCurrentEdit();
 
     // clear on Esc
@@ -319,8 +326,15 @@ $(function () {
       this.value = "";
     }
 
-    searchString = this.value;
+    var txt = this.value;
+    var changed = (txt != searchString);
+    searchString = txt;
     updateFilter();
+
+    // and sync both input fields: only do this when the search string actually changed -- a measly attempt to keep the cursor position intact
+    if (changed) {
+      $textsearch.val(txt);
+    }
   });
 
   function updateFilter() {
