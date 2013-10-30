@@ -21,8 +21,12 @@
       background: pink;
     }
 
-    .current-server {
+    .slick-viewport .slick-row .slick-cell.current-server {
       border: 1px solid black;
+      /*
+         The CSS selector is 4 classes deep to make this rule 'win' over the .slick-row .slick-cell rules in the theme which also set the background.
+         The alternative is making this an !important rule...
+       */
       background: orange;
     }
   </style>
@@ -126,7 +130,7 @@
 
   function simulateRealTimeUpdates() {
     var changes = {};
-    var numberOfUpdates = Math.round(Math.random() * (data.length / 10));
+    var numberOfUpdates = Math.round(Math.random() * (data.length / 10)) + 1;
     for (var i = 0; i < numberOfUpdates; i++) {
       var server = Math.round(Math.random() * (data.length - 1));
       var cpu = Math.round(Math.random() * (columns.length - 1));

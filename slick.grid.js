@@ -625,7 +625,7 @@ if (typeof Slick === "undefined") {
         });
 
         $header
-            .attr("title", toolTip || "")
+            .attr("title", columnDef.toolTip || "")
             .children().eq(0).html(title);
 
         trigger(self.onHeaderCellRendered, {
@@ -2817,8 +2817,26 @@ if (typeof Slick === "undefined") {
       trigger(self.onCellCssStylesChanged, { "key": key, "hash": hash });
     }
 
-    function getCellCssStyles(key) {
-      return cellCssClasses[key];
+    // Note: when you wish to use the returned hash as (edited) input to setCellCssStyles(), 
+    // then the returned hash is a semi-deep clone (2 levels deep) as otherwise setCellCssStyles() 
+    // won't be able to see the change. See grid.flashCell() :: toggleCellClass() for an example.
+    function getCellCssStyles(key, options) {
+      var hash = cellCssClasses[key];
+      if (options && options.clone) {
+        // clone hash so setCellCssStyles() will be able to see the changes: cloning MUST be 2 levels deep!
+        var o = {};
+        for (var prop in hash) {
+          var s = hash[prop];
+          if (s) {
+            var d = o[prop] = {};
+            for (var p in s) {
+              d[p] = s[p];
+            }
+          }
+        }
+        hash = o;
+      }
+      return hash;
     }
 
     // parameters:
@@ -2839,31 +2857,26 @@ if (typeof Slick === "undefined") {
 
         // and make sure intermediate .render() actions keep the 'flashing' class intact too!
         var id = columns[cell].id;
-        var start_state = !$cell.hasClass(options.cellFlashingCssClass);
 
         function toggleCellClass(times) {
           $cell.queue(function () {
-            var hash = getCellCssStyles(key) || {};
-            var new_state = !(times % 2);
-            new_state ^= start_state;
+            var hash = getCellCssStyles(key, { clone: true });
+            var new_state = !$cell.hasClass(options.cellFlashingCssClass);
             if (new_state) {
               // switch to ON
               if (!hash[row]) {
                 hash[row] = {};
               }
               hash[row][id] = options.cellFlashingCssClass;
-
-              $cell.addClass(options.cellFlashingCssClass).dequeue();
             } else {
               // switch to OFF
               if (hash[row]) {
                 delete hash[row][id];
               }
-
-              $cell.removeClass(options.cellFlashingCssClass).dequeue();
             }
             setCellCssStyles(key, hash);
             execNextFlashPhase(times - 1);
+            $cell.dequeue();
           });
         }
 
@@ -2877,7 +2890,7 @@ if (typeof Slick === "undefined") {
               speed);
         }
 
-        toggleCellClass(times | 0);
+        toggleCellClass(times);
       }
     }
 
