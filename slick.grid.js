@@ -334,6 +334,8 @@ if (typeof Slick === "undefined") {
 
       $headerScroller = $("<div class='slick-header ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
 
+      viewportW = parseFloat($.css($container[0], "width", true));
+
       var headersWidth = getHeadersWidth();
 
       $headerParents = $("<div/>").appendTo($headerScroller);
@@ -2817,8 +2819,8 @@ if (typeof Slick === "undefined") {
       trigger(self.onCellCssStylesChanged, { "key": key, "hash": hash });
     }
 
-    // Note: when you wish to use the returned hash as (edited) input to setCellCssStyles(), 
-    // then the returned hash is a semi-deep clone (2 levels deep) as otherwise setCellCssStyles() 
+    // Note: when you wish to use the returned hash as (edited) input to setCellCssStyles(),
+    // then the returned hash is a semi-deep clone (2 levels deep) as otherwise setCellCssStyles()
     // won't be able to see the change. See grid.flashCell() :: toggleCellClass() for an example.
     function getCellCssStyles(key, options) {
       var hash = cellCssClasses[key];
