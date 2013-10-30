@@ -7,10 +7,6 @@
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    .cell-title {
-      zfont-weight: bold;
-    }
-
     .cell-effort-driven {
       text-align: center;
     }
@@ -76,6 +72,10 @@
       <div id="dropzone" class="recycle-bin">
         Recycle Bin
       </div>
+        <h2>View Source:</h2>
+        <ul>
+            <li><A href="https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example9-row-reordering.html" target="_sourcewindow"> View the source for this example on Github</a></li>
+        </ul>
     </div>
   </div>
 </div>
@@ -84,8 +84,8 @@
 
 <script src="../lib/jquery-1.7.min.js"></script>
 <script src="../lib/jquery-ui-1.8.16.custom.min.js"></script>
-<script src="../lib/jquery.event.drag-2.0.min.js"></script>
-<script src="../lib/jquery.event.drop-2.0.min.js"></script>
+<script src="../lib/jquery.event.drag-2.2.js"></script>
+<script src="../lib/jquery.event.drop-2.2.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../plugins/slick.cellrangeselector.js"></script>
@@ -269,7 +269,6 @@ $(function () {
     if (dd.mode != "recycle") {
       return;
     }
-    e.stopImmediatePropagation();
     dd.helper.css({top: e.pageY + 5, left: e.pageX + 5});
   });
 
