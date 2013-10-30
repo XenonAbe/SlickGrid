@@ -92,7 +92,7 @@
 
 <div id="inlineFilterPanel" style="display:none;background:#dddddd;padding:3px;color:black;">
   Show tasks with title including <input type="text" id="txtSearch2">
-  and % at least 
+  and % at least
   <div style="width:100px;display:inline-block;" id="pcSlider2"></div>
 </div>
 
@@ -241,15 +241,15 @@ $(function () {
 
   grid.onAddNewRow.subscribe(function (e, args) {
     var item = {
-	  "num": data.length, 
-	  "id": "new_" + (Math.round(Math.random() * 10000)), 
-	  "title": "New task", 
-	  "duration": "1 day", 
-	  "percentComplete": 0, 
-	  "start": "01/01/2009", 
-	  "finish": "01/01/2009", 
-	  "effortDriven": false
-	};
+      "num": data.length,
+      "id": "new_" + (Math.round(Math.random() * 10000)),
+      "title": "New task",
+      "duration": "1 day",
+      "percentComplete": 0,
+      "start": "01/01/2009",
+      "finish": "01/01/2009",
+      "effortDriven": false
+    };
     $.extend(item, args.item);
     dataView.addItem(item);
   });

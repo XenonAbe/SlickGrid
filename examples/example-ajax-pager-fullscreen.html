@@ -58,9 +58,9 @@
   <div class="options-panel">
     <h2>Demonstrates</h2>
       <ul>
-	    <li>Using AJAX-loading</li>
-	    <li>Using paging</li>
-	    <li>Filling whole window when creating</li>
+        <li>Using AJAX-loading</li>
+        <li>Using paging</li>
+        <li>Filling whole window when creating</li>
       </ul>
 
     <h2>View Source:</h2>
@@ -108,7 +108,7 @@ $(document).ready(function () {
   var pager = new Slick.Controls.Pager(dataView, grid, $("#pager"));
 
   //$(".slick-viewport").height($("#container").height() - $("#header").height() - $("#pager").height() - $(".slick-header").height());
-  
+
   // use VERGE to determine the viewport size:
   var vh = verge.viewportH();
   // and see how much we need to grow the grid:
@@ -116,11 +116,11 @@ $(document).ready(function () {
   var bodymargin = $(document.body).margin();
   var $container = $(grid.getContainerNode());
   var vph = $container.height();
-  
+
   vph += vh - bh - bodymargin.top - bodymargin.bottom;
-  
+
   $container.height(vph);     // you must adjust the size of the $container for grid.resizeCanvas() to pick up the size change
-  
+
   grid.resizeCanvas();
 
   $(".grid-header .ui-icon")
