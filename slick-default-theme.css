@@ -88,6 +88,10 @@ classes should alter those!
 .slick-cell.selected {
   background-color: beige;
 }
+/* make sure we override the regular background color: */
+.slick-row.odd .slick-cell.selected {
+  background-color: rgb(231, 231, 195) /* beige */;
+}
 
 .slick-cell.active {
   border-color: gray;
