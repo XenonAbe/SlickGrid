@@ -27,7 +27,18 @@
    *
    *  @param  {Object}      options
    *          {Slick.Data.GroupItemMetadataProvider}
-   *                        .groupItemMetadataProvider      Grouping helper
+   *                        .groupItemMetadataProvider      Grouping helper.
+   *
+   *                                                        Interface structure:
+   *                                                          { getGroupRowMetadata:  function(item, row, cell, rows) { return meta; },
+   *                                                            getTotalsRowMetadata: function(item, row, cell, rows) { return meta; } }
+   *          {Slick.Data.GroupItemMetadataProvider}
+   *                        .globalItemMetadataProvider     Grouping helper override: when available, will
+   *                                                        be invoked for every row before the
+   *                                                        options.
+   *
+   *                                                        Interface structure:
+   *                                                          { getRowMetadata:       function(item, row, cell, rows) { return meta; } }
    *          {Boolean}     .inlineFilters                  True if the filter expression should
    *                                                        be "inlined" internally for performance.
    *                                                        Inlining should lead to better performance,
@@ -37,6 +48,15 @@
    *                                                        collapsed groups. If false, group
    *                                                        header rows are shown only for
    *                                                        collapsed groups.
+   *          {String}      .idProperty                     The field in each row (item) which is
+   *                                                        a unique index. (default: "id")
+   *          {Function}
+   *                        .flattenGroupedRows             Overrides the default 'flattener' responsible
+   *                                                        for delivering the complete set of data rows
+   *                                                        to the SlickGrid instance (via .getItem() et al)
+   *
+   *                                                        Interface:
+   *                                                          function(groups, level, groupingInfos, filteredItems, options) { return rows; }
    */
   function DataView(options) {
     var self = this;
@@ -1237,11 +1257,13 @@
       this.checkCount_ = 0;
     };
 
-    this.accumulate = new Function("item", '\
-      var val = item.' + this.field_ + ';\
-      this.count_++;\
-      if (val === true)\
-        this.checkCount_++;');
+    this.accumulate = function (item) {
+      var val = item[this.field_];
+      this.count_++;
+      if (val) {
+        this.checkCount_++;
+      }
+    };
 
     this.storeResult = function (groupTotals) {
       if (!groupTotals.checkCount)
@@ -1262,16 +1284,16 @@
       this.max_ = null;
     };
 
-    this.accumulate = new Function("item", '\
-      var val = item.' + this.field_ + ';\
-      if (val && val.valueOf) {\
-        val = val.valueOf();\
-        if (this.min_ === null || this.min_ > val)\
-          this.min_ = val;\
-        if (this.max_ === null || this.max_ < val)\
-          this.max_ = val;\
-      }\
-      ');
+    this.accumulate = function (item) {
+      var val = item[this.field_];
+      if (val && val.valueOf) {
+        val = val.valueOf();
+        if (this.min_ === null || this.min_ > val)
+          this.min_ = val;
+        if (this.max_ === null || this.max_ < val)
+          this.max_ = val;
+      }
+    };
 
     this.storeResult = function (groupTotals) {
       if (!groupTotals.dateRange)
