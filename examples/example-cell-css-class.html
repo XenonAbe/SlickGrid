@@ -84,7 +84,7 @@
 
         var grid;
         var data = [];
-        data.getItemMetadata = function (row) {
+        data.getItemMetadata = function (row, cell) {
             var item = this[row];
             return !item ? null :
                 {

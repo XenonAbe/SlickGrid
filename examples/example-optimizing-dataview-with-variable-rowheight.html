@@ -140,7 +140,7 @@
     });
     grid = new Slick.Grid("#myGrid", dataView, columns, options);
 
-    dataView.getItemMetadata = function(row) {
+    dataView.getItemMetadata = function(row, cell) {
         return {
             'rows': {
                 1: {
