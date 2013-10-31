@@ -54,21 +54,42 @@
   });
 
   test("onColumnsResized is fired on column resize", function () {
-    expect(2);
-    grid.onColumnsResized.subscribe(function() { ok(true,"onColumnsResized called"); });
+    expect(5);
+    var count = 0;
+    var cb = function() { 
+      count++;
+      ok(true,"onColumnsResized called"); 
+    };
+    grid.onColumnsResized.subscribe(cb);
     var oldWidth = cols[0].width;
     $("#container .slick-resizable-handle:first").simulate("drag", { dx: 100, dy: 0 });
     equal(cols[0].width, oldWidth+100-1, "columns array is updated");
+    equal(count, 1, "event fired once");
+
+    grid.onColumnsResized.unsubscribe(cb);
+    $("#container .slick-resizable-handle:first").simulate("drag", { dx: -100, dy: 0 });
+    equal(cols[0].width, oldWidth, "columns array is updated again");
+    equal(count, 1, "event not fired after unsubscribe");
   });
 
-test("onColumnsStartResize is fired on column resize", function() {
-    expect(2);
-    grid.onColumnsStartResize = function() { ok(true,"onColumnsStartResize called"); };
+  test("onColumnsStartResize is fired on column resize", function() {
+    expect(5);
+    var count = 0;
+    var cb = function() { 
+      count++;
+      ok(true,"onColumnsStartResize called"); 
+    };
+    grid.onColumnsStartResize.subscribe(cb);
     var oldWidth = cols[0].width;
-    $("#container .slick-resizable-handle:first").simulate("drag", {dx:100,dy:0});
+    $("#container .slick-resizable-handle:first").simulate("drag", { dx: 100, dy: 0 });
     equal(cols[0].width, oldWidth+100-1, "columns array is updated");
+    equal(count, 1, "event fired once");
 
-});
+    grid.onColumnsStartResize.unsubscribe(cb);
+    $("#container .slick-resizable-handle:first").simulate("drag", { dx: -100, dy: 0 });
+    equal(cols[0].width, oldWidth, "columns array is updated again");
+    equal(count, 1, "event not fired after unsubscribe");
+  });
 
 
   test("getData should return data", function () {
