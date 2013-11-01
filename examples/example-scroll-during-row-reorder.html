@@ -7,48 +7,55 @@
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    .cell-title {
-        zfont-weight: bold;
-    }
     .cell-effort-driven {
-        text-align: center;
+      text-align: center;
     }
-    .cell-reorder {
-        cursor: move;
-        background: url("../images/drag-handle.png") no-repeat center center;
+
+    /* make sure the background is overriding the default template */
+    .slick-row .slick-cell.cell-reorder {
+      cursor: move;
+      background-image: url("../images/drag-handle.png");
+      background-repeat: no-repeat;
+      background-position: center center;
+    }
+    .slick-row.odd .slick-cell.cell-reorder {
+      cursor: move;
+      background-image: url("../images/drag-handle.png");
+      background-repeat: no-repeat;
+      background-position: center center;
     }
 
     .cell-selection {
-        border-right-color: silver;
-        border-right-style: solid;
-        background: #f5f5f5;
-        color: gray;
-        text-align: right;
-        font-size: 10px;
+      border-right-color: silver;
+      border-right-style: solid;
+      background: #f5f5f5;
+      color: gray;
+      text-align: right;
+      font-size: 10px;
     }
 
     .slick-row.selected .cell-selection {
-        background-color: transparent; /* show default selected row background */
+      background-color: transparent; /* show default selected row background */
     }
 
     .recycle-bin {
-        width: 120px;
-        border: 1px solid gray;
-        background: beige;
-        padding: 4px;
-        font-size: 12pt;
-        font-weight: bold;
-        color: black;
-        text-align: center;
-        -moz-border-radius: 10px;
+      width: 120px;
+      border: 1px solid gray;
+      background: beige;
+      padding: 4px;
+      font-size: 12pt;
+      font-weight: bold;
+      color: black;
+      text-align: center;
+      -moz-border-radius: 10px;
     }
 
     .red {
-        background: red;
+      background: red;
     }
 
     .bold {
-        font-weight: bold;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -66,15 +73,17 @@
     <b>Tips:</b>
     <hr/>
     <div style="padding:6px;">
-        Click to select, Ctrl-click to toggle selection, Shift-click to select a range.<br/>
-        Drag one or more rows by the handle to reorder.<br/>
-        Drag one or more rows to the recycle bin to delete.
+      Click to select, Ctrl-click to toggle selection, Shift-click to select a range.<br/>
+      Drag one or more rows by the handle to reorder.<br/>
+      Drag one or more rows to the recycle bin to delete.
 
-        <br/>
-        <br/>
-        <div id="dropzone" class="recycle-bin">
-            Recycle Bin
-        </div>
+      <br/>
+      <br/>
+
+      <div id="dropzone" class="recycle-bin">
+        Recycle Bin
+      </div>
+    </div>
 
     <hr/>
 
@@ -115,7 +124,7 @@
 <script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
-<script src="../lib/threedubmedia/event.drag/jquery.event.drop.js"></script>
+<script src="../lib/threedubmedia/event.drop/jquery.event.drop.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
@@ -123,6 +132,7 @@
 <script src="../plugins/slick.cellselectionmodel.js"></script>
 <script src="../plugins/slick.rowselectionmodel.js"></script>
 <script src="../plugins/slick.rowmovemanager.js"></script>
+<script src="../slick.formatters.js"></script>
 <script src="../slick.editors.js"></script>
 <script src="../slick.grid.js"></script>
 
@@ -132,52 +142,52 @@
 <script id="script_tag_example" type="text/javascript">
 var grid;
 var data = [];
-
 var columns = [
-    {
-        id: "#",
-        name: "",
-        width: 40,
-        behavior: "selectAndMove",
-        selectable: false,
-        resizable: false,
-        cssClass: "cell-reorder dnd"
-    },
-    {
-        id: "name",
-        name: "Name",
-        field: "name",
-        width: 500,
-        cssClass: "cell-title",
-        editor: TextCellEditor,
-        validator: requiredFieldValidator
-    },
-    {
-        id: "complete",
-        name: "Complete",
-        width: 60,
-        cssClass: "cell-effort-driven",
-        field: "complete",
-        cannotTriggerInsert: true,
-        formatter: BoolCellFormatter,
-        editor: YesNoCheckboxCellEditor
-    }
+  {
+    id: "#",
+    name: "",
+    width: 40,
+    behavior: "selectAndMove",
+    selectable: false,
+    resizable: false,
+    cssClass: "cell-reorder dnd"
+  },
+  {
+    id: "name",
+    name: "Name",
+    field: "name",
+    width: 500,
+    cssClass: "cell-title",
+    editor: Slick.Editors.Text,
+    validator: requiredFieldValidator
+  },
+  {
+    id: "complete",
+    name: "Complete",
+    width: 60,
+    cssClass: "cell-effort-driven",
+    field: "complete",
+    cannotTriggerInsert: true,
+    formatter: Slick.Formatters.Checkmark,
+    editor: Slick.Editors.Checkbox
+  }
 ];
 
 var options = {
-    editable: true,
-    enableAddRow: true,
-    enableRowReordering: true,
-    enableCellNavigation: true,
-    forceFitColumns: true,
-    autoEdit: false
+  editable: true,
+  enableAddRow: true,
+  enableRowReordering: true,
+  enableCellNavigation: true,
+  forceFitColumns: true,
+  autoEdit: false
 };
 
 function requiredFieldValidator(value) {
-    if (value == null || value == undefined || !value.length)
-        return {valid:false, msg:"This is a required field"};
-    else
-        return {valid:true, msg:null};
+  if (value == null || value == undefined || !value.length) {
+    return {valid: false, msg: "This is a required field"};
+  } else {
+    return {valid: true, msg: null};
+  }
 }
 
 
@@ -197,7 +207,7 @@ $(function() {
 
     var moveRowsPlugin = new Slick.RowMoveManager();
 
-    moveRowsPlugin.onBeforeMoveRows.subscribe(function(e,data) {
+    moveRowsPlugin.onBeforeMoveRows.subscribe(function(e, data) {
         for (var i = 0; i < data.rows.length; i++) {
             // no point in moving before or after itself
             if (data.rows[i] == data.insertBefore || data.rows[i] == data.insertBefore - 1) {
@@ -209,32 +219,32 @@ $(function() {
         return true;
     });
 
-    moveRowsPlugin.onMoveRows.subscribe(function(e,args) {
+    moveRowsPlugin.onMoveRows.subscribe(function(e, args) {
         var extractedRows = [], left, right;
         var rows = args.rows;
         var insertBefore = args.insertBefore;
-        left = data.slice(0,insertBefore);
-        right = data.slice(insertBefore,data.length);
+        left = data.slice(0, insertBefore);
+        right = data.slice(insertBefore, data.length);
 
-        for (var i=0; i<rows.length; i++) {
+        for (var i = 0; i < rows.length; i++) {
             extractedRows.push(data[rows[i]]);
         }
 
         rows.sort().reverse();
 
-        for (var i=0; i<rows.length; i++) {
+        for (var i = 0; i < rows.length; i++) {
             var row = rows[i];
             if (row < insertBefore)
-                left.splice(row,1);
+                left.splice(row, 1);
             else
-                right.splice(row-insertBefore,1);
+                right.splice(row - insertBefore, 1);
         }
 
         data = left.concat(extractedRows.concat(right));
 
         var selectedRows = [];
-        for (var i=0; i<rows.length; i++)
-            selectedRows.push(left.length+i);
+        for (var i = 0; i < rows.length; i++)
+            selectedRows.push(left.length + i);
 
         grid.resetActiveCell();
         grid.setData(data);
@@ -249,7 +259,7 @@ $(function() {
         e.stopImmediatePropagation();
     });
 
-    grid.onDragStart.subscribe(function(e,dd) {
+    grid.onDragStart.subscribe(function(e, dd) {
         var cell = grid.getCellFromEvent(e);
         if (!cell)
             return;
@@ -322,16 +332,16 @@ $(function() {
         })
         .on("drop", function(e,dd) {
             var rowsToDelete = dd.rows.sort().reverse();
-            for (var i=0; i<rowsToDelete.length; i++) {
-                data.splice(rowsToDelete[i],1);
+            for (var i = 0; i < rowsToDelete.length; i++) {
+                data.splice(rowsToDelete[i], 1);
             }
             grid.invalidate();
             grid.setSelectedRows([]);
         });
 
 
-    grid.onAddNewRow.subscribe(function(e, args) {
-        var item = {name:"New task", complete: false};
+    grid.onAddNewRow.subscribe(function (e, args) {
+        var item = {name: "New task", complete: false};
         $.extend(item, args.item);
         data.push(item);
         grid.invalidateRows([data.length - 1]);

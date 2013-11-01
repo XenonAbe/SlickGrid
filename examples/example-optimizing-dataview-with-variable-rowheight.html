@@ -140,26 +140,25 @@
     });
     grid = new Slick.Grid("#myGrid", dataView, columns, options);
 
+    var custom_rowheights = {
+        1: {
+            'height': 32
+        },
+        5: {
+            'height': 55
+        },
+        50: {
+            'height': 40
+        },
+        400: {
+            'height': 40
+        },
+        49998: {
+            'height': 100
+        }
+    };
     dataView.getItemMetadata = function(row, cell) {
-        return {
-            'rows': {
-                1: {
-                    'height': 32
-                },
-                5: {
-                    'height': 55
-                },
-                50: {
-                    'height': 40
-                },
-                400: {
-                    'height': 40
-                },
-                49998: {
-                    'height': 100
-                }
-            }
-        };
+      return custom_rowheights[row];
     };
 
     var pager = new Slick.Controls.Pager(dataView, grid, $("#pager"));

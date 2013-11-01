@@ -78,7 +78,7 @@ var options = {
 
 $(function() {
     var data = [];
-    var metadata = {
+    var row_metadata = {
         1: {
             'height': 32
         },
@@ -107,7 +107,7 @@ $(function() {
     }
 
     data.getItemMetadata = function(row, cell) {
-        return metadata[row];
+        return row_metadata[row];
     };
 
     grid = new Slick.Grid("#myGrid", data, columns, options);
