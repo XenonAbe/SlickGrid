@@ -30,13 +30,15 @@
       totalsCssClass: "slick-group-totals",
       groupSelectable: false,
       groupFocusable: true,
+      totalsSelectable: false,
       totalsFocusable: false,
       toggleCssClass: "slick-group-toggle",
       toggleExpandedCssClass: "expanded",
       toggleCollapsedCssClass: "collapsed",
       enableExpandCollapse: true,
       groupFormatter: defaultGroupCellFormatter,
-      totalsFormatter: defaultTotalsCellFormatter
+      totalsFormatter: defaultTotalsCellFormatter,
+      getRowMetadata: null // function (item, row, cell, rows)
     };
 
     options = $.extend(true, {}, _defaults, options);
@@ -128,7 +130,7 @@
 
     function getTotalsRowMetadata(item, row, cell, rows) {
       return {
-        selectable: false,
+        selectable: options.totalsSelectable,
         focusable: options.totalsFocusable,
         cssClasses: options.totalsCssClass,
         formatter: options.totalsFormatter,
@@ -136,9 +138,9 @@
       };
     }
 
-    function getRowMetadata(item) {
+    function getRowMetadata(item, row, cell, rows) {
       if (options.getRowMetadata) {
-        return options.getRowMetadata(item);
+        return options.getRowMetadata(item, row, cell, rows);
       }
 
       return null;
