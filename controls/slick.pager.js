@@ -73,8 +73,9 @@
         var pagesize = $(e.target).attr("data");
         if (pagesize != undefined) {
           if (pagesize == -1) {
+            // TODO: produce the number of completely visible rows instead (height of the slickgrid viewport may be partially clipping the last row)
             var vp = grid.getViewport();
-            setPageSize(vp.bottom - vp.top);
+            setPageSize(vp.bottom - vp.top + 1);
           } else {
             setPageSize(parseInt(pagesize));
           }
