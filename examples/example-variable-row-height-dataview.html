@@ -3,7 +3,7 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-  <title>SlickGrid Variable Row Height + DataView</title>
+  <title>SlickGrid example: Variable Row Height + DataView</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../controls/slick.pager.css" type="text/css"/>
@@ -79,7 +79,7 @@
         <li>Paging.</li>
         <li>inline filter panel</li>
         <li>Extra vs. <a href="example4-model.html">example 4</a>: <b>Variable</b> row height</li>
-        <li>Extra vs. <a href="example4-model.html">example 4</a>: Rows with custom height: 1, 5, 98, 400, 49998</li>
+        <li>Extra vs. <a href="example4-model.html">example 4</a>: Rows with custom height: 1, 5, 50, 98, 400, 49998</li>
       </ul>
 
     <h2>View Source:</h2>
@@ -201,15 +201,15 @@ $(function () {
       };
   }
 
-  var dataView = new Slick.Data.DataView({ inlineFilters: true });
-  grid = new Slick.Grid("#myGrid", dataView, columns, options);
-
   var row_metadata = {
       1: {
           'height': 32
       },
       5: {
           'height': 55
+      },
+      50: {
+          'height': 40
       },
       98: {
           'height': 100
@@ -221,9 +221,16 @@ $(function () {
           'height': 100
       }
   };
-  data.getItemMetadata = function(row, cell) {
-      return row_metadata[row];
-  };
+
+  var dataView = new Slick.Data.DataView({ 
+  	inlineFilters: true,
+    globalItemMetadataProvider: { 
+      getRowMetadata: function (rowData, row, cell /* may be FALSE */, dataRows) {
+        return row_metadata[row];
+      }
+ 	}
+  });
+  grid = new Slick.Grid("#myGrid", dataView, columns, options);
 
   grid.setSelectionModel(new Slick.RowSelectionModel());
 
