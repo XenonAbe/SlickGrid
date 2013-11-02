@@ -2058,7 +2058,7 @@ if (typeof Slick === "undefined") {
 
     function invalidate() {
       invalidateAllRows();
-      updateRowCount();         // why was this moved PAST invalidate?
+      updateRowCount();
       render();
     }
 
