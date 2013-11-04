@@ -36,6 +36,11 @@
 				if (grid.getColumnIndex(columns[i].id) != null) {
 					$input.attr("checked", "checked");
 				}
+        // fixed columns
+        if (columns[i].alwaysShow) {
+          $input.attr("checked", "checked");
+          $input.attr("disabled", "disabled");
+        }
 
         $("<label />")
             .text(columns[i].name)
