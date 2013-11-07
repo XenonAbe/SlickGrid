@@ -28,8 +28,7 @@
       for (var i = 0; i < cnt; i++) {
         var col = {
           id: 'col_lvl_' + lvl + '_' + i,
-          name: colName(lvl, i),
-          fixedColumn: 'title'
+          name: colName(lvl, i)
         };
         if (lvl > 0)
           fill(col.children = [], childCnt, lvl - 1);

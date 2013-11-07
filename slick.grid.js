@@ -171,8 +171,7 @@ if (typeof Slick === "undefined") {
       fullWidthRows: false,
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
-      forceSyncScrolling: false,
-      fixedColumn: null
+      forceSyncScrolling: false
     };
 
     var columnDefaults = {
@@ -185,11 +184,6 @@ if (typeof Slick === "undefined") {
       defaultSortAsc: true,
       focusable: true,
       selectable: true
-    };
-
-    var fixedColumnDefaults = {
-      id: "title",
-      width: columnDefaults.minWidth
     };
 
     // scroller
@@ -218,9 +212,7 @@ if (typeof Slick === "undefined") {
     var $canvas;
     var $style;
     var $boundAncestors;
-    var $fixedColumnPanel;
     var $headerParents;
-    var $fixedColumn;
     var stylesheet, columnCssRulesL, columnCssRulesR;
     var viewportH, viewportW;
     var canvasWidth;
@@ -278,9 +270,6 @@ if (typeof Slick === "undefined") {
     var hasNestedColumns = false;
     var nestedColumns = null;
 
-    var isFixedColumnsRendered = false;
-    var fixedColumnRowCount = 0;
-
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Initialization
 
@@ -299,7 +288,6 @@ if (typeof Slick === "undefined") {
       scrollbarDimensions = scrollbarDimensions || measureScrollbar();
 
       options = $.extend({}, defaults, options);
-      options.fixedColumn && (options.fixedColumn = $.extend({}, fixedColumnDefaults, options.fixedColumn));
       validateAndEnforceOptions();
       columnDefaults.width = options.defaultColumnWidth;
 
@@ -359,12 +347,6 @@ if (typeof Slick === "undefined") {
 
       if (!options.showHeaderRow) {
         $headerRowScroller.hide();
-      }
-
-      if (options.fixedColumn) {
-        $fixedColumnPanel = $('<div class="slick-fixed-panel"></div>');
-        $fixedColumn = $('<div class="slick-fixed-column ' + uid + '_slick-fixed-column"></div>').appendTo($fixedColumnPanel);
-        $fixedColumnPanel.appendTo($container);
       }
 
       $viewport = $("<div class='slick-viewport' style='width:100%;overflow:auto;outline:0;position:relative;'>").appendTo($container);
@@ -1212,10 +1194,6 @@ if (typeof Slick === "undefined") {
         "." + uid + " .slick-cell { height:" + rowHeight + "px; }",
         "." + uid + " .slick-row { height:" + options.rowHeight + "px; }"
       ];
-
-      if (options.fixedColumn && options.fixedColumn.width) {
-        rules.push("." + uid + "_slick-fixed-column { width: " + options.fixedColumn.width + "px; }");
-      }
 
       for (var i = 0; i < columns.length; i++) {
         rules.push("." + uid + " .l" + i + " { }");
@@ -2070,7 +2048,6 @@ if (typeof Slick === "undefined") {
         removeRowFromCache(row);
       }
       rowPositionCache = {};
-      clearFixedColumn();
     }
 
     function removeRowFromCache(row) {
@@ -2171,8 +2148,6 @@ if (typeof Slick === "undefined") {
           removeRowFromCache(row);
         }
       }
-
-      clearFixedColumn(invalidateTopFrom);
 
       for (row in intersectingCells) {
         for (c in intersectingCells[row]) {
@@ -2639,9 +2614,6 @@ if (typeof Slick === "undefined") {
       if (needToReselectCell) {
         activeCellNode = getCellNode(activeRow, activeCell);
       }
-
-      // append new fixed columns from newly added rows
-      appendFixedColumns();
     }
 
     function startPostProcessing() {
@@ -2687,9 +2659,6 @@ if (typeof Slick === "undefined") {
       postProcessToRow = Math.min(getDataLengthIncludingAddNew() - 1, visible.bottom);
       startPostProcessing();
 
-      // render fixed columns panel
-      renderFixedColumns();
-
       lastRenderedScrollTop = scrollTop;
       lastRenderedScrollLeft = scrollLeft;
       h_render = null;
@@ -2716,13 +2685,6 @@ if (typeof Slick === "undefined") {
       }
 
       if (vScrollDist) {
-        // scroll fixed columns with content
-        if (isFixedColumnsRendered) {
-          $fixedColumn.css({
-            'top': -scrollTop
-          });
-        }
-
         vScrollDir = prevScrollTop < scrollTop ? 1 : -1;
         prevScrollTop = scrollTop;
 
@@ -2937,79 +2899,6 @@ if (typeof Slick === "undefined") {
         }
 
         toggleCellClass(times);
-      }
-    }
-
-    function clearFixedColumn(fromRow) {
-      if ($fixedColumn) {
-        if (fromRow == 0) {
-          $fixedColumn.empty();
-        } else {
-          var i = fixedColumnRowCount;
-          var column = $fixedColumn[0];
-          while (--i >= fromRow) {
-            column.removeChild(column.lastChild);
-          }
-        }
-        fixedColumnRowCount = fromRow;
-      }
-    }
-
-    function renderFixedColumns() {
-      if (options.fixedColumn && !isFixedColumnsRendered) {
-        $fixedColumn.empty();
-
-        // append columns
-        appendFixedColumns();
-
-        // set default position, alignment with 'viewport' by top
-        $fixedColumnPanel.css({
-          'top': $viewport[0].offsetTop - 1,
-          'height': $viewport[0].clientHeight
-        });
-
-        isFixedColumnsRendered = true;
-      }
-    }
-
-    function appendFixedColumns() {
-      var rowData, content;
-      var fixedColumnDef = options.fixedColumn;
-      var field = fixedColumnDef && fixedColumnDef.id;
-
-      if (field && $fixedColumn) {
-        var formatter = fixedColumnDef.formatter || defaultFormatter;
-        var rowCount = fixedColumnRowCount;
-        var index;
-
-        // determine upper row index to render fixed column cell for
-        for (index in rowsCache) {
-          index = index | 0;
-          if (rowsCache[index].rowNode && index >= rowCount) {
-            rowCount = index + 1;
-          }
-        }
-
-        if (rowCount > fixedColumnRowCount) {
-          var html = [];
-          var value;
-
-          for (var r = fixedColumnRowCount; r < rowCount; r++) {
-            rowData = getDataItem(r);
-            if (rowData) {
-              value = rowData[field];
-            } else {
-              value = '';
-            }
-            content = formatter(r, -1, value, fixedColumnDef, rowData);
-            html.push('<div class="slick-fixed-cell ' + (r % 2 != 0 ? 'alt' : 'even') + '" style="height:' +
-                (getRowHeight(r) - cellMetrics.borderBottomWidth) +
-                'px"><div class="slick-fixed-content">' + content + '</div></div>');
-          }
-
-          $fixedColumn.append(html.join(''));
-          fixedColumnRowCount = rowCount;
-        }
       }
     }
 
