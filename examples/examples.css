@@ -86,12 +86,14 @@ li {
 .grid-header #txtSearch {
   margin: 0 4px 0 4px;
   padding: 2px 2px;
+  border-radius: 2px;
   -moz-border-radius: 2px;
   -webkit-border-radius: 2px;
   border: 1px solid silver;
 }
 
 .options-panel {
+	border-radius: 6px;
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px;
   border: 1px solid silver;
@@ -150,6 +152,7 @@ li {
 .percent-complete-bar {
   display: inline-block;
   height: 6px;
+  border-radius: 3px;
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
 }
@@ -206,7 +209,7 @@ input.editor-percentcomplete {
 
   width: 120px;
   height: 140px;
-  display: none;
+    display: none;
   overflow: visible;
 }
 
@@ -221,15 +224,15 @@ input.editor-percentcomplete {
 }
 
 .editor-percentcomplete-buttons {
-  float: right;
+	float: right;
 }
 
 .editor-percentcomplete-buttons button {
-  width: 80px;
+	width: 80px;
 }
 
 .editor-percentcomplete-slider {
-  float: left;
+	float: left;
 }
 
 .editor-percentcomplete-picker:hover .editor-percentcomplete-helper {

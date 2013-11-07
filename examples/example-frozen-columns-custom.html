@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example 11: No vertical scrolling (autoHeight)</title>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.24.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick.columnpicker.css" type="text/css" />
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
+  <style>
+    #container {
+      margin: 10px;
+      border: solid 1px gray;
+      width: 800px;
+      height: 400px;
+      background-color: white;
+      background-position: center center;
+      background-repeat: no-repeat;
+    }
+    #container.container-loading {
+      background-image: url("../images/ajax-loader-small.gif");
+    }
+    #container .title {
+      background: rgba(0, 0, 0, .03);
+      color: rgba(0, 0, 0, .7);
+    }
+  </style>
+</head>
+<body>
+<div id="container"></div>
+
+<script src="../lib/jquery-1.7.min.js"></script>
+<script src="../lib/jquery-ui-1.8.24.custom.min.js"></script>
+<script src="../lib/jquery.event.drag-2.2.js"></script>
+<script src="../lib/jquery.mousewheel.js"></script>
+
+<script src="../slick.editors.js"></script>
+<script src="../slick.core.js"></script>
+<script src="../slick.grid.js"></script>
+<script src="../plugins/slick.rowselectionmodel.js"></script>
+<script src="../plugins/slick.autotooltips.js"></script>
+<script src="../controls/slick.columnpicker.js"></script>
+
+<script>
+  var grid;
+  var data = [];
+  var sortMe = function(asc) { // add sorting function
+    var field = this.field;
+    if (asc) {
+      data.sort(function(a, b) {
+        return a[field] - b[field];
+      });
+    } else {
+      data.sort(function(a, b) {
+        return b[field] - a[field];
+      });
+    }
+    grid.invalidate();
+  };
+  var columns = [
+    { id: "title", name: "Title", field: "title", alwaysShow: true, cssClass: 'title'},
+    { id: "duration", name: "Duration", field: "duration", editor: Slick.Editors.Text, alwaysShow: true},
+    { id: "%", name: "% Complete", field: "percentComplete", alwaysShow: true},
+    { id: "start", name: "Start", field: "start"},
+    { id: "finish", name: "Finish", field: "finish", editor: Slick.Editors.Date},
+    { id: "effort-driven", name: "Effort Driven", field: "effortDriven", editor: Slick.Editors.YesNoSelect},
+    { id: "A", name: "Column A", field: "a", editor: Slick.Editors.Integer, sortable: true, sortMe: sortMe, alwaysShow: true},
+    { id: "B", name: "Column B", field: "b", editor: Slick.Editors.Integer, sortable: true, sortMe: sortMe},
+    { id: "C", name: "Column C", field: "c", editor: Slick.Editors.Integer, sortable: true, sortMe: sortMe},
+    { id: "D", name: "Column D", field: "d", editor: Slick.Editors.Integer, sortable: true, sortMe: sortMe},
+    { id: "E", name: "Column E", field: "e", editor: Slick.Editors.Integer},
+    { id: "F", name: "Column F", field: "f", editor: Slick.Editors.Integer},
+    { id: "G", name: "Column G", field: "g", editor: Slick.Editors.Integer},
+    { id: "H", name: "Column H", field: "h", editor: Slick.Editors.Integer}
+  ];
+  var options = {
+    editable: true,
+    enableCellNavigation: true,
+    syncColumnCellResize: true,
+    asyncEditorLoading: true,
+    enableAsyncPostRender: true,
+    autoEdit: false,
+    // autoHeight: true,
+    frozenColumn: 2
+  };
+
+  // fill data
+  for (var i = 1000; i-- > 0;) {
+    data[i] = {
+      title: "Task " + i,
+      duration: "5 days",
+      percentComplete: Math.round(Math.random() * 100),
+      start: "01/01/2009",
+      finish: "01/05/2009",
+      effortDriven: (i % 5 == 0),
+      a: Math.floor(Math.random() * 10000),
+      b: Math.floor(Math.random() * 10000),
+      c: Math.floor(Math.random() * 10000),
+      d: Math.floor(Math.random() * 10000),
+      e: Math.floor(Math.random() * 10000),
+      f: Math.floor(Math.random() * 10000),
+      g: Math.floor(Math.random() * 10000),
+      h: Math.floor(Math.random() * 10000)
+    };
+  }
+
+  // create instance
+  grid = new Slick.Grid("#container", data, columns, options);
+
+  // loading on scroll
+  var loading = 0;
+  var container = $("#container");
+  grid.onScroll.subscribe(function(e, args) {
+    clearTimeout(loading);
+    container.addClass('container-loading');
+    loading = setTimeout(function() {
+      container.removeClass('container-loading');
+    }, 100);
+  });
+
+  // sort column
+  grid.onSort.subscribe(function(e, args) {
+    args.sortCol.sortMe(args.sortAsc);
+  });
+
+  // highlight row
+  grid.setSelectionModel(new Slick.RowSelectionModel());
+  grid.onMouseEnter.subscribe(function(e) {
+    var cell = this.getCellFromEvent(e);
+    this.setSelectedRows([cell.row]);
+  });
+  grid.onMouseLeave.subscribe(function(e) {
+    this.setSelectedRows([]);
+  });
+
+  // active cell
+  grid.onClick.subscribe(function(e) {
+    var cell = this.getCellFromEvent(e);
+    this.setActiveCell(cell.row, cell.cell);
+  });
+
+  // column picker
+  new Slick.Controls.ColumnPicker(columns, grid, options);
+
+  // auto tooltip
+  grid.registerPlugin(new Slick.AutoTooltips({
+    enableForHeaderCells: true
+  }));
+</script>
+</body>
+</html>

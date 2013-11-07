@@ -58,7 +58,7 @@
         _elem = $("<div></div>", {css: options.selectionCss})
             .addClass(options.selectionCssClass)
             .css("position", "absolute")
-            .appendTo(grid.getCanvasNode());
+            .appendTo(grid.getActiveCanvasNode());
       }
       if (!range) {
         range = _elem_range;

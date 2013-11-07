@@ -84,6 +84,10 @@ classes should alter those!
   height: 100%;
 }
 
+.slick-resizable-handle-hover {
+	background-color: #ccc;
+}
+
 .slick-sortable-placeholder {
   background: silver;
 }
@@ -91,6 +95,7 @@ classes should alter those!
 .grid-canvas {
   position: relative;
   outline: 0;
+	overflow: hidden;
 }
 
 .slick-row.ui-widget-content, .slick-row.ui-state-active {
@@ -177,37 +182,39 @@ classes should alter those!
   border: 2px dashed black;
 }
 
-/*  Fixed panel and columns styles START  */
-
-.slick-fixed-panel {
-  border-top: 1px solid #C0C0C0;
-  border-right: 1px solid transparent;
-  background-color: white;
-  overflow:hidden;
-  margin-right:-1px;
-  position:absolute;
-  left: 0px;
+.slick-pane {
+	position: absolute;
+	outline: 0;
+	overflow: hidden;
+	width: 100%;
 }
 
-.slick-fixed-column {
+.slick-pane-header {
+	display: block;
 }
 
-.slick-fixed-cell {
-  border-color: #C0C0C0;
-  border-bottom-style: solid;
-  border-right-style: dotted;
-  border-right-width: 1px;
-  border-bottom-width: 1px;
-  cursor: default;
+.slick-header {
+	overflow: hidden;
+	position: relative;
 }
 
-.slick-fixed-cell.alt {
-  background-color: #FAFAFA;
+.slick-headerrow {
+	overflow: hidden;
+	position: relative;
 }
 
-.slick-fixed-cell .slick-fixed-content {
-  padding-top: 5px;
-  margin-left: 5px;
+.slick-top-panel-scroller {
+	overflow: hidden;
+	position: relative;
 }
 
-/*  Fixed panel and columns styles END  */
+.slick-top-panel {
+	width:10000px
+}
+
+.slick-viewport {
+	position: relative;
+	outline: 0;
+	width: 100%;
+}
+
