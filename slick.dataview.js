@@ -138,6 +138,10 @@
       refreshHints = hints;
     }
 
+    function getFilterArgs() {
+      return filterArgs;
+    }
+
     function setFilterArgs(args) {
       filterArgs = args;
     }
@@ -1047,6 +1051,7 @@
       "mapRowsToIds": mapRowsToIds,
       "mapIdsToRows": mapIdsToRows,
       "setRefreshHints": setRefreshHints,
+      "getFilterArgs": getFilterArgs,
       "setFilterArgs": setFilterArgs,
       "refresh": refresh,
       "updateItem": updateItem,
