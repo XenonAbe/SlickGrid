@@ -4,6 +4,7 @@
 .project
 .DS_Store
 .settings/
+.project
 .idea
 
 /*.user

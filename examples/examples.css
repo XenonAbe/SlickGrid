@@ -93,7 +93,7 @@ li {
 }
 
 .options-panel {
-	border-radius: 6px;
+  border-radius: 6px;
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px;
   border: 1px solid silver;
@@ -209,7 +209,7 @@ input.editor-percentcomplete {
 
   width: 120px;
   height: 140px;
-    display: none;
+  display: none;
   overflow: visible;
 }
 
@@ -224,15 +224,15 @@ input.editor-percentcomplete {
 }
 
 .editor-percentcomplete-buttons {
-	float: right;
+  float: right;
 }
 
 .editor-percentcomplete-buttons button {
-	width: 80px;
+  width: 80px;
 }
 
 .editor-percentcomplete-slider {
-	float: left;
+  float: left;
 }
 
 .editor-percentcomplete-picker:hover .editor-percentcomplete-helper {
