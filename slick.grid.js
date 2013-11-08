@@ -15,6 +15,7 @@
  *     or data associated with any cell/row DOM nodes.  Cell editors must make sure they implement .destroy()
  *     and do proper cleanup.
  *
+ * [2013/11/07 23:30:17]
  */
 
 // make sure required JavaScript modules are loaded
