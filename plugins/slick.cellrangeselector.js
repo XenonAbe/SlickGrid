@@ -83,8 +83,8 @@
       _grid.focus();
 
       var start = _grid.getCellFromPoint(
-          dd.startX - _$activeCanvas.offset().left,
-          dd.startY - _$activeCanvas.offset().top
+          dd.startX - _$activeCanvas.offset().left + _columnOffset,
+          dd.startY - _$activeCanvas.offset().top + _rowOffset
       );
 
       dd.range = {start: start, end: {}};
