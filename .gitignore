@@ -4,4 +4,11 @@
 .project
 .DS_Store
 .settings/
+.project
 .idea
+
+/*.user
+
+# Editor backup files
+*~
+*.bak
