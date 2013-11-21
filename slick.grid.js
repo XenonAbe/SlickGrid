@@ -520,6 +520,10 @@ if (typeof Slick === "undefined") {
             }
         }
 
+		function getContainerNode() {
+			return $container.get(0);
+		}
+
         function measureScrollbar() {
             var $c = $("<div style='position:absolute; top:-10000px; left:-10000px; width:100px; height:100px; overflow:scroll;'></div>").appendTo("body");
             var dim = {
@@ -1827,6 +1831,8 @@ if (typeof Slick === "undefined") {
 
                 $viewportScrollContainerY[0].scrollTop = newScrollTop;
 
+				scrollTop = newScrollTop;
+
                 trigger(self.onViewportChanged, {});
             }
         }
@@ -2342,7 +2348,7 @@ if (typeof Slick === "undefined") {
         function getRenderedRange(viewportTop, viewportLeft) {
             var range = getVisibleRange(viewportTop, viewportLeft);
             var buffer = Math.round(viewportH / options.rowHeight);
-            var minBuffer = 3;
+			var minBuffer = 15;
 
             if (vScrollDir == -1) {
                 range.top -= buffer;
@@ -3315,6 +3321,9 @@ if (typeof Slick === "undefined") {
                     $(rowsCache[activeRow].rowNode).addClass('active');
                 }
 
+				if (document.activeElement == null) {
+					setFocus();
+				}
 
                 if (options.editable && editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
                     clearTimeout(h_editorLoader);
@@ -3582,7 +3591,7 @@ if (typeof Slick === "undefined") {
                             + (viewportHasHScroll ? scrollbarDimensions.height : 0);
 
             // need to page down?
-            if ((row + 1) * options.rowHeight > scrollTop + viewportScrollH + offset) {
+			if ((row + 1) * options.rowHeight > scrollTop + viewportScrollH + offset - (viewportHasHScroll ? scrollbarDimensions.height : 0)) {
                 scrollTo(doPaging ? rowAtTop : rowAtBottom );
                 render();
             }
@@ -3898,13 +3907,16 @@ if (typeof Slick === "undefined") {
 				} else {
 					deltaRows = dir * ( numFrozenRows - activeRow );
 				}
+				deltaRows = deltaRows - dir; // - dir makes it do 1 less row in paging
 				newFirstRow = activeRow + deltaRows;
 			} else {
 				newFirstRow = getRowFromPosition( scrollTop ) + numVisibleRows;
 			}
-			scrollRowIntoView( newFirstRow );
-			render();
 
+			newFirstRow = Math.max(0, newFirstRow);
+			newFirstRow = Math.min(newFirstRow, numberOfRows);
+
+			scrollRowIntoView( newFirstRow );
 
 			if (options.enableCellNavigation && activeRow != null) {
 				var row = activeRow + deltaRows;
@@ -4244,6 +4256,7 @@ if (typeof Slick === "undefined") {
             "setActiveCanvasNode": setActiveCanvasNode,
             "getViewportNode": getViewportNode,
             "getActiveViewportNode": getActiveViewportNode,
+			"getContainerNode": getContainerNode,
             "setActiveViewportNode": setActiveViewportNode,
             "focus": setFocus,
             "getCellFromPoint": getCellFromPoint,
