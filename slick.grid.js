@@ -600,35 +600,35 @@ if (typeof Slick === "undefined") {
     }
 
     function getActiveCanvasNode(element) {
-        setActiveCanvasNode(element);
+      setActiveCanvasNode(element);
 
-        return $activeCanvasNode[0];
+      return $activeCanvasNode[0];
     }
 
     function getCanvases() {
-        return $canvas;
+      return $canvas;
     }
 
     function setActiveCanvasNode(element) {
-        if (element) {
-            $activeCanvasNode = $(element.target).closest('.grid-canvas');
-        }
+      if (element) {
+        $activeCanvasNode = $(element.target).closest('.grid-canvas');
+      }
     }
 
     function getViewportNode() {
-        return $viewport[0];
+      return $viewport[0];
     }
 
     function getActiveViewportNode(element) {
-        setActiveViewPortNode(element);
+      setActiveViewPortNode(element);
 
-        return $activeViewportNode[0];
+      return $activeViewportNode[0];
     }
 
     function setActiveViewportNode(element) {
-        if (element) {
-            $activeViewportNode = $(element.target).closest('.slick-viewport');
-        }
+      if (element) {
+        $activeViewportNode = $(element.target).closest('.slick-viewport');
+      }
     }
 
     function measureScrollbar() {
@@ -2325,6 +2325,8 @@ if (typeof Slick === "undefined") {
 
         $viewportScrollContainerY[0].scrollTop = newScrollTop;
 
+        scrollTop = newScrollTop;
+
         trigger(self.onViewportChanged, {});
       }
     }
@@ -3030,7 +3032,7 @@ if (typeof Slick === "undefined") {
     function getRenderedRange(viewportTop, viewportLeft) {
       var range = getVisibleRange(viewportTop, viewportLeft);
       var buffer = getRowFromPosition(viewportH);
-      var minBuffer = 3;
+      var minBuffer = 15;
 
       delete range.topPx;
       delete range.bottomPx;
@@ -3347,6 +3349,13 @@ if (typeof Slick === "undefined") {
 			bottom: getDataLength() - 1,
 			leftPx: rendered.leftPx,
 			rightPx: rendered.rightPx
+        });
+      } else {
+        renderRows({
+            top: 0,
+            bottom: actualFrozenRow - 1,
+            leftPx: rendered.leftPx,
+            rightPx: rendered.rightPx
         });
       }
 
@@ -4026,13 +4035,13 @@ if (typeof Slick === "undefined") {
     }
 
     function scrollCellIntoView(row, cell, doPaging, doCentering) {
+      if (row < actualFrozenRow) {
+        scrollRowIntoView(row, doPaging, doCentering);
+      }
+
       // Don't scroll to frozen cells
       if (cell <= options.frozenColumn) {
         return;
-      }
-
-      if (row < actualFrozenRow) {
-        scrollRowIntoView(row, doPaging, doCentering);
       }
 
       var colspan = getColspan(row, cell);
@@ -4095,6 +4104,10 @@ if (typeof Slick === "undefined") {
         }
         $(activeCellNode).parent().addClass("active-row");
         $(rowsCache[activeRow].rowNode).parent().addClass("active-row");
+
+        if (document.activeElement == null) {
+          setFocus();
+        }
 
         if (opt_editMode == null) {
           opt_editMode = (activeRow == getDataLength()) || options.autoEdit;
@@ -4399,7 +4412,7 @@ if (typeof Slick === "undefined") {
         render();
       }
       // need to page down?
-      if (getRowBottom(row) > scrollTop + viewportScrollH + pageOffset) {
+      if (getRowBottom(row) > scrollTop + viewportScrollH + pageOffset - (viewportHasHScroll ? scrollbarDimensions.height : 0)) {
         scrollTo(doPaging ? rowAtTop : rowAtBottom);
         render();
       }
