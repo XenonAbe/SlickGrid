@@ -141,7 +141,6 @@
         } else {
           $status.text("Showing all " + totalRowsCount + " rows");
         }
-        $status.text("Showing all " + pagingInfo.totalRows + " rows");
       } else {
         $status.text("Showing page " + (pagingInfo.pageNum + 1) + " of " + pagingInfo.totalPages);
       }
