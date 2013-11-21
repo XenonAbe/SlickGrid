@@ -134,7 +134,13 @@
       }
 
       if (pagingInfo.pageSize == 0) {
-        $status.text("Showing all " + pagingInfo.totalRows + " rows");
+        var totalRowsCount = dataView.getItems().length;
+        var visibleRowsCount = pagingInfo.totalRows;
+        if (visibleRowsCount < totalRowsCount) {
+          $status.text("Showing " + visibleRowsCount + " of " + totalRowsCount + " rows");
+        } else {
+          $status.text("Showing all " + totalRowsCount + " rows");
+        }
       } else {
         $status.text("Showing page " + (pagingInfo.pageNum + 1) + " of " + pagingInfo.totalPages);
       }
