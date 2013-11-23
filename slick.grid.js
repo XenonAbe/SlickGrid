@@ -271,6 +271,12 @@ if (typeof Slick === "undefined") {
     var hasNestedColumns = false;
     var nestedColumns = null;
 
+    // These two variables work around a bug with inertial scrolling in Webkit/Blink on Mac.
+    // See http://crbug.com/312427.
+    var rowNodeFromLastMouseWheelEvent;  // this node must not be deleted while inertial scrolling
+    var zombieRowNodeFromLastMouseWheelEvent;  // node that was hidden instead of getting deleted
+
+
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Initialization
 
@@ -425,6 +431,12 @@ if (typeof Slick === "undefined") {
             .bind("dragend", handleDragEnd)
             .delegate(".slick-cell", "mouseenter", handleMouseEnter)
             .delegate(".slick-cell", "mouseleave", handleMouseLeave);
+
+        // Work around http://crbug.com/312427.
+        if (navigator.userAgent.toLowerCase().match(/webkit/) &&
+            navigator.userAgent.toLowerCase().match(/macintosh/)) {
+          $canvas.bind("mousewheel", handleMouseWheel);
+        }
       } else if (!stylesheet) {
         // when a previous 'init' run did not yet use the run-time stylesheet data, we have to adjust the canvas while waiting for the browser to actually parse that style.
         resizeCanvas();
@@ -2060,7 +2072,14 @@ if (typeof Slick === "undefined") {
       if (!cacheEntry) {
         return;
       }
-      $canvas[0].removeChild(cacheEntry.rowNode);
+
+      if (rowNodeFromLastMouseWheelEvent == cacheEntry.rowNode) {
+        cacheEntry.rowNode.style.display = 'none';
+        zombieRowNodeFromLastMouseWheelEvent = rowNodeFromLastMouseWheelEvent;
+      } else {
+        $canvas[0].removeChild(cacheEntry.rowNode);
+      }
+      
       delete rowsCache[row];
       delete postProcessedRows[row];
       renderedRows--;
@@ -2956,6 +2975,17 @@ if (typeof Slick === "undefined") {
 
     function handleHeaderDragEnd(e, dd) {
       trigger(self.onHeaderDragEnd, dd, e);
+    }
+
+    function handleMouseWheel(e) {
+      var rowNode = $(e.target).closest(".slick-row")[0];
+      if (rowNode != rowNodeFromLastMouseWheelEvent) {
+        if (zombieRowNodeFromLastMouseWheelEvent && zombieRowNodeFromLastMouseWheelEvent != rowNode) {
+          $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
+          zombieRowNodeFromLastMouseWheelEvent = null;
+        }
+        rowNodeFromLastMouseWheelEvent = rowNode;      
+      }
     }
 
     function handleDragInit(e, dd) {
