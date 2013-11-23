@@ -326,6 +326,12 @@ if (typeof Slick === "undefined") {
     var $headerScrollContainer;
     var $headerRowScrollContainer;
 
+    // These two variables work around a bug with inertial scrolling in Webkit/Blink on Mac.
+    // See http://crbug.com/312427.
+    var rowNodeFromLastMouseWheelEvent;  // this node must not be deleted while inertial scrolling
+    var zombieRowNodeFromLastMouseWheelEvent;  // node that was hidden instead of getting deleted
+
+
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Initialization
 
@@ -552,6 +558,12 @@ if (typeof Slick === "undefined") {
             .bind("dragend", handleDragEnd)
             .delegate(".slick-cell", "mouseenter", handleMouseEnter)
             .delegate(".slick-cell", "mouseleave", handleMouseLeave);
+
+        // Work around http://crbug.com/312427.
+        if (navigator.userAgent.toLowerCase().match(/webkit/) &&
+            navigator.userAgent.toLowerCase().match(/macintosh/)) {
+          $canvas.bind("mousewheel", handleMouseWheel);
+        }
       } else if (!stylesheet) {
         // when a previous 'init' run did not yet use the run-time stylesheet data, we have to adjust the canvas while waiting for the browser to actually parse that style.
         resizeCanvas();
@@ -2237,12 +2249,12 @@ if (typeof Slick === "undefined") {
       var probe, top;
       // before we enter the binary search, we attempt to improve the initial guess + search range
       // using the heuristic that the variable cell height will be close to rowHeight:
-      // we perform two probes (at ˜1‰ interval) to save 10 probes (1000 ˜ 2^10) if we are lucky;
+      // we perform two probes (at Ëœ1â€° interval) to save 10 probes (1000 Ëœ 2^10) if we are lucky;
       // we 'loose' 1 probe (the second) to inefficiency if we are unlucky (though one may argue
       // that the possibly extremely skewed split point for the first probe is also a loss -- which
       // would be true if the number of rows with non-standard rowHeight is large and/or deviating
       // from that norm options.rowHeight a lot for some rows, thus moving the targets outside the
-      // 'is probably within 1‰ of the norm' for most row positions.
+      // 'is probably within 1â€° of the norm' for most row positions.
       // Alas, for my tested (large!) grids this heuristic gets us very near O(2) vs O(log2(N)).
       // For grids which do not employ custom rowHeight at all, the performance is O(1). I like that!
       //
@@ -2566,11 +2578,21 @@ if (typeof Slick === "undefined") {
         return;
       }
 
-      cacheEntry.rowNode[0].parentElement.removeChild(cacheEntry.rowNode[0]);
+      if (rowNodeFromLastMouseWheelEvent[0] == cacheEntry.rowNode[0]) {
+        cacheEntry.rowNode[0].style.display = 'none';
+        zombieRowNodeFromLastMouseWheelEvent[0] = rowNodeFromLastMouseWheelEvent[0];
+      } else {
+        cacheEntry.rowNode[0].parentElement.removeChild(cacheEntry.rowNode[0]);
+      }
 
       // Remove the row from the right viewport
       if (cacheEntry.rowNode[1]) {
-        cacheEntry.rowNode[1].parentElement.removeChild(cacheEntry.rowNode[1]);
+        if (rowNodeFromLastMouseWheelEvent[1] == cacheEntry.rowNode[1]) {
+          cacheEntry.rowNode[1].style.display = 'none';
+          zombieRowNodeFromLastMouseWheelEvent[1] = rowNodeFromLastMouseWheelEvent[1];
+        } else {
+          cacheEntry.rowNode[1].parentElement.removeChild(cacheEntry.rowNode[1]);
+        }
       }
 
       delete rowsCache[row];
@@ -3706,6 +3728,17 @@ if (typeof Slick === "undefined") {
 
     function handleHeaderDragEnd(e, dd) {
       trigger(self.onHeaderDragEnd, dd, e);
+    }
+
+    function handleMouseWheel(e) {
+      var rowNode = $(e.target).closest(".slick-row")[0];
+      if (rowNode != rowNodeFromLastMouseWheelEvent) {
+        if (zombieRowNodeFromLastMouseWheelEvent && zombieRowNodeFromLastMouseWheelEvent != rowNode) {
+          $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
+          zombieRowNodeFromLastMouseWheelEvent = null;
+        }
+        rowNodeFromLastMouseWheelEvent = rowNode;      
+      }
     }
 
     function handleDragInit(e, dd) {
