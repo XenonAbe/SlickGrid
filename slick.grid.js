@@ -1746,7 +1746,7 @@ if (typeof Slick === "undefined") {
           if (!pos) {
             rowMetadata = data.getItemMetadata && data.getItemMetadata(r, false);
             pos = rowPositionCache[r] = {
-              height: (rowMetadata && rowMetadata.height > 0 ? rowMetadata.height : options.rowHeight)
+              height: (rowMetadata && rowMetadata.height > 0) ? rowMetadata.height : options.rowHeight
             };
           } else if (pos.top != null)
             break;
@@ -2220,7 +2220,7 @@ if (typeof Slick === "undefined") {
         }
         var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
         // look up by id, then index
-        var cellMetadata = rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[cell]);
+        var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[cell]);
         if (cellMetadata) {
           var cellHeight = getCellHeight(row, getRowspan(row, cell));
           if (cellHeight != options.rowHeight) {
@@ -2258,7 +2258,7 @@ if (typeof Slick === "undefined") {
           currentEditor.loadValue(d);
         } else if (d) {
           // look up by id, then index
-          var cellMetadata = rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[columnIdx]);
+          var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[columnIdx]);
           node.innerHTML = getFormatter(row, columnIdx)(row, columnIdx, getDataItemValueForColumn(d, m, rowMetadata, cellMetadata), m, d);
         } else {
           node.innerHTML = "";
@@ -3412,7 +3412,7 @@ if (typeof Slick === "undefined") {
           var formatter = getFormatter(activeRow, activeCell);
           var rowMetadata = data.getItemMetadata && data.getItemMetadata(activeRow, activeCell);
           // look up by id, then index
-          var cellMetadata = rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
+          var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
           activeCellNode.innerHTML = formatter(activeRow, activeCell, getDataItemValueForColumn(d, column, rowMetadata, cellMetadata), column, d);
           invalidatePostProcessingResults(activeRow);
         }
@@ -4068,7 +4068,7 @@ if (typeof Slick === "undefined") {
         var column = columns[cell];
         var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
         if (rowMetadata) {
-          var columnMetadata = rowMetadata && rowMetadata.columns;
+          var columnMetadata = rowMetadata.columns;
           // look up by id, then index
           columnMetadata = columnMetadata && (columnMetadata[column.id] || columnMetadata[cell]);
           if (columnMetadata) {
