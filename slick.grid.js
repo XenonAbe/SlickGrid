@@ -699,7 +699,7 @@ if (typeof Slick === "undefined") {
       return options.fullWidthRows ? Math.max(totalRowWidth, availableWidth) : totalRowWidth;
     }
 
-    function updateCanvasWidth(forceColumnWidthsUpdate) {
+    function updateCanvasWidth(forceColumnWidthsUpdate, forceCanvasResize) {
       var oldCanvasWidth = canvasWidth;
       var oldCanvasWidthL = canvasWidthL;
       var oldCanvasWidthR = canvasWidthR;
@@ -711,7 +711,7 @@ if (typeof Slick === "undefined") {
 
       widthChanged = (canvasWidth !== oldCanvasWidth || canvasWidthL !== oldCanvasWidthL || canvasWidthR !== oldCanvasWidthR);
 
-      if (widthChanged || options.frozenColumn > -1 || hasFrozenRows) {
+      if (widthChanged || options.frozenColumn > -1 || hasFrozenRows || forceCanvasResize) {
         $canvasTopL.width(canvasWidthL);
 
         getHeadersWidth();
@@ -776,7 +776,7 @@ if (typeof Slick === "undefined") {
       $headerRowSpacerR.width(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
 
       // when 'stylesheet' has not been set yet, it means that any previous call to applyColumnWidths() did not use up to date values yet as the run-time generated stylesheet wasn't parsed in time.
-      if (widthChanged || forceColumnWidthsUpdate || !stylesheet) {
+      if (widthChanged || forceColumnWidthsUpdate || forceCanvasResize || !stylesheet) {
         applyColumnWidths();
       }
     }
@@ -955,7 +955,20 @@ if (typeof Slick === "undefined") {
             .data("column", m)
             .addClass(m.headerCssClass || "")
             .addClass("level" + (level || 0))
+            .addClass("colspan" + getColumnColspan(m))
             .appendTo($headerTarget);
+      }
+
+      function getColumnColspan(m) {
+        var colspan = 0;
+        if (m.children) {
+          for (var k = 0; k < m.children.length; k++) {
+            colspan += getColumnColspan(m.children[k]);
+          }
+        } else {
+          colspan = 1;
+        }
+        return colspan;
       }
 
       function createBaseColumnHeader(m, $headerTarget, $headerRowTarget, level) {
@@ -2253,12 +2266,12 @@ if (typeof Slick === "undefined") {
       var probe, top;
       // before we enter the binary search, we attempt to improve the initial guess + search range
       // using the heuristic that the variable cell height will be close to rowHeight:
-      // we perform two probes (at ˜1‰ interval) to save 10 probes (1000 ˜ 2^10) if we are lucky;
+      // we perform two probes (at Ëœ1â€° interval) to save 10 probes (1000 Ëœ 2^10) if we are lucky;
       // we 'loose' 1 probe (the second) to inefficiency if we are unlucky (though one may argue
       // that the possibly extremely skewed split point for the first probe is also a loss -- which
       // would be true if the number of rows with non-standard rowHeight is large and/or deviating
       // from that norm options.rowHeight a lot for some rows, thus moving the targets outside the
-      // 'is probably within 1‰ of the norm' for most row positions.
+      // 'is probably within 1â€° of the norm' for most row positions.
       // Alas, for my tested (large!) grids this heuristic gets us very near O(2) vs O(log2(N)).
       // For grids which do not employ custom rowHeight at all, the performance is O(1). I like that!
       //
@@ -2477,7 +2490,8 @@ if (typeof Slick === "undefined") {
       var rowspan = getRowspan(row, cell);
       var cellCss = "slick-cell l" + cell + " r" + Math.min(columns.length - 1, cell + colspan - 1) +
         (m.cssClass ? " " + m.cssClass : "") +
-        (rowspan > 1 ? " rowspan" : "") +
+        (colspan > 1 ? " colspan colspan" + colspan : "") +
+        (rowspan > 1 ? " rowspan rowspan" + rowspan : "") +
         (cellMetadata && cellMetadata.cssClass ? " " + cellMetadata.cssClass : "") +
         (cellMetadata && cellMetadata.transparent ? " slick-transparent" : "");
       if (row === activeRow && cell === activeCell) {
