@@ -86,20 +86,26 @@
      * object the event was fired with.<p>
      * @method subscribe
      * @param fn {Function} Event handler.
+     * @return {Function} the registered event handler `fn`.
      */
     this.subscribe = function (fn) {
       handlers.push(fn);
+      return fn;
     };
 
     /***
      * Removes an event handler added with <code>subscribe(fn)</code>.
      * @method unsubscribe
-     * @param fn {Function} Event handler to be removed.
+     * @param fn {Function} Event handler to be removed. When undefined, all event handlers are unsubscribed.
      */
     this.unsubscribe = function (fn) {
-      for (var i = handlers.length - 1; i >= 0; i--) {
-        if (handlers[i] === fn) {
-          handlers.splice(i, 1);
+      if (!fn) {
+        handlers = [];
+      } else {
+        for (var i = handlers.length - 1; i >= 0; i--) {
+          if (handlers[i] === fn) {
+            handlers.splice(i, 1);
+          }
         }
       }
     };
