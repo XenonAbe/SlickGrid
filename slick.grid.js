@@ -171,7 +171,8 @@ if (typeof Slick === "undefined") {
       fullWidthRows: false,
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
-      forceSyncScrolling: false
+      forceSyncScrolling: false,
+      addNewRowCssClass: "new-row"
     };
 
     var columnDefaults = {
@@ -261,6 +262,11 @@ if (typeof Slick === "undefined") {
     // perf counters
     var counter_rows_rendered = 0;
     var counter_rows_removed = 0;
+
+    // These two variables work around a bug with inertial scrolling in Webkit/Blink on Mac.
+    // See http://crbug.com/312427.
+    var rowNodeFromLastMouseWheelEvent;  // this node must not be deleted while inertial scrolling
+    var zombieRowNodeFromLastMouseWheelEvent;  // node that was hidden instead of getting deleted
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -389,7 +395,7 @@ if (typeof Slick === "undefined") {
         $container
             .bind("resize.slickgrid", resizeCanvas);
         $viewport
-            .bind("click", handleClick)
+            //.bind("click", handleClick)
             .bind("scroll", handleScroll);
         $headerScroller
             .bind("contextmenu", handleHeaderContextMenu)
@@ -415,6 +421,12 @@ if (typeof Slick === "undefined") {
             .bind("dragend", handleDragEnd)
             .delegate(".slick-cell", "mouseenter", handleMouseEnter)
             .delegate(".slick-cell", "mouseleave", handleMouseLeave);
+
+        // Work around http://crbug.com/312427.
+        if (navigator.userAgent.toLowerCase().match(/webkit/) &&
+            navigator.userAgent.toLowerCase().match(/macintosh/)) {
+          $canvas.bind("mousewheel", handleMouseWheel);
+        }
       } else if (!stylesheet) {
         // when a previous 'init' run did not yet use the run-time stylesheet data, we have to adjust the canvas while waiting for the browser to actually parse that style.
         resizeCanvas();
@@ -1256,10 +1268,14 @@ if (typeof Slick === "undefined") {
         var growProportion = availWidth / total;
         for (i = 0; i < columns.length && total < availWidth; i++) {
           c = columns[i];
-          if (!c.resizable || c.maxWidth <= widths[i]) {
-            continue;
+          var currentWidth = widths[i];
+          var growSize;
+
+          if (!c.resizable || c.maxWidth <= currentWidth) {
+            growSize = 0;
+          } else {
+            growSize = Math.min(Math.floor(growProportion * currentWidth) - currentWidth, (c.maxWidth - currentWidth) || 1000000) || 1;
           }
-          var growSize = Math.min(Math.floor(growProportion * widths[i]) - widths[i], (c.maxWidth - widths[i]) || 1000000) || 1;
           total += growSize;
           widths[i] += growSize;
         }
@@ -1591,6 +1607,10 @@ if (typeof Slick === "undefined") {
           (row === activeRow ? " active" : "") +
           (row % 2 == 1 ? " odd" : " even");
 
+      if (!d) {
+        rowCss += " " + options.addNewRowCssClass;
+      }
+
       var metadata = data.getItemMetadata && data.getItemMetadata(row, false);
 
       if (metadata && metadata.cssClasses) {
@@ -1700,7 +1720,14 @@ if (typeof Slick === "undefined") {
       if (!cacheEntry) {
         return;
       }
-      $canvas[0].removeChild(cacheEntry.rowNode);
+
+      if (rowNodeFromLastMouseWheelEvent == cacheEntry.rowNode) {
+        cacheEntry.rowNode.style.display = 'none';
+        zombieRowNodeFromLastMouseWheelEvent = rowNodeFromLastMouseWheelEvent;
+      } else {
+        $canvas[0].removeChild(cacheEntry.rowNode);
+      }
+      
       delete rowsCache[row];
       delete postProcessedRows[row];
       renderedRows--;
@@ -1840,6 +1867,8 @@ if (typeof Slick === "undefined") {
       var oldViewportHasVScroll = viewportHasVScroll;
       // with autoHeight, we do not need to accommodate the vertical scroll bar
       viewportHasVScroll = !options.autoHeight && (numberOfRows * options.rowHeight > viewportH);
+
+      makeActiveCellNormal();
 
       // remove the rows that are now outside of the data range
       // this helps avoid redundant calls to .removeRow() when the size of the data decreased by thousands of rows
@@ -2458,6 +2487,17 @@ if (typeof Slick === "undefined") {
 
     function handleHeaderDragEnd(e, dd) {
       trigger(self.onHeaderDragEnd, dd, e);
+    }
+
+    function handleMouseWheel(e) {
+      var rowNode = $(e.target).closest(".slick-row")[0];
+      if (rowNode != rowNodeFromLastMouseWheelEvent) {
+        if (zombieRowNodeFromLastMouseWheelEvent && zombieRowNodeFromLastMouseWheelEvent != rowNode) {
+          $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
+          zombieRowNodeFromLastMouseWheelEvent = null;
+        }
+        rowNodeFromLastMouseWheelEvent = rowNode;      
+      }
     }
 
     function handleDragInit(e, dd) {
