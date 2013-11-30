@@ -519,14 +519,14 @@ if (typeof Slick === "undefined") {
       return options.fullWidthRows ? Math.max(rowWidth, availableWidth) : rowWidth;
     }
 
-    function updateCanvasWidth(forceColumnWidthsUpdate) {
+    function updateCanvasWidth(forceColumnWidthsUpdate, forceCanvasResize) {
       var oldCanvasWidth = canvasWidth;
       canvasWidth = getCanvasWidth();
 
       // see https://github.com/mleibman/SlickGrid/issues/477
       viewportHasHScroll = (canvasWidth > viewportW - scrollbarDimensions.width);
 
-      if (canvasWidth != oldCanvasWidth) {
+      if (canvasWidth != oldCanvasWidth || forceCanvasResize) {
         $canvas.width(canvasWidth);
         $headerRow.width(canvasWidth);
         var headersWidth = getHeadersWidth();
@@ -538,7 +538,7 @@ if (typeof Slick === "undefined") {
       $headerRowSpacer.width(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
 
       // when 'stylesheet' has not been set yet, it means that any previous call to applyColumnWidths() did not use up to date values yet as the run-time generated stylesheet wasn't parsed in time.
-      if (canvasWidth != oldCanvasWidth || forceColumnWidthsUpdate || !stylesheet) {
+      if (canvasWidth != oldCanvasWidth || forceColumnWidthsUpdate || forceCanvasResize || !stylesheet) {
         applyColumnWidths();
       }
     }
@@ -694,7 +694,20 @@ if (typeof Slick === "undefined") {
             .data("column", m)
             .addClass(m.headerCssClass || "")
             .addClass("level" + (level || 0))
+            .addClass("colspan" + getColumnColspan(m))
             .appendTo(appendTo);
+      }
+
+      function getColumnColspan(m) {
+        var colspan = 0;
+        if (m.children) {
+          for (var k = 0; k < m.children.length; k++) {
+            colspan += getColumnColspan(m.children[k]);
+          }
+        } else {
+          colspan = 1;
+        }
+        return colspan;
       }
 
       function createBaseColumnHeader(m, level) {
@@ -1070,7 +1083,7 @@ if (typeof Slick === "undefined") {
               applyColumnHeaderWidths();
               if (options.syncColumnCellResize) {
                 applyColumnWidths();
-                updateCanvasWidth(true);
+                updateCanvasWidth(true, true);
               }
             })
             .bind("dragend touchend", function (e, dd) {
@@ -1978,7 +1991,8 @@ if (typeof Slick === "undefined") {
       var rowspan = getRowspan(row, cell);
       var cellCss = "slick-cell l" + cell + " r" + Math.min(columns.length - 1, cell + colspan - 1) +
         (m.cssClass ? " " + m.cssClass : "") +
-        (rowspan > 1 ? " rowspan" : "") +
+        (colspan > 1 ? " colspan colspan" + colspan : "") +
+        (rowspan > 1 ? " rowspan rowspan" + rowspan : "") +
         (cellMetadata && cellMetadata.cssClass ? " " + cellMetadata.cssClass : "") +
         (cellMetadata && cellMetadata.transparent ? " slick-transparent" : "");
       if (row === activeRow && cell === activeCell) {
