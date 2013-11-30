@@ -1515,7 +1515,7 @@ if (typeof Slick === "undefined") {
       } else {
         $canvas[0].removeChild(cacheEntry.rowNode);
       }
-      
+
       delete rowsCache[row];
       delete postProcessedRows[row];
       renderedRows--;
@@ -2162,7 +2162,7 @@ if (typeof Slick === "undefined") {
           $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
           zombieRowNodeFromLastMouseWheelEvent = null;
         }
-        rowNodeFromLastMouseWheelEvent = rowNode;      
+        rowNodeFromLastMouseWheelEvent = rowNode;
       }
     }
 
@@ -2217,7 +2217,7 @@ if (typeof Slick === "undefined") {
             cancelEditAndSetFocus();
           } else if (e.which == 34) {
             navigatePageDown();
-            handled = true;           
+            handled = true;
           } else if (e.which == 33) {
             navigatePageUp();
             handled = true;
@@ -2273,9 +2273,9 @@ if (typeof Slick === "undefined") {
         // don't steal it back - keyboard events will still bubble up
         // IE9+ seems to default DIVs to tabIndex=0 instead of -1, so check for cell clicks directly.
         if (e.target != document.activeElement || $(e.target).hasClass("slick-cell")) {
-          var selection = getTextSelection(); //store text-selection and restore it after
+          var selection = getTextSelection(); // store text-selection and restore it after
           setFocus();
-          setTextSelection(selection); 
+          setTextSelection(selection);
         }
       }
 
@@ -2456,8 +2456,8 @@ if (typeof Slick === "undefined") {
       }
     }
 
-    //This get/set methods are used for keeping text-selection. These don't consider IE because they don't loose text-selection.
-    function getTextSelection(){
+    // These get/set methods are used for keeping text-selection. These don't consider IE because they don't loose text-selection.
+    function getTextSelection() {
       var selection = null;
       if (window.getSelection) {
         selection = window.getSelection().getRangeAt(0);
@@ -2465,7 +2465,7 @@ if (typeof Slick === "undefined") {
       return selection;
     }
 
-    function setTextSelection(selection){
+    function setTextSelection(selection) {
       if (window.getSelection && selection) {
         var target = window.getSelection();
         target.removeAllRanges();
@@ -2793,7 +2793,7 @@ if (typeof Slick === "undefined") {
         var prevActivePosX = activePosX;
         while (cell <= activePosX) {
           if (canCellBeActive(row, cell)) {
-            prevCell = cell;  
+            prevCell = cell;
           }
           cell += getColspan(row, cell);
         }
