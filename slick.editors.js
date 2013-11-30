@@ -442,6 +442,7 @@ function isValidModifier(v) {
     var defaultValue;
     var scope = this;
     var calendarOpen = false;
+    var imageDir = args.imagesPath || "../images";
 
     this.init = function () {
       defaultValue = '';
@@ -451,7 +452,7 @@ function isValidModifier(v) {
       $input.datepicker({
         showOn: "button",
         buttonImageOnly: true,
-        buttonImage: args.dateButtonImage || (getHost() + "images/calendar.png"),
+        buttonImage: args.dateButtonImage || (imageDir + "/calendar.png"),
         beforeShow: function () {
           calendarOpen = true
         },
