@@ -59,7 +59,7 @@
     var oldWidth = cols[0].width;
     $("#container .slick-resizable-handle:first").simulate("drag", { dx: 100, dy: 0 });
     equal(cols[0].width, oldWidth+100-1, "columns array is updated");
-    grid.onColumnsResized.subscribe();
+    grid.onColumnsResized.unsubscribe();
   });
 
   test("onColumnsStartResize is fired on column resize", function() {
@@ -68,6 +68,32 @@
     var oldWidth = cols[0].width;
     $("#container .slick-resizable-handle:first").simulate("drag", {dx:100,dy:0});
     equal(cols[0].width, oldWidth+100-1, "columns array is updated");
+    grid.onColumnsStartResize.unsubscribe();
+  });
+
+  test("onColumnsStartResize is fired before onColumnsResized on column resize", function() {
+    expect(4);
+    var marker = 3;
+    grid.onColumnsResized.subscribe(function() { 
+      marker *= 3;
+      ok(true,"onColumnsResized called"); 
+    });
+    grid.onColumnsStartResize.subscribe(function() { 
+      marker -= 2;
+      ok(true,"onColumnsStartResize called"); 
+    });
+    // this event should NOT fire as the resize is instantaneous:
+    grid.onColumnsResizing.subscribe(function() { 
+      marker = 11;
+      ok(true,"onColumnsResizing called"); 
+    });
+    var oldWidth = cols[0].width;
+    $("#container .slick-resizable-handle:first").simulate("drag", {dx:100,dy:0});
+    equal(cols[0].width, oldWidth+100-1, "columns array is updated");
+    equal(marker, (3 - 2) * 3, "event handlers invoked in the expected order");
+    grid.onColumnsStartResize.unsubscribe();
+    grid.onColumnsResizing.unsubscribe();
+    grid.onColumnsResized.unsubscribe();
   });
 
 
