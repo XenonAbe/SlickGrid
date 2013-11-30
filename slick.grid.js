@@ -1083,7 +1083,7 @@ if (typeof Slick === "undefined") {
               applyColumnHeaderWidths();
               if (options.syncColumnCellResize) {
                 applyColumnWidths();
-                updateCanvasWidth(true, true);
+                updateCanvasWidth(true);
               }
             })
             .bind("dragend touchend", function (e, dd) {
@@ -2097,7 +2097,7 @@ if (typeof Slick === "undefined") {
       } else {
         $canvas[0].removeChild(cacheEntry.rowNode);
       }
-      
+
       delete rowsCache[row];
       delete postProcessedRows[row];
       renderedRows--;
@@ -3002,18 +3002,7 @@ if (typeof Slick === "undefined") {
           $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
           zombieRowNodeFromLastMouseWheelEvent = null;
         }
-        rowNodeFromLastMouseWheelEvent = rowNode;      
-      }
-    }
-
-    function handleMouseWheel(e) {
-      var rowNode = $(e.target).closest(".slick-row")[0];
-      if (rowNode != rowNodeFromLastMouseWheelEvent) {
-        if (zombieRowNodeFromLastMouseWheelEvent && zombieRowNodeFromLastMouseWheelEvent != rowNode) {
-          $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
-          zombieRowNodeFromLastMouseWheelEvent = null;
-        }
-        rowNodeFromLastMouseWheelEvent = rowNode;      
+        rowNodeFromLastMouseWheelEvent = rowNode;
       }
     }
 
