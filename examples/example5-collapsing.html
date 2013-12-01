@@ -73,6 +73,7 @@
 <script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.formatters.js"></script>
@@ -213,7 +214,8 @@ $(function () {
       "percentComplete": 0,
       "start": "01/01/2009",
       "finish": "01/01/2009",
-      "effortDriven": false};
+      "effortDriven": false
+    };
     $.extend(item, args.item);
     dataView.addItem(item);
   });
@@ -233,7 +235,6 @@ $(function () {
       e.stopImmediatePropagation();
     }
   });
-
 
   // wire up model events to drive the grid
   dataView.onRowCountChanged.subscribe(function (e, args) {

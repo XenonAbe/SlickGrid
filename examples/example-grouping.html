@@ -52,11 +52,11 @@
       <hr/>
       <button onclick="dataView.setGrouping([])">Clear grouping</button>
       <br/>
-      <button onclick="groupByDuration()">Group by duration & sort groups by value</button>
+      <button onclick="groupByDuration()">Group by duration &amp; sort groups by value</button>
       <br/>
-      <button onclick="groupByDurationOrderByCount(false)">Group by duration & sort groups by count</button>
+      <button onclick="groupByDurationOrderByCount(false)">Group by duration &amp; sort groups by count</button>
       <br/>
-      <button onclick="groupByDurationOrderByCount(true)">Group by duration & sort groups by count, aggregate
+      <button onclick="groupByDurationOrderByCount(true)">Group by duration &amp; sort groups by count, aggregate
         collapsed
       </button>
       <br/>
@@ -81,7 +81,6 @@
       </li>
     </ul>
 
-
     <h2>View Source:</h2>
       <ul>
           <li id="viewsource">View Source Code</li>
@@ -95,6 +94,8 @@
 <script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/jquery.browser.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.formatters.js"></script>
@@ -323,8 +324,7 @@ $(function () {
 
       // use numeric sort of % and lexicographic for everything else
       dataView.fastSort((sortcol == "percentComplete") ? percentCompleteValueFn : sortcol, args.sortAsc);
-    }
-    else {
+    } else {
       // using native sort with comparer
       // preferred method but can be very slow in IE with huge datasets
       dataView.sort(comparer, args.sortAsc);
