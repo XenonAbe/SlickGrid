@@ -163,9 +163,23 @@ function myFilter(item, args) {
   return true;
 }
 
-function comparer(a, b) {
-  var x = a[sortcol], y = b[sortcol];
-  return (x == y ? 0 : (x > y ? 1 : -1));
+function stableComparer() {
+  var comparer = function(a, b) {
+    var x = a[sortcol], y = b[sortcol];
+    return (x == y ? (a.seqno > b.seqno ? 1 : -1) : (x > y ? 1 : -1));
+  };
+
+  comparer.mapper = function(e, i) {
+    e.seqno = i;
+    return e;
+  };
+
+  comparer.unmapper = function(e, i) {
+    delete e.seqno;
+    return e;
+  };
+
+  return comparer;
 }
 
 function toggleFilterRow() {
@@ -260,7 +274,7 @@ $(function () {
     } else {
       // using native sort with comparer
       // preferred method but can be very slow in IE with huge datasets
-      dataView.sort(comparer, args.sortAsc);
+      dataView.sort(stableComparer(), args.sortAsc);
     }
   });
 

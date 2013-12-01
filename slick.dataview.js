@@ -45,13 +45,15 @@
       flattenGroupedRows: flattenGroupedRows, // function (groups, level, groupingInfos, filteredItems, options) { return all_rows_you_want_to_see[]; }
       showExpandedGroupRows: true,
       inlineFilters: false,
-      idProperty: "id"
+      idProperty: "id",
+      stableSortIdProperty: "__stableSortId"
     };
 
     options = $.extend(true, {}, defaults, options);
 
     // private
     var idProperty = options.idProperty;  // property holding a unique row id
+    var stableSortIdProperty = options.stableSortIdProperty;  // property holding a unique row id field which is used and edited internally every time the data is sorted
     var items = [];         // data by index
     var rows = [];          // data by row
     var idxById = {};       // indexes by id
@@ -180,10 +182,45 @@
       sortAsc = ascending;
       sortComparer = comparer;
       fastSortField = null;
+
       if (ascending === false) {
         items.reverse();
       }
-      items.sort(comparer);
+
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort
+      //
+      // Sorting maps
+      // ------------
+      //
+      // The `comparer` function can be invoked multiple times per element within the array. 
+      // Depending on the `comparer` function's nature, this may yield a high overhead. 
+      // The more work a compare function does and the more elements there are to sort, the 
+      // wiser it may be to consider using a map for sorting. 
+      //
+      // The idea is to walk the array once to extract the actual values used for sorting into 
+      // a temporary array applying the `mapper` function to each element, sort the temporary 
+      // array and then walk the temporary array to bring the original array into the right order.
+
+      var map;
+      // we also use the mapper phase to turn sort into a stable sort by initializing the stableSortIdProperty for each data item:
+      // by including that one in the comparer check we create a stable sort.
+      var mapper = comparer.mapper || function(e, i) {
+        e[stableSortIdProperty] = i;
+        return e;
+      };
+      // temporary holder of position and sort-value
+      map = items.map(mapper);
+
+      // sorting the map containing the reduced values
+      map.sort(comparer);
+
+      var unmapper = comparer.unmapper || function(e, i) {
+        //delete e[stableSortIdProperty];
+        return e;
+      };
+      // apply the map for the resulting order
+      items = map.map(unmapper);
+
       if (ascending === false) {
         items.reverse();
       }

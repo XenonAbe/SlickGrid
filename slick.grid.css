@@ -49,7 +49,8 @@ classes should alter those!
   height: 5px;
   margin-left: 4px;
   margin-top: 6px;
-  float: left;
+  position: absolute;
+  left: 0;
   background: url(images/sort-undetermined.png);
 }
 
@@ -59,6 +60,10 @@ classes should alter those!
 
 .slick-sort-indicator-asc {
   background: url(images/sort-asc.png);
+}
+
+.slick-header-sortable .slick-column-name {
+  margin-left: 10px;
 }
 
 .slick-resizable-handle {
