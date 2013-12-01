@@ -2438,7 +2438,7 @@ if (typeof Slick === "undefined") {
 
       var rowHtml = "<div class='ui-widget-content " + rowCss + "' style='top:" +
         (getRowTop(row) - frozenRowOffset) + "px" +
-        (getRowHeight(row) !== options.rowHeight ? "; height:" + getRowHeight(row) + "px" : "") + ";' role='row'");
+        (getRowHeight(row) !== options.rowHeight ? "; height:" + getRowHeight(row) + "px" : "") + ";' role='row'";
 
       stringArrayL.push(rowHtml);
       appendMetadataAttributes(stringArrayL, metadata);
@@ -3114,11 +3114,11 @@ if (typeof Slick === "undefined") {
         if (cacheEntry.cellRenderQueue.length) {
           var $lastNode = cacheEntry.rowNode.children().last();
           while (cacheEntry.cellRenderQueue.length) {
-            if ($lastNode.className.indexOf('slick-cell') >= 0) {
+            if ($lastNode[0].className.indexOf('slick-cell') >= 0) {
               var columnIdx = cacheEntry.cellRenderQueue.pop();
 
               cacheEntry.cellNodesByColumnIdx[columnIdx] = $lastNode;
-			}
+            }
             $lastNode = $lastNode.prev();
 
             // Hack to retrieve the frozen columns because those need to be cached as well
