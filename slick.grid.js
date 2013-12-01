@@ -1100,6 +1100,7 @@ if (typeof Slick === "undefined") {
                 }
               }
               updateCanvasWidth(true);
+              handleScroll();
               render();
               trigger(self.onColumnsResized, {});
             })
