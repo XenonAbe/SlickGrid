@@ -984,8 +984,9 @@ if (typeof Slick === "undefined") {
                 }
               }
               applyColumnHeaderWidths();
+              updateColumnCaches();
               if (options.syncColumnCellResize) {
-                applyColumnWidths();
+                //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
                 updateCanvasWidth(true);
               }
             })
@@ -1030,6 +1031,7 @@ if (typeof Slick === "undefined") {
                     }
                 }
                 applyColumnHeaderWidths();
+                updateColumnCaches();
                 updateCanvasWidth(true);
                 render();
                 trigger(self.onColumnsResized, {});
@@ -1294,6 +1296,7 @@ if (typeof Slick === "undefined") {
       }
 
       applyColumnHeaderWidths();
+      updateColumnCaches();
       updateCanvasWidth(true);
       if (reRender) {
         invalidateAllRows();
@@ -1303,6 +1306,7 @@ if (typeof Slick === "undefined") {
 
     function applyColumnHeaderWidths() {
       if (!initialized) { return; }
+
       var h;
       for (var i = 0, headers = $headers.children(), ii = headers.length; i < ii; i++) {
         h = $(headers[i]);
@@ -1310,8 +1314,6 @@ if (typeof Slick === "undefined") {
           h.width(columns[i].width - headerColumnWidthDiff);
         }
       }
-
-      updateColumnCaches();
     }
 
     function applyColumnWidths() {
@@ -1523,9 +1525,30 @@ if (typeof Slick === "undefined") {
       return options.rowHeight * row - offset;
     }
 
-    function getRowFromPosition(y) {
-      return Math.floor((y + offset) / options.rowHeight);
+    // Return the row index at the given grid pixel coordinate Y.
+    // 
+    // Also return the 'fraction' of the index within the row, i.e.
+    // if the Y coordinate points at a spot 25% from the top of the row, then
+    // `returnValue.fraction` will be 0.25
+    //
+    // `returnValue.fraction == 0.0` would identify the top pixel within the row.
+    //
+    // When the Y coordinate points outside the grid, out-of-range numbers will be produced.
+    //
+    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>), 
+    // unless the Y coordinate points outside the grid.
+    function getRowWithFractionFromPosition(y) {
+      var preciseLocation = (y + offset) / options.rowHeight;
+      var row = Math.floor(preciseLocation);
+      return {
+        position: row,
+        fraction: preciseLocation - row
+      };
     }
+
+    // function getRowFromPosition(y) {
+    //   return getRowWithFractionFromPosition(y).position;
+    // }
 
     function scrollTo(y) {
       y = Math.max(y, 0);
@@ -1933,9 +1956,14 @@ if (typeof Slick === "undefined") {
         viewportLeft = scrollLeft;
       }
 
+      var top = getRowWithFractionFromPosition(viewportTop);
+      var bottom = getRowWithFractionFromPosition(viewportTop + viewportH); // test at the first INvisible pixel
       return {
-        top: getRowFromPosition(viewportTop),
-        bottom: getRowFromPosition(viewportTop + viewportH) + 1,
+        top: top.position,                          // the first visible row
+        bottom: bottom.position + 1,                // first row which is guaranteed to be NOT visible, not even partly
+        bottomVisible: bottom.position,             // the last visible row
+        bottomVisibleFraction: bottom.fraction,     // the vertical fraction of visibility for the last visible row
+        topInvisibleFraction: top.fraction,         // the vertical fraction of *IN*visibility for the first visible row
         topPx: viewportTop,
         bottomPx: viewportTop + viewportH,
         leftPx: viewportLeft,
@@ -2676,6 +2704,12 @@ if (typeof Slick === "undefined") {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
       trigger(self.onHeaderContextMenu, {column: column}, e);
+      // when the right-click context menu event actually was received by any handlers, then we make sure no default browser right-click popup menu shows up as well:
+      if (self.onHeaderContextMenu.handlers().length) {
+        // http://stackoverflow.com/questions/10483937/need-to-disable-context-menu-on-right-click-and-call-a-function-on-right-click
+        e.preventDefault();
+        return false;
+      }
     }
 
     function handleHeaderClick(e) {
@@ -2699,21 +2733,53 @@ if (typeof Slick === "undefined") {
       return (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0);
     }
 
+    // Return the `{row: ?, cell: ?}` row/column grid coordinate at the given grid pixel coordinate (X, Y).
+    // 
+    // Also return the 'fraction' of the position within the row and column, i.e.
+    // if the Y coordinate points at a spot 25% from the top of the row, then
+    // `returnValue.rowFraction` will be 0.25
+    //
+    // `returnValue.rowFraction == 0.0` would identify the top pixel within the row.
+    // `returnValue.cellFraction == 0.0` would identify the left-most pixel within the cell.
+    //
+    // When the coordinate points outside the grid, out-of-range row/cell coordinates will be produced.
     function getCellFromPoint(x, y) {
-      var row = getRowFromPosition(y);
+      var rowInfo = getRowWithFractionFromPosition(y);
       var cell = 0;
+      var cellFraction;
 
       var w = 0;
-      for (var i = 0; i < columns.length && w < x; i++) {
-        w += columns[i].width;
+      var cellWidth = 0;
+      for (var i = 0, l = columns.length; i < l && w < x; i++) {
+        w += (cellWidth = columns[i].width);
         cell++;
       }
 
-      if (cell < 0) {
-        cell = 0;
+      // calculate fraction from the left edge:
+      // (outside the grid range the cell.fraction represents the number of pixels it is out of range)
+      x -= w;
+      if (x < 0) {
+        cell--;
+        if (!cellWidth) {
+          assert(cell == -1);
+          cellWidth = 1;
+        }
+        x += cellWidth;
+        cellFraction = x / cellWidth;
+      } else if (x > 0) {
+        if (!cellWidth) {
+          assert(cell == columns.length);
+          cellWidth = 1;
+        }
+        cellFraction = x / cellWidth;
       }
 
-      return {row: row, cell: cell - 1};
+      return {
+        row: rowInfo.position, 
+        cell: cell,
+        rowFraction: rowInfo.fraction,
+        cellFraction: cellFraction
+      };
     }
 
     function getCellFromNode(cellNode) {
@@ -3138,7 +3204,7 @@ if (typeof Slick === "undefined") {
 
     function scrollPage(dir) {
       var deltaRows = dir * numVisibleRows;
-      scrollTo((getRowFromPosition(scrollTop) + deltaRows) * options.rowHeight);
+      scrollTo((getRowWithFractionFromPosition(scrollTop).position + deltaRows) * options.rowHeight);
       render();
 
       if (options.enableCellNavigation && activeRow != null) {
