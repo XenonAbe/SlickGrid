@@ -50,14 +50,15 @@ classes should alter those!
   margin-left: 4px;
   margin-top: 6px;
   float: left;
+  background: url(images/sort-undetermined.png);
 }
 
 .slick-sort-indicator-desc {
-  background: url(images/sort-desc.gif);
+  background: url(images/sort-desc.png);
 }
 
 .slick-sort-indicator-asc {
-  background: url(images/sort-asc.gif);
+  background: url(images/sort-asc.png);
 }
 
 .slick-resizable-handle {
