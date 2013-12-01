@@ -76,7 +76,7 @@
           if (pagesize == -1) {
             var vp = grid.getViewport();
             // the viewport spans several rows, including possibly two partial rows, so the actual page height should account for those:
-            var height = Math.floor(vp.bottomVisible - vp.top + 1 + (1 - vp.topInvisibleFraction) + vp.bottomVisibleFraction);
+            var height = Math.floor(vp.bottomVisible - vp.top + 1 - vp.topInvisibleFraction + vp.bottomVisibleFraction);
             setPageSize(height);
           } else {
             setPageSize(pagesize);
@@ -143,7 +143,6 @@
         } else {
           $status.text("Showing all " + totalRowsCount + " rows");
         }
-        $status.text("Showing all " + pagingInfo.totalRows + " rows");
       } else {
         $status.text("Showing page " + (pagingInfo.pageNum + 1) + " of " + pagingInfo.totalPages);
       }
