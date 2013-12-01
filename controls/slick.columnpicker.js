@@ -4,7 +4,7 @@
     var columnCheckboxes;
 
     var defaults = {
-      fadeSpeed:250
+      fadeSpeed: 250
     };
 
     function init() {
@@ -18,7 +18,6 @@
         $(this).fadeOut(options.fadeSpeed)
       });
       $menu.bind("click", updateColumn);
-
     }
 
     function handleHeaderContextMenu(e, args) {

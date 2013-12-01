@@ -111,6 +111,15 @@
     };
 
     /***
+     * Returns the list of registered event handlers as an array.
+     * @method handlers
+     * @return the list of registered event handlers as an array. When no handlers are registered the array is empty.
+     */
+    this.handlers = function () {
+      return handlers;
+    };
+
+    /***
      * Fires an event notifying all subscribers.
      * @method notify
      * @param args {Object} Additional data object to be passed to all handlers.

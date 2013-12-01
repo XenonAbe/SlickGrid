@@ -252,8 +252,8 @@ if (typeof Slick === "undefined") {
 
     var columnsById = {};
     var sortColumns = [];
-    var columnPosLeft = [];
-    var columnPosRight = [];
+    var columnPosLeft = [];      // this cache array length is +1 longer than columns[] itself as we store the 'right edge + 1 pixel' as the 'left edge' of the first column beyond the grid width just as it would have been anyway. This simplifies the rest of the code.
+    //var columnPosRight = [];
 
 
     // async call handles
@@ -499,23 +499,28 @@ if (typeof Slick === "undefined") {
       return dim;
     }
 
-    function getHeadersWidth() {
-      var headersWidth = 0;
-      for (var i = 0, ii = columns.length; i < ii; i++) {
-        var width = columns[i].width;
-        headersWidth += width;
+    // Return the pixel positions of the left and right edge of the column, relative to the left edge of the entire grid.
+    function getColumnOffset(cell) {
+      var l = columns.length;
+      // Is the cache ready? If not, update it.
+      if (columnPosLeft.length <= l) {
+        updateColumnCaches();
+        assert(columnPosLeft.length === l + 1);
       }
+      assert(cell >= 0);
+      assert(cell < columnPosLeft.length);
+      return columnPosLeft[cell];
+    }
+
+    function getHeadersWidth() {
+      var headersWidth = getColumnOffset(columns.length);
       headersWidth += scrollbarDimensions.width;
       return Math.max(headersWidth, viewportW) + 1000;
     }
 
     function getCanvasWidth() {
       var availableWidth = viewportHasVScroll ? viewportW - scrollbarDimensions.width : viewportW;
-      var rowWidth = 0;
-      var i = columns.length;
-      while (i--) {
-        rowWidth += columns[i].width;
-      }
+      var rowWidth = getColumnOffset(columns.length);
       return options.fullWidthRows ? Math.max(rowWidth, availableWidth) : rowWidth;
     }
 
@@ -829,13 +834,18 @@ if (typeof Slick === "undefined") {
             trigger(self.onSort, {
               multiColumnSort: false,
               sortCol: column,
-              sortAsc: sortOpts.sortAsc}, e);
+              sortAsc: sortOpts.sortAsc
+            }, e);
           } else {
             trigger(self.onSort, {
               multiColumnSort: true,
               sortCols: $.map(sortColumns, function(col) {
-                return {sortCol: columns[getColumnIndex(col.columnId)], sortAsc: col.sortAsc };
-              })}, e);
+                return {
+                  sortCol: columns[getColumnIndex(col.columnId)], 
+                  sortAsc: col.sortAsc 
+                };
+              })
+            }, e);
           }
         }
       });
@@ -1081,8 +1091,9 @@ if (typeof Slick === "undefined") {
                 }
               }
               applyColumnHeaderWidths();
+              updateColumnCaches();
               if (options.syncColumnCellResize) {
-                applyColumnWidths();
+                //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
                 updateCanvasWidth(true);
               }
             })
@@ -1106,13 +1117,15 @@ if (typeof Slick === "undefined") {
             })
             .bind("dblclick", function(e) {
                 var columnId = $($(this).parent()).attr('id').replace(uid, '');
+                var c;
                 for (var j = 0; j < columns.length; j++) {
-                    if (columns[j].id == columnId) {
+                    c = columns[j];
+                    if (c.id == columnId) {
                         var aux_width = calculateWordDimensions(columnElements[i].children[0].innerHTML).width;
-                        if (columns[j].values != undefined && columns[j].values.length > 0) {
-                            for (var k = 0; k < columns[j].values.length; k++) {
-                                if (calculateWordDimensions(columns[j].values[k].Description.toString()).width > aux_width) {
-                                    aux_width = calculateWordDimensions(columns[j].values[k].Description.toString()).width;
+                        if (c.values != undefined && c.values.length > 0) {
+                            for (var k = 0; k < c.values.length; k++) {
+                                if (calculateWordDimensions(c.values[k].Description.toString()).width > aux_width) {
+                                    aux_width = calculateWordDimensions(c.values[k].Description.toString()).width;
                                 }
                             }
                         } else {
@@ -1125,11 +1138,12 @@ if (typeof Slick === "undefined") {
                                 }
                             }
                         }
-                        columns[j].width = aux_width;
+                        c.width = aux_width;
                         break;
                     }
                 }
                 applyColumnHeaderWidths();
+                updateColumnCaches();
                 updateCanvasWidth(true);
                 render();
                 trigger(self.onColumnsResized, {});
@@ -1397,6 +1411,7 @@ if (typeof Slick === "undefined") {
       }
 
       applyColumnHeaderWidths();
+      updateColumnCaches();
       updateCanvasWidth(true);
       if (reRender) {
         invalidateAllRows();
@@ -1414,8 +1429,6 @@ if (typeof Slick === "undefined") {
           h.width(columns[i].width - headerColumnWidthDiff);
         }
       }
-
-      updateColumnCaches();
     }
 
     function applyNestedColumnHeaderWidths() {
@@ -1471,7 +1484,10 @@ if (typeof Slick === "undefined") {
     }
 
     function setSortColumn(columnId, ascending) {
-      setSortColumns([{ columnId: columnId, sortAsc: ascending}]);
+      setSortColumns([{ 
+        columnId: columnId, 
+        sortAsc: ascending
+      }]);
     }
 
     function setSortColumns(cols) {
@@ -1530,13 +1546,17 @@ if (typeof Slick === "undefined") {
     function updateColumnCaches() {
       // Pre-calculate cell boundaries.
       columnPosLeft = [];
-      columnPosRight = [];
+      //columnPosRight = [];
       var x = 0;
       for (var i = 0, ii = columns.length; i < ii; i++) {
         columnPosLeft[i] = x;
-        columnPosRight[i] = x + columns[i].width;
         x += columns[i].width;
+        //columnPosRight[i] = x;
       }
+      // store the last calculated left edge also in [length] as it equals the right edge 'plus one pixel' of the grid:
+      // this way we can use a single cache array columnPosLeft[] to store both left and right edges of all columns!
+      // Half the storage and less work for the same result!
+      columnPosLeft[i] = x;
     }
 
     function setColumns(columnDefinitions) {
@@ -1782,11 +1802,26 @@ if (typeof Slick === "undefined") {
       return pos.top + pos.height;
     }
 
-    function getRowFromPosition(maxPosition) {
+    // Return the row index at the given grid pixel coordinate Y.
+    // 
+    // Also return the 'fraction' of the index within the row, i.e.
+    // if the Y coordinate points at a spot 25% from the top of the row, then
+    // `returnValue.fraction` will be 0.25
+    //
+    // `returnValue.fraction == 0.0` would identify the top pixel within the row.
+    //
+    // When the Y coordinate points outside the grid, out-of-range numbers will be produced.
+    //
+    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>), 
+    // unless the Y coordinate points outside the grid.
+    function getRowWithFractionFromPosition(maxPosition) {
       var rowsInPosCache = getDataLength();
 
       if (!rowsInPosCache) {
-        return 0;
+        return {
+          position: 0,
+          fraction: 0
+        };
       }
 
       // perform a binary search through the row cache: O(log2(n)) vs. linear scan at O(n):
@@ -1796,7 +1831,10 @@ if (typeof Slick === "undefined") {
       // have been invalidated:
       if (maxPosition > getRowTop(rowsInPosCache - 1)) {
         // Return the last row in the grid
-        return rowsInPosCache - 1;
+        return {
+          position: rowsInPosCache - 1,
+          fraction: 0
+        };
       }
 
       var l = 0;
@@ -1827,12 +1865,18 @@ if (typeof Slick === "undefined") {
         if (top > maxPosition) {
           r = probe - 1;
         } else if (getRowBottom(probe) > maxPosition) {
-          return probe;
+          return {
+            position: probe,
+            fraction: 0
+          };
         } else {
           l = probe + 1;
         }
       } else if (getRowBottom(probe) > maxPosition) {
-        return probe;
+        return {
+          position: probe,
+          fraction: 0
+        };
       } else {
         l = probe + 1;
         probe = l + 1 + (0.001 * rowsInPosCache) | 0;
@@ -1841,7 +1885,10 @@ if (typeof Slick === "undefined") {
         if (top > maxPosition) {
           r = probe - 1;
         } else if (getRowBottom(probe) > maxPosition) {
-          return probe;
+          return {
+            position: probe,
+            fraction: 0
+          };
         } else {
           l = probe + 1;
         }
@@ -1860,7 +1907,10 @@ if (typeof Slick === "undefined") {
           l = probe + 1;
         }
       }
-      return l;
+      return {
+        position: l,
+        fraction: 0
+      };
     }
 
     function scrollTo(y) {
@@ -1975,7 +2025,8 @@ if (typeof Slick === "undefined") {
         }
 
         // Do not render cells outside of the viewport.
-        if (columnPosRight[Math.min(ii - 1, i + colspan - 1)] > range.leftPx) {
+        assert(Math.min(ii, i + colspan) === i + colspan);
+        if (columnPosLeft[i + colspan] > range.leftPx) {
           if (columnPosLeft[i] > range.rightPx) {
             // All columns to the right are outside the range.
             break;
@@ -1994,7 +2045,8 @@ if (typeof Slick === "undefined") {
       var m = columns[cell];
       var colspan = getColspan(row, cell);
       var rowspan = getRowspan(row, cell);
-      var cellCss = "slick-cell l" + cell + " r" + Math.min(columns.length - 1, cell + colspan - 1) +
+      assert(Math.min(columns.length - 1, cell + colspan - 1) === cell + colspan - 1);
+      var cellCss = "slick-cell l" + cell + " r" + (cell + colspan - 1) +
         (m.cssClass ? " " + m.cssClass : "") +
         (colspan > 1 ? " colspan colspan" + colspan : "") +
         (rowspan > 1 ? " rowspan rowspan" + rowspan : "") +
@@ -2422,9 +2474,14 @@ if (typeof Slick === "undefined") {
         viewportLeft = scrollLeft;
       }
 
+      var top = getRowWithFractionFromPosition(viewportTop + pageOffset);
+      var bottom = getRowWithFractionFromPosition(viewportTop + pageOffset + viewportH); // test at the first INvisible pixel
       return {
-        top: getRowFromPosition(viewportTop + pageOffset),
-        bottom: getRowFromPosition(viewportTop + pageOffset + viewportH),
+        top: top.position,                          // the first visible row
+        bottom: bottom.position + 1,                // first row which is guaranteed to be NOT visible, not even partly
+        bottomVisible: bottom.position,             // the last visible row
+        bottomVisibleFraction: bottom.fraction,     // the vertical fraction of visibility for the last visible row
+        topInvisibleFraction: top.fraction,         // the vertical fraction of *IN*visibility for the first visible row
         topPx: viewportTop,
         bottomPx: viewportTop + viewportH,
         leftPx: viewportLeft,
@@ -2495,8 +2552,9 @@ if (typeof Slick === "undefined") {
         i = i | 0;
 
         var colspan = getColspan(row, i);
+        assert(Math.min(columns.length, i + colspan) === i + colspan);
         if (columnPosLeft[i] > range.rightPx ||
-          columnPosRight[Math.min(columns.length - 1, i + colspan - 1)] < range.leftPx) {
+          columnPosLeft[i + colspan] < range.leftPx) {
           if (!(row == activeRow && i == activeCell)) {
             cellsToRemove.push(i);
           }
@@ -2559,7 +2617,8 @@ if (typeof Slick === "undefined") {
             continue;
           }
 
-          if (columnPosRight[Math.min(ii - 1, i + colspan - 1)] > range.leftPx) {
+          assert(Math.min(ii, i + colspan) === i + colspan);
+          if (columnPosLeft[i + colspan] > range.leftPx) {
             // look up by id, then index
             columnData = metadata && (metadata[columns[i].id] || metadata[i]);
             appendCellHtml(stringArray, row, i, colspan, metadata, columnData, d);
@@ -3183,6 +3242,12 @@ if (typeof Slick === "undefined") {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
       trigger(self.onHeaderContextMenu, {column: column}, e);
+      // when the right-click context menu event actually was received by any handlers, then we make sure no default browser right-click popup menu shows up as well:
+      if (self.onHeaderContextMenu.handlers().length) {
+        // http://stackoverflow.com/questions/10483937/need-to-disable-context-menu-on-right-click-and-call-a-function-on-right-click
+        e.preventDefault();
+        return false;
+      }
     }
 
     function handleHeaderClick(e) {
@@ -3206,21 +3271,53 @@ if (typeof Slick === "undefined") {
       return (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0);
     }
 
+    // Return the `{row: ?, cell: ?}` row/column grid coordinate at the given grid pixel coordinate (X, Y).
+    // 
+    // Also return the 'fraction' of the position within the row and column, i.e.
+    // if the Y coordinate points at a spot 25% from the top of the row, then
+    // `returnValue.rowFraction` will be 0.25
+    //
+    // `returnValue.rowFraction == 0.0` would identify the top pixel within the row.
+    // `returnValue.cellFraction == 0.0` would identify the left-most pixel within the cell.
+    //
+    // When the coordinate points outside the grid, out-of-range row/cell coordinates will be produced.
     function getCellFromPoint(x, y) {
-      var row = getRowFromPosition(y + pageOffset);
+      var rowInfo = getRowWithFractionFromPosition(y + pageOffset);
       var cell = 0;
+      var cellFraction;
 
       var w = 0;
-      for (var i = 0; i < columns.length && w < x; i++) {
-        w += columns[i].width;
+      var cellWidth = 0;
+      for (var i = 0, l = columns.length; i < l && w < x; i++) {
+        w += (cellWidth = columns[i].width);
         cell++;
       }
 
-      if (cell < 0) {
-        cell = 0;
+      // calculate fraction from the left edge:
+      // (outside the grid range the cell.fraction represents the number of pixels it is out of range)
+      x -= w;
+      if (x < 0) {
+        cell--;
+        if (!cellWidth) {
+          assert(cell == -1);
+          cellWidth = 1;
+        }
+        x += cellWidth;
+        cellFraction = x / cellWidth;
+      } else if (x > 0) {
+        if (!cellWidth) {
+          assert(cell == columns.length);
+          cellWidth = 1;
+        }
+        cellFraction = x / cellWidth;
       }
 
-      return {row: row, cell: cell - 1};
+      return {
+        row: rowInfo.position, 
+        cell: cell,
+        rowFraction: rowInfo.fraction,
+        cellFraction: cellFraction
+      };
     }
 
     function getCellFromNode(cellNode) {
@@ -3268,10 +3365,7 @@ if (typeof Slick === "undefined") {
 
       var y1 = getRowTop(row) - pageOffset;
       var y2 = y1 + getRowHeight(row) - 1;
-      var x1 = 0;
-      for (var i = 0; i < cell; i++) {
-        x1 += columns[i].width;
-      }
+      var x1 = getColumnOffset(cell);
       var x2 = x1 + columns[cell].width;
 
       return {
@@ -3302,7 +3396,7 @@ if (typeof Slick === "undefined") {
 
       var colspan = getColspan(row, cell);
       var left = columnPosLeft[cell],
-          right = columnPosRight[cell + (colspan > 1 ? colspan - 1 : 0)],
+          right = columnPosLeft[cell + colspan],
           scrollRight = scrollLeft + viewportW;
 
       if (left < scrollLeft) {
@@ -3646,9 +3740,9 @@ if (typeof Slick === "undefined") {
     }
 
     function scrollPage(dir) {
-      var topRow = getRowFromPosition(scrollTop + pageOffset);
-      var bottomRow = getRowFromPosition(scrollTop + pageOffset + viewportH);
-      var deltaRows = dir * (bottomRow - topRow);
+      var topRow = getRowWithFractionFromPosition(scrollTop + pageOffset);
+      var bottomRow = getRowWithFractionFromPosition(scrollTop + pageOffset + viewportH);
+      var deltaRows = dir * (bottomRow.position - topRow.position);
       scrollTo(getRowTop(bottomRow));
       render();
 
@@ -3829,8 +3923,7 @@ if (typeof Slick === "undefined") {
 
       do {
         cell += getColspan(posY, cell);
-      }
-      while (cell < columns.length && !canCellBeActive((row = getSpanRow(posY, cell)), cell));
+      } while (cell < columns.length && !canCellBeActive((row = getSpanRow(posY, cell)), cell));
 
       if (cell < columns.length) {
         return {
