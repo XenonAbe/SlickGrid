@@ -776,13 +776,18 @@ if (typeof Slick === "undefined") {
             trigger(self.onSort, {
               multiColumnSort: false,
               sortCol: column,
-              sortAsc: sortOpts.sortAsc}, e);
+              sortAsc: sortOpts.sortAsc
+            }, e);
           } else {
             trigger(self.onSort, {
               multiColumnSort: true,
               sortCols: $.map(sortColumns, function(col) {
-                return {sortCol: columns[getColumnIndex(col.columnId)], sortAsc: col.sortAsc };
-              })}, e);
+                return {
+                  sortCol: columns[getColumnIndex(col.columnId)], 
+                  sortAsc: col.sortAsc 
+                };
+              })
+            }, e);
           }
         }
       });
@@ -1339,7 +1344,10 @@ if (typeof Slick === "undefined") {
     }
 
     function setSortColumn(columnId, ascending) {
-      setSortColumns([{ columnId: columnId, sortAsc: ascending}]);
+      setSortColumns([{ 
+        columnId: columnId, 
+        sortAsc: ascending
+      }]);
     }
 
     function setSortColumns(cols) {
