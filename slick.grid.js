@@ -1853,7 +1853,7 @@ if (typeof Slick === "undefined") {
       //
       // (Yes, this discussion ignores the cost of the rowheight position cache table update which
       // is O(N) on its own but which is also to be treated as 'negligible cost' when amortized over
-      // the number of getRowFromPosition calls vs. cache invalidation.)
+      // the number of getRowWithFractionFromPosition calls vs. cache invalidation.)
       probe = (maxPosition / options.rowHeight) | 0;
       probe = Math.min(rowsInPosCache - 1, Math.max(0, probe));
       top = getRowTop(probe);
@@ -2375,7 +2375,7 @@ if (typeof Slick === "undefined") {
         viewportH = getViewportHeight();
       }
 
-      numVisibleRows = getRowFromPosition(viewportH);
+      numVisibleRows = getRowWithFractionFromPosition(viewportH).position;
       viewportW = parseFloat($.css($container[0], "width", true));
       if (!options.autoHeight) {
         $viewport.height(viewportH);
@@ -2491,7 +2491,7 @@ if (typeof Slick === "undefined") {
 
     function getRenderedRange(viewportTop, viewportLeft) {
       var range = getVisibleRange(viewportTop, viewportLeft);
-      var buffer = getRowFromPosition(viewportH);
+      var buffer = getRowWithFractionFromPosition(viewportH).position;
       var minBuffer = 3;
 
       delete range.topPx;
