@@ -135,6 +135,7 @@ if (typeof Slick === "undefined") {
    *      defaultFormatter:   {Function}  Default function for converting cell values to strings.
    *      forceSyncScrolling: {Boolean}   If true, renders more frequently during scrolling, rather than
    *                                      deferring rendering until default scroll thresholds are met.
+   *      addNewRowCssClass:  {String}    specifies CSS class for the extra bottom row: 'add new row'
    * [/KCPT]
    **/
   function SlickGrid(container, data, columns, options) {
