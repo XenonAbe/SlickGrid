@@ -172,7 +172,9 @@ if (typeof Slick === "undefined") {
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
       forceSyncScrolling: false,
-      addNewRowCssClass: "new-row"
+      addNewRowCssClass: "new-row",
+      syncColumnCellResize: false,
+      editCommandHandler: null
     };
 
     var columnDefaults = {
@@ -3647,6 +3649,7 @@ if (typeof Slick === "undefined") {
           var validationResults = currentEditor.validate();
 
           if (validationResults.valid) {
+            makeActiveCellNormal();
             if (activeRow < getDataLength()) {
               var editCommand = {
                 row: activeRow,
@@ -3675,11 +3678,9 @@ if (typeof Slick === "undefined") {
               };
 
               if (options.editCommandHandler) {
-                makeActiveCellNormal();
                 options.editCommandHandler(item, column, editCommand);
               } else {
                 editCommand.execute();
-                makeActiveCellNormal();
               }
 
               trigger(self.onCellChange, {
@@ -3692,7 +3693,6 @@ if (typeof Slick === "undefined") {
             } else {
               var newItem = {};
               currentEditor.applyValue(newItem, currentEditor.serializeValue());
-              makeActiveCellNormal();
               trigger(self.onAddNewRow, {item: newItem, column: column});
             }
 
