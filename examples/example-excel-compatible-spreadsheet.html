@@ -1,10 +1,10 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>SlickGrid example 3: Editing</title>
-  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Excel-like spreadsheet grid - copy/paste and undo/redo</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .slick-cell.copied {
@@ -62,16 +62,22 @@
         text-align:center;
         margin-top:5px;
     }
-
   </style>
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:600px;">
-    <div id="myGrid" style="width:100%;height:500px;"></div>
-  </div>
-  <div style="width:600px;">
-    <div id="myGrid2" style="width:100%;height:500px;"></div>
+  <div class="grid-outer-wrapper">
+    <div class="grid-header">
+      <label>SlickGrid 1</label>
+    </div>
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+
+    <hr />
+
+    <div class="grid-header">
+      <label>SlickGrid 2</label>
+    </div>
+    <div id="myGrid2" class="grid-inner-wrapper"></div>
   </div>
 
   <div class="options-panel">
@@ -98,7 +104,6 @@
     </ul>
     <button onclick="undoRedoBuffer.undo()"><img src="../images/arrow_undo.png" align="absmiddle"> Undo</button>
     <button onclick="undoRedoBuffer.redo()"><img src="../images/arrow_redo.png" align="absmiddle"> Redo</button>
-
 
     <h2>View Source:</h2>
       <ul>

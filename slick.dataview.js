@@ -171,9 +171,9 @@
     function getPagingInfo() {
       var totalPages = pagesize ? Math.max(1, Math.ceil(totalRows / pagesize)) : 1;
       return {
-        pageSize: pagesize, 
-        pageNum: pagenum, 
-        totalRows: totalRows, 
+        pageSize: pagesize,
+        pageNum: pagenum,
+        totalRows: totalRows,
         totalPages: totalPages
       };
     }
@@ -192,13 +192,13 @@
       // Sorting maps
       // ------------
       //
-      // The `comparer` function can be invoked multiple times per element within the array. 
-      // Depending on the `comparer` function's nature, this may yield a high overhead. 
-      // The more work a compare function does and the more elements there are to sort, the 
-      // wiser it may be to consider using a map for sorting. 
+      // The `comparer` function can be invoked multiple times per element within the array.
+      // Depending on the `comparer` function's nature, this may yield a high overhead.
+      // The more work a compare function does and the more elements there are to sort, the
+      // wiser it may be to consider using a map for sorting.
       //
-      // The idea is to walk the array once to extract the actual values used for sorting into 
-      // a temporary array applying the `mapper` function to each element, sort the temporary 
+      // The idea is to walk the array once to extract the actual values used for sorting into
+      // a temporary array applying the `mapper` function to each element, sort the temporary
       // array and then walk the temporary array to bring the original array into the right order.
 
       var map;
@@ -978,7 +978,7 @@
           inHandler = true;
           var selectedRows = self.mapIdsToRows(selectedRowIds);
           if (!preserveHidden) {
-            setSelectedRowIds(self.mapRowsToIds(selectedRows));       
+            setSelectedRowIds(self.mapRowsToIds(selectedRows));
           }
           grid.setSelectedRows(selectedRows);
           inHandler = false;
@@ -1149,7 +1149,7 @@
         groupTotals.min = {};
       }
       groupTotals.min[this.field_] = this.min_;
-    }
+    };
   }
 
   function MaxAggregator(field) {
@@ -1173,7 +1173,7 @@
         groupTotals.max = {};
       }
       groupTotals.max[this.field_] = this.max_;
-    }
+    };
   }
 
   function SumAggregator(field) {
@@ -1195,8 +1195,9 @@
         groupTotals.sum = {};
       }
       groupTotals.sum[this.field_] = this.sum_;
-    }
+    };
   }
+
 
   function MdeAggregator(field) {
     this.field_ = field;

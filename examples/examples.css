@@ -5,6 +5,10 @@
   font-size: 8pt;
 }
 
+pre {
+  font-family: Consolas, monospace;
+}
+
 body {
   background: beige;
   padding: 0;
@@ -30,10 +34,27 @@ li {
   margin: 0;
 }
 
-#myGrid {
+.grid-outer-wrapper {
+  width: 600px;
+  float: left;
+
+  background-color: white;
+  border: 1px solid #CCCCCC;
+  padding: 1px;
+}
+
+.grid-inner-wrapper {
   background: white;
   outline: 0;
-  border: 1px solid gray;
+  /*border: 1px solid gray;*/
+
+  width: 100%;
+  min-height: 450px;
+}
+
+.grid-pager {
+  width: 100%;
+  height: 20px;
 }
 
 .grid-header {
@@ -65,22 +86,31 @@ li {
 .grid-header #txtSearch {
   margin: 0 4px 0 4px;
   padding: 2px 2px;
+  border-radius: 2px;
   -moz-border-radius: 2px;
   -webkit-border-radius: 2px;
   border: 1px solid silver;
 }
 
 .options-panel {
+  border-radius: 6px;
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px;
   border: 1px solid silver;
   background: #f0f0f0;
-  padding: 4px;
+  padding: 10px;
   margin-bottom: 20px;
-  width: 450px;
-  position: absolute;
-  top: 0px;
-  left: 650px;
+
+  float: left;
+  margin-left: 10px;
+  padding: 10px;
+
+  max-width: 260px;
+}
+
+#viewsource {
+  cursor: pointer;
+  color: darkblue;
 }
 
 /* Individual cell styles */
@@ -122,6 +152,7 @@ li {
 .percent-complete-bar {
   display: inline-block;
   height: 6px;
+  border-radius: 3px;
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
 }

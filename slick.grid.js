@@ -615,7 +615,7 @@ if (typeof Slick === "undefined") {
         });
 
         $header
-            .attr("title", toolTip || "")
+            .attr("title", columnDef.toolTip || "")
             .children().eq(0).html(title);
 
         trigger(self.onHeaderCellRendered, {
@@ -783,8 +783,8 @@ if (typeof Slick === "undefined") {
               multiColumnSort: true,
               sortCols: $.map(sortColumns, function(col) {
                 return {
-                  sortCol: columns[getColumnIndex(col.columnId)], 
-                  sortAsc: col.sortAsc 
+                  sortCol: columns[getColumnIndex(col.columnId)],
+                  sortAsc: col.sortAsc
                 };
               })
             }, e);
@@ -814,7 +814,7 @@ if (typeof Slick === "undefined") {
         beforeStop: function (e, ui) {
           $(ui.helper).removeClass("slick-header-column-active");
         },
-        sort: function(e, ui) {
+        sort: function (e, ui) {
           trigger(self.onColumnsReordering, {e:e, ui:ui});
         },
         stop: function (e) {
@@ -842,6 +842,7 @@ if (typeof Slick === "undefined") {
       columnElements = $headers.children();
       columnElements.find(".slick-resizable-handle").remove();
       columnElements.each(function (i, e) {
+        assert(columns[i]);
         if (columns[i].resizable) {
           if (firstResizable === undefined) {
             firstResizable = i;
@@ -869,13 +870,14 @@ if (typeof Slick === "undefined") {
             .css({ width: 'ontouchstart' in window ? 16 : (i === lastResizable ? 8 : 4) })
             // [\KCPT]
             .bind("dragstart touchstart", function (e, dd) {
-              var c, j;
+              var j, c;
               if (!getEditorLock().commitCurrentEdit()) {
                 return false;
               }
               pageX = e.pageX;
               $(this).parent().addClass("slick-header-column-active");
               var shrinkLeewayOnRight = null, stretchLeewayOnRight = null;
+              assert(columns.length === columnElements.length);
               // lock each column's width option to current width
               columnElements.each(function (i, e) {
                 columns[i].previousWidth = $(e).outerWidth();
@@ -886,6 +888,7 @@ if (typeof Slick === "undefined") {
                 // colums on right affect maxPageX/minPageX
                 for (j = i + 1; j < columnElements.length; j++) {
                   c = columns[j];
+                  assert(c);
                   if (c.resizable) {
                     if (stretchLeewayOnRight !== null) {
                       if (c.maxWidth) {
@@ -902,6 +905,7 @@ if (typeof Slick === "undefined") {
               for (j = 0; j <= i; j++) {
                 // columns on left only affect minPageX
                 c = columns[j];
+                assert(c);
                 if (c.resizable) {
                   if (stretchLeewayOnLeft !== null) {
                     if (c.maxWidth) {
@@ -930,11 +934,14 @@ if (typeof Slick === "undefined") {
               trigger(self.onColumnsStartResize, {}); // onColumnsResizeStart
             })
             .bind("drag touchmove", function (e, dd) {
-              var actualMinWidth, d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX, x, c, j;
+              var actualMinWidth, d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX, x;
+              var j, c;
+              assert(columns.length === columnElements.length);
               if (d < 0) { // shrink column
                 x = d;
                 for (j = i; j >= 0; j--) {
                   c = columns[j];
+                  assert(c);
                   if (c.resizable) {
                     actualMinWidth = Math.max(c.minWidth || 0, absoluteColumnMinWidth);
                     if (x && c.previousWidth + x < actualMinWidth) {
@@ -951,6 +958,7 @@ if (typeof Slick === "undefined") {
                   x = -d;
                   for (j = i + 1; j < columnElements.length; j++) {
                     c = columns[j];
+                    assert(c);
                     if (c.resizable) {
                       if (x && c.maxWidth && (c.maxWidth - c.previousWidth < x)) {
                         x -= c.maxWidth - c.previousWidth;
@@ -966,6 +974,7 @@ if (typeof Slick === "undefined") {
                 x = d;
                 for (j = i; j >= 0; j--) {
                   c = columns[j];
+                  assert(c);
                   if (c.resizable) {
                     if (x && c.maxWidth && (c.maxWidth - c.previousWidth < x)) {
                       x -= c.maxWidth - c.previousWidth;
@@ -981,6 +990,7 @@ if (typeof Slick === "undefined") {
                   x = -d;
                   for (j = i + 1; j < columnElements.length; j++) {
                     c = columns[j];
+                    assert(c);
                     if (c.resizable) {
                       actualMinWidth = Math.max(c.minWidth || 0, absoluteColumnMinWidth);
                       if (x && c.previousWidth + x < actualMinWidth) {
@@ -1002,10 +1012,12 @@ if (typeof Slick === "undefined") {
               }
             })
             .bind("dragend touchend", function (e, dd) {
-              var newWidth, c, j;
+              var newWidth, j, c;
               $(this).parent().removeClass("slick-header-column-active");
+              assert(columns.length === columnElements.length);
               for (j = 0; j < columnElements.length; j++) {
                 c = columns[j];
+                assert(c);
                 newWidth = $(columnElements[j]).outerWidth();
 
                 if (c.previousWidth !== newWidth && c.rerenderOnResize) {
@@ -1030,7 +1042,7 @@ if (typeof Slick === "undefined") {
                                 }
                             }
                         } else {
-                            var data_col = $.map(data instanceof Array ? data : data.getItems(),function(e) {
+                            var data_col = $.map(data instanceof Array ? data : data.getItems(), function(e) {
                                 return e[columnId];
                             });
                             for (var k = 0; k < data_col.length; k++) {
@@ -1125,7 +1137,7 @@ if (typeof Slick === "undefined") {
 
     function createCssRules() {
       $style = $("<style type='text/css' rel='stylesheet' />").appendTo($("head"));
-      var rowHeight = (options.rowHeight - cellHeightDiff);
+      var rowHeight = options.rowHeight - cellHeightDiff;
       var rules = [
         "." + uid + " .slick-header-column { left: 1000px; }",
         "." + uid + " .slick-top-panel { height:" + options.topPanelHeight + "px; }",
@@ -1203,7 +1215,7 @@ if (typeof Slick === "undefined") {
       }
 
       if (options.enableColumnReorder) {
-          $headers.filter(":ui-sortable").sortable("destroy");
+        $headers.filter(":ui-sortable").sortable("destroy");
       }
 
       unbindAncestorScrollEvents();
@@ -1344,8 +1356,8 @@ if (typeof Slick === "undefined") {
     }
 
     function setSortColumn(columnId, ascending) {
-      setSortColumns([{ 
-        columnId: columnId, 
+      setSortColumns([{
+        columnId: columnId,
         sortAsc: ascending
       }]);
     }
@@ -1546,7 +1558,7 @@ if (typeof Slick === "undefined") {
     }
 
     // Return the row index at the given grid pixel coordinate Y.
-    // 
+    //
     // Also return the 'fraction' of the index within the row, i.e.
     // if the Y coordinate points at a spot 25% from the top of the row, then
     // `returnValue.fraction` will be 0.25
@@ -1555,7 +1567,7 @@ if (typeof Slick === "undefined") {
     //
     // When the Y coordinate points outside the grid, out-of-range numbers will be produced.
     //
-    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>), 
+    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>),
     // unless the Y coordinate points outside the grid.
     function getRowWithFractionFromPosition(y) {
       var preciseLocation = (y + offset) / options.rowHeight;
@@ -1768,7 +1780,7 @@ if (typeof Slick === "undefined") {
       } else {
         $canvas[0].removeChild(cacheEntry.rowNode);
       }
-      
+
       delete rowsCache[row];
       delete postProcessedRows[row];
       renderedRows--;
@@ -2541,7 +2553,7 @@ if (typeof Slick === "undefined") {
           $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
           zombieRowNodeFromLastMouseWheelEvent = null;
         }
-        rowNodeFromLastMouseWheelEvent = rowNode;      
+        rowNodeFromLastMouseWheelEvent = rowNode;
       }
     }
 
@@ -2751,7 +2763,7 @@ if (typeof Slick === "undefined") {
     }
 
     // Return the `{row: ?, cell: ?}` row/column grid coordinate at the given grid pixel coordinate (X, Y).
-    // 
+    //
     // Also return the 'fraction' of the position within the row and column, i.e.
     // if the Y coordinate points at a spot 25% from the top of the row, then
     // `returnValue.rowFraction` will be 0.25
@@ -2792,7 +2804,7 @@ if (typeof Slick === "undefined") {
       }
 
       return {
-        row: rowInfo.position, 
+        row: rowInfo.position,
         cell: cell,
         rowFraction: rowInfo.fraction,
         cellFraction: cellFraction
@@ -3146,7 +3158,7 @@ if (typeof Slick === "undefined") {
     }
 
     function getGridPosition() {
-      return absBox($container[0])
+      return absBox($container[0]);
     }
 
     function handleActiveCellPositionChange() {
