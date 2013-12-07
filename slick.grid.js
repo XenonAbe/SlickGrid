@@ -3644,6 +3644,7 @@ if (typeof Slick === "undefined") {
     function commitCurrentEdit() {
       var item = getDataItem(activeRow);
       var column = columns[activeCell];
+      var evt;
 
       if (currentEditor) {
         if (currentEditor.isValueChanged()) {
@@ -3652,49 +3653,38 @@ if (typeof Slick === "undefined") {
           if (validationResults.valid) {
             makeActiveCellNormal();
             if (activeRow < getDataLength()) {
-              var editCommand = {
-                row: activeRow,
-                cell: activeCell,
-                editor: currentEditor,
-                serializedValue: currentEditor.serializeValue(),
-                prevSerializedValue: serializedEditorValue,
-                execute: function () {
-                  this.editor.applyValue(item, this.serializedValue);
-                  updateRow(this.row);
-                  trigger(self.onCellChange, {
-                    row: activeRow,
-                    cell: activeCell,
-                    item: item
-                  });
-                },
-                undo: function () {
-                  this.editor.applyValue(item, this.prevSerializedValue);
-                  updateRow(this.row);
-                  trigger(self.onCellChange, {
-                    row: activeRow,
-                    cell: activeCell,
-                    item: item
-                  });
-                }
-              };
-
-              if (options.editCommandHandler) {
-                options.editCommandHandler(item, column, editCommand);
-              } else {
-                editCommand.execute();
-              }
-
-              trigger(self.onCellChange, {
-                row: activeRow,
-                cell: activeCell,
-                item: item,
-                previousValue: editCommand.prevSerializedValue,
-                newValue: editCommand.serializedValue
-              });
+              evt = self.onCellChange;
             } else {
-              var newItem = {};
-              currentEditor.applyValue(newItem, currentEditor.serializeValue());
-              trigger(self.onAddNewRow, {item: newItem, column: column});
+              item = item || {};
+              evt = self.onAddNewRow;
+            }
+            var editCommand = {
+              row: activeRow,
+              cell: activeCell,
+              item: item,
+              column: column,
+              editor: currentEditor,
+              serializedValue: currentEditor.serializeValue(),
+              prevSerializedValue: serializedEditorValue,
+              execute: function () {
+                this.editor.applyValue(item, (this.setValue = this.serializedValue));
+                updateRow(this.row);
+                this.notify();
+              },
+              undo: function () {
+                this.editor.applyValue(item, (this.setValue = this.prevSerializedValue));
+                updateRow(this.row);
+                this.notify();
+              },
+              notify: function() {
+                trigger(self.onCellChange, this);
+              }
+            };
+
+            if (options.editCommandHandler) {
+              options.editCommandHandler(item, column, editCommand);
+            } else {
+              editCommand.execute();
             }
 
             // check whether the lock has been re-acquired by event handlers
@@ -3706,12 +3696,15 @@ if (typeof Slick === "undefined") {
             $(activeCellNode).addClass("invalid");
 
             trigger(self.onValidationError, {
-              editor: currentEditor,
-              cellNode: activeCellNode,
-              validationResults: validationResults,
               row: activeRow,
               cell: activeCell,
-              column: column
+              item: item,
+              column: column,
+              editor: currentEditor,
+              prevSerializedValue: serializedEditorValue,
+
+              cellNode: activeCellNode,
+              validationResults: validationResults
             });
 
             currentEditor.focus();
