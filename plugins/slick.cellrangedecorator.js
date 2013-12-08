@@ -14,12 +14,16 @@
    * Use FF and WebKit-specific "pointer-events" CSS style, or some kind of event forwarding.
    * Could also construct the borders separately using 4 individual DIVs.
    *
+   * Currently the above issue is 'fixed' by providing onClick, etc handlers 
+   * which produce the cell coordinate as partt of the event data.
+   *
    * @param {Grid} grid
    * @param {Object} options
    */
   function CellRangeDecorator(grid, options) {
     var _elem;
     var _elem_range;
+    var $canvas;
     var _self = this;
     var _defaults = {
       borderThickness: 2,
@@ -56,22 +60,30 @@
 
     function show(range) {
       if (!_elem) {
+        $canvas = $(grid.getCanvasNode());
         _elem = $("<div></div>", {css: options.selectionCss})
             .addClass(options.selectionCssClass)
             .css("position", "absolute")
-            .appendTo(grid.getCanvasNode());
+            .appendTo($canvas);
 
-            _elem.on('click', function(e) {
-              console.log("range decorator slickgrid ", e);
+        _elem.on('click', function(e) {
+          console.log("range decorator slickgrid ", e);
 
-              _self.onClick.notify({
-                row: -1, // TBD
-                cell: -1, // TBD
-                innerEvent: e
-              });
+          // obtain clicked pixel coordinate relative to CanvasNode:
+          var x, y, o;
+          o = $canvas.offset();
+          x = e.pageX - o.left;
+          y = e.pageY - o.top;
+          var nodeInfo = grid.getCellFromPoint(x, y);
+          nodeInfo.innerEvent = e;
 
-              e.preventDefault();
-            });
+          var ev = new Slick.EventData();
+          _self.onClick.notify(nodeInfo, ev, _self);
+
+          if (ev.isPropagationStopped() || ev.isImmediatePropagationStopped()) {
+            e.preventDefault();
+          }
+        });
       }
 
       if (!range) {
