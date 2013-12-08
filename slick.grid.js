@@ -1823,7 +1823,8 @@ if (typeof Slick === "undefined") {
       if (!rowsInPosCache) {
         return {
           position: 0,
-          fraction: 0
+          fraction: 0,
+          height: 1
         };
       }
 
@@ -1836,7 +1837,8 @@ if (typeof Slick === "undefined") {
         // Return the last row in the grid
         return {
           position: rowsInPosCache - 1,
-          fraction: 0
+          fraction: 0,
+          height: 1
         };
       }
 
@@ -1878,7 +1880,8 @@ if (typeof Slick === "undefined") {
       } else if (getRowBottom(probe) > maxPosition) {
         return {
           position: probe,
-          fraction: 0
+          fraction: 0,
+          height: options.rowHeight
         };
       } else {
         l = probe + 1;
@@ -1890,7 +1893,8 @@ if (typeof Slick === "undefined") {
         } else if (getRowBottom(probe) > maxPosition) {
           return {
             position: probe,
-            fraction: 0
+            fraction: 0,
+            height: options.rowHeight
           };
         } else {
           l = probe + 1;
@@ -1912,7 +1916,8 @@ if (typeof Slick === "undefined") {
       }
       return {
         position: l,
-        fraction: 0
+        fraction: 0,
+        height: options.rowHeight
       };
     }
 
@@ -2037,14 +2042,14 @@ if (typeof Slick === "undefined") {
 
           // look up by id, then index
           columnData = metadata && metadata.columns && (metadata.columns[m.id] || metadata.columns[i]);
-          appendCellHtml(stringArray, row, i, colspan, metadata, columnData, d);
+          appendCellHtml(stringArray, row, i, metadata, columnData, d);
         }
       }
 
       stringArray.push("</div>");
     }
 
-    function mkCellHtml(stringArray, row, cell, colspan, rowMetadata, cellMetadata, item) {
+    function mkCellHtml(row, cell, rowMetadata, cellMetadata, item) {
       var m = columns[cell];
       var colspan = getColspan(row, cell);
       var rowspan = getRowspan(row, cell);
@@ -2078,6 +2083,11 @@ if (typeof Slick === "undefined") {
         }
       }
 
+      var cellHeight = getCellHeight(row, rowspan);
+      if (cellHeight != options.rowHeight - cellHeightDiff) {
+        cellStyles.push("height:" + cellHeight + "px");
+      }
+
       // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
       var fmt = "";
       if (item) {
@@ -2088,14 +2098,17 @@ if (typeof Slick === "undefined") {
       return {
         cellCss: cellCss,
         cellStyles: cellStyles,
-        html: fmt
+        html: fmt,
+        colspan: colspan,
+        rowspan: rowspan,
+        cellHeight: cellHeight
       };
     }
 
 
-    function appendCellHtml(stringArray, row, cell, colspan, rowMetadata, cellMetadata, item) {
+    function appendCellHtml(stringArray, row, cell, rowMetadata, cellMetadata, item) {
       var m = columns[cell];
-      var fmt = mkCellHtml(row, cell, colspan, rowMetadata, cellMetadata, item);
+      var fmt = mkCellHtml(row, cell, rowMetadata, cellMetadata, item);
       var styles;
       if (fmt.cellStyles.length > 0) {
         styles = "style='" + fmt.cellStyles.join(";") + ";' ";
@@ -2105,11 +2118,6 @@ if (typeof Slick === "undefined") {
       stringArray.push("<div class='" + fmt.cellCss.join(" ") + "' " + 
                        styles + "aria-describedby='" + uid + m.id +
                        "' tabindex='-1' role='gridcell'");
-
-      var cellHeight = getCellHeight(row, rowspan);
-      if (cellHeight != options.rowHeight - cellHeightDiff) {
-        stringArray.push(" style='height:" + cellHeight + "px'");
-      }
 
       appendMetadataAttributes(stringArray, cellMetadata);
 
@@ -2307,9 +2315,8 @@ if (typeof Slick === "undefined") {
             cellNode.style.height = "";
           }
         }
-        var colspan = getColspan(row, cell);
         if (d) {
-          var fmt = mkCellHtml(row, cell, colspan, rowMetadata, cellMetadata, d);
+          var fmt = mkCellHtml(row, cell, rowMetadata, cellMetadata, d);
           var el = $(cellNode);
           el.attr("style", fmt.cellStyles.join(";") + ";");
           el.attr("class", fmt.cellCss.join(" "));
@@ -2346,8 +2353,7 @@ if (typeof Slick === "undefined") {
         } else if (d) {
           // look up by id, then index
           var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[columnIdx]);
-          var colspan = getColspan(row, columnIdx);
-          var fmt = mkCellHtml(row, columnIdx, colspan, rowMetadata, cellMetadata, d);
+          var fmt = mkCellHtml(row, columnIdx, rowMetadata, cellMetadata, d);
           var el = $(node);
           el.attr("style", fmt.cellStyles.join(";") + ";");
           el.attr("class", fmt.cellCss.join(" "));
@@ -2660,7 +2666,7 @@ if (typeof Slick === "undefined") {
           if (columnPosLeft[i + colspan] > range.leftPx) {
             // look up by id, then index
             columnData = metadata && (metadata[columns[i].id] || metadata[i]);
-            appendCellHtml(stringArray, row, i, colspan, metadata, columnData, d);
+            appendCellHtml(stringArray, row, i, metadata, columnData, d);
             cellsAdded++;
           }
         }
@@ -2703,8 +2709,36 @@ if (typeof Slick === "undefined") {
       for (ii = 0; ii < columns.length; ii += colspan) {
         i = getSpanRow(range.top, ii);
         colspan = getColspan(i, ii);
-        if (i < range.top && !rowsCache[i] && columnPosRight[ii + colspan - 1] > range.leftPx && columnPosLeft[ii] <= range.rightPx) {
+        assert(ii + colspan <= columns.length);
+        if (i < range.top && !rowsCache[i] && columnPosLeft[ii + colspan] > range.leftPx && columnPosLeft[ii] <= range.rightPx) {
           rows.push(i);
+
+          if (rowsCache[i]) {
+            continue;
+          }
+
+          // collect not rendered range rows
+          renderedRows++;
+
+          // Create an entry right away so that appendRowHtml() can
+          // start populatating it.
+          rowsCache[i] = {
+            "rowNode": null,
+
+            // Cell nodes (by column idx).  Lazy-populated by ensureCellNodesInRowsCache().
+            "cellNodesByColumnIdx": [],
+
+            // Column indices of cell nodes that have been rendered, but not yet indexed in
+            // cellNodesByColumnIdx.  These are in the same order as cell nodes added at the
+            // end of the row.
+            "cellRenderQueue": []
+          };
+
+          appendRowHtml(stringArray, i, range, dataLength);
+          if (activeCellNode && activeRow === i) {
+            needToReselectCell = true;
+          }
+          counter_rows_rendered++;
         }
       }
 
@@ -3355,7 +3389,9 @@ if (typeof Slick === "undefined") {
         row: rowInfo.position,
         cell: cell,
         rowFraction: rowInfo.fraction,
-        cellFraction: cellFraction
+        cellFraction: cellFraction,
+        cellWidth: cellWidth,
+        cellHeight: rowInfo.height
       };
     }
 
@@ -3543,11 +3579,10 @@ if (typeof Slick === "undefined") {
         $(activeCellNode).removeClass("editable invalid");
         if (d) {
           var column = columns[activeCell];
-          var colspan = getColspan(activeRow, activeCell);
           var rowMetadata = data.getItemMetadata && data.getItemMetadata(activeRow, activeCell);
           // look up by id, then index
           var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
-          var fmt = mkCellHtml(activeRow, activeCell, colspan, rowMetadata, cellMetadata, d);
+          var fmt = mkCellHtml(activeRow, activeCell, rowMetadata, cellMetadata, d);
           var el = $(activeCellNode);
           el.attr("style", fmt.cellStyles.join(";") + ";");
           el.attr("class", fmt.cellCss.join(" "));

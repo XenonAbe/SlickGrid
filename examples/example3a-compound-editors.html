@@ -71,16 +71,17 @@
   function NumericRangeEditor(args) {
     var $from, $to;
     var scope = this;
+    var $container = $(args.container);
 
     this.init = function () {
       $from = $("<INPUT type=text style='width:40px' />")
-          .appendTo(args.container)
+          .appendTo($container)
           .bind("keydown", scope.handleKeyDown);
 
       $(args.container).append("&nbsp; to &nbsp;");
 
       $to = $("<INPUT type=text style='width:40px' />")
-          .appendTo(args.container)
+          .appendTo($container)
           .bind("keydown", scope.handleKeyDown);
 
       scope.focus();
@@ -93,7 +94,7 @@
     };
 
     this.destroy = function () {
-      $(args.container).empty();
+      $container.empty();
     };
 
     this.focus = function () {

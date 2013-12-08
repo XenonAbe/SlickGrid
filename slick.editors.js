@@ -959,18 +959,19 @@ function isValidModifier(v) {
     var defaultValue;
     var scope = this;
     var isOpen = false;
+    var $container = $(args.container);
 
     this.init = function () {
       me = this;
       $('html').click(function(event) {
          if (isOpen) {
-            if (args.container.has(event.target).length !== 0) return;
+            if ($container.has(event.target).length !== 0) return;
             // me.destroy();
          }
        });
 
       $input = $("<input type='color' />")
-          .appendTo(args.container)
+          .appendTo($container)
           .bind("keydown.nav", function (e) {
             if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
               e.stopImmediatePropagation();
