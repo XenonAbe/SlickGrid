@@ -135,6 +135,7 @@ if (typeof Slick === "undefined") {
    *      defaultFormatter:   {Function}  Default function for converting cell values to strings.
    *      forceSyncScrolling: {Boolean}   If true, renders more frequently during scrolling, rather than
    *                                      deferring rendering until default scroll thresholds are met.
+   *      addNewRowCssClass:  {String}    specifies CSS class for the extra bottom row: 'add new row'
    * [/KCPT]
    **/
   function SlickGrid(container, data, columns, options) {
@@ -172,7 +173,9 @@ if (typeof Slick === "undefined") {
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
       forceSyncScrolling: false,
-      addNewRowCssClass: "new-row"
+      addNewRowCssClass: "new-row",
+      syncColumnCellResize: false,
+      editCommandHandler: null
     };
 
     var columnDefaults = {
@@ -841,8 +844,8 @@ if (typeof Slick === "undefined") {
               multiColumnSort: true,
               sortCols: $.map(sortColumns, function(col) {
                 return {
-                  sortCol: columns[getColumnIndex(col.columnId)], 
-                  sortAsc: col.sortAsc 
+                  sortCol: columns[getColumnIndex(col.columnId)],
+                  sortAsc: col.sortAsc
                 };
               })
             }, e);
@@ -1373,7 +1376,7 @@ if (typeof Slick === "undefined") {
           shrinkLeeway -= shrinkSize;
           widths[i] -= shrinkSize;
         }
-        if (prevTotal == total) {  // avoid infinite loop
+        if (prevTotal <= total) {  // avoid infinite loop
           break;
         }
         prevTotal = total;
@@ -1396,7 +1399,7 @@ if (typeof Slick === "undefined") {
           total += growSize;
           widths[i] += growSize;
         }
-        if (prevTotal == total) {  // avoid infinite loop
+        if (prevTotal >= total) {  // avoid infinite loop
           break;
         }
         prevTotal = total;
@@ -1484,8 +1487,8 @@ if (typeof Slick === "undefined") {
     }
 
     function setSortColumn(columnId, ascending) {
-      setSortColumns([{ 
-        columnId: columnId, 
+      setSortColumns([{
+        columnId: columnId,
         sortAsc: ascending
       }]);
     }
@@ -1803,7 +1806,7 @@ if (typeof Slick === "undefined") {
     }
 
     // Return the row index at the given grid pixel coordinate Y.
-    // 
+    //
     // Also return the 'fraction' of the index within the row, i.e.
     // if the Y coordinate points at a spot 25% from the top of the row, then
     // `returnValue.fraction` will be 0.25
@@ -1812,7 +1815,7 @@ if (typeof Slick === "undefined") {
     //
     // When the Y coordinate points outside the grid, out-of-range numbers will be produced.
     //
-    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>), 
+    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>),
     // unless the Y coordinate points outside the grid.
     function getRowWithFractionFromPosition(maxPosition) {
       var rowsInPosCache = getDataLength();
@@ -2041,25 +2044,37 @@ if (typeof Slick === "undefined") {
       stringArray.push("</div>");
     }
 
-    function appendCellHtml(stringArray, row, cell, colspan, rowMetadata, cellMetadata, item) {
+    function mkCellHtml(stringArray, row, cell, colspan, rowMetadata, cellMetadata, item) {
       var m = columns[cell];
       var colspan = getColspan(row, cell);
       var rowspan = getRowspan(row, cell);
       assert(Math.min(columns.length - 1, cell + colspan - 1) === cell + colspan - 1);
-      var cellCss = "slick-cell l" + cell + " r" + (cell + colspan - 1) +
-        (m.cssClass ? " " + m.cssClass : "") +
-        (colspan > 1 ? " colspan colspan" + colspan : "") +
-        (rowspan > 1 ? " rowspan rowspan" + rowspan : "") +
-        (cellMetadata && cellMetadata.cssClass ? " " + cellMetadata.cssClass : "") +
-        (cellMetadata && cellMetadata.transparent ? " slick-transparent" : "");
+      var cellStyles = [];
+      var cellCss = ["slick-cell", "l" + cell, "r" + (cell + colspan - 1)];
+      if (m.cssClass) {
+        cellCss.push(m.cssClass);
+      }
+      if (colspan > 1) {
+        cellCss.push("colspan");
+        cellCss.push("colspan" + colspan);
+      }
+      if (rowspan > 1) {
+        cellCss.push("rowspan");
+        cellCss.push("rowspan" + rowspan);
+      }
+      if (cellMetadata && cellMetadata.cssClass) {
+        cellCss.push(cellMetadata.cssClass);
+      }
+      if (cellMetadata && cellMetadata.transparent) {
+        cellCss.push("slick-transparent");
+      }
       if (row === activeRow && cell === activeCell) {
-        cellCss += " active";
+        cellCss.push("active");
       }
 
-      // TODO:  merge them together in the setter
       for (var key in cellCssClasses) {
         if (cellCssClasses[key][row] && cellCssClasses[key][row][m.id]) {
-          cellCss += " " + cellCssClasses[key][row][m.id];
+          cellCss.push(cellCssClasses[key][row][m.id]);
         }
       }
 
@@ -2068,17 +2083,27 @@ if (typeof Slick === "undefined") {
       if (item) {
         var value = getDataItemValueForColumn(item, m, rowMetadata, cellMetadata);
         // allow the formatter to edit the outer cell's DIV CSS as well:
-        // this requires the formatter to return an OBJECT instead of a STRING!
-        fmt = getFormatter(row, cell)(row, cell, value, m, item, colspan, cellCss);
-        // OBJECT: { html, cellCss }
-        if (fmt.cellCss) {
-          cellCss = fmt.cellCss;
-          fmt = fmt.html;
-        }
+        fmt = getFormatter(row, cell)(row, cell, value, m, item, colspan, cellCss, cellStyles);
       }
+      return {
+        cellCss: cellCss,
+        cellStyles: cellStyles,
+        html: fmt
+      };
+    }
 
-      stringArray.push("<div class='" + cellCss +
-                       "' aria-describedby='" + uid + m.id +
+
+    function appendCellHtml(stringArray, row, cell, colspan, rowMetadata, cellMetadata, item) {
+      var m = columns[cell];
+      var fmt = mkCellHtml(row, cell, colspan, rowMetadata, cellMetadata, item);
+      var styles;
+      if (fmt.cellStyles.length > 0) {
+        styles = "style='" + fmt.cellStyles.join(";") + ";' ";
+      } else {
+        styles = "";
+      }
+      stringArray.push("<div class='" + fmt.cellCss.join(" ") + "' " + 
+                       styles + "aria-describedby='" + uid + m.id +
                        "' tabindex='-1' role='gridcell'");
 
       var cellHeight = getCellHeight(row, rowspan);
@@ -2090,7 +2115,7 @@ if (typeof Slick === "undefined") {
 
       stringArray.push(">");
 
-      stringArray.push(fmt);
+      stringArray.push(fmt.html);
 
       stringArray.push("</div>");
 
@@ -2282,7 +2307,16 @@ if (typeof Slick === "undefined") {
             cellNode.style.height = "";
           }
         }
-        cellNode.innerHTML = d ? getFormatter(row, cell)(row, cell, getDataItemValueForColumn(d, m, rowMetadata, cellMetadata), m, d) : "";
+        var colspan = getColspan(row, cell);
+        if (d) {
+          var fmt = mkCellHtml(row, cell, colspan, rowMetadata, cellMetadata, d);
+          var el = $(cellNode);
+          el.attr("style", fmt.cellStyles.join(";") + ";");
+          el.attr("class", fmt.cellCss.join(" "));
+          el.html(fmt.html);
+        } else {
+          cellNode.innerHTML = "";
+        }
         invalidatePostProcessingResults(row);
       }
     }
@@ -2312,7 +2346,12 @@ if (typeof Slick === "undefined") {
         } else if (d) {
           // look up by id, then index
           var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[columnIdx]);
-          node.innerHTML = getFormatter(row, columnIdx)(row, columnIdx, getDataItemValueForColumn(d, m, rowMetadata, cellMetadata), m, d);
+          var colspan = getColspan(row, columnIdx);
+          var fmt = mkCellHtml(row, columnIdx, colspan, rowMetadata, cellMetadata, d);
+          var el = $(node);
+          el.attr("style", fmt.cellStyles.join(";") + ";");
+          el.attr("class", fmt.cellCss.join(" "));
+          el.html(fmt.html);
         } else {
           node.innerHTML = "";
         }
@@ -3272,7 +3311,7 @@ if (typeof Slick === "undefined") {
     }
 
     // Return the `{row: ?, cell: ?}` row/column grid coordinate at the given grid pixel coordinate (X, Y).
-    // 
+    //
     // Also return the 'fraction' of the position within the row and column, i.e.
     // if the Y coordinate points at a spot 25% from the top of the row, then
     // `returnValue.rowFraction` will be 0.25
@@ -3313,7 +3352,7 @@ if (typeof Slick === "undefined") {
       }
 
       return {
-        row: rowInfo.position, 
+        row: rowInfo.position,
         cell: cell,
         rowFraction: rowInfo.fraction,
         cellFraction: cellFraction
@@ -3504,11 +3543,15 @@ if (typeof Slick === "undefined") {
         $(activeCellNode).removeClass("editable invalid");
         if (d) {
           var column = columns[activeCell];
-          var formatter = getFormatter(activeRow, activeCell);
+          var colspan = getColspan(activeRow, activeCell);
           var rowMetadata = data.getItemMetadata && data.getItemMetadata(activeRow, activeCell);
           // look up by id, then index
           var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
-          activeCellNode.innerHTML = formatter(activeRow, activeCell, getDataItemValueForColumn(d, column, rowMetadata, cellMetadata), column, d);
+          var fmt = mkCellHtml(activeRow, activeCell, colspan, rowMetadata, cellMetadata, d);
+          var el = $(activeCellNode);
+          el.attr("style", fmt.cellStyles.join(";") + ";");
+          el.attr("class", fmt.cellCss.join(" "));
+          el.html(fmt.html);
           invalidatePostProcessingResults(activeRow);
         }
       }
@@ -4234,6 +4277,7 @@ if (typeof Slick === "undefined") {
     function commitCurrentEdit() {
       var item = getDataItem(activeRow);
       var column = columns[activeCell];
+      var evt;
 
       if (currentEditor) {
         if (currentEditor.isValueChanged()) {
@@ -4241,53 +4285,42 @@ if (typeof Slick === "undefined") {
 
           if (validationResults.valid) {
             if (activeRow < getDataLength()) {
-              var editCommand = {
-                row: activeRow,
-                cell: activeCell,
-                editor: currentEditor,
-                serializedValue: currentEditor.serializeValue(),
-                prevSerializedValue: serializedEditorValue,
-                execute: function () {
-                  this.editor.applyValue(item, this.serializedValue);
-                  updateRow(this.row);
-                  trigger(self.onCellChange, {
-                    row: activeRow,
-                    cell: activeCell,
-                    item: item
-                  });
-                },
-                undo: function () {
-                  this.editor.applyValue(item, this.prevSerializedValue);
-                  updateRow(this.row);
-                  trigger(self.onCellChange, {
-                    row: activeRow,
-                    cell: activeCell,
-                    item: item
-                  });
-                }
-              };
-
-              if (options.editCommandHandler) {
-                makeActiveCellNormal();
-                options.editCommandHandler(item, column, editCommand);
-              } else {
-                editCommand.execute();
-                makeActiveCellNormal();
-              }
-
-              trigger(self.onCellChange, {
-                row: activeRow,
-                cell: activeCell,
-                item: item,
-                previousValue: editCommand.prevSerializedValue,
-                newValue: editCommand.serializedValue
-              });
+              evt = self.onCellChange;
             } else {
-              var newItem = {};
-              currentEditor.applyValue(newItem, currentEditor.serializeValue());
-              makeActiveCellNormal();
-              trigger(self.onAddNewRow, {item: newItem, column: column});
+              item = item || {};
+              evt = self.onAddNewRow;
             }
+            var editCommand = {
+              row: activeRow,
+              cell: activeCell,
+              item: item,
+              column: column,
+              editor: currentEditor,
+              serializedValue: currentEditor.serializeValue(),
+              prevSerializedValue: serializedEditorValue,
+              execute: function () {
+                this.appliedValue = this.serializedValue;
+                this.editor.applyValue(item, this.appliedValue);
+                updateRow(this.row);
+                this.notify();
+              },
+              undo: function () {
+                this.appliedValue = this.prevSerializedValue;
+                this.editor.applyValue(item, this.appliedValue);
+                updateRow(this.row);
+                this.notify();
+              },
+              notify: function() {
+                trigger(self.onCellChange, this);
+              }
+            };
+
+            if (options.editCommandHandler) {
+              options.editCommandHandler(item, column, editCommand);
+            } else {
+              editCommand.execute();
+            }
+            makeActiveCellNormal();
 
             // check whether the lock has been re-acquired by event handlers
             return !getEditorLock().isActive();
@@ -4298,12 +4331,15 @@ if (typeof Slick === "undefined") {
             $(activeCellNode).addClass("invalid");
 
             trigger(self.onValidationError, {
-              editor: currentEditor,
-              cellNode: activeCellNode,
-              validationResults: validationResults,
               row: activeRow,
               cell: activeCell,
-              column: column
+              item: item,
+              column: column,
+              editor: currentEditor,
+              prevSerializedValue: serializedEditorValue,
+
+              cellNode: activeCellNode,
+              validationResults: validationResults
             });
 
             currentEditor.focus();

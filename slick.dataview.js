@@ -105,7 +105,8 @@
       aggregateCollapsed: false,
       aggregateChildGroups: false,
       collapsed: false,
-      displayTotalsRow: true
+      displayTotalsRow: true,
+      lazyTotalsCalculation: false
     };
     var groupingInfos = [];
     var groups = [];
@@ -203,9 +204,9 @@
     function getPagingInfo() {
       var totalPages = pagesize ? Math.max(1, Math.ceil(totalRows / pagesize)) : 1;
       return {
-        pageSize: pagesize, 
-        pageNum: pagenum, 
-        totalRows: totalRows, 
+        pageSize: pagesize,
+        pageNum: pagenum,
+        totalRows: totalRows,
         totalPages: totalPages
       };
     }
@@ -224,13 +225,13 @@
       // Sorting maps
       // ------------
       //
-      // The `comparer` function can be invoked multiple times per element within the array. 
-      // Depending on the `comparer` function's nature, this may yield a high overhead. 
-      // The more work a compare function does and the more elements there are to sort, the 
-      // wiser it may be to consider using a map for sorting. 
+      // The `comparer` function can be invoked multiple times per element within the array.
+      // Depending on the `comparer` function's nature, this may yield a high overhead.
+      // The more work a compare function does and the more elements there are to sort, the
+      // wiser it may be to consider using a map for sorting.
       //
-      // The idea is to walk the array once to extract the actual values used for sorting into 
-      // a temporary array applying the `mapper` function to each element, sort the temporary 
+      // The idea is to walk the array once to extract the actual values used for sorting into
+      // a temporary array applying the `mapper` function to each element, sort the temporary
       // array and then walk the temporary array to bring the original array into the right order.
 
       var map;
@@ -455,7 +456,22 @@
     }
 
     function getItem(i) {
-      return rows[i];
+      var item = rows[i];
+
+      // if this is a group row, make sure totals are calculated and update the title
+      if (item && item.__group && item.totals && !item.totals.initialized) {
+        var gi = groupingInfos[item.level];
+        if (!gi.displayTotalsRow) {
+          calculateTotals(item.totals);
+          item.title = gi.formatter ? gi.formatter(item) : item.value;
+        }
+      }
+      // if this is a totals row, make sure it's calculated
+      else if (item && item.__groupTotals && !item.initialized) {
+        calculateTotals(item);
+      }
+
+      return item;
     }
 
     function getItemMetadata(row, cell) {
@@ -544,7 +560,7 @@
      * @param varArgs Either a Slick.Group's "groupingKey" property, or a
      *     variable argument list of grouping values denoting a unique path to the row.  For
      *     example, calling collapseGroup('high', '10%') will collapse the '10%' subgroup of
-     *     the 'high' setGrouping.
+     *     the 'high' group.
      */
     function collapseGroup(varArgs) {
       var args = Array.prototype.slice.call(arguments);
@@ -560,7 +576,7 @@
      * @param varArgs Either a Slick.Group's "groupingKey" property, or a
      *     variable argument list of grouping values denoting a unique path to the row.  For
      *     example, calling expandGroup('high', '10%') will expand the '10%' subgroup of
-     *     the 'high' setGrouping.
+     *     the 'high' group.
      */
     function expandGroup(varArgs) {
       var args = Array.prototype.slice.call(arguments);
@@ -630,27 +646,50 @@
       return groups;
     }
 
-    // TODO:  lazy totals calculation
-    function calculateGroupTotals(group) {
-      // TODO:  try moving iterating over groups into compiled accumulator
+    function calculateTotals(totals) {
+      var group = totals.group;
       var gi = groupingInfos[group.level];
       var isLeafLevel = (group.level == groupingInfos.length);
-      var totals = new Slick.GroupTotals();
       var agg, idx = gi.aggregators.length;
+
+      if (!isLeafLevel && gi.aggregateChildGroups) {
+        // make sure all the subgroups are calculated
+        var i = group.groups.length;
+        while (i--) {
+          if (!group.groups[i].initialized) {
+            calculateTotals(group.groups[i]);
+          }
+        }
+      }
+
       while (idx--) {
         agg = gi.aggregators[idx];
         agg.init(gi, group, totals);
-        gi.compiledAccumulators[idx].call(agg,
-            (!isLeafLevel && gi.aggregateChildGroups) ? group.groups : group.rows);
+        if (!isLeafLevel && gi.aggregateChildGroups) {
+          gi.compiledAccumulators[idx].call(agg, group.groups);
+        } else {
+          gi.compiledAccumulators[idx].call(agg, group.rows);
+        }
         agg.storeResult(totals);
       }
-      totals.group = group;
-      group.totals = totals;
+      totals.initialized = true;
     }
 
-    function calculateTotals(groups, level) {
+    function addGroupTotals(group) {
+      var gi = groupingInfos[group.level];
+      var totals = new Slick.GroupTotals();
+      totals.group = group;
+      group.totals = totals;
+      if (!gi.lazyTotalsCalculation) {
+        calculateTotals(totals);
+      }
+    }
+
+    function addTotals(groups, level) {
       level = level || 0;
       var gi = groupingInfos[level];
+      var groupCollapsed = gi.collapsed;
+      var toggledGroups = toggledGroupsByLevel[level];      
       var idx = groups.length, g;
       while (idx--) {
         g = groups[idx];
@@ -659,38 +698,20 @@
           continue;
         }
 
-        // Do a depth-first aggregation so that parent setGrouping aggregators can access subgroup totals.
+        // Do a depth-first aggregation so that parent group aggregators can access subgroup totals.
         if (g.groups) {
-          calculateTotals(g.groups, level + 1);
+          addTotals(g.groups, level + 1);
         }
 
         if (gi.aggregators.length && (
             gi.aggregateEmpty || g.rows.length || (g.groups && g.groups.length))) {
-          calculateGroupTotals(g);
+          addGroupTotals(g);
         }
-      }
-    }
 
-    function finalizeGroups(groups, level) {
-      level = level || 0;
-      var gi = groupingInfos[level];
-      var groupCollapsed = gi.collapsed;
-      var toggledGroups = toggledGroupsByLevel[level];
-      var idx = groups.length, g;
-      while (idx--) {
-        g = groups[idx];
         g.collapsed = groupCollapsed ^ toggledGroups[g.groupingKey];
         g.title = gi.formatter ? gi.formatter(g) : g.value;
-
-        if (g.groups) {
-          finalizeGroups(g.groups, level + 1);
-          // Let the non-leaf setGrouping rows get garbage-collected.
-          // They may have been used by aggregates that go over all of the descendants,
-          // but at this point they are no longer needed.
-          g.rows = [];
-        }
       }
-    }
+    } 
 
     function flattenGroupedRows(groups, level, groupingInfos, filteredItems, options) {
       //level = level || 0;
@@ -922,8 +943,7 @@
       if (groupingInfos.length) {
         groups = extractGroups(newRows, null, filteredItems);
         if (groups.length) {
-          calculateTotals(groups);
-          finalizeGroups(groups);
+          addTotals(groups);
           newRows = options.flattenGroupedRows(groups, 0, groupingInfos, filteredItems, options);
         }
       }
@@ -1010,7 +1030,7 @@
           inHandler = true;
           var selectedRows = self.mapIdsToRows(selectedRowIds);
           if (!preserveHidden) {
-            setSelectedRowIds(self.mapRowsToIds(selectedRows));       
+            setSelectedRowIds(self.mapRowsToIds(selectedRows));
           }
           grid.setSelectedRows(selectedRows);
           inHandler = false;
@@ -1137,7 +1157,7 @@
   function AvgAggregator(field) {
     this.field_ = field;
 
-    this.init = function () {
+    this.init = function (groupingInfo, group, totals) {
       this.count_ = 0;
       this.nonNullCount_ = 0;
       this.sum_ = 0;
@@ -1165,7 +1185,7 @@
   function MinAggregator(field) {
     this.field_ = field;
 
-    this.init = function () {
+    this.init = function (groupingInfo, group, totals) {
       this.min_ = null;
     };
 
@@ -1189,7 +1209,7 @@
   function MaxAggregator(field) {
     this.field_ = field;
 
-    this.init = function () {
+    this.init = function (groupingInfo, group, totals) {
       this.max_ = null;
     };
 
@@ -1213,7 +1233,7 @@
   function SumAggregator(field) {
     this.field_ = field;
 
-    this.init = function () {
+    this.init = function (groupingInfo, group, totals) {
       this.sum_ = null;
     };
 
@@ -1236,7 +1256,7 @@
   function MdeAggregator(field) {
     this.field_ = field;
 
-    this.init = function () {
+    this.init = function (groupingInfo, group, totals) {
       this.pairs_ = [];
     };
 
@@ -1274,7 +1294,7 @@
   function MdnAggregator(field) {
     this.field_ = field;
 
-    this.init = function () {
+    this.init = function (groupingInfo, group, totals) {
       this.sorted_ = [];
     };
 
@@ -1284,7 +1304,7 @@
       if (val != null && val !== "" && val !== NaN) {
         for (var i = 0; i < this.sorted_.length; i++) {
           if (val < this.sorted_[i]) {
-            this.sorted_.splice(i,0,val);
+            this.sorted_.splice(i, 0, val);
             spliced = true;
             break;
           }
@@ -1298,11 +1318,11 @@
         groupTotals.mdn = {};
       }
       var n = this.sorted_.length;
-      if (n%2 == 1) {
-        groupTotals.mdn[this.field_] = this.sorted_[(n-1)/2];
+      if (n % 2 == 1) {
+        groupTotals.mdn[this.field_] = this.sorted_[(n - 1) / 2];
       } else {
-        var i = n/2;
-        groupTotals.mdn[this.field_] = 0.5*(this.sorted_[i]+this.sorted_[i-1]);
+        var i = n / 2;
+        groupTotals.mdn[this.field_] = 0.5 * (this.sorted_[i] + this.sorted_[i-1]);
       }
     };
   }
@@ -1310,7 +1330,7 @@
   function StdAggregator(field) {
     this.field_ = field;
 
-    this.init = function () {
+    this.init = function (groupingInfo, group, totals) {
       this.nonNullCount_ = 0;
       this.Mk_ = null;
       this.Qk_ = 0;
@@ -1321,8 +1341,8 @@
       if (val != null && val !== "" && val !== NaN) {
         this.nonNullCount_++;
         if (this.Mk_ != null) {
-          this.Qk_ = this.Qk_+(this.nonNullCount_-1)*Math.pow((val-this.Mk_),2)/this.nonNullCount_;
-          this.Mk_ = this.Mk_+(val-this.Mk_)/this.nonNullCount_;
+          this.Qk_ = this.Qk_ + (this.nonNullCount_ - 1) * Math.pow((val - this.Mk_), 2) / this.nonNullCount_;
+          this.Mk_ = this.Mk_ + (val - this.Mk_) / this.nonNullCount_;
         } else {
           this.Mk_ = val;
         }
@@ -1334,7 +1354,7 @@
         groupTotals.std = {};
       }
       if (this.nonNullCount_ != 0) {
-        groupTotals.std[this.field_] = Math.sqrt(this.Qk_/this.nonNullCount_);
+        groupTotals.std[this.field_] = Math.sqrt(this.Qk_ / this.nonNullCount_);
       }
     };
   }

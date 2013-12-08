@@ -20,6 +20,7 @@
   function CellRangeDecorator(grid, options) {
     var _elem;
     var _elem_range;
+    var _self = this;
     var _defaults = {
       borderThickness: 2,
       selectionCssClass: 'slick-range-decorator',
@@ -59,7 +60,20 @@
             .addClass(options.selectionCssClass)
             .css("position", "absolute")
             .appendTo(grid.getCanvasNode());
+
+            _elem.on('click', function(e) {
+              console.log("range decorator slickgrid ", e);
+
+              _self.onClick.notify({
+                row: -1, // TBD
+                cell: -1, // TBD
+                innerEvent: e
+              });
+
+              e.preventDefault();
+            });
       }
+
       if (!range) {
         range = _elem_range;
       } else {
@@ -87,6 +101,7 @@
 
     function hide() {
       if (_elem) {
+        _elem.unbind("click");
         _elem.remove();
         _elem = null;
       }
@@ -101,6 +116,8 @@
     }
 
     $.extend(this, {
+      "onClick": new Slick.Event(),
+
       "show": show,
       "hide": hide,
       "getInfo": getInfo
