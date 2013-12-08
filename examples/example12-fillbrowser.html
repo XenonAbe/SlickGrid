@@ -1,24 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example 12: Fill browser</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
+    /* as taken from http://stackoverflow.com/questions/1719452/how-to-make-a-div-always-full-screen */
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    .grid-fullscreen-wrapper {
+      min-height: 100%; 
+	  position: relative;
+    }
+
     html, body {
       margin: 0;
       padding: 0;
       background-color: White;
-      overflow: auto;
+      overflow: hidden;
     }
 
     body {
       font: 11px Helvetica, Arial, sans-serif;
     }
 
-    #container {
+    #myGrid {
       position: absolute;
       top: 0;
       left: 0;
@@ -26,7 +37,7 @@
       bottom: 0;
     }
 
-    #description {
+    div.options-panel {
       position: fixed;
       top: 30px;
       right: 30px;
@@ -34,33 +45,46 @@
       background: beige;
       border: solid 1px gray;
       z-index: 1000;
+
+      float: none;
+      margin: 0;
     }
 
-    #description h2 {
-      padding-left: 0.5em;
+  </style>
+  <!--[if lte IE 6]>
+  <style type="text/css">
+    .grid-fullscreen-wrapper {
+      height: 100%;
     }
   </style>
+  <![endif]-->
 </head>
 <body>
-<div id="container"></div>
-<div id="description">
-  <h2>Demonstrates</h2>
-  <ul>
-    <li>Grid filling browser window completely (using absolute positioning)</li>
-    <li>Grid resizing when browser window changes size</li>
-    <li>Overall performance of the grid when displaying large tabular data (17 columns x 10,000 rows)</li>
-  </ul>
-
-
-    <h2>View Source:</h2>
-      <ul>
-          <li id="viewsource">View Source Code</li>
-          <div id="displaycode"></div>
-      </ul>
+<div class="grid-fullscreen-wrapper">
+  <div id="myGrid"></div>
 </div>
 
+<div class="options-panel">
+  <h2>Demonstrates</h2>
+    <ul>
+  <li>Grid filling browser window completely (using absolute positioning)</li>
+  <li>Grid resizing when browser window changes size</li>
+  <li>Overall performance of the grid when displaying large tabular data (17 columns x 10,000 rows)</li>
+    </ul>
+
+  <h2>View Source:</h2>
+    <ul>
+        <li id="viewsource">View Source Code</li>
+        <div id="displaycode"></div>
+    </ul>
+</div>
+
+<script src="../lib/firebugx.js"></script>
+
 <script src="../lib/jquery.js"></script>
+<script src="../lib/jquery.ba-resize.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
@@ -117,7 +141,7 @@
     };
   }
 
-  grid = new Slick.Grid("#container", data, columns, options);
+  grid = new Slick.Grid("#myGrid", data, columns, options);
 </script>
 </body>
 </html>

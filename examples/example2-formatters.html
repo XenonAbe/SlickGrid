@@ -1,27 +1,29 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example 2: Formatters</title>
-  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
       font-weight: bold;
     }
 
+    .cell-title a {
+      color: darkblue;
+    }
+
     .cell-effort-driven {
       text-align: center;
     }
-
-
   </style>
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:520px;">
-    <div id="myGrid" style="width:100%;height:500px;"></div>
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
   </div>
 
   <div class="options-panel">
@@ -32,7 +34,6 @@
         <li>width, minWidth, maxWidth, resizable, cssClass column attributes</li>
         <li>custom column formatters</li>
       </ul>
-
 
     <h2>View Source:</h2>
       <ul>
@@ -47,6 +48,7 @@
 <script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.formatters.js"></script>
@@ -61,7 +63,6 @@
   }
 
   var grid;
-  var data = [];
   var columns = [
     {id: "title", name: "Title", field: "title", width: 120, cssClass: "cell-title", formatter: formatter},
     {id: "duration", name: "Duration", field: "duration"},
@@ -78,19 +79,20 @@
   };
 
   $(function () {
-    for (var i = 0; i < 5; i++) {
-      var d = (data[i] = {});
-
-      d["title"] = "<a href='#' tabindex='0'>Task</a> " + i;
-      d["duration"] = "5 days";
-      d["percentComplete"] = Math.min(100, Math.round(Math.random() * 110));
-      d["start"] = "01/01/2009";
-      d["finish"] = "01/05/2009";
-      d["effortDriven"] = (i % 5 == 0);
+    var data = [];
+    for (var i = 0; i < 500; i++) {
+      data[i] = {
+        title: "<a href='#' tabindex='0'>Task</a> " + i,
+        duration: "5 days",
+        percentComplete: Math.min(100, Math.round(Math.random() * 110)),
+        start: "01/01/2009",
+        finish: "01/05/2009",
+        effortDriven: (i % 5 == 0)
+      };
     }
 
     grid = new Slick.Grid("#myGrid", data, columns, options);
-  })
+  });
 </script>
 </body>
 </html>

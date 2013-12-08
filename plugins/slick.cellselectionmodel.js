@@ -29,7 +29,7 @@
       _canvas = _grid.getCanvasNode();
       _grid.onActiveCellChanged.subscribe(handleActiveCellChange);
       _grid.onKeyDown.subscribe(handleKeyDown);
-      grid.registerPlugin(_selector);
+      _grid.registerPlugin(_selector);
       _selector.onCellRangeSelected.subscribe(handleCellRangeSelected);
       _selector.onBeforeCellRangeSelected.subscribe(handleBeforeCellRangeSelected);
     }
@@ -64,6 +64,8 @@
       return _ranges;
     }
 
+    // return FALSE when the drag should NOT start.
+    // args = cell
     function handleBeforeCellRangeSelected(e, args) {
       if (_grid.getEditorLock().isActive()) {
         e.stopPropagation();
@@ -92,7 +94,7 @@
       var ranges, last;
       var active = _grid.getActiveCell();
 
-      if ( active && e.shiftKey && !e.ctrlKey && !e.altKey &&
+      if (active && e.shiftKey && !e.ctrlKey && !e.altKey &&
           (e.which == 37 || e.which == 39 || e.which == 38 || e.which == 40) ) {
 
         ranges = getSelectedRanges();
@@ -128,11 +130,11 @@
           ranges.push(new_last);
           var viewRow = dirRow > 0 ? new_last.toRow : new_last.fromRow;
           var viewCell = dirCell > 0 ? new_last.toCell : new_last.fromCell;
-         _grid.scrollRowIntoView(viewRow);
-         _grid.scrollCellIntoView(viewRow, viewCell);
-        }
-        else
+          _grid.scrollRowIntoView(viewRow);
+          _grid.scrollCellIntoView(viewRow, viewCell);
+        } else {
           ranges.push(last);
+        }
 
         setSelectedRanges(ranges);
 

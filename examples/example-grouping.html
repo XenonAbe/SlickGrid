@@ -1,13 +1,13 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example: Grouping</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../controls/slick.pager.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
-  <link rel="stylesheet" href="examples.css" type="text/css"/>
   <link rel="stylesheet" href="../controls/slick.columnpicker.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-effort-driven {
       text-align: center;
@@ -24,19 +24,23 @@
     .slick-group-title[level='2'] {
       font-style: italic;
     }
+
+    .row-green {
+        background-color: #C3FDB8
+    }
   </style>
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:600px;">
-    <div class="grid-header" style="width:100%">
+  <div class="grid-outer-wrapper">
+    <div class="grid-header">
       <label>SlickGrid</label>
     </div>
-    <div id="myGrid" style="width:100%;height:500px;"></div>
-    <div id="pager" style="width:100%;height:20px;"></div>
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+    <div id="pager" class="grid-pager"></div>
   </div>
 
-  <div class="options-panel" style="width:450px;">
+  <div class="options-panel">
     <b>Options:</b>
     <hr/>
     <div style="padding:6px;">
@@ -52,11 +56,11 @@
       <hr/>
       <button onclick="dataView.setGrouping([])">Clear grouping</button>
       <br/>
-      <button onclick="groupByDuration()">Group by duration & sort groups by value</button>
+      <button onclick="groupByDuration()">Group by duration &amp; sort groups by value</button>
       <br/>
-      <button onclick="groupByDurationOrderByCount(false)">Group by duration & sort groups by count</button>
+      <button onclick="groupByDurationOrderByCount(false)">Group by duration &amp; sort groups by count</button>
       <br/>
-      <button onclick="groupByDurationOrderByCount(true)">Group by duration & sort groups by count, aggregate
+      <button onclick="groupByDurationOrderByCount(true)">Group by duration &amp; sort groups by count, aggregate
         collapsed
       </button>
       <br/>
@@ -81,7 +85,6 @@
       </li>
     </ul>
 
-
     <h2>View Source:</h2>
       <ul>
           <li id="viewsource">View Source Code</li>
@@ -95,6 +98,8 @@
 <script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/jquery.browser.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.formatters.js"></script>
@@ -156,10 +161,6 @@ function myFilter(item, args) {
   return item["percentComplete"] >= args.percentComplete;
 }
 
-function percentCompleteSort(a, b) {
-  return a["percentComplete"] - b["percentComplete"];
-}
-
 function comparer(a, b) {
   var x = a[sortcol], y = b[sortcol];
   return (x == y ? 0 : (x > y ? 1 : -1));
@@ -175,7 +176,8 @@ function groupByDuration() {
       new Slick.Data.Aggregators.Avg("percentComplete"),
       new Slick.Data.Aggregators.Sum("cost")
     ],
-    aggregateCollapsed: false
+    aggregateCollapsed: false,
+    lazyTotalsCalculation: true
   });
 }
 
@@ -192,7 +194,8 @@ function groupByDurationOrderByCount(aggregateCollapsed) {
       new Slick.Data.Aggregators.Avg("percentComplete"),
       new Slick.Data.Aggregators.Sum("cost")
     ],
-    aggregateCollapsed: aggregateCollapsed
+    aggregateCollapsed: aggregateCollapsed,
+    lazyTotalsCalculation: true
   });
 }
 
@@ -207,7 +210,8 @@ function groupByDurationEffortDriven() {
         new Slick.Data.Aggregators.Sum("duration"),
         new Slick.Data.Aggregators.Sum("cost")
       ],
-      aggregateCollapsed: true
+      aggregateCollapsed: true,
+      lazyTotalsCalculation: true
     },
     {
       getter: "effortDriven",
@@ -218,7 +222,8 @@ function groupByDurationEffortDriven() {
         new Slick.Data.Aggregators.Avg("percentComplete"),
         new Slick.Data.Aggregators.Sum("cost")
       ],
-      collapsed: true
+      collapsed: true,
+      lazyTotalsCalculation: true
     }
   ]);
 }
@@ -234,7 +239,8 @@ function groupByDurationEffortDrivenPercent() {
         new Slick.Data.Aggregators.Sum("duration"),
         new Slick.Data.Aggregators.Sum("cost")
       ],
-      aggregateCollapsed: true
+      aggregateCollapsed: true,
+      lazyTotalsCalculation: true
     },
     {
       getter: "effortDriven",
@@ -244,7 +250,8 @@ function groupByDurationEffortDrivenPercent() {
       aggregators :[
         new Slick.Data.Aggregators.Sum("duration"),
         new Slick.Data.Aggregators.Sum("cost")
-      ]
+      ],
+      lazyTotalsCalculation: true
     },
     {
       getter: "percentComplete",
@@ -255,7 +262,8 @@ function groupByDurationEffortDrivenPercent() {
         new Slick.Data.Aggregators.Avg("percentComplete")
       ],
       aggregateCollapsed: true,
-      collapsed: true
+      collapsed: true,
+      lazyTotalsCalculation: true
     }
   ]);
 }
@@ -270,7 +278,7 @@ function loadData(count) {
     d["id"] = "id_" + i;
     d["num"] = i;
     d["title"] = "Task " + i;
-    d["duration"] = Math.round(Math.random() * 14);
+    d["duration"] = Math.round(Math.random() * 30);
     d["percentComplete"] = Math.round(Math.random() * 100);
     d["start"] = someDates[ Math.floor((Math.random()*2)) ];
     d["finish"] = someDates[ Math.floor((Math.random()*2)) ];
@@ -280,6 +288,17 @@ function loadData(count) {
   dataView.setItems(data);
 }
 
+function myRowCss(item) {
+    if (item.effortDriven) {
+        return {
+            cssClasses: "row-green"
+        }
+    }
+}
+
+var groupItemMetadataProvider = new Slick.Data.GroupItemMetadataProvider({
+    getRowMetadata: myRowCss
+});
 
 $(".grid-header .ui-icon")
     .addClass("ui-state-default ui-corner-all")
@@ -291,7 +310,6 @@ $(".grid-header .ui-icon")
     });
 
 $(function () {
-  var groupItemMetadataProvider = new Slick.Data.GroupItemMetadataProvider();
   dataView = new Slick.Data.DataView({
     groupItemMetadataProvider: groupItemMetadataProvider,
     inlineFilters: true
@@ -327,8 +345,7 @@ $(function () {
 
       // use numeric sort of % and lexicographic for everything else
       dataView.fastSort((sortcol == "percentComplete") ? percentCompleteValueFn : sortcol, args.sortAsc);
-    }
-    else {
+    } else {
       // using native sort with comparer
       // preferred method but can be very slow in IE with huge datasets
       dataView.sort(comparer, args.sortAsc);

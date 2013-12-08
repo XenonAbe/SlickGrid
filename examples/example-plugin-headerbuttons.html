@@ -1,10 +1,12 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Header Buttons</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="examples.css" type="text/css"/>
   <link rel="stylesheet" href="../plugins/slick.headerbuttons.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .icon-highlight-off,
     .icon-highlight-on {
@@ -22,8 +24,8 @@
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:600px;">
-    <div id="myGrid" style="width:100%;height:500px;"></div>
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
   </div>
 
   <div class="options-panel">
@@ -32,7 +34,6 @@
       This example demonstrates using the <b>Slick.Plugins.HeaderButtons</b> plugin to easily add buttons to column
       headers.  These buttons can be specified directly in the column definition, and are very easy to configure and use.
     </p>
-
 
     <h2>View Source:</h2>
       <ul>
@@ -47,6 +48,7 @@
 <script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>

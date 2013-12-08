@@ -1,9 +1,10 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Header Menus</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../plugins/slick.headermenu.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
@@ -45,8 +46,8 @@
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:600px;">
-    <div id="myGrid" style="width:100%;height:500px;"></div>
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
   </div>
 
   <div class="options-panel">
@@ -55,7 +56,6 @@
       This example demonstrates using the <b>Slick.Plugins.HeaderMenu</b> plugin to add drop-down menus to column
       headers.  (Hover over the headers.)
     </p>
-
 
     <h2>View Source:</h2>
       <ul>
@@ -70,6 +70,7 @@
 <script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
@@ -94,12 +95,12 @@
       menu: {
         items: [
           {
-            iconImage: "../images/sort-asc.gif",
+            iconImage: "../images/sort-asc.png",
             title: "Sort Ascending",
             command: "sort-asc"
           },
           {
-            iconImage: "../images/sort-desc.gif",
+            iconImage: "../images/sort-desc.png",
             title: "Sort Descending",
             command: "sort-desc"
           },

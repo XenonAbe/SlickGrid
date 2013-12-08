@@ -86,22 +86,37 @@
      * object the event was fired with.<p>
      * @method subscribe
      * @param fn {Function} Event handler.
+     * @return {Function} the registered event handler `fn`.
      */
     this.subscribe = function (fn) {
       handlers.push(fn);
+      return fn;
     };
 
     /***
      * Removes an event handler added with <code>subscribe(fn)</code>.
      * @method unsubscribe
-     * @param fn {Function} Event handler to be removed.
+     * @param fn {Function} Event handler to be removed. When undefined, all event handlers are unsubscribed.
      */
     this.unsubscribe = function (fn) {
-      for (var i = handlers.length - 1; i >= 0; i--) {
-        if (handlers[i] === fn) {
-          handlers.splice(i, 1);
+      if (!fn) {
+        handlers = [];
+      } else {
+        for (var i = handlers.length - 1; i >= 0; i--) {
+          if (handlers[i] === fn) {
+            handlers.splice(i, 1);
+          }
         }
       }
+    };
+
+    /***
+     * Returns the list of registered event handlers as an array.
+     * @method handlers
+     * @return the list of registered event handlers as an array. When no handlers are registered the array is empty.
+     */
+    this.handlers = function () {
+      return handlers;
     };
 
     /***
@@ -370,6 +385,14 @@
      * @type {Group}
      */
     this.group = null;
+
+    /***
+     * Whether the totals have been fully initialized / calculated.
+     * Will be set to false for lazy-calculated group totals.
+     * @param initialized
+     * @type {Boolean}
+     */
+    this.initialized = false;
   }
 
   GroupTotals.prototype = new NonDataItem();

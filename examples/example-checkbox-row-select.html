@@ -1,11 +1,12 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Checkbox Row Select</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
-  <link rel="stylesheet" href="examples.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../controls/slick.columnpicker.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .slick-cell-checkboxsel {
       background: #f0f0f0;
@@ -16,12 +17,12 @@
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:600px;">
-    <div id="myGrid" style="width:100%;height:500px;"></div>
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
   </div>
 
   <div class="options-panel">
-    <h2>Demonstrates:</h2>
+    <h2>Demonstrates</h2>
     <ul>
       <li>Checkbox row select column</li>
     </ul>
@@ -39,6 +40,7 @@
 <script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../plugins/slick.checkboxselectcolumn.js"></script>

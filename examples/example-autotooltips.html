@@ -1,16 +1,16 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid plugin example: AutoTooltips</title>
-  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:520px;">
-    <div id="myGrid" style="width:100%;height:500px;"></div>
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
   </div>
 
   <div class="options-panel">
@@ -27,7 +27,7 @@
 grid.registerPlugin(plugin);
 grid.render();</pre>
 
-      <h2>View Source:</h2>
+    <h2>View Source:</h2>
       <ul>
           <li id="viewsource">View Source Code</li>
           <div id="displaycode"></div>
@@ -39,6 +39,7 @@ grid.render();</pre>
 
 <script src="../lib/jquery.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
@@ -69,7 +70,7 @@ grid.render();</pre>
       data[i] = {
         title: "Task " + i,
         duration: "5 days",
-        percentComplete: Math.round(Math.random() * 100),
+        percentComplete: Math.min(100, Math.round(Math.random() * 110)),
         start: "01/01/2009",
         finish: "01/05/2009",
         effortDriven: (i % 5 == 0)
@@ -79,7 +80,7 @@ grid.render();</pre>
     grid = new Slick.Grid("#myGrid", data, columns, options);
     grid.registerPlugin( new Slick.AutoTooltips({ enableForHeaderCells: true }) );
     grid.render();
-  })
+  });
 </script>
 </body>
 </html>

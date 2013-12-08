@@ -49,15 +49,21 @@ classes should alter those!
   height: 5px;
   margin-left: 4px;
   margin-top: 6px;
-  float: left;
+  position: absolute;
+  left: 0;
+  background: url(images/sort-undetermined.png);
 }
 
 .slick-sort-indicator-desc {
-  background: url(images/sort-desc.gif);
+  background: url(images/sort-desc.png);
 }
 
 .slick-sort-indicator-asc {
-  background: url(images/sort-asc.gif);
+  background: url(images/sort-asc.png);
+}
+
+.slick-header-sortable .slick-column-name {
+  margin-left: 10px;
 }
 
 .slick-resizable-handle {
@@ -69,6 +75,10 @@ classes should alter those!
   right: 0px;
   top: 0;
   height: 100%;
+}
+
+.slick-resizable-handle-hover {
+  background-color: #ccc;
 }
 
 .slick-sortable-placeholder {

@@ -1,13 +1,13 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example 4: Model</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../controls/slick.pager.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
-  <link rel="stylesheet" href="examples.css" type="text/css"/>
   <link rel="stylesheet" href="../controls/slick.columnpicker.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
       font-weight: bold;
@@ -33,14 +33,14 @@
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:600px;">
-    <div class="grid-header" style="width:100%">
+  <div class="grid-outer-wrapper">
+    <div class="grid-header">
       <label>SlickGrid</label>
       <span style="float:right" class="ui-icon ui-icon-search" title="Toggle search panel"
             onclick="toggleFilterRow()"></span>
     </div>
-    <div id="myGrid" style="width:100%;height:500px;"></div>
-    <div id="pager" style="width:100%;height:20px;"></div>
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+    <div id="pager" class="grid-pager"></div>
   </div>
 
   <div class="options-panel">
@@ -73,12 +73,11 @@
         <li>adding new rows, bidirectional sorting</li>
         <li>column options: cannotTriggerInsert</li>
         <li>events: onCellChange, onAddNewRow, onKeyDown, onSelectedRowsChanged, onSort</li>
-        <li><font color=red>NOTE:</font> all filters are immediately applied to new/edited rows</li>
+        <li><font color="red">NOTE:</font> all filters are immediately applied to new/edited rows</li>
         <li>Handling row selection against model changes.</li>
         <li>Paging.</li>
         <li>inline filter panel</li>
       </ul>
-
 
     <h2>View Source:</h2>
       <ul>
@@ -90,7 +89,7 @@
 
 <div id="inlineFilterPanel" style="display:none;background:#dddddd;padding:3px;color:black;">
   Show tasks with title including <input type="text" id="txtSearch2">
-  and % at least &nbsp;
+  and % at least
   <div style="width:100px;display:inline-block;" id="pcSlider2"></div>
 </div>
 
@@ -99,6 +98,8 @@
 <script src="../lib/jquery.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/jquery.browser.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.formatters.js"></script>
@@ -113,9 +114,7 @@
 <script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
-var dataView;
 var grid;
-var data = [];
 var columns = [
   {id: "sel", name: "#", field: "num", behavior: "select", cssClass: "cell-selection", width: 40, cannotTriggerInsert: true, resizable: false, selectable: false },
   {id: "title", name: "Title", field: "title", width: 120, minWidth: 120, cssClass: "cell-title", editor: Slick.Editors.Text, validator: requiredFieldValidator, sortable: true},
@@ -143,8 +142,7 @@ var searchString = "";
 function requiredFieldValidator(value) {
   if (value == null || value == undefined || !value.length) {
     return {valid: false, msg: "This is a required field"};
-  }
-  else {
+  } else {
     return {valid: true, msg: null};
   }
 }
@@ -161,10 +159,6 @@ function myFilter(item, args) {
   return true;
 }
 
-function percentCompleteSort(a, b) {
-  return a["percentComplete"] - b["percentComplete"];
-}
-
 function comparer(a, b) {
   var x = a[sortcol], y = b[sortcol];
   return (x == y ? 0 : (x > y ? 1 : -1));
@@ -176,31 +170,31 @@ function toggleFilterRow() {
 
 
 $(".grid-header .ui-icon")
-        .addClass("ui-state-default ui-corner-all")
-        .mouseover(function (e) {
-          $(e.target).addClass("ui-state-hover")
-        })
-        .mouseout(function (e) {
-          $(e.target).removeClass("ui-state-hover")
-        });
+    .addClass("ui-state-default ui-corner-all")
+    .mouseover(function (e) {
+      $(e.target).addClass("ui-state-hover")
+    })
+    .mouseout(function (e) {
+      $(e.target).removeClass("ui-state-hover")
+    });
 
 $(function () {
   // prepare the data
+  var data = [];
   for (var i = 0; i < 50000; i++) {
-    var d = (data[i] = {});
-
-    d["id"] = "id_" + i;
-    d["num"] = i;
-    d["title"] = "Task " + i;
-    d["duration"] = "5 days";
-    d["percentComplete"] = Math.round(Math.random() * 100);
-    d["start"] = "01/01/2009";
-    d["finish"] = "01/05/2009";
-    d["effortDriven"] = (i % 5 == 0);
+      data[i] = {
+        id: "id_" + i,
+        num: i,
+        title: "Task " + i,
+        duration: "5 days",
+        percentComplete: Math.min(100, Math.round(Math.random() * 110)),
+        start: "01/01/2009",
+        finish: "01/05/2009",
+        effortDriven: (i % 5 == 0)
+      };
   }
 
-
-  dataView = new Slick.Data.DataView({ inlineFilters: true });
+  var dataView = new Slick.Data.DataView({ inlineFilters: true });
   grid = new Slick.Grid("#myGrid", dataView, columns, options);
   grid.setSelectionModel(new Slick.RowSelectionModel());
 
@@ -218,7 +212,16 @@ $(function () {
   });
 
   grid.onAddNewRow.subscribe(function (e, args) {
-    var item = {"num": data.length, "id": "new_" + (Math.round(Math.random() * 10000)), "title": "New task", "duration": "1 day", "percentComplete": 0, "start": "01/01/2009", "finish": "01/01/2009", "effortDriven": false};
+    var item = {
+      "num": data.length,
+      "id": "new_" + (Math.round(Math.random() * 10000)),
+      "title": "New task",
+      "duration": "1 day",
+      "percentComplete": 0,
+      "start": "01/01/2009",
+      "finish": "01/01/2009",
+      "effortDriven": false
+    };
     $.extend(item, args.item);
     dataView.addItem(item);
   });
@@ -291,7 +294,8 @@ $(function () {
   var h_runfilters = null;
 
   // wire up the slider to apply the filter to the model
-  $("#pcSlider,#pcSlider2").slider({
+  var $sliders = $("#pcSlider,#pcSlider2");
+  $sliders.slider({
     "range": "min",
     "slide": function (event, ui) {
       Slick.GlobalEditorLock.cancelCurrentEdit();
@@ -300,13 +304,17 @@ $(function () {
         window.clearTimeout(h_runfilters);
         h_runfilters = window.setTimeout(updateFilter, 10);
         percentCompleteThreshold = ui.value;
+
+        // and make sure to sync both sliders:
+        $sliders.slider("value", percentCompleteThreshold);
       }
     }
   });
 
 
   // wire up the search textbox to apply the filter to the model
-  $("#txtSearch,#txtSearch2").keyup(function (e) {
+  var $textsearch = $("#txtSearch,#txtSearch2");
+  $textsearch.keyup(function (e) {
     Slick.GlobalEditorLock.cancelCurrentEdit();
 
     // clear on Esc
@@ -314,8 +322,15 @@ $(function () {
       this.value = "";
     }
 
-    searchString = this.value;
+    var txt = this.value;
+    var changed = (txt != searchString);
+    searchString = txt;
     updateFilter();
+
+    // and sync both input fields: only do this when the search string actually changed -- a measly attempt to keep the cursor position intact
+    if (changed) {
+      $textsearch.val(txt);
+    }
   });
 
   function updateFilter() {
@@ -355,7 +370,7 @@ $(function () {
   dataView.syncGridSelection(grid, true);
 
   $("#gridContainer").resizable();
-})
+});
 </script>
 </body>
 </html>
