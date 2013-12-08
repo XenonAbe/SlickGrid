@@ -63,7 +63,7 @@
     };
 
     /***
-     * Returns whether stopImmediatePropagation was called on this event object.\
+     * Returns whether stopImmediatePropagation was called on this event object.
      * @method isImmediatePropagationStopped
      * @return {Boolean}
      */
