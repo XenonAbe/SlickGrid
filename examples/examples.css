@@ -157,8 +157,14 @@ li {
   -webkit-border-radius: 3px;
 }
 
-/* Slick.Editors.Text, Slick.Editors.Date */
-input.editor-text {
+/* Slick.Editors.Text et al */
+input.editor-text, 
+input.editor-text-readonly, 
+input.editor-integer, 
+input.editor-float, 
+input.editor-percentage, 
+input.editor-date 
+{
   width: 100%;
   height: 100%;
   border: 0;
@@ -166,7 +172,12 @@ input.editor-text {
   background: transparent;
   outline: 0;
   padding: 0;
+}
 
+.slick-cell input.editor-date 
+{
+  font-family: Arial, sans-serif;
+  font-size: 8px;
 }
 
 .ui-datepicker-trigger {

@@ -1705,19 +1705,21 @@ if (typeof Slick === "undefined") {
       stringArray.push("</div>");
     }
 
-    function appendCellHtml(stringArray, row, cell, colspan, item) {
+    function mkCellHtml(row, cell, colspan, item) {
       var m = columns[cell];
       assert(Math.min(columns.length - 1, cell + colspan - 1) === cell + colspan - 1);
-      var cellCss = "slick-cell l" + cell + " r" + (cell + colspan - 1) +
-          (m.cssClass ? " " + m.cssClass : "");
+      var cellStyles = [];
+      var cellCss = ["slick-cell", "l" + cell, "r" + (cell + colspan - 1)];
+      if (m.cssClass) {
+        cellCss.push(m.cssClass);
+      }
       if (row === activeRow && cell === activeCell) {
-        cellCss += " active";
+        cellCss.push("active");
       }
 
-      // TODO:  merge them together in the setter
       for (var key in cellCssClasses) {
         if (cellCssClasses[key][row] && cellCssClasses[key][row][m.id]) {
-          cellCss += " " + cellCssClasses[key][row][m.id];
+          cellCss.push(cellCssClasses[key][row][m.id]);
         }
       }
 
@@ -1726,20 +1728,30 @@ if (typeof Slick === "undefined") {
       if (item) {
         var value = getDataItemValueForColumn(item, m);
         // allow the formatter to edit the outer cell's DIV CSS as well:
-        // this requires the formatter to return an OBJECT instead of a STRING!
-        fmt = getFormatter(row, cell)(row, cell, value, m, item, colspan, cellCss);
-        // OBJECT: { html, cellCss }
-        if (fmt.cellCss) {
-          cellCss = fmt.cellCss;
-          fmt = fmt.html;
-        }
+        fmt = getFormatter(row, cell)(row, cell, value, m, item, colspan, cellCss, cellStyles);
       }
+      return {
+        cellCss: cellCss,
+        cellStyles: cellStyles,
+        html: fmt
+      };
+    }
 
-      stringArray.push("<div class='" + cellCss +
-                       "' aria-describedby='" + uid + m.id +
+
+    function appendCellHtml(stringArray, row, cell, colspan, item) {
+      var m = columns[cell];
+      var fmt = mkCellHtml(row, cell, colspan, item);
+      var styles;
+      if (fmt.cellStyles.length > 0) {
+        styles = "style='" + fmt.cellStyles.join(";") + ";' ";
+      } else {
+        styles = "";
+      }
+      stringArray.push("<div class='" + fmt.cellCss.join(" ") + "' " + 
+                       styles + "aria-describedby='" + uid + m.id +
                        "' tabindex='-1' role='gridcell'>");
 
-      stringArray.push(fmt);
+      stringArray.push(fmt.html);
 
       stringArray.push("</div>");
 
@@ -1820,7 +1832,16 @@ if (typeof Slick === "undefined") {
       if (currentEditor && activeRow === row && activeCell === cell) {
         currentEditor.loadValue(d);
       } else {
-        cellNode.innerHTML = d ? getFormatter(row, cell)(row, cell, getDataItemValueForColumn(d, m), m, d) : "";
+        var colspan = getColspan(row, cell);
+        if (d) {
+          var fmt = mkCellHtml(row, cell, colspan, d);
+          var el = $(cellNode);
+          el.attr("style", fmt.cellStyles.join(";") + ";");
+          el.attr("class", fmt.cellCss.join(" "));
+          el.html(fmt.html);
+        } else {
+          cellNode.innerHTML = "";
+        }
         invalidatePostProcessingResults(row);
       }
     }
@@ -1847,7 +1868,12 @@ if (typeof Slick === "undefined") {
         if (row === activeRow && columnIdx === activeCell && currentEditor) {
           currentEditor.loadValue(d);
         } else if (d) {
-          node.innerHTML = getFormatter(row, columnIdx)(row, columnIdx, getDataItemValueForColumn(d, m), m, d);
+          var colspan = getColspan(row, columnIdx);
+          var fmt = mkCellHtml(row, columnIdx, colspan, d);
+          var el = $(node);
+          el.attr("style", fmt.cellStyles.join(";") + ";");
+          el.attr("class", fmt.cellCss.join(" "));
+          el.html(fmt.html);
         } else {
           node.innerHTML = "";
         }
@@ -2999,8 +3025,12 @@ if (typeof Slick === "undefined") {
         $(activeCellNode).removeClass("editable invalid");
         if (d) {
           var column = columns[activeCell];
-          var formatter = getFormatter(activeRow, activeCell);
-          activeCellNode.innerHTML = formatter(activeRow, activeCell, getDataItemValueForColumn(d, column), column, d);
+          var colspan = getColspan(activeRow, activeCell);
+          var fmt = mkCellHtml(activeRow, activeCell, colspan, d);
+          var el = $(activeCellNode);
+          el.attr("style", fmt.cellStyles.join(";") + ";");
+          el.attr("class", fmt.cellCss.join(" "));
+          el.html(fmt.html);
           invalidatePostProcessingResults(activeRow);
         }
       }
@@ -3651,7 +3681,6 @@ if (typeof Slick === "undefined") {
           var validationResults = currentEditor.validate();
 
           if (validationResults.valid) {
-            makeActiveCellNormal();
             if (activeRow < getDataLength()) {
               evt = self.onCellChange;
             } else {
@@ -3667,12 +3696,14 @@ if (typeof Slick === "undefined") {
               serializedValue: currentEditor.serializeValue(),
               prevSerializedValue: serializedEditorValue,
               execute: function () {
-                this.editor.applyValue(item, (this.setValue = this.serializedValue));
+                this.appliedValue = this.serializedValue;
+                this.editor.applyValue(item, this.appliedValue);
                 updateRow(this.row);
                 this.notify();
               },
               undo: function () {
-                this.editor.applyValue(item, (this.setValue = this.prevSerializedValue));
+                this.appliedValue = this.prevSerializedValue;
+                this.editor.applyValue(item, this.appliedValue);
                 updateRow(this.row);
                 this.notify();
               },
@@ -3686,6 +3717,7 @@ if (typeof Slick === "undefined") {
             } else {
               editCommand.execute();
             }
+            makeActiveCellNormal();
 
             // check whether the lock has been re-acquired by event handlers
             return !getEditorLock().isActive();
