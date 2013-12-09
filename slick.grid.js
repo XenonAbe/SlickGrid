@@ -1663,7 +1663,8 @@ if (typeof Slick === "undefined") {
       var rowCss = "slick-row" +
           (dataLoading ? " loading" : "") +
           (row === activeRow ? " active" : "") +
-          (row % 2 == 1 ? " odd" : " even");
+          (row % 2 == 1 ? " odd" : " even") + 
+          " slick-row-" + row;
 
       if (!d) {
         rowCss += " " + options.addNewRowCssClass;
