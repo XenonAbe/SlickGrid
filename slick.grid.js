@@ -351,7 +351,7 @@ if (typeof Slick === "undefined") {
         $headerRowScroller.hide();
       }
 
-      $viewport = $("<div class='slick-viewport' style='width:100%;overflow:auto;outline:0;position:relative;;'>").appendTo($container);
+      $viewport = $("<div class='slick-viewport' style='width:100%;overflow:auto;outline:0;position:relative;'>").appendTo($container);
       $viewport.css("overflow-y", options.autoHeight ? "hidden" : "auto");
 
       $canvas = $("<div class='grid-canvas' />").appendTo($viewport);
@@ -1663,7 +1663,7 @@ if (typeof Slick === "undefined") {
       var rowCss = "slick-row" +
           (dataLoading ? " loading" : "") +
           (row === activeRow ? " active" : "") +
-          (row % 2 == 1 ? " odd" : " even") + 
+          (row % 2 == 1 ? " odd" : " even") +
           " slick-row-" + row;
 
       if (!d) {
@@ -1748,7 +1748,7 @@ if (typeof Slick === "undefined") {
       } else {
         styles = "";
       }
-      stringArray.push("<div class='" + fmt.cellCss.join(" ") + "' " + 
+      stringArray.push("<div class='" + fmt.cellCss.join(" ") + "' " +
                        styles + "aria-describedby='" + uid + m.id +
                        "' tabindex='-1' role='gridcell'>");
 
