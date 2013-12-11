@@ -342,7 +342,7 @@ if (typeof Slick === "undefined") {
       $focusSink = $("<div tabIndex='0' hideFocus='true' style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
 
       $headerScroller = $("<div class='slick-header ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
-      $headers = $("<div class='slick-header-columns' style='left:0;top:0;' role='row' />").appendTo($headerScroller);
+      $headers = $("<div class='slick-header-columns' style='left:-1000px;top:0;' role='row' />").appendTo($headerScroller);
       $headers.width(getHeadersWidth());
 
       $headerRowScroller = $("<div class='slick-headerrow ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
@@ -519,7 +519,7 @@ if (typeof Slick === "undefined") {
     function getHeadersWidth() {
       var headersWidth = getColumnOffset(columns.length);
       headersWidth += scrollbarDimensions.width;
-      return Math.max(headersWidth, viewportW);
+      return Math.max(headersWidth, viewportW) + 1000;
     }
 
     function getCanvasWidth() {
@@ -693,7 +693,7 @@ if (typeof Slick === "undefined") {
       for (var i = 0; i < columns.length; i++) {
         var m = columns[i];
 
-        var cellCss = ["ui-state-default", "slick-header-column", "l" + i, "r" + i];
+        var cellCss = ["ui-state-default", "slick-header-column"];
         if (m.headerCssClass) cellCss.push(m.headerCssClass);
         var cellStyles = ["width:" + (m.width - headerColumnWidthDiff) + "px"];
         var html = getHeaderFormatter(-2000, i)(-2000, i, m.name, m, null /* rowDataItem */, 1 /* colspan */, cellCss, cellStyles);
@@ -1168,7 +1168,7 @@ if (typeof Slick === "undefined") {
       $style = $("<style type='text/css' rel='stylesheet' />").appendTo($("head"));
       var rowHeight = options.rowHeight - cellHeightDiff;
       var rules = [
-        "." + uid + " .slick-header-column { left: 0; }",
+        "." + uid + " .slick-header-column { left: 1000px; }",
         "." + uid + " .slick-top-panel { height:" + options.topPanelHeight + "px; }",
         "." + uid + " .slick-headerrow-columns { height:" + options.headerRowHeight + "px; }",
         "." + uid + " .slick-cell { height:" + rowHeight + "px; }",
@@ -1388,7 +1388,7 @@ if (typeof Slick === "undefined") {
      * This function 'tweaks' the generated .l<N> and .r<N> CSS rules, setting their
      * 'left' and 'right' CSS styles to calculated pixel positions.
      *
-     * Note that google Chromw, when debugging/inspecting the elements/styles,
+     * Note that google Chrome, when debugging/inspecting the elements/styles,
      * does NOT show these styles and their values!
      *
      * Also note that this assumes the addressed DOM nodes (cells in columns) have

@@ -29,6 +29,12 @@
     .grid-inner-wrapper .odd .editable {
       background-color: rgb(204, 0, 0);
     }
+
+    #clear-debug-output {
+      float: right;
+      margin: 6px 0;
+      padding: 3px 1em;
+    }
   </style>
 </head>
 <body>
@@ -54,8 +60,8 @@
 
   <div class="diagnostics-panel">
     <div class="diagnostics-view">
-      <h2>Diagnostics</h2>
       <button id="clear-debug-output">clear log</button>
+      <h2>Diagnostics</h2>
 
       <div id="debug-output"></div>
     </div>
