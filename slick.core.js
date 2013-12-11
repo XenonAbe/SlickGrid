@@ -131,14 +131,15 @@
      *      Optional.
      *      The scope ("this") within which the handler will be executed.
      *      If not specified, the scope will be set to the <code>Event</code> instance.
+     * @return {boolean} the return value produced by the event handlers; boolean TRUE by default.
      */
     this.notify = function (args, e, scope) {
       e = e || new EventData();
       scope = scope || this;
 
-      var returnValue;
+      var returnValue = true;
       for (var i = 0; i < handlers.length && !(e.isPropagationStopped() || e.isImmediatePropagationStopped()); i++) {
-        returnValue = handlers[i].call(scope, e, args);
+        returnValue = handlers[i].call(scope, e, args, returnValue);
       }
 
       return returnValue;
@@ -416,6 +417,7 @@
      * @return {Boolean}
      */
     this.isActive = function (editController) {
+      assert(!editController || (assert(typeof editController.commitCurrentEdit === 'function') && assert(typeof editController.cancelCurrentEdit === 'function')));
       return (editController ? activeEditController === editController : activeEditController !== null);
     };
 
@@ -426,6 +428,7 @@
      * @param editController {EditController} edit controller acquiring the lock
      */
     this.activate = function (editController) {
+      assert(editController && assert(typeof editController.commitCurrentEdit === 'function') && assert(typeof editController.cancelCurrentEdit === 'function'));
       if (editController === activeEditController) { // already activated?
         return;
       }
@@ -448,6 +451,7 @@
      * @param editController {EditController} edit controller releasing the lock
      */
     this.deactivate = function (editController) {
+      assert(editController && assert(typeof editController.commitCurrentEdit === 'function') && assert(typeof editController.cancelCurrentEdit === 'function'));
       if (activeEditController !== editController) {
         throw "SlickGrid.EditorLock.deactivate: specified editController is not the currently active one";
       }

@@ -16,10 +16,12 @@ classes should alter those!
   white-space: nowrap;
   cursor: default;
   overflow: hidden;
+  height: 24px;
 }
 
 .slick-header-column.ui-state-default {
-  position: relative;
+  position: absolute;
+  top: 0;
   display: inline-block;
   overflow: hidden;
   -o-text-overflow: ellipsis;
@@ -32,7 +34,6 @@ classes should alter those!
   border-left: 0px;
   border-top: 0px;
   border-bottom: 0px;
-  float: left;
 }
 
 .slick-headerrow-column.ui-state-default {

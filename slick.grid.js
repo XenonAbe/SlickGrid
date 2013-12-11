@@ -80,8 +80,10 @@ if (typeof Slick === "undefined") {
    *      minWidth:           {Number}    The minimum width of the column
    *      maxWidth:           {Number}    The maximum width of the column
    *      cssClass:           {String}    The name of the CSS class to use for cells in this column
-   *      formatter:          {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowItem)
-   *      editor:             {Function}  The constructor function for the class to use for editing
+   *      formatter:          {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, colspan, cellCss, cellStyles) for grid cells
+   *      headerFormatter:    {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, colspan, cellCss, cellStyles) for header cells
+   *      headerRowFormatter: {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, colspan, cellCss, cellStyles) for headerRow cells (option.showHeaderRow)
+   *      editor:             {Function}  The constructor function for the class to use for editing of grid cells
    *      validator:          {Function}  A function to be called when validating user-entered values
    *      cannotTriggerInsert:{Boolean}
    *      resizable:          {Boolean}   Whether this column can be resized
@@ -121,10 +123,10 @@ if (typeof Slick === "undefined") {
    *      asyncPostRenderDelay:{Number}   Delay passed to setTimeout in milliseconds
    *      editable:           {Boolean}   Is editing table cells supported?
    *      autoEdit:           {Boolean}   (?)Should editing be initiated automatically on click in cell?
-   *      editorFactory:      {Object}    If present, its getEditor(column) method will be called
+   *      editorFactory:      {Object}    If present, its getEditor(columnInfo, row, cell) method will be called
    *                                      to retrieve an editor for the specified cell,
    *                                      unless column.editor is specified, which will be used.
-   *      editorLock:
+   *      editorLock:         {Object}    a Slick.EditorLock instance; the default NULL will make SlickGrid use the Slick.GlobalEditorLock singleton
    *      asyncEditorLoading: {Boolean}   Should editors be loaded asynchronously?
    *      asyncEditorLoadDelay:{Number}   Delay passed to setTimeout in milliseconds
    *      editCommandHandler: {Function}  editCommandHandler(item, column, editCommand) is called from
@@ -133,6 +135,12 @@ if (typeof Slick === "undefined") {
    *      fullWidthRows:      {Boolean}   If true, rows are sized to take up the available grid width.
    *      multiColumnSort:    {Boolean}   If true, rows can be sorted by multiple columns.
    *      defaultFormatter:   {Function}  Default function for converting cell values to strings.
+   *      defaultEditor:      {Function}  Default function for editing cell values.
+   *      defaultHeaderFormatter: {Function}
+   *                                      The Slick.Formatters compatible cell formatter used to render the header cell.
+   *      defaultHeaderRowFormatter: {Function}
+   *                                      The Slick.Formatters compatible cell formatter used to render the headerRow cell.
+   *                                      The 'headerRow' is the header row shown by SlickGrid when the `option.showHeaderRow` is enabled.
    *      forceSyncScrolling: {Boolean}   If true, renders more frequently during scrolling, rather than
    *                                      deferring rendering until default scroll thresholds are met.
    *      addNewRowCssClass:  {String}    specifies CSS class for the extra bottom row: 'add new row'
@@ -156,7 +164,7 @@ if (typeof Slick === "undefined") {
       enableAsyncPostRender: false,
       asyncPostRenderDelay: 50,
       autoHeight: false,
-      editorLock: new Slick.EditorLock(),
+      editorLock: Slick.GlobalEditorLock,
       showHeaderRow: false,
       headerRowHeight: 25,
       showTopPanel: false,
@@ -172,6 +180,9 @@ if (typeof Slick === "undefined") {
       fullWidthRows: false,
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
+      defaultEditor: null,
+      defaultHeaderFormatter: defaultHeaderFormatter,
+      defaultHeaderRowFormatter: defaultHeaderRowFormatter,
       forceSyncScrolling: false,
       addNewRowCssClass: "new-row",
       syncColumnCellResize: false,
@@ -230,7 +241,7 @@ if (typeof Slick === "undefined") {
     var activeCellNode = null;
     var currentEditor = null;
     var serializedEditorValue;
-    var editController;
+    var editController = null;
 
     var rowsCache = {};
     var renderedRows = 0;
@@ -311,8 +322,8 @@ if (typeof Slick === "undefined") {
       }
 
       editController = {
-        "commitCurrentEdit": commitCurrentEdit,
-        "cancelCurrentEdit": cancelCurrentEdit
+        commitCurrentEdit: commitCurrentEdit,
+        cancelCurrentEdit: cancelCurrentEdit
       };
 
       $container
@@ -331,7 +342,7 @@ if (typeof Slick === "undefined") {
       $focusSink = $("<div tabIndex='0' hideFocus='true' style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
 
       $headerScroller = $("<div class='slick-header ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
-      $headers = $("<div class='slick-header-columns' style='left:-1000px' role='row' />").appendTo($headerScroller);
+      $headers = $("<div class='slick-header-columns' style='left:0;top:0;' role='row' />").appendTo($headerScroller);
       $headers.width(getHeadersWidth());
 
       $headerRowScroller = $("<div class='slick-headerrow ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
@@ -508,7 +519,7 @@ if (typeof Slick === "undefined") {
     function getHeadersWidth() {
       var headersWidth = getColumnOffset(columns.length);
       headersWidth += scrollbarDimensions.width;
-      return Math.max(headersWidth, viewportW) + 1000;
+      return Math.max(headersWidth, viewportW);
     }
 
     function getCanvasWidth() {
@@ -617,8 +628,9 @@ if (typeof Slick === "undefined") {
           "column": columnDef
         });
 
+        // TODO: RISK: when formatter produces more than ONE outer HTML element, we're toast with nuking the .eq(0) element down here:
         $header
-            .attr("title", columnDef.toolTip || "")
+            .attr("title", columnDef.toolTip || null)
             .children().eq(0).html(title);
 
         trigger(self.onHeaderCellRendered, {
@@ -681,13 +693,17 @@ if (typeof Slick === "undefined") {
       for (var i = 0; i < columns.length; i++) {
         var m = columns[i];
 
-        var header = $("<div class='ui-state-default slick-header-column' role='columnheader' />")
-            .html("<span class='slick-column-name'>" + m.name + "</span>")
-            .width(m.width - headerColumnWidthDiff)
+        var cellCss = ["ui-state-default", "slick-header-column", "l" + i, "r" + i];
+        if (m.headerCssClass) cellCss.push(m.headerCssClass);
+        var cellStyles = ["width:" + (m.width - headerColumnWidthDiff) + "px"];
+        var html = getHeaderFormatter(-2000, i)(-2000, i, m.name, m, null /* rowDataItem */, 1 /* colspan */, cellCss, cellStyles);
+        var header = $("<div role='columnheader' />")
+            .html(html)
             .attr("id", "" + uid + m.id)
-            .attr("title", m.toolTip || "")
+            .attr("title", m.toolTip || null)
             .data("column", m)
-            .addClass(m.headerCssClass || "")
+            .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
+            .attr("class", cellCss.join(" "))
             .appendTo($headers);
 
         if (options.enableColumnReorder || m.sortable) {
@@ -702,18 +718,27 @@ if (typeof Slick === "undefined") {
         }
 
         trigger(self.onHeaderCellRendered, {
-          "node": header[0],
-          "column": m
+          node: header[0],
+          column: m,
+          cell: i
         });
 
         if (options.showHeaderRow) {
-          var headerRowCell = $("<div class='ui-state-default slick-headerrow-column l" + i + " r" + i + "'></div>")
+          var cellCss = ["ui-state-default", "slick-headerrow-column", "l" + i, "r" + i];
+          if (m.headerCssClass) cellCss.push(m.headerCssClass);
+          var cellStyles = [];
+          var html = getHeaderRowFormatter(-1000, i)(-1000, i, m.initialHeaderRowValue, m, null /* rowDataItem */, 1 /* colspan */, cellCss, cellStyles);
+          var headerRowCell = $("<div></div>")
+              .attr("title", m.headerRowToolTip || null)
               .data("column", m)
+              .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
+              .attr("class", cellCss.join(" "))
               .appendTo($headerRow);
 
           trigger(self.onHeaderRowCellRendered, {
-            "node": headerRowCell[0],
-            "column": m
+            node: headerRowCell[0],
+            column: m,
+            cell: i
           });
         }
       }
@@ -1013,6 +1038,7 @@ if (typeof Slick === "undefined") {
                 //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
                 updateCanvasWidth(true);
               }
+              trigger(self.onColumnsResizing, {});
             })
             .bind("dragend touchend", function (e, dd) {
               var newWidth, j, c;
@@ -1142,7 +1168,7 @@ if (typeof Slick === "undefined") {
       $style = $("<style type='text/css' rel='stylesheet' />").appendTo($("head"));
       var rowHeight = options.rowHeight - cellHeightDiff;
       var rules = [
-        "." + uid + " .slick-header-column { left: 1000px; }",
+        "." + uid + " .slick-header-column { left: 0; }",
         "." + uid + " .slick-top-panel { height:" + options.topPanelHeight + "px; }",
         "." + uid + " .slick-headerrow-columns { height:" + options.headerRowHeight + "px; }",
         "." + uid + " .slick-cell { height:" + rowHeight + "px; }",
@@ -1244,6 +1270,12 @@ if (typeof Slick === "undefined") {
       return options.editorLock;
     }
 
+    /**
+     * @return {EditController} return the SlickGrid internal EditController. The EditController is an object
+     *         which provides two functions (methods) who are invoked by the EditorLock object when necessary:
+     *             commitCurrentEdit: function() {...}
+     *             cancelCurrentEdit: function() {...}
+     */
     function getEditController() {
       return editController;
     }
@@ -1332,6 +1364,14 @@ if (typeof Slick === "undefined") {
       }
     }
 
+    /**
+     * As the column **header** cells have a 'resize' ability (options.resizable), those
+     * header cells cannot use the `position: absolute` + `.l<N> .r<N>` styling that all
+     * other cells in the grid (including 'headerRow cells' -- option.showHeaderRow) use
+     * as the resize (drag) operation would then require a lot of continuous style
+     * recalculations to show the resize action as 'smooth': it would load the dragmove
+     * handler overmuch (options.syncColumnCellResize).
+     */
     function applyColumnHeaderWidths() {
       if (!initialized) { return; }
 
@@ -1344,6 +1384,16 @@ if (typeof Slick === "undefined") {
       }
     }
 
+    /**
+     * This function 'tweaks' the generated .l<N> and .r<N> CSS rules, setting their
+     * 'left' and 'right' CSS styles to calculated pixel positions.
+     *
+     * Note that google Chromw, when debugging/inspecting the elements/styles,
+     * does NOT show these styles and their values!
+     *
+     * Also note that this assumes the addressed DOM nodes (cells in columns) have
+     *   position: absolute;
+     */
     function applyColumnWidths() {
       var x = 0, w, rule;
       for (var i = 0; i < columns.length; i++) {
@@ -1609,13 +1659,23 @@ if (typeof Slick === "undefined") {
       }
     }
 
-    function defaultFormatter(row, cell, value, columnDef, dataContext) {
+    function defaultFormatter(row, cell, value, columnDef, rowDataItem, colspan, cellCss, cellStyles) {
       if (value == null) {
         return "";
       } else {
         // Safari 6 fix: (value + "") instead of .toString()
         return (value + "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
       }
+    }
+
+    function defaultHeaderFormatter(row, cell, value, columnDef, rowDataItem, colspan, cellCss, cellStyles) {
+      // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
+      return "<span class='slick-column-name'>" + defaultFormatter(row, cell, value, columnDef, rowDataItem, colspan, cellCss, cellStyles) + "</span>";
+    }
+
+    function defaultHeaderRowFormatter(row, cell, value, columnDef, rowDataItem, colspan, cellCss, cellStyles) {
+      // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
+      return "<span class='slick-extra-headerrow-column'>" + defaultFormatter(row, cell, value, columnDef, rowDataItem, colspan, cellCss, cellStyles) + "</span>";
     }
 
     function getFormatter(row, cell) {
@@ -1630,7 +1690,7 @@ if (typeof Slick === "undefined") {
       return (columnOverrides && columnOverrides.formatter) ||
           (rowMetadata && rowMetadata.formatter) ||
           column.formatter ||
-          (options.formatterFactory && options.formatterFactory.getFormatter(column)) ||
+          (options.formatterFactory && options.formatterFactory.getFormatter && options.formatterFactory.getFormatter(column, row, cell)) ||
           options.defaultFormatter;
     }
 
@@ -1640,14 +1700,88 @@ if (typeof Slick === "undefined") {
       var columnMetadata = rowMetadata && rowMetadata.columns;
 
       // look up by id, then index
-      if (columnMetadata && columnMetadata[column.id] && columnMetadata[column.id].editor !== undefined) {
-        return columnMetadata[column.id].editor;
-      }
-      if (columnMetadata && columnMetadata[cell] && columnMetadata[cell].editor !== undefined) {
-        return columnMetadata[cell].editor;
-      }
+      var columnOverrides = rowMetadata &&
+          rowMetadata.columns &&
+          (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
 
-      return column.editor || (options.editorFactory && options.editorFactory.getEditor(column));
+      return (columnOverrides && columnOverrides.editor) ||
+          (rowMetadata && rowMetadata.editor) ||
+          column.editor ||
+          (options.editorFactory && options.editorFactory.getEditor && options.editorFactory.getEditor(column, row, cell)) ||
+          options.defaultEditor;
+    }
+
+    /**
+     * Returns the header cell formatter for the given header row / column
+     *
+     * @param {Integer} headerRow the header row number; starts numbering at 0 (zero).
+     *                  Vanilla SlickGrid only supports a single header row, which is numbered 0 (zero).
+     * @param {Integer} cell the header column number; starts numbering at 0 (zero).
+     * @return {Function} a Slick.Formatters compatible formatter.
+     *                    In order to allow the user to 're-use' basic formatters,
+     *                    the row number passed to the formatter will start at -2000 (minus two thousand).
+     */
+    function getHeaderFormatter(headerRow, cell) {
+      var column = columns[cell];
+      var rowMetadata = data.getHeaderItemMetadata && data.getHeaderItemMetadata(headerRow, cell);
+
+      // look up by id, then index
+      var columnOverrides = rowMetadata &&
+          rowMetadata.columns &&
+          (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
+
+      return (columnOverrides && columnOverrides.headerFormatter) ||
+          (rowMetadata && rowMetadata.headerFormatter) ||
+          column.headerFormatter ||
+          (options.formatterFactory && options.formatterFactory.getHeaderFormatter && options.formatterFactory.getHeaderFormatter(column, row, cell)) ||
+          options.defaultHeaderFormatter;
+    }
+
+    /**
+     * Returns the headerRow cell formatter for the given headerRow row / column.
+     *
+     * The 'headerRow' is the header row shown by SlickGrid when the `option.showHeaderRow` is enabled.
+     *
+     * @param {Integer} headerRow the header row number; starts numbering at 0 (zero).
+     *                  Vanilla SlickGrid only supports a single header row, which is numbered 0 (zero).
+     *
+     * @param {Integer} cell the header column number; starts numbering at 0 (zero).
+     *
+     * @return {Function} a Slick.Formatters compatible formatter.
+     *                    In order to allow the user to 're-use' basic formatters,
+     *                    the row number passed to the formatter will start at -1000 (minus one thousand).
+     */
+    function getHeaderRowFormatter(headerRow, cell) {
+      var column = columns[cell];
+      var rowMetadata = data.getHeaderRowItemMetadata && data.getHeaderRowItemMetadata(headerRow, cell);
+
+      // look up by id, then index
+      var columnOverrides = rowMetadata &&
+          rowMetadata.columns &&
+          (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
+
+      return (columnOverrides && columnOverrides.headerRowFormatter) ||
+          (rowMetadata && rowMetadata.headerRowFormatter) ||
+          column.headerRowFormatter ||
+          (options.formatterFactory && options.formatterFactory.getHeaderRowFormatter && options.formatterFactory.getHeaderRowFormatter(column, row, cell)) ||
+          options.defaultHeaderRowFormatter;
+    }
+
+    function getEditor(row, cell) {
+      var column = columns[cell];
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
+      var columnMetadata = rowMetadata && rowMetadata.columns;
+
+      // look up by id, then index
+      var columnOverrides = rowMetadata &&
+          rowMetadata.columns &&
+          (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
+
+      return (columnOverrides && columnOverrides.editor) ||
+          (rowMetadata && rowMetadata.editor) ||
+          column.editor ||
+          (options.editorFactory && options.editorFactory.getEditor && options.editorFactory.getEditor(column, row, cell)) ||
+          options.defaultEditor;
     }
 
     function getDataItemValueForColumn(item, columnDef) {
@@ -1706,7 +1840,7 @@ if (typeof Slick === "undefined") {
       stringArray.push("</div>");
     }
 
-    function mkCellHtml(row, cell, colspan, item) {
+    function mkCellHtml(row, cell, colspan, rowDataItem) {
       var m = columns[cell];
       assert(Math.min(columns.length - 1, cell + colspan - 1) === cell + colspan - 1);
       var cellStyles = [];
@@ -1726,10 +1860,10 @@ if (typeof Slick === "undefined") {
 
       // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
       var fmt = "";
-      if (item) {
-        var value = getDataItemValueForColumn(item, m);
+      if (rowDataItem) {
+        var value = getDataItemValueForColumn(rowDataItem, m);
         // allow the formatter to edit the outer cell's DIV CSS as well:
-        fmt = getFormatter(row, cell)(row, cell, value, m, item, colspan, cellCss, cellStyles);
+        fmt = getFormatter(row, cell)(row, cell, value, m, rowDataItem, colspan, cellCss, cellStyles);
       }
       return {
         cellCss: cellCss,
@@ -1739,9 +1873,9 @@ if (typeof Slick === "undefined") {
     }
 
 
-    function appendCellHtml(stringArray, row, cell, colspan, item) {
+    function appendCellHtml(stringArray, row, cell, colspan, rowDataItem) {
       var m = columns[cell];
-      var fmt = mkCellHtml(row, cell, colspan, item);
+      var fmt = mkCellHtml(row, cell, colspan, rowDataItem);
       var styles;
       if (fmt.cellStyles.length > 0) {
         styles = "style='" + fmt.cellStyles.join(";") + ";' ";
@@ -1837,7 +1971,7 @@ if (typeof Slick === "undefined") {
         if (d) {
           var fmt = mkCellHtml(row, cell, colspan, d);
           var el = $(cellNode);
-          el.attr("style", fmt.cellStyles.join(";") + ";");
+          el.attr("style", fmt.cellStyles.length ? fmt.cellStyles.join(";") + ";" : null);
           el.attr("class", fmt.cellCss.join(" "));
           el.html(fmt.html);
         } else {
@@ -1872,7 +2006,7 @@ if (typeof Slick === "undefined") {
           var colspan = getColspan(row, columnIdx);
           var fmt = mkCellHtml(row, columnIdx, colspan, d);
           var el = $(node);
-          el.attr("style", fmt.cellStyles.join(";") + ";");
+          el.attr("style", fmt.cellStyles.length ? fmt.cellStyles.join(";") + ";" : null);
           el.attr("class", fmt.cellCss.join(" "));
           el.html(fmt.html);
         } else {
@@ -2712,7 +2846,7 @@ if (typeof Slick === "undefined") {
       if ((activeCell != cell.cell || activeRow != cell.row) && canCellBeActive(cell.row, cell.cell)) {
         if (!getEditorLock().isActive() || getEditorLock().commitCurrentEdit()) {
           scrollRowIntoView(cell.row, false);
-          setActiveCellInternal(getCellNode(cell.row, cell.cell));
+          setActiveCellInternal(getCellNode(cell.row, cell.cell), null);
         }
       }
     }
@@ -2743,7 +2877,7 @@ if (typeof Slick === "undefined") {
       }
 
       if (options.editable) {
-        gotoCell(cell.row, cell.cell, true);
+        gotoCell(cell.row, cell.cell, 2 /* truthy value which 'wins' over options.asyncEditorLoading: open the editor immediately! */ );
       }
     }
 
@@ -2961,7 +3095,8 @@ if (typeof Slick === "undefined") {
         if (options.editable && opt_editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
           clearTimeout(h_editorLoader);
 
-          if (options.asyncEditorLoading) {
+          // if opt_editMode > 1 then show the editor immediately (this happens for instance when the cell is double-clicked)
+          if (options.asyncEditorLoading >= opt_editMode) {
             h_editorLoader = setTimeout(function () {
               makeActiveCellEditable();
             }, options.asyncEditorLoadDelay);
@@ -3029,7 +3164,7 @@ if (typeof Slick === "undefined") {
           var colspan = getColspan(activeRow, activeCell);
           var fmt = mkCellHtml(activeRow, activeCell, colspan, d);
           var el = $(activeCellNode);
-          el.attr("style", fmt.cellStyles.join(";") + ";");
+          el.attr("style", fmt.cellStyles.length ? fmt.cellStyles.join(";") + ";" : null);
           el.attr("class", fmt.cellCss.join(" "));
           el.html(fmt.html);
           invalidatePostProcessingResults(activeRow);
@@ -3047,7 +3182,7 @@ if (typeof Slick === "undefined") {
 
     function makeActiveCellEditable(editor) {
       if (!activeCellNode) {
-        return;
+        return false;
       }
       if (!options.editable) {
         throw "Grid : makeActiveCellEditable : should never get called when options.editable is false";
@@ -3057,7 +3192,7 @@ if (typeof Slick === "undefined") {
       clearTimeout(h_editorLoader);
 
       if (!isCellPotentiallyEditable(activeRow, activeCell)) {
-        return;
+        return false;
       }
 
       var columnDef = columns[activeCell];
@@ -3065,7 +3200,7 @@ if (typeof Slick === "undefined") {
 
       if (trigger(self.onBeforeEditCell, {row: activeRow, cell: activeCell, item: item, column: columnDef}) === false) {
         setFocus();
-        return;
+        return false;
       }
 
       getEditorLock().activate(editController);
@@ -3097,6 +3232,7 @@ if (typeof Slick === "undefined") {
       if (currentEditor.position) {
         handleActiveCellPositionChange();
       }
+      return currentEditor; // this is a truthy return value
     }
 
     function commitEditAndSetFocus() {
@@ -3287,7 +3423,7 @@ if (typeof Slick === "undefined") {
         }
 
         if (prevCell !== null) {
-          setActiveCellInternal(getCellNode(row, prevCell));
+          setActiveCellInternal(getCellNode(row, prevCell), null);
           activePosX = prevActivePosX;
         } else {
           resetActiveCell();
@@ -3572,11 +3708,11 @@ if (typeof Slick === "undefined") {
       if (pos) {
         var isAddNewRow = (pos.row == getDataLength());
         scrollCellIntoView(pos.row, pos.cell, !isAddNewRow);
-        setActiveCellInternal(getCellNode(pos.row, pos.cell));
+        setActiveCellInternal(getCellNode(pos.row, pos.cell), null);
         activePosX = pos.posX;
         return true;
       } else {
-        setActiveCellInternal(getCellNode(activeRow, activeCell));
+        setActiveCellInternal(getCellNode(activeRow, activeCell), null);
         return false;
       }
     }
