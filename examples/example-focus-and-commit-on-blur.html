@@ -189,7 +189,7 @@
            .data("columnId", args.column.id)
            .val(columnFilters[args.column.id])
            .appendTo(args.node)
-           .focus(function(d, i) {
+           .focus(function() {
               debug.log("header cell edit focus: ", this, arguments, e, args);
               var lock = grid.getEditorLock();
               if (!lock.isActive(gridEditController) && lock.commitCurrentEdit()) {
@@ -197,7 +197,7 @@
               }
               // else: jump back to previously focussed element... but we don't know what it is so this is all we can do now...
            })
-           .focusout(function(d, i) {
+           .focusout(function() {
               debug.log("header cell edit LOST FOCUS = autoCOMMIT: ", this, arguments, e, args);
               var lock = grid.getEditorLock();
               if (!lock.commitCurrentEdit()) {
