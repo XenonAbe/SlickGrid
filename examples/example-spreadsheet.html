@@ -134,8 +134,8 @@
     };
 
     this.handleCellRangeSelected = function (e, args) {
-      _editor.setValue(
-          _editor.getValue() +
+      _editor.setDirectValue(
+          _editor.serializeValue() +
               grid.getColumns()[args.range.fromCell].name +
               args.range.fromRow +
               ":" +
