@@ -407,7 +407,23 @@ if (typeof Slick === "undefined") {
         bindAncestorScrollEvents();
 
         $container
-            .bind("resize.slickgrid", resizeCanvas);
+            .bind("resize.slickgrid", resizeCanvas)
+            .bind("focus.slickgrid", function() {
+              console.log("container focus: ", this, arguments);
+              var lock = getEditorLock();
+              if (!lock.isActive(editController) && lock.commitCurrentEdit()) {
+                lock.activate(editController);
+              }
+              // else: jump back to previously focussed element... but we don't know what it is so this is all we can do now...
+            })
+            .bind("focusout.slickgrid", function(e) {
+              console.log("container LOST FOCUS = autoCOMMIT: ", this, arguments);
+              var lock = getEditorLock();
+              if (!lock.commitCurrentEdit()) {
+                // commit failed, jump back to edited field so user can edit it and make sure it passes the next time through
+                $(e.target).focus();
+              }
+            });
         $viewport
             //.bind("click", handleClick)
             .bind("scroll", handleScroll);
@@ -624,8 +640,9 @@ if (typeof Slick === "undefined") {
         }
 
         trigger(self.onBeforeHeaderCellDestroy, {
-          "node": $header[0],
-          "column": columnDef
+          node: $header[0],
+          column: columnDef,
+          cell: idx
         });
 
         // TODO: RISK: when formatter produces more than ONE outer HTML element, we're toast with nuking the .eq(0) element down here:
@@ -634,8 +651,9 @@ if (typeof Slick === "undefined") {
             .children().eq(0).html(title);
 
         trigger(self.onHeaderCellRendered, {
-          "node": $header[0],
-          "column": columnDef
+          node: $header[0],
+          column: columnDef,
+          cell: idx
         });
       }
     }
@@ -670,8 +688,8 @@ if (typeof Slick === "undefined") {
           var columnDef = $(this).data("column");
           if (columnDef) {
             trigger(self.onBeforeHeaderCellDestroy, {
-              "node": this,
-              "column": columnDef
+              node: this,
+              column: columnDef
             });
           }
         });
@@ -683,8 +701,8 @@ if (typeof Slick === "undefined") {
           var columnDef = $(this).data("column");
           if (columnDef) {
             trigger(self.onBeforeHeaderRowCellDestroy, {
-              "node": this,
-              "column": columnDef
+              node: this,
+              column: columnDef
             });
           }
         });
@@ -845,7 +863,7 @@ if (typeof Slick === "undefined") {
         sort: function (e, ui) {
           trigger(self.onColumnsReordering, {e:e, ui:ui});
         },
-        stop: function (e) {
+        stop: function (e, ui) {
           if (!getEditorLock().commitCurrentEdit()) {
             $(this).sortable("cancel");
             return;
@@ -858,7 +876,7 @@ if (typeof Slick === "undefined") {
           }
           setColumns(reorderedColumns);
 
-          trigger(self.onColumnsReordered, {});
+          trigger(self.onColumnsReordered, {e:e, ui:ui});
           e.stopPropagation();
           setupColumnResize();
         }
@@ -959,7 +977,7 @@ if (typeof Slick === "undefined") {
               }
               maxPageX = pageX + Math.min(shrinkLeewayOnRight, stretchLeewayOnLeft);
               minPageX = pageX - Math.min(shrinkLeewayOnLeft, stretchLeewayOnRight);
-              trigger(self.onColumnsStartResize, {}); // onColumnsResizeStart
+              trigger(self.onColumnsStartResize, {e:e}); // onColumnsResizeStart
             })
             .bind("drag touchmove", function (e, dd) {
               var actualMinWidth, d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX, x;
@@ -1038,7 +1056,7 @@ if (typeof Slick === "undefined") {
                 //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
                 updateCanvasWidth(true);
               }
-              trigger(self.onColumnsResizing, {});
+              trigger(self.onColumnsResizing, {e:e});
             })
             .bind("dragend touchend", function (e, dd) {
               var newWidth, j, c;
@@ -1055,7 +1073,7 @@ if (typeof Slick === "undefined") {
               }
               updateCanvasWidth(true);
               render();
-              trigger(self.onColumnsResized, {});
+              trigger(self.onColumnsResized, {e:e});
             })
             .bind("dblclick", function(e) {
                 var columnId = $($(this).parent()).attr('id').replace(uid,'');
@@ -1088,7 +1106,7 @@ if (typeof Slick === "undefined") {
                 updateColumnCaches();
                 updateCanvasWidth(true);
                 render();
-                trigger(self.onColumnsResized, {});
+                trigger(self.onColumnsResized, {e:e});
             });
       });
     }
@@ -1461,7 +1479,7 @@ if (typeof Slick === "undefined") {
 
       setCellCssStyles(options.selectedCellCssClass, hash);
 
-      trigger(self.onSelectedRowsChanged, {rows: getSelectedRows()}, e);
+      trigger(self.onSelectedRowsChanged, {rows: getSelectedRows(), e: e, ranges: ranges}, e);
     }
 
     function getColumns() {
@@ -1912,6 +1930,7 @@ if (typeof Slick === "undefined") {
     function invalidateAllRows() {
       if (currentEditor) {
         makeActiveCellNormal();
+        assert(!currentEditor);
       }
       for (var row in rowsCache) {
         removeRowFromCache(row);
@@ -1946,6 +1965,7 @@ if (typeof Slick === "undefined") {
       for (i = 0, rl = rows.length; i < rl; i++) {
         if (currentEditor && activeRow === rows[i]) {
           makeActiveCellNormal();
+          assert(!currentEditor);
         }
         if (rowsCache[rows[i]]) {
           removeRowFromCache(rows[i]);
@@ -3152,9 +3172,13 @@ if (typeof Slick === "undefined") {
       if (!currentEditor) {
         return;
       }
-      trigger(self.onBeforeCellEditorDestroy, {editor: currentEditor});
-      currentEditor.destroy();
+      // reset the global var as any node.destroy() can trigger additional focusout events which will trigger a commit:
+      // only by immediately resetting the global and keeping the 'old' value locally for further processing
+      // can we prevent nested invocations of this code (and consequent crashes in jQuery).
+      var editor = currentEditor;
       currentEditor = null;
+      trigger(self.onBeforeCellEditorDestroy, {editor: editor});
+      editor.destroy();
 
       if (activeCellNode) {
         var d = getDataItem(activeRow);
