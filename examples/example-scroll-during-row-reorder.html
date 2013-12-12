@@ -39,7 +39,7 @@
     }
 
     .recycle-bin {
-      width: 120px;
+      width: 100%;
       border: 1px solid gray;
       background: beige;
       padding: 4px;
@@ -56,6 +56,32 @@
 
     .bold {
       font-weight: bold;
+    }
+
+    .drop {
+      table-layout: fixed;
+    }
+    
+    .drop td {
+      width: 95px;
+      height: 25px;
+      padding: 0;
+      border: 1px dashed #888;
+      background: #EEE;
+      font-size: 10px;
+      line-height: 12px;
+      overflow: hidden;
+      text-align: center;
+    }
+    
+    td.dropped {
+      background-color: #EBC;
+      border-color: #B89;
+    } 
+    
+    td.active {  
+      background-color: #CEB;
+      border-color: #9B8;
     }
   </style>
 </head>
@@ -75,14 +101,18 @@
     <div style="padding:6px;">
       Click to select, Ctrl-click to toggle selection, Shift-click to select a range.<br/>
       Drag one or more rows by the handle to reorder.<br/>
-      Drag one or more rows to the recycle bin to delete.
+      Drag one or more rows to the recycle bins to delete.
 
       <br/>
       <br/>
 
-      <div id="dropzone" class="recycle-bin">
-        Recycle Bin
-      </div>
+      <table id="dropzone" class="drop recycle-bin" cellspacing="5">
+        <tr><td colspan="4">The Recycle Bins</td></tr>
+        <tr><td>1</td><td>2</td><td>3</td><td>4</td></tr>
+        <tr><td>5</td><td>6</td><td colspan="2">7</td></tr>
+        <tr><td>8</td><td rowspan="2">9</td><td colspan="2" rowspan="2">10</td></tr>
+        <tr><td>11</td></tr>
+      </table>
     </div>
 
     <hr/>
@@ -302,7 +332,7 @@ $(function() {
 
         dd.helper = proxy;
 
-        $(dd.available).css("background","pink");
+        $(dd.available).parent().parent().parent().css("background","pink");
 
         return proxy;
     });
@@ -321,18 +351,20 @@ $(function() {
         }
         e.stopImmediatePropagation();
         dd.helper.remove();
-        $(dd.available).css("background","beige");
+        $(dd.available).parent().parent().parent().css("background","beige");
     });
 
 
-    $("#dropzone")
+    $(".drop td")
         .on("dropstart", function(e,dd) {
-            $(this).css("background","yellow");
+            $(this).addClass("active");
         })
         .on("dropend", function(e,dd) {
-            $(dd.available).css("background","pink");
+            $(this).removeClass("active");
         })
         .on("drop", function(e,dd) {
+            $(this).toggleClass("dropped");
+
             var rowsToDelete = dd.rows.sort().reverse();
             for (var i = 0; i < rowsToDelete.length; i++) {
                 data.splice(rowsToDelete[i], 1);
@@ -341,6 +373,10 @@ $(function() {
             grid.setSelectedRows([]);
         });
 
+    $.drop({ 
+      mode: "intersect",
+      multi: false
+    });
 
     grid.onAddNewRow.subscribe(function (e, args) {
         var item = {name: "New task", complete: false};
