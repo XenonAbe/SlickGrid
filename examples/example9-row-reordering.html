@@ -294,7 +294,7 @@ $(function () {
     $(dd.available).css("background", "beige");
   });
 
-  $.drop({mode: "mouse"});
+  $.drop({mode: "intersect"});
   $("#dropzone")
       .bind("dropstart", function (e, dd) {
         if (dd.mode != "recycle") {
