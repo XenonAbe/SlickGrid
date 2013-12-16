@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  <title>SlickGrid example: Header Row</title>
+  <title>SlickGrid example: Commit when edit control loses focus</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
@@ -22,6 +22,19 @@
       -moz-box-sizing: border-box;
       box-sizing: border-box;
     }
+
+    .grid-inner-wrapper .editable {
+      background-color: rgb(255, 0, 0);
+    }
+    .grid-inner-wrapper .odd .editable {
+      background-color: rgb(204, 0, 0);
+    }
+
+    #clear-debug-output {
+      float: right;
+      margin: 6px 0;
+      padding: 3px 1em;
+    }
   </style>
 </head>
 <body>
@@ -35,6 +48,7 @@
     <ul>
       <li>Using a fixed header row to implement column-level filters</li>
       <li>Type numbers in textboxes to filter grid data</li>
+      <li><i>Commit edits in both header and regular cells when user clicks elsewhere (focus change / blur event)</i></li>
     </ul>
 
     <h2>View Source:</h2>
@@ -42,6 +56,15 @@
           <li id="viewsource">View Source Code</li>
           <div id="displaycode"></div>
       </ul>
+  </div>
+
+  <div class="diagnostics-panel">
+    <div class="diagnostics-view">
+      <button id="clear-debug-output">clear log</button>
+      <h2>Diagnostics</h2>
+
+      <div id="debug-output"></div>
+    </div>
   </div>
 </div>
 
@@ -51,15 +74,27 @@
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
 <script src="../lib/assert.js"></script>
+<script src="../lib/ba-debug.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.dataview.js"></script>
 <script src="../slick.grid.js"></script>
+<script src="../slick.formatters.js"></script>
+<script src="../slick.editors.js"></script>
 
 <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
 <script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
+  // set up debug lib to forward debug statements to the DOM:
+  debug.setDomInsertion(document.querySelector("#debug-output"));
+  debug.log("hello world!");
+
+  // Keep this in mind: http://www.quirksmode.org/js/introevents.html
+  document.querySelector("#clear-debug-output").onclick = function() {
+    document.querySelector("#debug-output").innerHTML = "";
+  };
+  
   var dataView;
   var grid;
   var data = [];
@@ -67,6 +102,12 @@
     enableCellNavigation: true,
     showHeaderRow: true,
     headerRowHeight: 30,
+    syncColumnCellResize: true,
+    editable: true,
+    autoEdit: true,
+    asyncEditorLoading: true,
+    asyncEditorLoadDelay: 1000,
+    defaultEditor: Slick.Editors.Text,
     explicitInitialization: true
   };
   var columns = [];
@@ -126,12 +167,44 @@
       }
     });
 
+    var gridEditController = {
+      commitCurrentEdit: function () {
+        debug.log("commit edit", arguments);
+
+        var lock = grid.getEditorLock();
+
+        // all done, release the lock:
+        lock.deactivate(gridEditController);
+        return true;
+      },
+      cancelCurrentEdit: function () {
+        debug.log("CANCEL edit", arguments);
+      }
+    };
+
     grid.onHeaderRowCellRendered.subscribe(function(e, args) {
         $(args.node).empty();
+
         $("<input type='text'>")
            .data("columnId", args.column.id)
            .val(columnFilters[args.column.id])
-           .appendTo(args.node);
+           .appendTo(args.node)
+           .focus(function() {
+              debug.log("header cell edit focus: ", this, arguments, e, args);
+              var lock = grid.getEditorLock();
+              if (!lock.isActive(gridEditController) && lock.commitCurrentEdit()) {
+                lock.activate(gridEditController);
+              }
+              // else: jump back to previously focussed element... but we don't know what it is so this is all we can do now...
+           })
+           .focusout(function() {
+              debug.log("header cell edit LOST FOCUS = autoCOMMIT: ", this, arguments, e, args);
+              var lock = grid.getEditorLock();
+              if (!lock.commitCurrentEdit()) {
+                // commit failed, jump back to edited field so user can edit it and make sure it passes the next time through
+                $(this).focus();
+              }
+           });
     });
 
     grid.init();

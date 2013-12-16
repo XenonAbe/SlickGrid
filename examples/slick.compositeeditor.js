@@ -72,7 +72,7 @@
 
 
       function init() {
-        var newArgs = {};
+        var newArgs;
         var idx = columns.length;
         while (idx--) {
           if (columns[idx].editor) {

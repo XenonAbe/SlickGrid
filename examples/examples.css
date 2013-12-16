@@ -113,6 +113,36 @@ li {
   color: darkblue;
 }
 
+.diagnostics-panel {
+  clear: both;
+  min-width: 600px;
+  padding: 10px 0 0 0;
+  margin: 0;
+}
+
+.diagnostics-view {
+  min-width: 600px;
+  margin-top: 20px;
+
+  border-radius: 6px;
+  -moz-border-radius: 6px;
+  -webkit-border-radius: 6px;
+  border: 1px solid silver;
+  background: #f0f0f0;
+  padding: 10px;
+  margin-bottom: 20px;
+  margin-left: 0;
+  padding: 10px;
+}
+
+#debug-output {
+  white-space: pre-wrap;
+  background: white;
+  outline: 0;
+  border: 1px solid gray;
+  min-height: 100px;
+}
+
 /* Individual cell styles */
 .slick-cell.task-name {
   font-weight: bold;

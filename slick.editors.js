@@ -48,12 +48,8 @@
         theEditor.focus();
       };
 
-      this.getValue = function () {
-        return theEditor.getValue();
-      };
-
-      this.setValue = function (val) {
-        theEditor.setValue(val);
+      this.setDirectValue = function (val) {
+        theEditor.setDirectValue(val);
       };
 
       this.loadValue = function (item) {
@@ -107,18 +103,15 @@
       $input.focus();
     };
 
-    this.getValue = function () {
-      return $input.val();
-    };
-
-    this.setValue = function (val) {
+    this.setDirectValue = function (val) {
+      if (val == null) val = "";
+      defaultValue = val;
       $input.val(val);
+      $input[0].defaultValue = val;
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field] || "";
-      $input.val(defaultValue);
-      $input[0].defaultValue = defaultValue;
+      scope.setDirectValue(item[args.column.field]);
       $input.select();
     };
 
@@ -131,15 +124,13 @@
     };
 
     this.isValueChanged = function () {
-      return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
+      assert(defaultValue != null);
+      return $input.val() != (defaultValue + "");
     };
 
     this.validate = function () {
       if (args.column.validator) {
-        var validationResults = args.column.validator($input.val());
-        if (!validationResults.valid) {
-          return validationResults;
-        }
+        return args.column.validator($input.val());
       }
 
       return {
@@ -160,6 +151,7 @@
 
     this.init = function () {
       $input = $("<span class='editor-text-readonly' />").appendTo(args.container);
+      defaultValue = '';
     };
 
     this.destroy = function () {
@@ -168,22 +160,19 @@
 
     this.focus = function () { };
 
-    this.getValue = function () {
-      return $input.val();
-    };
-
-    this.setValue = function (val) {
-      $input.val(val);
+    this.setDirectValue = function (val) {
+      defaultValue = val;
+      if (val == null) val = "";
+      $input.text(val);
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field] || "";
-      $input.text(defaultValue);
+      scope.setDirectValue(item[args.column.field]);
       $input.select();
     };
 
     this.serializeValue = function () {
-      return $input.text();
+      return defaultValue; // $input.text(); -- make sure the value is NEVER changed, which might happen when it goes 'through the DOM'
     };
 
     this.applyValue = function (item, state) {
@@ -214,7 +203,7 @@ function applyModifier(val, mod) {
   if (isPercent) sv = sv.slice(0, -1);
   var dv = parseFloat(val);
   var dsv = parseFloat(sv);
-  switch(ope){
+  switch(ope) {
     case "+":
       return isPercent ? dv + dv * dsv / 100.0 : dv + dsv;
     break;
@@ -236,7 +225,7 @@ function isValidModifier(v) {
   if ("+-*/".indexOf(sv.charAt(0)) < 0) return false;  // no good if it does not start with an operation
   sv = sv.substr(1);    //remove first char
   if (sv.indexOf('+') >= 0 || sv.indexOf('-') >= 0 || sv.indexOf('*') >= 0 || sv.indexOf('/') >= 0) return false;  // no more signs please.
-  if (sv.charAt(sv.length-1) === '%') sv = sv.slice(0, -1);    // remove also the % char if it is there
+  if (sv.charAt(sv.length - 1) === '%') sv = sv.slice(0, -1);    // remove also the % char if it is there
   // what remains must be a number
   return !isNaN(sv);
 }
@@ -247,7 +236,7 @@ function isValidModifier(v) {
     var scope = this;
 
     this.init = function () {
-      $input = $("<INPUT type='text' class='editor-integer' />")
+      $input = $("<INPUT type='number' class='editor-integer' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
             if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
@@ -256,7 +245,7 @@ function isValidModifier(v) {
           })
           .focus()
           .select();
-      defaultValue = '';
+      defaultValue = 0;
     };
 
     this.destroy = function () {
@@ -267,16 +256,23 @@ function isValidModifier(v) {
       $input.focus();
     };
 
+    this.setDirectValue = function (val) {
+      val = parseInt(val);
+      if (isNaN(val)) val = 0;
+      defaultValue = val;
+      $input.val(val);
+      $input[0].defaultValue = val;
+    };
+
     this.loadValue = function (item) {
-      defaultValue = parseInt(item[args.column.field]);
-      if (isNaN(defaultValue)) defaultValue = '';
-      $input.val(defaultValue);
-      $input[0].defaultValue = defaultValue;
+      scope.setDirectValue(item[args.column.field]);
       $input.select();
     };
 
     this.serializeValue = function () {
-      return parseInt(applyModifier(defaultValue, $input.val()), 10) || 0;
+      var v = $input.val();
+      if (v === '') return 0;
+      return parseInt(applyModifier(defaultValue, v), 10) || 0;
     };
 
     this.applyValue = function (item, state) {
@@ -284,7 +280,8 @@ function isValidModifier(v) {
     };
 
     this.isValueChanged = function () {
-      return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
+      assert(defaultValue != null);
+      return $input.val() != (defaultValue + "");
     };
 
     this.validate = function () {
@@ -319,7 +316,7 @@ function isValidModifier(v) {
           })
           .focus()
           .select();
-      defaultValue = '';
+      defaultValue = 0;
     };
 
     this.destroy = function () {
@@ -330,17 +327,22 @@ function isValidModifier(v) {
       $input.focus();
     };
 
+    this.setDirectValue = function (val) {
+      val = parseFloat(val);
+      if (isNaN(val)) val = 0;
+      defaultValue = val;
+      $input.val(val);
+      $input[0].defaultValue = val;
+    };
+
     this.loadValue = function (item) {
-      defaultValue = parseFloat(item[args.column.field]);
-      if (isNaN(defaultValue)) defaultValue = '';
-      $input.val(defaultValue);
-      $input[0].defaultValue = defaultValue;
+      scope.setDirectValue(item[args.column.field]);
       $input.select();
     };
 
     this.serializeValue = function () {
       var v = $input.val();
-      if (v == '') return v;
+      if (v == '') return 0.0;
       return parseFloat(applyModifier(defaultValue, v)) || 0.0;
     };
 
@@ -349,8 +351,8 @@ function isValidModifier(v) {
     };
 
     this.isValueChanged = function () {
-      //return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
-      return ($input.val() != defaultValue.toString());
+      assert(defaultValue != null);
+      return $input.val() != (defaultValue + "");
     };
 
     this.validate = function () {
@@ -376,6 +378,23 @@ function isValidModifier(v) {
     var defaultValue;
     var scope = this;
 
+    function roundPerunage(v) {
+      return Math.round(v * 1000) / 10;
+    }
+
+    function stringToPerunage(val) {
+      var multiplier = 1;
+      val += "";
+      if (val.charAt(val.length - 1) === '%') {
+        val = val.slice(0, -1);    // remove also the % char if it is there
+        multiplier = 100;
+      }
+      // what remains must be a number
+      val = roundPerunage(parseFloat(val) / multiplier);
+      if (isNaN(val)) val = 0; 
+      return val;
+    }
+
     this.init = function () {
       $input = $("<INPUT type='text' class='editor-percentage' />")
           .appendTo(args.container)
@@ -397,23 +416,23 @@ function isValidModifier(v) {
       $input.focus();
     };
 
+    this.setDirectValue = function (val) {
+      val = stringToPerunage(val);
+      val = (val * 100) + " %";
+      defaultValue = val;
+      $input.val(val);
+      $input[0].defaultValue = val;
+    };
+
     this.loadValue = function (item) {
-      defaultValue = parseFloat(item[args.column.field]) * 100;
-      if (isNaN(defaultValue)) {
-        defaultValue = ''; 
-      } else {
-        defaultValue += ' %';
-      }
-      $input.val(defaultValue);
-      $input[0].defaultValue = defaultValue;
+      scope.setDirectValue(item[args.column.field]);
       $input.select();
     };
 
     this.serializeValue = function () {
       var v = $input.val();
-      if (v == '') return v;
-      if (v.charAt( v.length - 1 ) == '%') return Math.round(parseFloat(v) * 10) / 1000 || 0.0;
-      return parseFloat(v) || 0.0;
+      if (v === '') return 0;
+      return stringToPerunage(v);
     };
 
     this.applyValue = function (item, state) {
@@ -421,12 +440,16 @@ function isValidModifier(v) {
     };
 
     this.isValueChanged = function () {
-      //return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
-      return ($input.val() != defaultValue.toString());
+      assert(defaultValue != null);
+      return $input.val() != defaultValue;
     };
 
     this.validate = function () {
-      if (isNaN(parseFloat($input.val()))) {
+      var val = $input.val();
+      if (val.charAt(val.length - 1) === '%') {
+        val = val.slice(0, -1);    // remove also the % char if it is there
+      }
+      if (isNaN(parseFloat(val))) {
         return {
           valid: false,
           msg: "Please enter a valid percentage"
@@ -544,9 +567,15 @@ function isValidModifier(v) {
       $input.focus();
     };
 
+    this.setDirectValue = function (val) {
+      val = parseDateStringAndDetectFormat(val); /* parseISODate() */
+      if (!val) val = new Date();
+      defaultValue = val;
+      $input.datepicker("setDate", val);
+    };
+
     this.loadValue = function (item) {
-      defaultValue = parseDateStringAndDetectFormat(item[args.column.field]); /* parseISODate() */
-      $input.datepicker("setDate", defaultValue);
+      scope.setDirectValue(item[args.column.field]);
       $input.select();
     };
 
@@ -605,15 +634,17 @@ function isValidModifier(v) {
     this.init = function() {
         defaultValue = null;
         opt = (args.metadataColumn && args.metadataColumn.options) || args.column.options;
-        option_str = "";
+        assert(opt);
+        option_str = [];
         for (i in opt) {
           v = opt[i];
-          option_str += "<OPTION value='" + v.key + "'>" + v.val + "</OPTION>";
+          option_str.push("<OPTION value='" + v.key + "'>" + v.val + "</OPTION>");
         }
-        $select = $('<SELECT class="editor-select">' + option_str + "</SELECT>")
+        $select = $('<SELECT class="editor-select">' + option_str.join('') + "</SELECT>")
          .appendTo(args.container)
          .focus()
          .select();
+        // this expects the multiselect widget (http://www.erichynds.com/jquery/jquery-ui-multiselect-widget/) to be loaded
         $select.multiselect({
           autoOpen: true,
           minWidth: $(args.container).innerWidth() - 5,
@@ -637,19 +668,21 @@ function isValidModifier(v) {
         $select.focus();
     };
 
-    this.loadValue = function(item) {
-        defaultValue = item[args.column.field];
-        var key = getKeyFromKeyVal(opt, defaultValue);
+    this.setDirectValue = function (val) {
+        var key = getKeyFromKeyVal(opt, val);
+        key = opt[key].key;
+        defaultValue = key;
         $select.val(key);
         $select.multiselect("refresh");
     };
 
+    this.loadValue = function (item) {
+      scope.setDirectValue(item[args.column.field]);
+      $select.select();
+    };
+
     this.serializeValue = function() {
-        if (opt) {
-          return $select.children("option:selected").text();
-        } else {
-          return ($select.val() == "yes");
-        }
+        return $select.val();
     };
 
     this.applyValue = function(item, state) {
@@ -657,7 +690,7 @@ function isValidModifier(v) {
     };
 
     this.isValueChanged = function() {
-        return ($select.children("option:selected").text() != defaultValue);
+        return scope.serializeValue() != defaultValue;
     };
 
     this.validate = function() {
@@ -690,8 +723,14 @@ function isValidModifier(v) {
       $select.focus();
     };
 
+    this.setDirectValue = function (val) {
+      val = !!val;
+      defaultValue = val;
+      $select.val(val ? "yes" : "no");
+    };
+
     this.loadValue = function (item) {
-      $select.val((defaultValue = item[args.column.field]) ? "yes" : "no");
+      scope.setDirectValue(item[args.column.field]);
       $select.select();
     };
 
@@ -704,7 +743,7 @@ function isValidModifier(v) {
     };
 
     this.isValueChanged = function () {
-      return ($select.val() != defaultValue);
+      return scope.serializeValue() != defaultValue;
     };
 
     this.validate = function () {
@@ -727,6 +766,7 @@ function isValidModifier(v) {
           .appendTo(args.container)
           .focus()
           .select();
+      defaultValue = false;
     };
 
     this.destroy = function () {
@@ -737,13 +777,15 @@ function isValidModifier(v) {
       $select.focus();
     };
 
+    this.setDirectValue = function (val) {
+      val = !!val;
+      defaultValue = val;
+      $select.prop('checked', val);
+    };
+
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field];
-      if (defaultValue) {
-        $select.prop('checked', true);
-      } else {
-        $select.prop('checked', false);
-      }
+      scope.setDirectValue(item[args.column.field]);
+      $select.select();
     };
 
     this.serializeValue = function () {
@@ -755,7 +797,8 @@ function isValidModifier(v) {
     };
 
     this.isValueChanged = function () {
-      return (this.serializeValue() !== defaultValue);
+      assert(defaultValue != null);
+      return this.serializeValue() !== defaultValue;
     };
 
     this.validate = function () {
@@ -774,6 +817,8 @@ function isValidModifier(v) {
     var scope = this;
 
     this.init = function () {
+      defaultValue = 0;
+
       $input = $("<INPUT type='text' class='editor-percentcomplete' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
@@ -796,14 +841,14 @@ function isValidModifier(v) {
         range: "min",
         value: defaultValue,
         slide: function (event, ui) {
-          $input.val(ui.value)
+          $input.val(ui.value);
         }
       });
 
       $picker.find(".editor-percentcomplete-buttons button").bind("click", function (e) {
         $input.val($(this).attr("val"));
         $picker.find(".editor-percentcomplete-slider").slider("value", $(this).attr("val"));
-      })
+      });
     };
 
     this.destroy = function () {
@@ -815,8 +860,16 @@ function isValidModifier(v) {
       $input.focus();
     };
 
+    this.setDirectValue = function (val) {
+      val = parseFloat(val);
+      if (isNaN(val)) val = 0;
+      defaultValue = val;
+      $input.val(val);
+      $picker.find(".editor-percentcomplete-slider").slider("value", val);
+    };
+
     this.loadValue = function (item) {
-      $input.val(defaultValue = item[args.column.field]);
+      scope.setDirectValue(item[args.column.field]);
       $input.select();
     };
 
@@ -829,7 +882,8 @@ function isValidModifier(v) {
     };
 
     this.isValueChanged = function () {
-      return (!($input.val() == "" && defaultValue == null)) && ((parseInt($input.val(), 10) || 0) != defaultValue);
+      assert(defaultValue != null);
+      return (parseInt($input.val(), 10) || 0) != defaultValue;
     };
 
     this.validate = function () {
@@ -871,12 +925,14 @@ function isValidModifier(v) {
       $("<DIV style='text-align:right'><BUTTON>Save</BUTTON><BUTTON>Cancel</BUTTON></DIV>")
           .appendTo($wrapper);
 
-      $wrapper.find("button:first").bind("click", this.save);
-      $wrapper.find("button:last").bind("click", this.cancel);
-      $input.bind("keydown", this.handleKeyDown);
+      $wrapper.find("button:first").bind("click", scope.save);
+      $wrapper.find("button:last").bind("click", scope.cancel);
+      $input.bind("keydown", scope.handleKeyDown);
 
       scope.position(args.position);
       $input.focus().select();
+
+      defaultValue = '';
     };
 
     this.handleKeyDown = function (e) {
@@ -914,7 +970,7 @@ function isValidModifier(v) {
     this.position = function (position) {
       $wrapper
           .css("top", position.top - 5)
-          .css("left", position.left - 5)
+          .css("left", position.left - 5);
     };
 
     this.destroy = function () {
@@ -925,8 +981,15 @@ function isValidModifier(v) {
       $input.focus();
     };
 
+    this.setDirectValue = function (val) {
+      if (val == null) val = "";
+      val += "";
+      defaultValue = val;
+      $input.val(val);
+    };
+
     this.loadValue = function (item) {
-      $input.val(defaultValue = item[args.column.field]);
+      scope.setDirectValue(item[args.column.field]);
       $input.select();
     };
 
@@ -939,7 +1002,8 @@ function isValidModifier(v) {
     };
 
     this.isValueChanged = function () {
-      return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
+      assert(defaultValue != null);
+      return $input.val() != defaultValue;
     };
 
     this.validate = function () {
@@ -962,14 +1026,6 @@ function isValidModifier(v) {
     var $container = $(args.container);
 
     this.init = function () {
-      me = this;
-      $('html').click(function(event) {
-         if (isOpen) {
-            if ($container.has(event.target).length !== 0) return;
-            // me.destroy();
-         }
-       });
-
       $input = $("<input type='color' />")
           .appendTo($container)
           .bind("keydown.nav", function (e) {
@@ -979,16 +1035,13 @@ function isValidModifier(v) {
           })
           .focus()
           .select();
-      this.show();
+      scope.show();
     };
-
-
-
 
     this.destroy = function () {
       $input.spectrum("destroy");
       $input.remove();
-      isOpen=false;
+      isOpen = false;
     };
 
     this.show = function () {
@@ -999,12 +1052,13 @@ function isValidModifier(v) {
             showButtons: false,
             showPalette: true,
             showInput: true,
+            showAlpha: false,
             showSelectionPalette: true,
             maxPaletteSize: 16,
             preferredFormat: "hex6",
             appendTo: "body",
             flat: true,
-          palette: [
+            palette: [
               ["#000000","#262626","#464646","#626262","#707070","#7D7D7D","#898989","#959595","#A0A0A0","#ACACAC","#B7B7B7","#C2C2C2","#D7D7D7","#E1E1E1","#EBEBEB","#FFFFFF"],
               ["#FF0000","#FFFF00","#00FF00","#00FFFF","#0000FF","#FF00FF","#ED1C24","#FFF200","#00A651","#00AEEF","#2E3192","#EC008C"],
               ["#F7977A","#F9AD81","#FDC68A","#FFF79A","#C4DF9B","#A2D39C","#82CA9D","#7BCDC8","#6ECFF6","#7EA7D8","#8493CA","#8882BE","#A187BE","#BC8DBF","#F49AC2","#F6989D"],
@@ -1012,17 +1066,17 @@ function isValidModifier(v) {
               ["#ED1C24","#F26522","#F7941D","#FFF200","#8DC73F","#39B54A","#00A651","#00A99D","#00AEEF","#0072BC","#0054A6","#2E3192","#662D91","#92278F","#EC008C","#ED145B"],
               ["#9E0B0F","#A0410D","#A36209","#ABA000","#598527","#1A7B30","#007236","#00746B","#0076A3","#004B80","#003471","#1B1464","#440E62","#630460","#9E005D","#9E0039"],
               ["#790000","#7B2E00","#7D4900","#827B00","#406618","#005E20","#005826","#005952","#005B7F","#003663","#002157","#0D004C","#32004B","#4B0049","#7B0046","#7A0026"],
-          ]
+            ]
         });
         isOpen = true;
       }
-     $input.spectrum("show");
+      $input.spectrum("show");
     };
 
     this.hide = function () {
       if (isOpen) {
         $input.spectrum("hide");
-        isOpen=false;
+        isOpen = false;
       }
     };
 
@@ -1032,27 +1086,23 @@ function isValidModifier(v) {
     };
 
     this.focus = function () {
+      scope.show();
       $input.focus();
-      this.show();
     };
 
-    this.getValue = function () {
-      return $input.spectrum("get").toHexString();
-    };
-
-    this.setValue = function (val) {
+    this.setDirectValue = function (val) {
+      if (val == null) val = "";
       $input.spectrum("set", val);
+      defaultValue = scope.serializeValue();
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field] || "";
-      $input.spectrum("set", defaultValue);
-      $input[0].defaultValue = defaultValue;
+      scope.setDirectValue(item[args.column.field]);
       $input.select();
     };
 
     this.serializeValue = function () {
-      return $input.spectrum("get").toHexString();
+      return $input.spectrum("get").toString();
     };
 
     this.applyValue = function (item, state) {
@@ -1060,8 +1110,9 @@ function isValidModifier(v) {
     };
 
     this.isValueChanged = function () {
-      var v = $input.spectrum("get").toHexString();
-      return (!(v == "" && defaultValue == null)) && (v != defaultValue);
+      assert(defaultValue != null);
+      var v = scope.serializeValue();
+      return v != defaultValue;
     };
 
     this.validate = function () {
@@ -1073,6 +1124,5 @@ function isValidModifier(v) {
 
     this.init();
   }
-
 
 })(jQuery);
