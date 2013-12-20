@@ -75,7 +75,7 @@
       // if a custom getter is not defined, we call serializeValue of the editor to serialize
       if (columnDef.editor) {
         var editorArgs = {
-          'container':$("body"),  // a dummy container
+          'container':$("<p>"),  // a dummy container
           'column':columnDef,
           'position':{'top':0, 'left':0}  // a dummy position required by some editors
         };
