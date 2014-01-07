@@ -105,8 +105,8 @@
 
         dd.insertBefore = insertBefore;
 
-                // TODO: Implement in a timer
-                grid.scrollRowIntoView( insertBefore );
+        // TODO: Implement in a timer
+        _grid.scrollRowIntoView( insertBefore );
       }
     }
 
