@@ -37,6 +37,8 @@
     var _clearCopyTI = 0;
     var _externalCopyActionWrapupDelay = 100;
     var _bodyElement = _options.bodyElement || document.body;
+    var _externalCopyPastaCatcherTI = 0;
+    var _externalCopyPastaCatcherEl = null;
 
     var keyCodes = {
       'C':67,
@@ -76,15 +78,26 @@
 
       // use formatter if available; much faster than editor
       if (columnDef.formatter) {
-          return columnDef.formatter(0, 0, item[columnDef.field], columnDef, item);
+          // fake these: we only want the raw entry value anyway:
+          var cellCss = []; // ["slick-cell", "l" + cell, "r" + (cell + colspan - 1)];
+          var cellStyles = [];
+          var colspan = 0; // rather than using getColspan(srcY, srcX), this signals the formatter that the plaintext value is required.
+          return columnDef.formatter(srcY, srcX, row_item[columnDef.field], columnDef, row_item, colspan, cellCss, cellStyles);
       }
 
       // if a custom getter is not defined, we call serializeValue of the editor to serialize
       if (columnDef.editor) {
         var editorArgs = {
-          'container': $(document),  // a dummy container
-          'column': columnDef,
-          'position': {'top':0, 'left':0}  // a dummy position required by some editors
+          container: $(document),  // a dummy container
+          column: columnDef,
+
+          grid: _grid,
+          gridPosition: _grid.getGridPosition(),
+          item: row_item || {},
+          commitChanges: _grid.commitEditAndSetFocus,
+          cancelChanges: _grid.cancelEditAndSetFocus,
+
+          position: {top: srcY, left: srcX}  // a dummy position required by some editors
         };
         var editor = new columnDef.editor(editorArgs);
         editor.loadValue(row_item);
@@ -103,9 +116,16 @@
       // if a custom setter is not defined, we call applyValue of the editor to unserialize
       if (columnDef.editor) {
         var editorArgs = {
-          'container': $(document),  // a dummy container
-          'column': columnDef,
-          'position': {'top':0, 'left':0}  // a dummy position required by some editors
+          container: $(document),  // a dummy container
+          column: columnDef,
+
+          grid: _grid,
+          gridPosition: _grid.getGridPosition(),
+          item: row_item || {},
+          commitChanges: _grid.commitEditAndSetFocus,
+          cancelChanges: _grid.cancelEditAndSetFocus,
+
+          position: {top: srcY, left: srcX}  // a dummy position required by some editors
         };
         var editor = new columnDef.editor(editorArgs);
         editor.loadValue(row_item);
@@ -116,37 +136,78 @@
 
 
     function _createTextBox(innerText) {
-      var ta = document.createElement('textarea');
-      ta.style.position = 'absolute';
-      ta.style.left = '-1000px';
-      ta.style.top = document.body.scrollTop + 'px';
-      ta.className = _copiedCellStyleExternalHelperKey;
-      ta.value = innerText;
-      _bodyElement.appendChild(ta);
-      ta.select();
+      if (!_externalCopyPastaCatcherEl) {
+        var ta = document.createElement('textarea');
+        ta.style.position = 'absolute';
+        ta.style.left = '-1000px';
+        ta.style.top = document.body.scrollTop + 'px';
+        ta.className = _copiedCellStyleExternalHelperKey;
+        ta.value = innerText;
+        _bodyElement.appendChild(ta);
+        ta.select(); // .focus();
 
-      return ta;
+        _externalCopyPastaCatcherEl = ta;
+
+        // 'side effect': clear the pending 'catch external copy/pasta action' timeout
+        if (_externalCopyPastaCatcherTI) {
+          clearTimeout(_externalCopyPastaCatcherTI);
+          _externalCopyPastaCatcherTI = 0;
+        }
+      }
     }
 
-    function _decodeTabularData(_grid, ta) {
-      // stuff has been pasted into ta=textarea; now allow user to preprocess the pasted data.
+    function _destroyTextBox() {
+      if (_externalCopyPastaCatcherEl) {
+        _bodyElement.removeChild(_externalCopyPastaCatcherEl);
+        _externalCopyPastaCatcherEl = null;
+
+        if (_externalCopyPastaCatcherTI) {
+          clearTimeout(_externalCopyPastaCatcherTI);
+          _externalCopyPastaCatcherTI = 0;
+        }
+      }
+    }
+
+    function _decodeTabularData(_grid) {
+      // stuff has been pasted into _externalCopyPastaCatcherEl textarea; now allow user to preprocess the pasted data.
       _self.onPasteCellsPrepare.notify({
-        helperDOMelement: ta,
+        helperDOMelement: _externalCopyPastaCatcherEl,
         rangeIsCopied: true /* outside source coming in: always regarded as COPY rather than CUT */,
         rangeDataFromExternalSource: true
       });
 
       var columns = _grid.getColumns();
-      var clipText = ta.value;
+      var clipText = _externalCopyPastaCatcherEl.value;
       var clipRows = clipText.split(/[\n\f\r]/);
       var clippedRange = [];
 
-      _bodyElement.removeChild(ta);
+      _destroyTextBox();
+      assert(!_externalCopyPastaCatcherTI);
 
       for (var i = 0; i < clipRows.length; i++) {
         if (clipRows[i] != "") {
           clippedRange[i] = clipRows[i].split("\t");
         }
+      }
+
+      /*
+      HACKY FIX for this exec scenario in User App:
+
+          copy item as text from someplace in UI,
+          select other cell in slickgrid,
+          hit Paste (Ctrl-V)
+
+      which will exec this code as slickgrid will assume the import is tabular data ('external excel import' feature)
+
+      The end result is that w==0 and h==0 and you get at least very odd bRange numbers in the resulting event notification.
+
+      Cause: clipText is NOT tabular data but simply a single formula/value expression
+      */
+      if (clippedRange.length === 0) {
+        assert(0); // should never get here!
+
+        clippedRange[0] = [];
+        clippedRange[0][0] = clipText;
       }
 
       var selectedCell = _grid.getActiveCell();
@@ -375,12 +436,12 @@
             _copyFingerPrint = clipText.replace(/\r/g, "");
 
             var activeCell = _grid.getActiveCell();
-            var ta = _createTextBox(clipText);
+            _createTextBox(clipText);
 
-            ta.select(); // .focus();
+            _externalCopyPastaCatcherTI = setTimeout(function() {
+                _destroyTextBox();
+                assert(!_externalCopyPastaCatcherTI);
 
-            setTimeout(function() {
-                _bodyElement.removeChild(ta);
                 // restore focus
                 if (activeCell) {
                     //$focus.attr('tabIndex', '-1');
@@ -396,6 +457,15 @@
 
         // Control+V
         if (e.which == keyCodes.V && (e.ctrlKey || e.metaKey)) {
+          // when we still have a copy/pasta action pending, we IGNORE this one
+          // (this code might even have been invoked recursively as Ctrl+C/Ctrl+V
+          // do NOT mark the keyboard event as 'handled' when they actually do,
+          // just because they only do so after a timeout...)
+          if (_externalCopyPastaCatcherTI) {
+            // simply ignore...
+            return false;
+          }
+
           /*
            * We have a slightly different behaviour than the regular 'copy manager' here:
            *
@@ -403,11 +473,11 @@
            * when we do NOT have marked a cell range for ourselves during a previous Ctrl-C/X:
            * that would mean we are doing an INTERNAL copy/paste -- or at least PASTE -- anyhow.
            */
-          var ta = _createTextBox('');
+          _createTextBox('');
 
-          setTimeout(function() {
+          _externalCopyPastaCatcherTI = setTimeout(function() {
             // check the 'copy fingerprint' to detect if we are copying/pasting cell data 'internally' i.e. within the same slickgrid grid:
-            var fp = ta.value;
+            var fp = _externalCopyPastaCatcherEl.value;
             assert(typeof fp === 'string');
             fp = fp.replace(/\r/g, "");
             if (_copyFingerPrint === fp) {
@@ -428,14 +498,19 @@
                 _copiedRanges = null;
                 _copyFingerPrint = null;
               }
+              assert(_externalCopyPastaCatcherTI);
             } else {
               // pasting externally obtained data: nuke the internal Ctrl-C range buffer et al:
               clearCopySelection();
               _copiedRanges = null;
               _copyFingerPrint = null;
 
-              _decodeTabularData(_grid, ta);
+              _decodeTabularData(_grid);
+              assert(!_externalCopyPastaCatcherTI);
             }
+
+            _destroyTextBox();
+            assert(!_externalCopyPastaCatcherTI);
           }, _externalCopyActionWrapupDelay);
 
           //e.preventDefault(); <-- DO exec the default behaviour as that will fill the textbox we just created!
