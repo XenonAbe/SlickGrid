@@ -2455,7 +2455,9 @@ if (typeof Slick === "undefined") {
       } else {
         // if the cell has other coordinates because of row/cell span, update that cell (which will invalidate this cellNode)
         var spans = getSpans(row, cell);
-        if (spans[0] != row || spans[1] != cell) {
+        assert(spans ? spans.length === 4 : true);
+        assert(spans ? spans[3] >= 1 : true);
+        if (spans && (spans[0] != row || spans[1] != cell)) {
           updateCell(spans[0], spans[1]);
           return;
         }
@@ -4703,6 +4705,9 @@ if (typeof Slick === "undefined") {
       "getActiveCellPosition": getActiveCellPosition,
       "resetActiveCell": resetActiveCell,
       "editActiveCell": makeActiveCellEditable,
+      "commitEditAndSetFocus": commitEditAndSetFocus,
+      "cancelEditAndSetFocus": cancelEditAndSetFocus,
+
       "getCellEditor": getCellEditor,
       "getCellNode": getCellNode,
       "getCellNodeBox": getCellNodeBox,
@@ -4729,6 +4734,8 @@ if (typeof Slick === "undefined") {
       "setCellCssStyles": setCellCssStyles,
       "removeCellCssStyles": removeCellCssStyles,
       "getCellCssStyles": getCellCssStyles,
+
+      "handleKeyDown": handleKeyDown,
 
       "init": finishInitialization,
       "destroy": destroy,
