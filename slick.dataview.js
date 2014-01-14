@@ -106,6 +106,7 @@
       aggregateChildGroups: false,
       collapsed: false,
       displayTotalsRow: true,
+      totalsRowBeforeItems: false,
       lazyTotalsCalculation: false
     };
     var groupingInfos = [];
@@ -723,6 +724,11 @@
         if (options.showExpandedGroupRows || g.collapsed)
           groupedRows[gl++] = g;
 
+        var displayTotalsRow = g.totals && gi.displayTotalsRow && (!g.collapsed || gi.aggregateCollapsed);
+        if (displayTotalsRow && gi.totalsRowBeforeItems) {
+          groupedRows[gl++] = g.totals;
+        }
+
         if (!g.collapsed) {
           rows = g.groups ? options.flattenGroupedRows(g.groups, level + 1, groupingInfos, filteredItems, options) : g.rows;
           for (var j = 0, jj = rows.length; j < jj; j++) {
@@ -730,7 +736,7 @@
           }
         }
 
-        if (g.totals && gi.displayTotalsRow && (!g.collapsed || gi.aggregateCollapsed)) {
+        if (displayTotalsRow && !gi.totalsRowBeforeItems) {
           groupedRows[gl++] = g.totals;
         }
       }
