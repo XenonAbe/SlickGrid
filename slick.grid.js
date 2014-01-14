@@ -198,7 +198,8 @@ if (typeof Slick === "undefined") {
       headerCssClass: null,
       defaultSortAsc: true,
       focusable: true,
-      selectable: true
+      selectable: true,
+      dataItemColumnValueExtractor: null
     };
 
     // scroller
@@ -2143,6 +2144,9 @@ if (typeof Slick === "undefined") {
       }
       if (rowMetadata && rowMetadata.dataItemColumnValueExtractor) {
         return rowMetadata.dataItemColumnValueExtractor(item, columnDef, rowMetadata, cellMetadata);
+      }
+      if (columnDef && columnDef.dataItemColumnValueExtractor) {
+        return columnDef.dataItemColumnValueExtractor(item, columnDef, rowMetadata, cellMetadata);
       }
       if (options.dataItemColumnValueExtractor) {
         return options.dataItemColumnValueExtractor(item, columnDef, rowMetadata, cellMetadata);
