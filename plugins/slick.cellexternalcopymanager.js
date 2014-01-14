@@ -319,23 +319,51 @@
                 }
                 clipText += clipTextRows.join("\r\n") + "\r\n";
             }
+              
+            //  
+            // Clipboard handling
+            // ------------------
+            //
+            // See also:
+            //
+            //   - http://help.dottoro.com/ljctuhrg.php
+            //
+            //   - http://stackoverflow.com/questions/7713182/copy-to-clipboard-for-all-browsers-using-javascript#11603131
+            //     (where the hash in the URL points you at the solution approach which is also employed in slickgrid:
+            //      no Flash, only a hidden (off screen) TEXTAREA DOM node, some arbitrary (heuristically determined)
+            //      timeout and **the subtle requirement that these particular keypresses (Ctrl-C/Ctrl-X/Ctrl-V | Cmd-C/Cmd-X/Cmd-V)
+            //      have their keyboard events 'bubble up' all the way into the browser default handler** so no
+            //      event.stopPropagation() or `return false` in this (or any outer level) keyboard handler for you!**
+            //
+            //   - http://stackoverflow.com/questions/400212/how-to-copy-to-the-clipboard-in-javascript
+            //     (note the by now obsoleted FF approach in there; just for completeness listed here: do not even consider this!)
+            //
+            //   - https://github.com/mojombo/clippy
+            //     (Flash-based solution. Need I say more?)
+            //
+            if (windows.clipboardData) {
+                // MSIE browser supports clipboard access from JavaScript
+                windows.clipboardData.Set("Text", clipText);
+                return true;
+            }
+            else {
+                var $focus = $(_grid.getActiveCellNode());
+                var ta = _createTextBox(clipText);
 
-            var $focus = $(_grid.getActiveCellNode());
-            var ta = _createTextBox(clipText);
+                ta.focus();
+            
+                setTimeout(function(){
+                    _bodyElement.removeChild(ta);
+                    // restore focus
+                    if ($focus && $focus.length > 0) {
+                        $focus.attr('tabIndex', '-1');
+                        $focus.focus();
+                        $focus.removeAttr('tabIndex');
+                    }
+                }, 100);
 
-            ta.focus();
-
-            setTimeout(function(){
-                _bodyElement.removeChild(ta);
-                // restore focus
-                if ($focus && $focus.length > 0) {
-                    $focus.attr('tabIndex', '-1');
-                    $focus.focus();
-                    $focus.removeAttr('tabIndex');
-                }
-            }, 100);
-
-            return false;
+                return false;
+            }
           }
         }
 
