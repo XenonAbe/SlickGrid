@@ -341,9 +341,9 @@
             //   - https://github.com/mojombo/clippy
             //     (Flash-based solution. Need I say more?)
             //
-            if (windows.clipboardData) {
+            if (typeof window !== 'undefined' && window.clipboardData) {
                 // MSIE browser supports clipboard access from JavaScript
-                windows.clipboardData.Set("Text", clipText);
+                window.clipboardData.setData("Text", clipText);
                 return true;
             }
             else {
