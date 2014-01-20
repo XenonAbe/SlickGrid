@@ -1969,7 +1969,7 @@ if (typeof Slick === "undefined") {
           l = probe + 1;
         }
       }
-      assert(l <= r);
+      assert(l <= r || r < 0);
 
       while (l < r) {
         probe = ((l + r) / 2) | 0; // INT/FLOOR
