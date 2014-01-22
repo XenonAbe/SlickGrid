@@ -2018,7 +2018,7 @@ if (typeof Slick === "undefined") {
         return "";
       } else {
         // Safari 6 fix: (value + "") instead of .toString()
-        return (value + "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        return (value + "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       }
     }
 
