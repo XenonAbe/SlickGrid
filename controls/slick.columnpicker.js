@@ -20,6 +20,12 @@
       $menu.bind("click", updateColumn);
     }
 
+    function destroy() {
+      grid.onHeaderContextMenu.unsubscribe(handleHeaderContextMenu);
+      grid.onColumnsReordered.unsubscribe(updateColumnOrder);
+      $menu.remove();
+    }
+
     function handleHeaderContextMenu(e, args) {
       e.preventDefault();
       $menu.empty();
@@ -135,7 +141,8 @@
     init();
 
     return {
-      "getAllColumns": getAllColumns
+      "getAllColumns": getAllColumns,
+      "destroy": destroy
     };
   }
 
