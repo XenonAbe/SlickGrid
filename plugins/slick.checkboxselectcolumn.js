@@ -16,7 +16,10 @@
       columnId: "_checkbox_selector",
       cssClass: null,
       toolTip: "Select/Deselect All",
-      width: 30
+      field: "sel",
+      width: 30,
+      resizable: true,
+      sortable: false
     };
 
     var _options = $.extend(true, {}, _defaults, options);
@@ -36,7 +39,15 @@
 
     function handleSelectedRowsChanged(e, args) {
       var selectedRows = _grid.getSelectedRows();
-      var lookup = {}, row, i;
+      var data = _grid.getData();
+      var selectableRowCount = 0;
+      var lookup = {}, row, i, rowSelectable;
+      for (i = 0; i < _grid.getDataLength(); i++) {
+        rowSelectable = isRowSelectable(data, i);
+        if (rowSelectable) {
+          selectableRowCount += 1;
+        }
+      }
       for (i = 0; i < selectedRows.length; i++) {
         row = selectedRows[i];
         lookup[row] = true;
@@ -51,7 +62,7 @@
       _selectedRowsLookup = lookup;
       _grid.render();
 
-      if (selectedRows.length && selectedRows.length == _grid.getDataLength()) {
+      if (selectedRows.length == selectableRowCount) {
         _grid.updateColumnHeader(_options.columnId, "<input type='checkbox' checked='checked'>", _options.toolTip);
       } else {
         _grid.updateColumnHeader(_options.columnId, "<input type='checkbox'>", _options.toolTip);
@@ -88,11 +99,12 @@
     }
 
     function toggleRowSelection(row) {
+      var data = _grid.getData();
       if (_selectedRowsLookup[row]) {
         _grid.setSelectedRows($.grep(_grid.getSelectedRows(), function (n) {
-          return n != row
+          return n != row;
         }));
-      } else {
+      } else if (isRowSelectable(data, row)) {
         _grid.setSelectedRows(_grid.getSelectedRows().concat(row));
       }
     }
@@ -107,9 +119,14 @@
         }
 
         if ($(e.target).is(":checked")) {
-          var rows = [];
+          var rows = [],
+              data = _grid.getData(),
+              rowSelectable;
           for (var i = 0; i < _grid.getDataLength(); i++) {
-            rows.push(i);
+            rowSelectable = isRowSelectable(data, i);
+            if (rowSelectable) {
+              rows.push(i);
+            }
           }
           _grid.setSelectedRows(rows);
         } else {
@@ -125,10 +142,10 @@
         id: _options.columnId,
         name: "<input type='checkbox'>",
         toolTip: _options.toolTip,
-        field: "sel",
+        field: _options.field,
         width: _options.width,
-        resizable: false,
-        sortable: false,
+        resizable: _options.resizable,
+        sortable: _options.sortable,
         cssClass: _options.cssClass,
         formatter: checkboxSelectionFormatter
       };
@@ -141,6 +158,15 @@
             : "<input type='checkbox'>";
       }
       return null;
+    }
+
+    function isRowSelectable(data, row) {
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, false);
+      if (rowMetadata) {
+        return rowMetadata.selectable;
+      }
+      // when your data[] is not a DataView (or at least does not provide the getItemMetaData API method) then assume answer 'YES' for this question
+      return true;
     }
 
     $.extend(this, {

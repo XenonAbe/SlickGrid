@@ -28,14 +28,17 @@
       groupCssClass: "slick-group",
       groupTitleCssClass: "slick-group-title",
       totalsCssClass: "slick-group-totals",
+      groupSelectable: false,
       groupFocusable: true,
+      totalsSelectable: false,
       totalsFocusable: false,
       toggleCssClass: "slick-group-toggle",
       toggleExpandedCssClass: "expanded",
       toggleCollapsedCssClass: "collapsed",
       enableExpandCollapse: true,
       groupFormatter: defaultGroupCellFormatter,
-      totalsFormatter: defaultTotalsCellFormatter
+      totalsFormatter: defaultTotalsCellFormatter,
+      getRowMetadata: null // function (item, row, cell, rows)
     };
 
     options = $.extend(true, {}, _defaults, options);
@@ -79,6 +82,12 @@
     function handleGridClick(e, args) {
       var item = this.getDataItem(args.row);
       if (item && item instanceof Slick.Group && $(e.target).hasClass(options.toggleCssClass)) {
+        var range = _grid.getRenderedRange();
+        this.getData().setRefreshHints({
+          ignoreDiffsBefore: range.top,
+          ignoreDiffsAfter: range.bottom
+        });
+
         if (item.collapsed) {
           this.getData().expandGroup(item.groupingKey);
         } else {
@@ -97,6 +106,12 @@
         if (activeCell) {
           var item = this.getDataItem(activeCell.row);
           if (item && item instanceof Slick.Group) {
+            var range = _grid.getRenderedRange();
+            this.getData().setRefreshHints({
+              ignoreDiffsBefore: range.top,
+              ignoreDiffsAfter: range.bottom
+            });
+
             if (item.collapsed) {
               this.getData().expandGroup(item.groupingKey);
             } else {
@@ -110,9 +125,9 @@
       }
     }
 
-    function getGroupRowMetadata(item) {
+    function getGroupRowMetadata(item, row, cell, rows) {
       return {
-        selectable: false,
+        selectable: options.groupSelectable,
         focusable: options.groupFocusable,
         cssClasses: options.groupCssClass,
         columns: {
@@ -125,9 +140,9 @@
       };
     }
 
-    function getTotalsRowMetadata(item) {
+    function getTotalsRowMetadata(item, row, cell, rows) {
       return {
-        selectable: false,
+        selectable: options.totalsSelectable,
         focusable: options.totalsFocusable,
         cssClasses: options.totalsCssClass,
         formatter: options.totalsFormatter,
@@ -135,10 +150,19 @@
       };
     }
 
+    function getRowMetadata(item, row, cell, rows) {
+      if (options.getRowMetadata) {
+        return options.getRowMetadata(item, row, cell, rows);
+      }
+
+      return null;
+    }
+
 
     return {
       "init": init,
       "destroy": destroy,
+      "getRowMetadata": getRowMetadata,
       "getGroupRowMetadata": getGroupRowMetadata,
       "getTotalsRowMetadata": getTotalsRowMetadata
     };

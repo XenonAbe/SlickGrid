@@ -63,7 +63,7 @@
     };
 
     /***
-     * Returns whether stopImmediatePropagation was called on this event object.\
+     * Returns whether stopImmediatePropagation was called on this event object.
      * @method isImmediatePropagationStopped
      * @return {Boolean}
      */
@@ -86,22 +86,37 @@
      * object the event was fired with.<p>
      * @method subscribe
      * @param fn {Function} Event handler.
+     * @return {Function} the registered event handler `fn`.
      */
     this.subscribe = function (fn) {
       handlers.push(fn);
+      return fn;
     };
 
     /***
      * Removes an event handler added with <code>subscribe(fn)</code>.
      * @method unsubscribe
-     * @param fn {Function} Event handler to be removed.
+     * @param fn {Function} Event handler to be removed. When undefined, all event handlers are unsubscribed.
      */
     this.unsubscribe = function (fn) {
-      for (var i = handlers.length - 1; i >= 0; i--) {
-        if (handlers[i] === fn) {
-          handlers.splice(i, 1);
+      if (!fn) {
+        handlers = [];
+      } else {
+        for (var i = handlers.length - 1; i >= 0; i--) {
+          if (handlers[i] === fn) {
+            handlers.splice(i, 1);
+          }
         }
       }
+    };
+
+    /***
+     * Returns the list of registered event handlers as an array.
+     * @method handlers
+     * @return the list of registered event handlers as an array. When no handlers are registered the array is empty.
+     */
+    this.handlers = function () {
+      return handlers;
     };
 
     /***
@@ -116,14 +131,15 @@
      *      Optional.
      *      The scope ("this") within which the handler will be executed.
      *      If not specified, the scope will be set to the <code>Event</code> instance.
+     * @return {boolean} the return value produced by the event handlers; boolean TRUE by default.
      */
     this.notify = function (args, e, scope) {
       e = e || new EventData();
       scope = scope || this;
 
-      var returnValue;
+      var returnValue = true;
       for (var i = 0; i < handlers.length && !(e.isPropagationStopped() || e.isImmediatePropagationStopped()); i++) {
-        returnValue = handlers[i].call(scope, e, args);
+        returnValue = handlers[i].call(scope, e, args, returnValue);
       }
 
       return returnValue;
@@ -370,6 +386,14 @@
      * @type {Group}
      */
     this.group = null;
+
+    /***
+     * Whether the totals have been fully initialized / calculated.
+     * Will be set to false for lazy-calculated group totals.
+     * @param initialized
+     * @type {Boolean}
+     */
+    this.initialized = false;
   }
 
   GroupTotals.prototype = new NonDataItem();
@@ -393,6 +417,7 @@
      * @return {Boolean}
      */
     this.isActive = function (editController) {
+      assert(!editController || (assert(typeof editController.commitCurrentEdit === 'function') && assert(typeof editController.cancelCurrentEdit === 'function')));
       return (editController ? activeEditController === editController : activeEditController !== null);
     };
 
@@ -403,6 +428,7 @@
      * @param editController {EditController} edit controller acquiring the lock
      */
     this.activate = function (editController) {
+      assert(editController && assert(typeof editController.commitCurrentEdit === 'function') && assert(typeof editController.cancelCurrentEdit === 'function'));
       if (editController === activeEditController) { // already activated?
         return;
       }
@@ -425,6 +451,7 @@
      * @param editController {EditController} edit controller releasing the lock
      */
     this.deactivate = function (editController) {
+      assert(editController && assert(typeof editController.commitCurrentEdit === 'function') && assert(typeof editController.cancelCurrentEdit === 'function'));
       if (activeEditController !== editController) {
         throw "SlickGrid.EditorLock.deactivate: specified editController is not the currently active one";
       }

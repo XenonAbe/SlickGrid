@@ -1,9 +1,10 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Header Menus</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../plugins/slick.headermenu.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
@@ -45,30 +46,40 @@
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:600px;">
-    <div id="myGrid" style="width:100%;height:500px;"></div>
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
   </div>
 
   <div class="options-panel">
+    <h2>Demonstrates</h2>
     <p>
       This example demonstrates using the <b>Slick.Plugins.HeaderMenu</b> plugin to add drop-down menus to column
       headers.  (Hover over the headers.)
     </p>
-      <h2>View Source:</h2>
+
+    <h2>View Source:</h2>
       <ul>
-          <li><A href="https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example-plugin-headermenu.html" target="_sourcewindow"> View the source for this example on Github</a></li>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
       </ul>
   </div>
 </div>
 
-<script src="../lib/jquery-1.7.min.js"></script>
+<script src="../lib/firebugx.js"></script>
+
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
 <script src="../plugins/slick.headermenu.js"></script>
 
-<script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
   var grid;
   var columns = [
     {id: "title", name: "Title", field: "title"},
@@ -84,12 +95,12 @@
       menu: {
         items: [
           {
-            iconImage: "../images/sort-asc.gif",
+            iconImage: "../images/sort-asc.png",
             title: "Sort Ascending",
             command: "sort-asc"
           },
           {
-            iconImage: "../images/sort-desc.gif",
+            iconImage: "../images/sort-desc.png",
             title: "Sort Descending",
             command: "sort-desc"
           },
@@ -147,8 +158,7 @@
     });
 
     grid.registerPlugin(headerMenuPlugin);
-
-  })
+  });
 </script>
 </body>
 </html>

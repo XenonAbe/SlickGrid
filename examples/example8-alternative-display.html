@@ -1,10 +1,10 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example 8: Alternative display</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .slick-cell {
@@ -59,28 +59,29 @@
   </style>
 </head>
 <body>
-<table width="100%">
-  <tr>
-    <td valign="top" width="50%">
-      <div id="myGrid" style="width:600px;height:500px;"></div>
-    </td>
-    <td valign="top">
-      <h2>Demonstrates:</h2>
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+  </div>
 
+  <div class="options-panel">
+    <h2>About</h2>
+    This example shows alternative ways to present data using SlickGrid.
+    <h2>Demonstrates</h2>
       <ul>
         <li>Template-based rendering using John Resig's <a href="http://ejohn.org/blog/javascript-micro-templating/"
                                                            target=_blank>micro-templates</a> while still using
           SlickGrid's virtual rendering technology.
         </li>
       </ul>
-        <h2>View Source:</h2>
-        <ul>
-            <li><A href="https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example8-alternative-display.html" target="_sourcewindow"> View the source for this example on Github</a></li>
-        </ul>
 
-    </td>
-  </tr>
-</table>
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
+      </ul>
+  </div>
+</div>
 
 <!-- cell template -->
 <script type="text/html" id="cell_template">
@@ -97,13 +98,17 @@
 
 <script src="../lib/firebugx.js"></script>
 
-<script src="../lib/jquery-1.7.min.js"></script>
+<script src="../lib/jquery.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
 
-<script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
   // Simple JavaScript Templating
   // John Resig - http://ejohn.org/ - MIT Licensed
   (function () {
@@ -170,7 +175,7 @@
     }
 
     grid = new Slick.Grid("#myGrid", data, columns, options);
-  })
+  });
 </script>
 </body>
 </html>

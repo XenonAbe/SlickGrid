@@ -4,7 +4,7 @@
     var columnCheckboxes;
 
     var defaults = {
-      fadeSpeed:250
+      fadeSpeed: 250
     };
 
     function init() {
@@ -18,7 +18,12 @@
         $(this).fadeOut(options.fadeSpeed)
       });
       $menu.bind("click", updateColumn);
+    }
 
+    function destroy() {
+      grid.onHeaderContextMenu.unsubscribe(handleHeaderContextMenu);
+      grid.onColumnsReordered.unsubscribe(updateColumnOrder);
+      $menu.remove();
     }
 
     function handleHeaderContextMenu(e, args) {
@@ -126,6 +131,8 @@
         }
 
         grid.setColumns(visibleColumns);
+
+        _self.onColumnChanged.notify();
       }
     }
 
@@ -136,10 +143,11 @@
     init();
 
     return {
-      "getAllColumns": getAllColumns
+      "getAllColumns": getAllColumns,
+      "onColumnChanged": new Slick.Event(),
+      "destroy": destroy
     };
   }
-
   // Slick.Controls.ColumnPicker
   $.extend(true, window, { Slick:{ Controls:{ ColumnPicker:SlickColumnPicker }}});
 })(jQuery);

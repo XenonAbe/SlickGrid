@@ -1,10 +1,10 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>SlickGrid example 3: Editing</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Excel-like spreadsheet grid - copy/paste and undo/redo</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .slick-cell.copied {
@@ -12,8 +12,8 @@
       background: rgba(0, 0, 255, 0.2);
       -webkit-transition: 0.5s background;
     }
-    
-    
+
+
     /*
         weekcalendareditor
     */
@@ -62,44 +62,63 @@
         text-align:center;
         margin-top:5px;
     }
-    
   </style>
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:600px;">
-    <div id="myGrid" style="width:100%;height:500px;"></div>
-  </div>
-  <div style="width:600px;">
-    <div id="myGrid2" style="width:100%;height:500px;"></div>
+  <div class="grid-outer-wrapper">
+    <div class="grid-header">
+      <label>SlickGrid 1</label>
+    </div>
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+
+    <hr />
+
+    <div class="grid-header">
+      <label>SlickGrid 2</label>
+    </div>
+    <div id="myGrid2" class="grid-inner-wrapper"></div>
   </div>
 
   <div class="options-panel">
     <h2>Excel compatible copy/paste manager</h2>
         <div>
-          This is basically the same example than example-spreadsheet.html, with the support of external excel-compatible software clipboard<br />
-          
+          This is basically the same example than <a href="example-spreadsheet.html">example-spreadsheet.html</a>, with the support of external excel-compatible software clipboard<br />
         </div>
     <h2>Paste from Excel-compatible:</h2>
     <ul>
       <li>Copy a range of cells to clipboard in Excel</li>
-      <li>Select a cell on slickgrid</li> 
-      <li>Use Ctrl-V keyboard shortcut to paste from the clipboard</li> 
+      <li>Select a cell on slickgrid</li>
+      <li>Use Ctrl-V keyboard shortcut to paste from the clipboard</li>
     </ul>
     <h2>Copy for Excel-compatible:</h2>
     <ul>
         <li>Select a range of cells with a mouse</li>
         <li>Use Ctrl-C shortcut to copy cells</li>
         <li>You can paste the tabular data into Excel</li>
-    </ul>    
+    </ul>
+
+    <h2>Undo/redo support:</h2>
+    <ul>
+      <li>Use buttons to undo/redo copy/paste</li>
+    </ul>
+    <button onclick="undoRedoBuffer.undo()"><img src="../images/arrow_undo.png" align="absmiddle"> Undo</button>
+    <button onclick="undoRedoBuffer.redo()"><img src="../images/arrow_redo.png" align="absmiddle"> Redo</button>
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
+      </ul>
   </div>
 </div>
 
 <script src="../lib/firebugx.js"></script>
 
-<script src="../lib/jquery-1.7.min.js"></script>
-<script src="../lib/jquery-ui-1.8.16.custom.min.js"></script>
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../plugins/slick.autotooltips.js"></script>
@@ -111,18 +130,72 @@
 <script src="../slick.formatters.js"></script>
 <script src="../slick.grid.js"></script>
 
-<script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
   var grid;
   var grid2;
   var data = [];
   var data2 = [];
-  
+
   var options = {
     editable: true,
     enableAddRow: true,
     enableCellNavigation: true,
     asyncEditorLoading: false,
     autoEdit: false
+  };
+
+
+
+  var undoRedoBuffer = {
+      commandQueue : [],
+      commandCtr : 0,
+
+      queueAndExecuteCommand : function(editCommand) {
+        this.commandQueue[this.commandCtr] = editCommand;
+        this.commandCtr++;
+        editCommand.execute();
+      },
+
+      undo : function() {
+        if (this.commandCtr == 0)
+          return;
+
+        this.commandCtr--;
+        var command = this.commandQueue[this.commandCtr];
+
+        if (command && Slick.GlobalEditorLock.cancelCurrentEdit()) {
+          command.undo();
+        }
+      },
+      redo : function() {
+        if (this.commandCtr >= this.commandQueue.length)
+          return;
+        var command = this.commandQueue[this.commandCtr];
+        this.commandCtr++;
+        if (command && Slick.GlobalEditorLock.cancelCurrentEdit()) {
+          command.execute();
+        }
+      }
+  }
+
+  // undo shortcut
+  $(document).keydown(function(e)
+  {
+    if (e.which == 90 && (e.ctrlKey || e.metaKey)) {    // CTRL + (shift) + Z
+      if (e.shiftKey){
+        undoRedoBuffer.redo();
+      } else {
+        undoRedoBuffer.undo();
+      }
+    }
+  });
+
+  var pluginOptions = {
+    clipboardCommandHandler: function(editCommand){ undoRedoBuffer.queueAndExecuteCommand.call(undoRedoBuffer,editCommand); },
+    includeHeaderWhenCopying : false
   };
 
   var columns = [
@@ -143,10 +216,10 @@
       editor: Slick.Editors.Text
     });
   }
-  
+
   columns[4] = {id: "%", name: "% Complete", field: "percentComplete", width: 80, resizable: false, formatter: Slick.Formatters.PercentCompleteBar, editor: Slick.Editors.PercentComplete};
   columns[5] = {id: "start", name: "Start", field: "start", minWidth: 60, editor: Slick.Editors.Date};
- 
+
 
   $(function () {
     for (var i = 0; i < 100; i++) {
@@ -159,7 +232,7 @@
       d["start"] = new Date(Math.round(Math.random() * 1000000000));
       d["weekCalendar"] = [true, true, true, true, true, true, true, true, true, true, false, false, false, false];
     }
-    
+
     grid = new Slick.Grid("#myGrid", data, columns, options);
     grid.setSelectionModel(new Slick.CellSelectionModel());
     grid.registerPlugin(new Slick.AutoTooltips());
@@ -167,8 +240,8 @@
     // set keyboard focus on the grid
     grid.getCanvasNode().focus();
 
-    grid.registerPlugin(new Slick.CellExternalCopyManager());
-    
+    grid.registerPlugin(new Slick.CellExternalCopyManager(pluginOptions));
+
 
     grid.onAddNewRow.subscribe(function (e, args) {
       var item = args.item;
@@ -178,12 +251,12 @@
       grid.updateRowCount();
       grid.render();
     });
-    
+
     grid2 = new Slick.Grid("#myGrid2", data, columns, options);
     grid2.setSelectionModel(new Slick.CellSelectionModel());
-    
-    grid2.registerPlugin(new Slick.CellExternalCopyManager());
-  })
+
+    grid2.registerPlugin(new Slick.CellExternalCopyManager(pluginOptions));
+  });
 </script>
 </body>
 </html>

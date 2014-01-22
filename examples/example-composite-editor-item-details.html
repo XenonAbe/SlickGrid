@@ -1,10 +1,10 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <title>SlickGrid example: CompositeEditor</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Composite Editor</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
@@ -58,12 +58,12 @@
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:600px;">
-    <div id="myGrid" style="width:100%;height:500px;"></div>
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
   </div>
 
   <div class="options-panel">
-    <h2>Demonstrates:</h2>
+    <h2>Demonstrates</h2>
     <ul>
       <li>using a CompositeEditor to implement detached item edit form</li>
     </ul>
@@ -71,9 +71,10 @@
     <h2>Options:</h2>
     <button onclick="openDetails()">Open Item Edit for active row</button>
 
-      <h2>View Source:</h2>
+    <h2>View Source:</h2>
       <ul>
-          <li><A href="https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example-composite-editor-item-details.html" target="_sourcewindow"> View the source for this example on Github</a></li>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
       </ul>
   </div>
 </div>
@@ -98,10 +99,11 @@
 
 <script src="../lib/firebugx.js"></script>
 
-<script src="../lib/jquery-1.7.min.js"></script>
-<script src="../lib/jquery-ui-1.8.16.custom.min.js"></script>
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
-<script src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js"></script>
+<script src="../lib/jquery.tmpl.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../plugins/slick.cellrangeselector.js"></script>
@@ -111,7 +113,10 @@
 <script src="../slick.grid.js"></script>
 <script src="slick.compositeeditor.js"></script>
 
-<script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
   function requiredFieldValidator(value) {
     if (value == null || value == undefined || !value.length) {
       return {valid: false, msg: "This is a required field"};
@@ -123,7 +128,7 @@
   var grid;
   var data = [];
   var columns = [
-    {id: "title", name: "Title", field: "title", width: 120, cssClass: "cell-title", editor: Slick.Editors.Text, validator: requiredFieldValidator},
+    {id: "title", name: "Title", field: "title", width: 80, cssClass: "cell-title", editor: Slick.Editors.Text, validator: requiredFieldValidator},
     {id: "desc", name: "Description", field: "description", width: 100, editor: Slick.Editors.Text},
     {id: "duration", name: "Duration", field: "duration", editor: Slick.Editors.Text},
     {id: "percent", name: "% Complete", field: "percentComplete", width: 80, resizable: false, formatter: Slick.Formatters.PercentCompleteBar, editor: Slick.Editors.PercentComplete},
@@ -230,7 +235,7 @@
     });
 
     grid.setActiveCell(0, 0);
-  })
+  });
 </script>
 </body>
 </html>

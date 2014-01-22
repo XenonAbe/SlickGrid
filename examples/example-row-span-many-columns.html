@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+  <title>SlickGrid Row Spans: Basic Grid</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css">
+  <link rel="stylesheet" href="examples.css" type="text/css">
+  <style type="text/css">
+    .slick-row .slick-cell.rowspan {
+      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAQ0lEQVQYV2N8/fr1fwY84M6dOwyM+BSBFKioqOBWBFMAsgSrScgKsCpCV4ChCJsCFEW4FMAV4VMAVnT8+PH/IG/iAwDA1DlezHn8bwAAAABJRU5ErkJggg==);
+    }
+
+
+    .cellValue {
+        float: right;
+    }
+
+    .valueComment {
+        color: #AAA;
+    }
+  </style>
+</head>
+<body>
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+  </div>
+
+  <div class="options-panel">
+    <h2>Demonstrates</h2>
+      <ul>
+        <li>basic grid with minimal configuration</li>
+        <li>Cells with rowspan > 1</li>
+        <li>Row with custom height: 6</li>
+
+        <li><button id='scrollTo'>Scroll To Row</button><input id="nRow" type="text" value="100" style="width: 50px;" /></li>
+        <li><button id='toggleHeight'>Toggle row #6 height</button></li>
+        <li><button id='toggleSpans'>Toggle blue cell colspan &amp; rowspan</button></li>
+          <div id="displaycode"></div>
+      </ul>
+  </div>
+</div>
+
+<script src="../lib/firebugx.js"></script>
+
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-ui.js"></script>
+<script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
+
+<script src="../slick.core.js"></script>
+<script src="../slick.grid.js"></script>
+
+<script src="datasource.js"></script>
+
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
+(function(window, $) {
+    "use strict";
+    console.clear();
+    var grid;
+
+    var columns = slickGridTests.createColumns(5, 2);
+    var data = slickGridTests.getDataItems(600, columns.leafs);
+    var metadata = {
+        2: {
+            columns: {
+                1: {rowspan: 80}
+            }
+        },
+        3: {
+            columns: {
+                3: {rowspan: 3, colspan: 200}
+            }
+        }
+    };
+
+    var dataView = {
+        getItem: function(row) {
+            return data[row];
+        },
+        getLength: function() {
+            return data.length;
+        },
+        getItemMetadata: function(row) {
+            return metadata[row] && metadata.attributes ? metadata[row]
+                : (metadata[row] = $.extend({attributes: {'data-row': row}}, metadata[row]));
+        }
+    };
+
+    var options = {
+        //enableAddRow: true,
+        enableCellNavigation: true,
+        enableColumnReorder: true
+    };
+
+    $(function() {
+        grid = new Slick.Grid("#myGrid", dataView, columns, options);
+    });
+
+})(window, $);
+</script>
+</body>
+</html>

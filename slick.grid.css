@@ -16,6 +16,7 @@ classes should alter those!
   white-space: nowrap;
   cursor: default;
   overflow: hidden;
+  height: 24px;
 }
 
 .slick-header-column.ui-state-default {
@@ -29,10 +30,23 @@ classes should alter those!
   margin: 0;
   padding: 4px;
   border-right: 1px solid silver;
+  border-bottom: 0px;
   border-left: 0px;
   border-top: 0px;
-  border-bottom: 0px;
   float: left;
+}
+
+.slick-header-columns.slick-header-parents .slick-header-column {
+  height: 16px;
+}
+
+.slick-header {
+  border-left: 1px solid silver !important;
+}
+
+
+.slick-header-columns.slick-header-parents .slick-header-column {
+  border-bottom: 1px solid silver;
 }
 
 .slick-headerrow-column.ui-state-default {
@@ -49,15 +63,21 @@ classes should alter those!
   height: 5px;
   margin-left: 4px;
   margin-top: 6px;
-  float: left;
+  position: absolute;
+  left: 0;
+  background: url(images/sort-undetermined.png);
 }
 
 .slick-sort-indicator-desc {
-  background: url(images/sort-desc.gif);
+  background: url(images/sort-desc.png);
 }
 
 .slick-sort-indicator-asc {
-  background: url(images/sort-asc.gif);
+  background: url(images/sort-asc.png);
+}
+
+.slick-header-sortable .slick-column-name {
+  margin-left: 10px;
 }
 
 .slick-resizable-handle {
@@ -69,6 +89,10 @@ classes should alter those!
   right: 0px;
   top: 0;
   height: 100%;
+}
+
+.slick-resizable-handle-hover {
+  background-color: #ccc;
 }
 
 .slick-sortable-placeholder {
@@ -102,6 +126,10 @@ classes should alter those!
   cursor: default;
 }
 
+.slick-transparent {
+  visibility: hidden;
+}
+
 .slick-group {
 }
 
@@ -130,6 +158,10 @@ classes should alter those!
   border-style: solid;
 }
 
+.slick-cell.rowspan {
+  z-index: 9;
+}
+
 .slick-cell:focus {
   outline: none;
 }
@@ -155,3 +187,38 @@ classes should alter those!
   position: absolute;
   border: 2px dashed black;
 }
+
+/*  Fixed panel and columns styles START  */
+
+.slick-fixed-panel {
+  border-top: 1px solid #C0C0C0;
+  border-right: 1px solid transparent;
+  background-color: white;
+  overflow:hidden;
+  margin-right:-1px;
+  position:absolute;
+  left: 0px;
+}
+
+.slick-fixed-column {
+}
+
+.slick-fixed-cell {
+  border-color: #C0C0C0;
+  border-bottom-style: solid;
+  border-right-style: dotted;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+  cursor: default;
+}
+
+.slick-fixed-cell.alt {
+  background-color: #FAFAFA;
+}
+
+.slick-fixed-cell .slick-fixed-content {
+  padding-top: 5px;
+  margin-left: 5px;
+}
+
+/*  Fixed panel and columns styles END  */

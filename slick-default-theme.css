@@ -7,7 +7,12 @@ classes should alter those!
 
 .slick-header-columns {
   background: url('images/header-columns-bg.gif') repeat-x center bottom;
+  /* background-color: #EBECEE; */
   border-bottom: 1px solid silver;
+}
+
+.slick-header-columns.slick-header-parents{
+  border-bottom: 0;
 }
 
 .slick-header-column {
@@ -29,19 +34,26 @@ classes should alter those!
   height: 100%;
 }
 
-.slick-row.ui-state-active {
+.slick-row.ui-state-active .slick-cell {
   background: #F5F7D7;
 }
 
 .slick-row {
   position: absolute;
   background: white;
-  border: 0px;
+  border: 0;
   line-height: 20px;
+}
+
+.slick-row .slick-cell {
+  background: white;
 }
 
 .slick-row.selected {
   z-index: 10;
+}
+
+.slick-row.selected .slick-cell {
   background: #DFE8F6;
 }
 
@@ -76,6 +88,10 @@ classes should alter those!
 .slick-cell.selected {
   background-color: beige;
 }
+/* make sure we override the regular background color: */
+.slick-row.odd .slick-cell.selected {
+  background-color: rgb(231, 231, 195) /* beige */;
+}
 
 .slick-cell.active {
   border-color: gray;
@@ -86,12 +102,8 @@ classes should alter those!
   background: silver !important;
 }
 
-.slick-row.odd {
+.slick-row.odd .slick-cell {
   background: #fafafa;
-}
-
-.slick-row.ui-state-active {
-  background: #F5F7D7;
 }
 
 .slick-row.loading {
@@ -104,7 +116,7 @@ classes should alter those!
   -moz-animation-duration: 0.2s;
   -webkit-animation-duration: 0.2s;
   -moz-animation-name: slickgrid-invalid-hilite;
-  -webkit-animation-name: slickgrid-invalid-hilite;  
+  -webkit-animation-name: slickgrid-invalid-hilite;
 }
 
 @-moz-keyframes slickgrid-invalid-hilite {

@@ -11,14 +11,20 @@ function assertEmpty(dv) {
     same(undefined, dv.getItemByIdx(0), "getItemByIdx should return undefined if not found");
 }
 
-function assertConsistency(dv,idProperty) {
+function assertConsistency(dv, idProperty, grouping) {
     idProperty = idProperty || "id";
+    grouping = grouping || {};
+    grouping.totalGroupRows = grouping.totalGroupRows || 0;
+    grouping.totalGroupTotalsRows = grouping.totalGroupTotalsRows || 0;
     var items = dv.getItems(),
         filteredOut = 0,
         row,
-        id;
+        id,
+        item;
+    var groupRows = 0;
+    var groupTotalsRows = 0;
 
-    for (var i=0; i<items.length; i++) {
+    for (var i = 0; i < items.length; i++) {
         id = items[i][idProperty];
         same(dv.getItemByIdx(i), items[i], "getItemByIdx");
         same(dv.getItemById(id), items[i], "getItemById");
@@ -31,7 +37,25 @@ function assertConsistency(dv,idProperty) {
             same(dv.getItem(row), items[i], "getRowById");
     }
 
-    same(items.length-dv.getLength(), filteredOut, "filtered rows");
+    for (var i = 0, len = dv.getLength(); i < len; i++) {
+        item = dv.getItem(i);
+        id = item[idProperty];
+        if (id != null) {
+            row = dv.getRowById(id);
+            same(row, i, "id points to correct row for data item");
+            same(dv.getItemById(id), items[dv.getIdxById(id)], "getItem");
+        } else {
+            ok(item.__group ^ item.__groupTotals, "all non-data rows are either group header rows or group totals rows");
+            if (item.__group) 
+                groupRows++;
+            else if (item.__groupTotals)
+                groupTotalsRows++;
+        }
+    }
+
+    same(groupRows, grouping.totalGroupRows, "expected number of group rows");
+    same(groupTotalsRows, grouping.totalGroupTotalsRows, "expected number of group totals rows");
+    same(grouping.totalGroupRows + grouping.totalGroupTotalsRows + items.length - dv.getLength(), filteredOut, "filtered rows");
 }
 
 test("initial setup", function() {
@@ -475,7 +499,7 @@ test("updating an item to pass the filter", function() {
         same(args.pageSize, 0, "pageSize arg");
         same(args.pageNum, 0, "pageNum arg");
         same(args.totalRows, 4, "totalRows arg");
-        count++;        
+        count++;
     });
     dv.updateItem(3,{id:3,val:3});
     equal(count, 3, "events fired");
@@ -835,6 +859,159 @@ test("delete at the end", function() {
     equal(dv.getLength(), 2, "rows updated");
     assertConsistency(dv);
 });
+
+module("grouping");
+
+function loadData(count, seed, options) {
+  // produce predictable 'random' numbers similar to semiRandom.random()
+  var semiRandom = new MersenneTwister(seed || 42);
+  var someDates = ["01/01/2009", "02/02/2009", "03/03/2009"];
+  var data = [];
+  // prepare the data
+  for (var i = 0; i < count; i++) {
+    var d = data[i] = {
+       id: i,
+       val: ((i ^ 54) % 7),
+       title: "Task " + ((i | 6) % 7),
+       duration: Math.round(semiRandom.random() * 14),
+       percentComplete: Math.round(semiRandom.random() * 100),
+       start: someDates[ Math.floor((semiRandom.random() * 2)) ],
+       finish: someDates[ Math.floor((semiRandom.random() * 2)) ],
+       cost: Math.round(semiRandom.random() * 10000) / 100,
+       effortDriven: (i % 5 == 0)
+    };
+  }
+  var dv = new Slick.Data.DataView(options);
+  dv.setItems(data);
+  return dv;
+}
+
+test("does not do anything by default", function() {
+    var count = 0;
+    var dv = loadData(50, 42);
+    equal(dv.getLength(), 50, "no rows are added or removed");
+    equal(dv.getItems().length, 50, "each row is an item");
+    assertConsistency(dv);
+});
+
+test("adds no rows per group (options.showExpandedGroupRows = false)", function() {
+    var count = 0;
+    var dv = loadData(50, 42, {
+        showExpandedGroupRows: false,
+        inlineFilters: false
+        // idProperty: "id"
+        // groupItemMetadataProvider: 
+        // globalItemMetadataProvider: { getRowMetadata:       function(item, row, cell, rows) { return meta; } }
+        // groupItemMetadataProvider:  { getGroupRowMetadata:  function(item, row, cell, rows) { return meta; }, 
+        //                               getTotalsRowMetadata: function(item, row, cell, rows) { return meta; } }
+        // flattenGroupedRows: (groups, level, groupingInfos, filteredItems, options) { return rows; }         
+    });
+    var gi = [{
+        getter: "val",                  // group by 'val' field
+        comparer: function(ga, gb) { return gb.value - ga.value; }, // can also sort by .count, .groups, .rows, .totals (by .level makes no sense)
+        formatter: function(g) { return "grouptitle-" + g.value; }, // sets the group.title field
+        displayTotalsRow: false,
+        collapsed: false,
+        aggregateCollapsed: false,
+        aggregateEmpty: false
+        //aggregators: [...]
+        //predefinedValues: [ ... ]
+        //getGroupRows: function(self, gi, rows, allFilteredItems, level, parentGroup) { return rows; }
+    }];
+    dv.setGrouping(gi);
+
+    equal(dv.getLength(), 50, "no rows are added or removed");
+    equal(dv.getItems().length, 50, "each row is an item");
+    assertConsistency(dv);
+});
+
+test("adds one row per group when you do not have any aggregators", function() {
+    var count = 0;
+    var dv = loadData(50, 42, {
+        showExpandedGroupRows: true,
+        inlineFilters: false
+        // idProperty: "id"
+        // groupItemMetadataProvider: 
+        // globalItemMetadataProvider: { getRowMetadata:       function(item, row, cell, rows) { return meta; } }
+        // groupItemMetadataProvider:  { getGroupRowMetadata:  function(item, row, cell, rows) { return meta; }, 
+        //                               getTotalsRowMetadata: function(item, row, cell, rows) { return meta; } }
+        // flattenGroupedRows: (groups, level, groupingInfos, filteredItems, options) { return rows; }         
+    });
+
+    var expectation = {
+        totalGroupRows: 0,
+        totalGroupTotalsRows: 0,
+        totalDataItems: 50,
+        oldtotalRows: 50,
+        updatedRows: { 
+            rows: [ 0, 
+                    2, 3, 4, 5, 6, 7, 8, 9, 10, 
+                    12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 
+                    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56 
+                ] 
+        }
+    };
+
+    dv.onRowsChanged.subscribe(function(e,args) {
+        ok(true, "onRowsChanged called");
+        same(args, expectation.updatedRows, "args");
+        count++;
+    });
+    dv.onRowCountChanged.subscribe(function(e,args) {
+        ok(true, "onRowCountChanged called");
+        equal(args.previous, expectation.oldtotalRows, "previous arg");
+        equal(args.current, expectation.totalDataItems + expectation.totalGroupRows + expectation.totalGroupTotalsRows, "current arg");
+        count++;
+    });
+    dv.onPagingInfoChanged.subscribe(function(e,args) {
+        ok(true, "onPagingInfoChanged called");
+        equal(args.pageSize, 0, "pageSize arg");
+        equal(args.pageNum, 0, "pageNum arg");
+        equal(args.totalRows, expectation.totalDataItems + expectation.totalGroupRows + expectation.totalGroupTotalsRows, "totalRows arg");
+        count++;
+    });
+
+    var gi = [{
+        getter: "val",                  // group by 'val' field
+        comparer: function(ga, gb) { return gb.value - ga.value; }, // can also sort by .count, .groups, .rows, .totals (by .level makes no sense)
+        formatter: function(g) { return "grouptitle-" + g.value; }, // sets the group.title field
+        displayTotalsRow: false,
+        collapsed: false,
+        aggregateCollapsed: false,
+        aggregateEmpty: false
+        //aggregators: [...]
+        //predefinedValues: [ ... ]
+        //getGroupRows: function(self, gi, rows, allFilteredItems, level, parentGroup) { return rows; }
+    }];
+
+    expectation.totalGroupRows = 7;
+
+    dv.setGrouping(gi);
+    equal(count, 2, "events fired");
+
+    equal(dv.getLength(), 50 + 7, "group header rows are included");
+    equal(dv.getItems().length, 50, "all data rows remain");
+    assertConsistency(dv, null, expectation);
+
+    // clear grouping:
+    expectation.totalGroupRows = 0;
+    expectation.oldtotalRows = 57;
+    expectation.updatedRows = { 
+        "rows": [ 0, 
+            2, 3, 4, 5, 6, 7, 8, 9, 10, 
+            12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 
+            41, 42, 43, 44, 45, 46, 47, 48, 49 
+        ] 
+    };
+
+    dv.setGrouping([]);
+    equal(count, 4, "events fired");
+    equal(dv.getLength(), 50, "after clear no group header rows are included");
+    equal(dv.getItems().length, 50, "all data rows remain");
+    assertConsistency(dv, null, expectation);
+});
+
+
 
 // TODO: paging
 // TODO: combination

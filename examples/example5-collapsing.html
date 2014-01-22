@@ -1,10 +1,10 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example 5: Collapsing</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
@@ -29,12 +29,19 @@
       background: url(../images/collapse.gif) no-repeat center center;
     }
 
+    #displaycode {
+        width: 500px;
+    }
+
   </style>
 </head>
 <body>
-<table width="100%">
-  <tr>
-    <td valign="top" width="50%">
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+  </div>
+
+  <div class="options-panel">
       <div style="border:1px solid gray;background:wheat;padding:6px;">
         <label>Show tasks with % at least: </label>
 
@@ -45,29 +52,28 @@
         <label>And title including:</label>
         <input type=text id="txtSearch">
       </div>
-      <br/>
 
-      <div id="myGrid" style="width:600px;height:500px;"></div>
-    </td>
-    <td valign="top">
-      <h2>Demonstrates:</h2>
+      <hr/>
+
+    <h2>Demonstrates</h2>
       <ul>
         <li>implementing expand/collapse as a filter for DataView</li>
       </ul>
 
-        <h2>View Source:</h2>
-        <ul>
-            <li><A href="https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example5-collapsing.html" target="_sourcewindow"> View the source for this example on Github</a></li>
-        </ul>
-    </td>
-  </tr>
-</table>
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
+      </ul>
+  </div>
+</div>
 
 <script src="../lib/firebugx.js"></script>
 
-<script src="../lib/jquery-1.7.min.js"></script>
-<script src="../lib/jquery-ui-1.8.16.custom.min.js"></script>
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.formatters.js"></script>
@@ -75,7 +81,10 @@
 <script src="../slick.grid.js"></script>
 <script src="../slick.dataview.js"></script>
 
-<script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
 function requiredFieldValidator(value) {
   if (value == null || value == undefined || !value.length) {
     return {valid: false, msg: "This is a required field"};
@@ -84,6 +93,7 @@ function requiredFieldValidator(value) {
   }
 }
 
+var dataView;
 
 var TaskNameFormatter = function (row, cell, value, columnDef, dataContext) {
   value = value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -100,16 +110,14 @@ var TaskNameFormatter = function (row, cell, value, columnDef, dataContext) {
   }
 };
 
-var dataView;
 var grid;
-var data = [];
 var columns = [
-  {id: "title", name: "Title", field: "title", width: 220, cssClass: "cell-title", formatter: TaskNameFormatter, editor: Slick.Editors.Text, validator: requiredFieldValidator},
+  {id: "title", name: "Title", field: "title", width: 190, cssClass: "cell-title", formatter: TaskNameFormatter, editor: Slick.Editors.Text, validator: requiredFieldValidator},
   {id: "duration", name: "Duration", field: "duration", editor: Slick.Editors.Text},
   {id: "%", name: "% Complete", field: "percentComplete", width: 80, resizable: false, formatter: Slick.Formatters.PercentCompleteBar, editor: Slick.Editors.PercentComplete},
   {id: "start", name: "Start", field: "start", minWidth: 60, editor: Slick.Editors.Date},
   {id: "finish", name: "Finish", field: "finish", minWidth: 60, editor: Slick.Editors.Date},
-  {id: "effort-driven", name: "Effort Driven", width: 80, minWidth: 20, maxWidth: 80, cssClass: "cell-effort-driven", field: "effortDriven", formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox, cannotTriggerInsert: true}
+  {id: "effort-driven", name: "Effort Driven", width: 70, minWidth: 20, maxWidth: 80, cssClass: "cell-effort-driven", field: "effortDriven", formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox, cannotTriggerInsert: true}
 ];
 
 var options = {
@@ -121,6 +129,7 @@ var options = {
 
 var percentCompleteThreshold = 0;
 var searchString = "";
+var data = [];
 
 function myFilter(item) {
   if (item["percentComplete"] < percentCompleteThreshold) {
@@ -146,10 +155,6 @@ function myFilter(item) {
   return true;
 }
 
-function percentCompleteSort(a, b) {
-  return a["percentComplete"] - b["percentComplete"];
-}
-
 $(function () {
   var indent = 0;
   var parents = [];
@@ -165,8 +170,8 @@ $(function () {
     } else if (Math.random() < 0.3 && indent > 0) {
       indent--;
       parents.pop();
-    } 
-	
+    }
+
     if (parents.length > 0) {
       parent = parents[parents.length - 1];
     } else {
@@ -209,7 +214,8 @@ $(function () {
       "percentComplete": 0,
       "start": "01/01/2009",
       "finish": "01/01/2009",
-      "effortDriven": false};
+      "effortDriven": false
+    };
     $.extend(item, args.item);
     dataView.addItem(item);
   });
@@ -229,7 +235,6 @@ $(function () {
       e.stopImmediatePropagation();
     }
   });
-
 
   // wire up model events to drive the grid
   dataView.onRowCountChanged.subscribe(function (e, args) {
@@ -271,8 +276,8 @@ $(function () {
 
     searchString = this.value;
     dataView.refresh();
-  })
-})
+  });
+});
 </script>
 </body>
 </html>

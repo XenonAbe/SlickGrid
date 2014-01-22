@@ -1,38 +1,45 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example: Multi Column Sort</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
 </head>
 <body>
-<table width="100%">
-  <tr>
-    <td valign="top" width="50%">
-      <div id="myGrid" style="width:600px;height:500px;"></div>
-    </td>
-    <td valign="top">
-      <h2>Demonstrates:</h2>
-      <ul>
-        <li>basic grid with multi-column sort option</li>
-      </ul>
-        <h2>View Source:</h2>
-        <ul>
-            <li><A href="https://github.com/mleibman/SlickGrid/blob/gh-pages/examples/example-multi-column-sort.html" target="_sourcewindow"> View the source for this example on Github</a></li>
-        </ul>
-    </td>
-  </tr>
-</table>
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+  </div>
 
-<script src="../lib/jquery-1.7.min.js"></script>
+  <div class="options-panel">
+    <h2>Demonstrates</h2>
+      <ul>
+        <li>Basic grid with multi-column sort option. Keep [SHIFT] key depressed while clicking on headers to add them to the sort criteria, where precedence is determine by the order in which you select the columns to sort (going from high priority to low).</li>
+      </ul>
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+          <div id="displaycode"></div>
+      </ul>
+  </div>
+</div>
+
+<script src="../lib/firebugx.js"></script>
+
+<script src="../lib/jquery.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
 
-<script>
+<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
   var grid;
   var columns = [
     { id: "title", name: "Title", field: "title", sortable: true },
@@ -93,7 +100,7 @@
       grid.invalidate();
       grid.render();
     });
-  })
+  });
 </script>
 </body>
 </html>
