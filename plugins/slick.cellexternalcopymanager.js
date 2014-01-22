@@ -88,7 +88,7 @@
       // if a custom getter is not defined, we call serializeValue of the editor to serialize
       if (columnDef.editor) {
         var editorArgs = {
-          container: $(document),  // a dummy container
+          container: $("<p>"),  // a dummy container
           column: columnDef,
 
           grid: _grid,
@@ -434,24 +434,52 @@
             }
             var clipText = clipTextArr.join('');
             _copyFingerPrint = clipText.replace(/\r/g, "");
+              
+            //  
+            // Clipboard handling
+            // ------------------
+            //
+            // See also:
+            //
+            //   - http://help.dottoro.com/ljctuhrg.php
+            //
+            //   - http://stackoverflow.com/questions/7713182/copy-to-clipboard-for-all-browsers-using-javascript#11603131
+            //     (where the hash in the URL points you at the solution approach which is also employed in slickgrid:
+            //      no Flash, only a hidden (off screen) TEXTAREA DOM node, some arbitrary (heuristically determined)
+            //      timeout and **the subtle requirement that these particular keypresses (Ctrl-C/Ctrl-X/Ctrl-V | Cmd-C/Cmd-X/Cmd-V)
+            //      have their keyboard events 'bubble up' all the way into the browser default handler** so no
+            //      event.stopPropagation() or `return false` in this (or any outer level) keyboard handler for you!**
+            //
+            //   - http://stackoverflow.com/questions/400212/how-to-copy-to-the-clipboard-in-javascript
+            //     (note the by now obsoleted FF approach in there; just for completeness listed here: do not even consider this!)
+            //
+            //   - https://github.com/mojombo/clippy
+            //     (Flash-based solution. Need I say more?)
+            //
+            if (window.clipboardData) {
+              // MSIE browser supports clipboard access from JavaScript
+              window.clipboardData.setData("Text", clipText);
+              return true;
+            }
+            else {
+              var activeCell = _grid.getActiveCell();
+              _createTextBox(clipText);
 
-            var activeCell = _grid.getActiveCell();
-            _createTextBox(clipText);
+              _externalCopyPastaCatcherTI = setTimeout(function() {
+                  _destroyTextBox();
+                  assert(!_externalCopyPastaCatcherTI);
 
-            _externalCopyPastaCatcherTI = setTimeout(function() {
-                _destroyTextBox();
-                assert(!_externalCopyPastaCatcherTI);
+                  // restore focus
+                  if (activeCell) {
+                      //$focus.attr('tabIndex', '-1');
+                      //$focus.focus();
+                      //$focus.removeAttr('tabIndex');
+                      _grid.setActiveCell(activeCell.row, activeCell.cell);
+                  }
+              }, _externalCopyActionWrapupDelay);
 
-                // restore focus
-                if (activeCell) {
-                    //$focus.attr('tabIndex', '-1');
-                    //$focus.focus();
-                    //$focus.removeAttr('tabIndex');
-                    _grid.setActiveCell(activeCell.row, activeCell.cell);
-                }
-            }, _externalCopyActionWrapupDelay);
-
-            return false;
+              return false;
+            }
           }
         }
 
