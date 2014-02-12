@@ -2620,15 +2620,21 @@ if (typeof Slick === "undefined") {
 
     // parameters:
     //   row,cell:    grid cell coordinate
-    //   speed:       number of milliseconds one half of each ON/OFF toggle cycle takes (default: 100ms)
-    //   times:       number of flash half-cycles to run through (default: 4) - proper 'flashing' requires you to set this to an EVEN number
+    //   options:
+    //     speed:     number of milliseconds one half of each ON/OFF toggle cycle takes (default: 100ms)
+    //     times:     number of flash half-cycles to run through (default: 4) - proper 'flashing' requires you to set this to an EVEN number
+    //     delay:     0/false: start flashing immediately. true: wait one half-cycle to begin flashing. <+N>: wait N milliseconds to begin flashing.
+    //     cssClass:  the class to toggle; when set, this overrides the slickgrid options.cellFlashingCssClass
     //
     // Notes:
-    // - starts flashing immediately.
     // - when count = 0 or ODD, then the 'flash' class is SET [at the end of the flash period] but never reset!
-    function flashCell(row, cell, speed, times) {
-      speed = speed || 100;
-      times = times || 4;
+    function flashCell(row, cell, flash_options) {
+      flash_options = $.extend({}, {
+        speed: 100,
+        times: 4,
+        delay: false,
+        cssClass: options.cellFlashingCssClass
+      }, flash_options);
       var key = "flashing";
 
       if (rowsCache[row]) {
@@ -2636,7 +2642,7 @@ if (typeof Slick === "undefined") {
 
         // and make sure intermediate .render() actions keep the 'flashing' class intact too!
         var id = columns[cell].id;
-        var start_state = !$cell.hasClass(options.cellFlashingCssClass);
+        var start_state = !$cell.hasClass(flash_options);
 
         function toggleCellClass(times) {
           $cell.queue(function () {
@@ -2648,16 +2654,16 @@ if (typeof Slick === "undefined") {
               if (!hash[row]) {
                 hash[row] = {};
               }
-              hash[row][id] = options.cellFlashingCssClass;
+              hash[row][id] = flash_options.cssClass;
 
-              $cell.addClass(options.cellFlashingCssClass).dequeue();
+              $cell.addClass(flash_options.cssClass).dequeue();
             } else {
               // switch to OFF
               if (hash[row]) {
                 delete hash[row][id];
               }
 
-              $cell.removeClass(options.cellFlashingCssClass).dequeue();
+              $cell.removeClass(flash_options.cssClass).dequeue();
             }
             setCellCssStyles(key, hash);
             execNextFlashPhase(times - 1);
@@ -2671,10 +2677,17 @@ if (typeof Slick === "undefined") {
           setTimeout(function () {
                 toggleCellClass(times);
               },
-              speed);
+              flash_options.speed);
         }
 
-        toggleCellClass(times | 0);
+        if (flash_options.delay) {
+          setTimeout(function () {
+            toggleCellClass(flash_options.times | 0);
+          },
+          flash_options.delay !== true ? flash_options.delay : flash_options.speed);
+        } else {
+          toggleCellClass(flash_options.times | 0);
+        }
       }
     }
 
