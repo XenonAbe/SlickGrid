@@ -526,10 +526,10 @@ function isValidModifier(v) {
         buttonImageOnly: true,
         buttonImage: args.dateButtonImage || (imageDir + "/calendar.png"),
         beforeShow: function () {
-          calendarOpen = true
+          calendarOpen = true;
         },
         onClose: function () {
-          calendarOpen = false
+          calendarOpen = false;
         }
       });
       $input.width($input.width() - 18);

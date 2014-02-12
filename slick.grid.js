@@ -408,11 +408,13 @@ if (typeof Slick === "undefined") {
 
         $container
             .bind("resize.slickgrid", resizeCanvas)
-            .bind("focus.slickgrid", function() {
+            .bind("focusin.slickgrid", function(e) {
               console.log("container focus: ", this, arguments);
+		      trigger(self.onFocusIn, {e: e}, e);
             })
             .bind("focusout.slickgrid", function(e) {
               console.log("container LOST FOCUS", this, arguments);
+		      trigger(self.onFocusOut, {e: e}, e);
             });
         $viewport
             //.bind("click", handleClick)
@@ -3994,6 +3996,8 @@ if (typeof Slick === "undefined") {
       "onDblClick": new Slick.Event(),
       "onContextMenu": new Slick.Event(),
       "onKeyDown": new Slick.Event(),
+      "onFocusIn": new Slick.Event(),
+      "onFocusOut": new Slick.Event(),
       "onAddNewRow": new Slick.Event(),
       "onValidationError": new Slick.Event(),
       "onCanvasWidthChanged": new Slick.Event(),
