@@ -186,7 +186,8 @@ if (typeof Slick === "undefined") {
       forceSyncScrolling: false,
       addNewRowCssClass: "new-row",
       syncColumnCellResize: false,
-      editCommandHandler: null
+      editCommandHandler: null,
+      clearCellBeforeEdit: true
     };
 
     var columnDefaults = {
@@ -3253,7 +3254,7 @@ if (typeof Slick === "undefined") {
       $(activeCellNode).addClass("editable");
 
       // don't clear the cell if a custom editor is passed through
-      if (!editor && options.clearCellBeforeEdit!==false) {
+      if (!editor && options.clearCellBeforeEdit) {
         activeCellNode.innerHTML = "";
       }
 
