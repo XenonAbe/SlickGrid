@@ -410,19 +410,9 @@ if (typeof Slick === "undefined") {
             .bind("resize.slickgrid", resizeCanvas)
             .bind("focus.slickgrid", function() {
               console.log("container focus: ", this, arguments);
-              var lock = getEditorLock();
-              if (!lock.isActive(editController) && lock.commitCurrentEdit()) {
-                lock.activate(editController);
-              }
-              // else: jump back to previously focussed element... but we don't know what it is so this is all we can do now...
             })
             .bind("focusout.slickgrid", function(e) {
-              console.log("container LOST FOCUS = autoCOMMIT: ", this, arguments);
-              var lock = getEditorLock();
-              if (!lock.commitCurrentEdit()) {
-                // commit failed, jump back to edited field so user can edit it and make sure it passes the next time through
-                $(e.target).focus();
-              }
+              console.log("container LOST FOCUS", this, arguments);
             });
         $viewport
             //.bind("click", handleClick)
