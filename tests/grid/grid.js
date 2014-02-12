@@ -58,7 +58,7 @@
     grid.onColumnsResized.subscribe(function() { ok(true,"onColumnsResized called"); });
     var oldWidth = cols[0].width;
     $("#container .slick-resizable-handle:first").simulate("drag", { dx: 100, dy: 0 });
-    equal(cols[0].width, oldWidth+100-1, "columns array is updated");
+    equal(cols[0].width, oldWidth+100, "columns array is updated");
     grid.onColumnsResized.unsubscribe();
   });
 
@@ -67,30 +67,34 @@
     grid.onColumnsStartResize.subscribe(function() { ok(true,"onColumnsStartResize called"); });
     var oldWidth = cols[0].width;
     $("#container .slick-resizable-handle:first").simulate("drag", {dx:100,dy:0});
-    equal(cols[0].width, oldWidth+100-1, "columns array is updated");
+    equal(cols[0].width, oldWidth+100, "columns array is updated");
     grid.onColumnsStartResize.unsubscribe();
   });
 
   test("onColumnsStartResize is fired before onColumnsResized on column resize", function() {
-    expect(4);
+    expect(7);
     var marker = 3;
     grid.onColumnsResized.subscribe(function() { 
       marker *= 3;
       ok(true,"onColumnsResized called"); 
     });
     grid.onColumnsStartResize.subscribe(function() { 
-      marker -= 2;
+      marker *= 5;
       ok(true,"onColumnsStartResize called"); 
     });
     // this event should NOT fire as the resize is instantaneous:
     grid.onColumnsResizing.subscribe(function() { 
-      marker = 11;
+      marker += 11;
       ok(true,"onColumnsResizing called"); 
     });
     var oldWidth = cols[0].width;
-    $("#container .slick-resizable-handle:first").simulate("drag", {dx:100,dy:0});
-    equal(cols[0].width, oldWidth+100-1, "columns array is updated");
-    equal(marker, (3 - 2) * 3, "event handlers invoked in the expected order");
+    $("#container .slick-resizable-handle:first").simulate("drag", {
+    	dx: 100, 
+    	dy: 0, 
+    	steps: 3
+    });
+    equal(cols[0].width, oldWidth + 100, "columns array is updated");
+    equal(marker, (3 * 5 + 3 * 11 /* jquery.simulate(drag) simulates three dragmove events */) * 3, "event handlers invoked in the expected order");
     grid.onColumnsStartResize.unsubscribe();
     grid.onColumnsResizing.unsubscribe();
     grid.onColumnsResized.unsubscribe();
