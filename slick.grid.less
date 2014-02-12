@@ -5,6 +5,9 @@ No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) 
 classes should alter those!
 */
 
+@import (less) "slick.less.macros.less";
+
+
 .slick-header.ui-state-default, .slick-headerrow.ui-state-default {
   width: 100%;
   overflow: hidden;
@@ -115,7 +118,9 @@ classes should alter those!
   cursor: default;
 }
 
-.slick-group! {}
+.slick-group {
+
+}
 
 .slick-group-toggle {
   display: inline-block;
@@ -151,8 +156,7 @@ classes should alter those!
 .slick-reorder-proxy {
   display: inline-block;
   background: blue;
-  opacity: 0.15;
-  filter: alpha(opacity = 15);
+  .opacity(0.15);
   cursor: move;
 }
 
@@ -160,8 +164,7 @@ classes should alter those!
   display: inline-block;
   height: 2px;
   background: blue;
-  opacity: 0.7;
-  filter: alpha(opacity = 70);
+  .opacity(0.7);
 }
 
 .slick-selection {

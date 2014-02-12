@@ -5,6 +5,9 @@ No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) 
 classes should alter those!
 */
 
+@import (less) "slick.less.macros.less";
+
+
 .slick-header-columns {
   background: url('images/header-columns-bg.gif') repeat-x center bottom;
   /* background-color: #EBECEE; */
@@ -86,7 +89,7 @@ classes should alter those!
 }
 /* make sure we override the regular background color: */
 .slick-row.odd .slick-cell.selected {
-  background-color: rgb(231, 231, 195) /* beige */;
+  background-color: rgb(231, 231, 195); /* beige */
 }
 
 .slick-cell.active {
@@ -107,8 +110,7 @@ classes should alter those!
 }
 
 .slick-row.loading {
-  opacity: 0.5;
-  filter: alpha(opacity = 50);
+  .opacity(0.5);
 }
 
 .slick-cell.invalid {
@@ -120,13 +122,21 @@ classes should alter those!
 }
 
 @-moz-keyframes slickgrid-invalid-hilite {
-  from { box-shadow: 0 0 6px red; }
-  to { box-shadow: none; }
+  from { 
+  	box-shadow: 0 0 6px red; 
+  }
+  to { 
+  	box-shadow: none; 
+  }
 }
 
 @-webkit-keyframes slickgrid-invalid-hilite {
-  from { box-shadow: 0 0 6px red; }
-  to { box-shadow: none; }
+  from { 
+  	box-shadow: 0 0 6px red; 
+  }
+  to { 
+  	box-shadow: none; 
+  }
 }
 
 
