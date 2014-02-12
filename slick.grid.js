@@ -80,9 +80,9 @@ if (typeof Slick === "undefined") {
    *      minWidth:           {Number}    The minimum width of the column
    *      maxWidth:           {Number}    The maximum width of the column
    *      cssClass:           {String}    The name of the CSS class to use for cells in this column
-   *      formatter:          {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, colspan, cellCss, cellStyles) for grid cells
-   *      headerFormatter:    {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, colspan, cellCss, cellStyles) for header cells
-   *      headerRowFormatter: {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, colspan, cellCss, cellStyles) for headerRow cells (option.showHeaderRow)
+   *      formatter:          {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, cellMetaInfo) for grid cells
+   *      headerFormatter:    {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, cellMetaInfo) for header cells
+   *      headerRowFormatter: {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, cellMetaInfo) for headerRow cells (option.showHeaderRow)
    *      editor:             {Function}  The constructor function for the class to use for editing of grid cells
    *      validator:          {Function}  A function to be called when validating user-entered values
    *      cannotTriggerInsert:{Boolean}
@@ -115,7 +115,7 @@ if (typeof Slick === "undefined") {
    *                          {Function}  If present, will be called to retrieve a data value from the
    *                                      specified item for the corresponding column.
    *                                      Analogous to item[columnDef.field], where item is analogous to data[i].
-   *      formatterFactory:   {Object}    If present, its getFormatter(column) method will be called
+   *      formatterFactory:   {Object}    If present, its getFormatter(column, row) method will be called
    *                                      to retrieve a formatter for the specified cell
    *      selectedCellCssClass:{Object?}  (?)Object used to specify CSS class for selected cells
    *      cellFlashingCssClass:{Object?}  (?)Object used to specify CSS class for flashing cells
@@ -724,16 +724,32 @@ if (typeof Slick === "undefined") {
         });
       $headerRow.empty();
 
-      function createColumnHeader(m, appendTo, level) {
+      function createColumnHeader(m, appendTo, level, cell) {
         var colspan = getColumnColspan(m);
         var cellCss = ["ui-state-default", "slick-header-column", "level" + (level || 0), "colspan" + colspan];
         if (m.headerCssClass) cellCss.push(m.headerCssClass);
         var cellStyles = ["width:" + (m.width - headerColumnWidthDiff) + "px"];
-        var html = getHeaderFormatter(-2000, i)(-2000, i, m.name, m, null /* rowDataItem */, colspan, cellCss, cellStyles);
+        var info = {
+          cellCss: cellCss,
+          cellStyles: cellStyles,
+          html: "",
+          toolTip: m.toolTip || null,
+          colspan: colspan,
+          rowspan: 1,
+          //cellHeight: cellHeight,
+          //rowMetadata: rowMetadata, 
+          //cellMetadata: cellMetadata,
+          columnHeader: {
+            column: m,
+            level: level,
+            cell: cell
+          }
+        };
+        info.html = getHeaderFormatter(-2000, cell)(-2000, cell, m.name, m, null /* rowDataItem */, info);
         var header = $("<div role='columnheader' />")
-            .html(html)
+            .html(info.html)
             .attr("id", "" + uid + m.id)
-            .attr("title", m.toolTip || null)
+            .attr("title", info.toolTip)
             .data("column", m)
             .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
             .attr("class", cellCss.join(" "))
@@ -753,8 +769,8 @@ if (typeof Slick === "undefined") {
         return colspan;
       }
 
-      function createBaseColumnHeader(m, level) {
-        var header = createColumnHeader(m, $headers, level);
+      function createBaseColumnHeader(m, level, cell) {
+        var header = createColumnHeader(m, $headers, level, cell);
 
         if (options.enableColumnReorder || m.sortable) {
           header
@@ -770,16 +786,33 @@ if (typeof Slick === "undefined") {
         trigger(self.onHeaderCellRendered, {
           node: header[0],
           column: m,
-          cell: i
+          cell: cell,
+          level: level
         });
 
         if (options.showHeaderRow) {
-          var cellCss = ["ui-state-default", "slick-headerrow-column", "l" + i, "r" + i];
+          var cellCss = ["ui-state-default", "slick-headerrow-column", "l" + cell, "r" + cell];
           if (m.headerCssClass) cellCss.push(m.headerCssClass);
           var cellStyles = [];
-          var html = getHeaderRowFormatter(-1000, i)(-1000, i, m.initialHeaderRowValue, m, null /* rowDataItem */, 1 /* colspan */, cellCss, cellStyles);
+          var info = {
+            cellCss: cellCss,
+            cellStyles: cellStyles,
+            html: "",
+            toolTip: m.headerRowToolTip || null,
+            colspan: 1,
+            rowspan: 1,
+            //cellHeight: cellHeight,
+            //rowMetadata: rowMetadata, 
+            //cellMetadata: cellMetadata,
+            columnHeader: {
+              column: m,
+              level: level,
+              cell: cell
+            }
+          };
+          info.html = getHeaderRowFormatter(-1000, cell)(-1000, cell, m.initialHeaderRowValue, m, null /* rowDataItem */, info);
           var headerRowCell = $("<div></div>")
-              .attr("title", m.headerRowToolTip || null)
+              .attr("title", info.toolTip)
               .data("column", m)
               .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
               .attr("class", cellCss.join(" "))
@@ -788,7 +821,8 @@ if (typeof Slick === "undefined") {
           trigger(self.onHeaderRowCellRendered, {
             node: headerRowCell[0],
             column: m,
-            cell: i
+            cell: cell,
+            level: level
           });
         }
       }
@@ -805,16 +839,16 @@ if (typeof Slick === "undefined") {
           for (var j = 0; j < layer.length; j++) {
             var column = layer[j];
             if (isParent) {
-              createColumnHeader(column, $row, i);
+              createColumnHeader(column, $row, i, j);
             } else {
-              createBaseColumnHeader(column, i);
+              createBaseColumnHeader(column, i, j);
             }
           }
         }
       } else {
         for (var i = 0; i < columns.length; i++) {
           var m = columns[i];
-          createBaseColumnHeader(m);
+          createBaseColumnHeader(m, 0, i);
         }
       }
 
@@ -1712,12 +1746,98 @@ if (typeof Slick === "undefined") {
       return getDataLength() + (options.enableAddRow ? 1 : 0);
     }
 
-    function getDataItem(i) {
+    function getDataItem(row) {
       if (data.getItem) {
-        return data.getItem(i);
+        return data.getItem(row);
       } else {
-        return data[i];
+        return data[row];
       }
+    }
+
+    function getCellValueAndInfo(row, cell, options) {
+      var v = {};
+
+      options = options || {
+        value: true,
+        node: true,
+        height: true,
+        formatterOptions: {
+          outputPlainText: true
+        }
+      };
+
+      // if the cell has other coordinates because of row/cell span, update that cell coordinate
+      var spans = getSpans(row, cell);
+      assert(spans ? spans.length === 4 : true);
+      assert(spans ? spans[3] >= 1 : true);
+      v.spans = spans;
+      if (spans && (spans[0] != row || spans[1] != cell)) {
+        row = spans[0];
+        cell = spans[1];
+      }
+
+      var m = columns[cell], 
+          rowDataItem = getDataItem(row);
+
+      v.columnDef = m;
+      v.rowDataItem = rowDataItem;
+      v.uid = uid + m.id;
+      v.row = row;
+      v.cell = cell;
+      if (options.node) {
+        v.cellNode = getCellNode(row, cell);
+      }
+
+
+      //currentEditor.loadValue(rowDataItem);
+
+
+      var colspan = getColspan(row, cell);
+      var rowspan = getRowspan(row, cell);
+      assert(Math.min(columns.length - 1, cell + colspan - 1) === cell + colspan - 1);
+      v.colspan = colspan;
+      v.rowspan = rowspan;
+
+      var cellHeight = 0;
+      if (options.DOM) {
+        cellHeight = getCellHeight(row, rowspan);
+        v.isNonStandardCellHeight = (cellHeight != options.rowHeight - cellHeightDiff);
+        v.cellHeight = cellHeight;
+      }
+
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
+      // look up by id, then index
+      var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[cell]);
+      v.rowMetadata = rowMetadata;
+      v.cellMetadata = cellMetadata;
+
+      var cellCss = [];
+      for (var key in cellCssClasses) {
+        if (cellCssClasses[key][row] && cellCssClasses[key][row][m.id]) {
+          cellCss.push(cellCssClasses[key][row][m.id]);
+        }
+      }
+      v.cellCssClasses = cellCss;
+
+      if (rowDataItem) {
+        var value = getDataItemValueForColumn(rowDataItem, m, rowMetadata, cellMetadata);
+        v.value = value;
+
+        var info = $.extend({
+          cellCss: cellCss,
+          cellStyles: [],
+          html: "",
+          colspan: colspan,
+          rowspan: rowspan,
+          cellHeight: cellHeight,
+          rowMetadata: rowMetadata, 
+          cellMetadata: cellMetadata
+        }, options.formatterOptions);
+        info.html = getFormatter(row, cell)(row, cell, value, m, rowDataItem, info);
+
+        v.formatterOutput = info;
+      }
+      return v;
     }
 
     function getTopPanel() {
@@ -2013,7 +2133,7 @@ if (typeof Slick === "undefined") {
       }
     }
 
-    function defaultFormatter(row, cell, value, columnDef, rowDataItem, colspan, cellCss, cellStyles) {
+    function defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       if (value == null) {
         return "";
       } else {
@@ -2022,14 +2142,14 @@ if (typeof Slick === "undefined") {
       }
     }
 
-    function defaultHeaderFormatter(row, cell, value, columnDef, rowDataItem, colspan, cellCss, cellStyles) {
+    function defaultHeaderFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
-      return "<span class='slick-column-name'>" + defaultFormatter(row, cell, value, columnDef, rowDataItem, colspan, cellCss, cellStyles) + "</span>";
+      return "<span class='slick-column-name'>" + defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) + "</span>";
     }
 
-    function defaultHeaderRowFormatter(row, cell, value, columnDef, rowDataItem, colspan, cellCss, cellStyles) {
+    function defaultHeaderRowFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
-      return "<span class='slick-extra-headerrow-column'>" + defaultFormatter(row, cell, value, columnDef, rowDataItem, colspan, cellCss, cellStyles) + "</span>";
+      return "<span class='slick-extra-headerrow-column'>" + defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) + "</span>";
     }
 
     function getFormatter(row, cell) {
@@ -2246,22 +2366,23 @@ if (typeof Slick === "undefined") {
       }
 
       // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
-      var fmt = "";
+      var info = {
+        cellCss: cellCss,
+        cellStyles: cellStyles,
+        html: "",
+        colspan: colspan,
+        rowspan: rowspan,
+        cellHeight: cellHeight,
+        rowMetadata: rowMetadata, 
+        cellMetadata: cellMetadata
+      };
       if (rowDataItem) {
         var value = getDataItemValueForColumn(rowDataItem, m, rowMetadata, cellMetadata);
         // allow the formatter to edit the outer cell's DIV CSS as well:
-        fmt = getFormatter(row, cell)(row, cell, value, m, rowDataItem, colspan, cellCss, cellStyles);
+        info.html = getFormatter(row, cell)(row, cell, value, m, rowDataItem, info);
       }
-      return {
-        cellCss: cellCss,
-        cellStyles: cellStyles,
-        html: fmt,
-        colspan: colspan,
-        rowspan: rowspan,
-        cellHeight: cellHeight
-      };
+      return info;
     }
-
 
     function appendCellHtml(stringArray, row, cell, rowMetadata, cellMetadata, rowDataItem) {
       var m = columns[cell];
@@ -2453,7 +2574,8 @@ if (typeof Slick === "undefined") {
         return;
       }
 
-      var m = columns[cell], d = getDataItem(row);
+      var m = columns[cell], 
+          d = getDataItem(row);
       if (currentEditor && activeRow === row && activeCell === cell) {
         currentEditor.loadValue(d);
       } else {
@@ -2468,14 +2590,14 @@ if (typeof Slick === "undefined") {
         var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
         // look up by id, then index
         var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[cell]);
-        if (cellMetadata) {
-          var cellHeight = getCellHeight(row, getRowspan(row, cell));
-          if (cellHeight != options.rowHeight) {
-            cellNode.style.height = cellHeight + "px";
-          } else if (cellNode.style.height) {
-            cellNode.style.height = "";
-          }
+
+        var cellHeight = getCellHeight(row, getRowspan(row, cell));
+        if (cellHeight != options.rowHeight) {
+          cellNode.style.height = cellHeight + "px";
+        } else if (cellNode.style.height) {
+          cellNode.style.height = "";
         }
+
         if (d) {
           var fmt = mkCellHtml(row, cell, rowMetadata, cellMetadata, d);
           var el = $(cellNode);
@@ -2884,15 +3006,15 @@ if (typeof Slick === "undefined") {
           // Create an entry right away so that appendRowHtml() can
           // start populatating it.
           rowsCache[i] = {
-            "rowNode": null,
+            rowNode: null,
 
             // Cell nodes (by column idx).  Lazy-populated by ensureCellNodesInRowsCache().
-            "cellNodesByColumnIdx": [],
+            cellNodesByColumnIdx: [],
 
             // Column indices of cell nodes that have been rendered, but not yet indexed in
             // cellNodesByColumnIdx.  These are in the same order as cell nodes added at the
             // end of the row.
-            "cellRenderQueue": []
+            cellRenderQueue: []
           };
 
           appendRowHtml(stringArray, i, range, dataLength);
@@ -2914,15 +3036,15 @@ if (typeof Slick === "undefined") {
         // Create an entry right away so that appendRowHtml() can
         // start populatating it.
         rowsCache[i] = {
-          "rowNode": null,
+          rowNode: null,
 
           // Cell nodes (by column idx).  Lazy-populated by ensureCellNodesInRowsCache().
-          "cellNodesByColumnIdx": [],
+          cellNodesByColumnIdx: [],
 
           // Column indices of cell nodes that have been rendered, but not yet indexed in
           // cellNodesByColumnIdx.  These are in the same order as cell nodes added at the
           // end of the row.
-          "cellRenderQueue": []
+          cellRenderQueue: []
         };
 
         appendRowHtml(stringArray, i, range, dataLength);
@@ -2968,14 +3090,6 @@ if (typeof Slick === "undefined") {
       postProcessToRow = Math.max(postProcessToRow, row);
       startPostProcessing();
     }
-
-    /*
-    function updateRowPositions() {
-      for (var row in rowsCache) {
-        rowsCache[row].rowNode.style.top = getRowTop(row) + "px";
-      }
-    }
-    */
 
     function render() {
       if (!initialized) { return; }

@@ -74,15 +74,31 @@
 
       assert(columnDef.field !== undefined);
       assert(columnDef.field !== null);
+      var data = _grid.getData();
+      assert(data);
+      var columns = _grid.getColumns();
+      assert(columns);
+      var m = columns[srcX];
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(srcY, srcX);
+      // look up by id, then index
+      var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[srcX]);
       var retVal = row_item[columnDef.field];
 
       // use formatter if available; much faster than editor
       if (columnDef.formatter) {
-          // fake these: we only want the raw entry value anyway:
-          var cellCss = []; // ["slick-cell", "l" + cell, "r" + (cell + colspan - 1)];
-          var cellStyles = [];
-          var colspan = 0; // rather than using getColspan(srcY, srcX), this signals the formatter that the plaintext value is required.
-          return columnDef.formatter(srcY, srcX, row_item[columnDef.field], columnDef, row_item, colspan, cellCss, cellStyles);
+        // fake these: we only want the raw entry value anyway:
+        var info = {
+          cellCss: [], // ["slick-cell", "l" + cell, "r" + (cell + colspan - 1)],
+          cellStyles: [],
+          html: "",
+          colspan: 1,
+          rowspan: 1,
+          //cellHeight: cellHeight,
+          rowMetadata: rowMetadata, 
+          cellMetadata: cellMetadata,
+          outputPlainText: true         // this signals the formatter that the plaintext value is required.
+        };
+        return columnDef.formatter(srcY, srcX, row_item[columnDef.field], columnDef, row_item, info);
       }
 
       // if a custom getter is not defined, we call serializeValue of the editor to serialize
@@ -448,7 +464,7 @@
             //      no Flash, only a hidden (off screen) TEXTAREA DOM node, some arbitrary (heuristically determined)
             //      timeout and **the subtle requirement that these particular keypresses (Ctrl-C/Ctrl-X/Ctrl-V | Cmd-C/Cmd-X/Cmd-V)
             //      have their keyboard events 'bubble up' all the way into the browser default handler** so no
-            //      event.stopPropagation() or `return false` in this (or any outer level) keyboard handler for you!**
+            //      event.stopPropagation() or `return true` in this (or any outer level) keyboard handler for you!**
             //
             //   - http://stackoverflow.com/questions/400212/how-to-copy-to-the-clipboard-in-javascript
             //     (note the by now obsoleted FF approach in there; just for completeness listed here: do not even consider this!)
