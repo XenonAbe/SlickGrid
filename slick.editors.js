@@ -497,6 +497,26 @@ function isValidModifier(v) {
         monthNamesShort: regionSettings.monthNamesShort,
         monthNames: regionSettings.monthNames
       };
+      var datePickerOptions = {};
+      var datePickerDefaultOptions = {
+        dateFormat: "yy-mm-dd",                 // this format is used for displaying the date while editing / picking it
+        defaultDate: 0,                         // default date: today
+        showOn: "button",
+        buttonImageOnly: true,
+        buttonImage: args.dateButtonImage || (imageDir + "/calendar.png"),
+      };
+      var datePickerFixedOptions = {
+        beforeShow: function () {
+          calendarOpen = true;
+        },
+        onClose: function () {
+          calendarOpen = false;
+        }
+      };
+      // Override DatePicker options from datePickerOptions on column definition.
+      // Make sure that beforeShow and onClose events are not clobbered.
+      datePickerOptions = $.extend(datePickerOptions, datePickerDefaultOptions,
+        args.column.datePickerOptions, datePickerFixedOptions);
 
     function parseDateStringAndDetectFormat(s) {
       var fmt, d;
@@ -522,19 +542,7 @@ function isValidModifier(v) {
           })
           .focus()
           .select();
-      $input.datepicker({
-        dateFormat: "yy-mm-dd",                 // this format is used for displaying the date while editing / picking it
-        defaultDate: 0,                         // default date: today
-        showOn: "button",
-        buttonImageOnly: true,
-        buttonImage: args.dateButtonImage || (imageDir + "/calendar.png"),
-        beforeShow: function () {
-          calendarOpen = true;
-        },
-        onClose: function () {
-          calendarOpen = false;
-        }
-      });
+      $input.datepicker(datePickerOptions);
       $input.width($input.width() - 18);
     };
 
