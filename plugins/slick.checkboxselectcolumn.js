@@ -16,10 +16,13 @@
       columnId: "_checkbox_selector",
       cssClass: null,
       toolTip: "Select/Deselect All",
-      width: 30
+      width: 30,
+      rowselector: true   // is it a column for grid row selection
     };
 
     var _options = $.extend(true, {}, _defaults, options);
+
+    var selectionChanged = new Slick.Event();
 
     function init(grid) {
       _grid = grid;
@@ -35,10 +38,18 @@
     }
 
     function handleSelectedRowsChanged(e, args) {
+      if (!_options.rowselector) return;
+      
       var selectedRows = _grid.getSelectedRows();
       var data = _grid.getData();
       var selectableRowCount = 0;
-      var lookup = {}, row, i, rowSelectable;
+      var lookup = {};
+      var row, i, rowSelectable;
+      var tx_args = {
+        added: [],
+        removed: []
+      };  // eventargs to transmit
+      
       for (i = 0; i < _grid.getDataLength(); i++) {
         rowSelectable = isRowSelectable(data, i);
         if (rowSelectable) {
@@ -49,11 +60,15 @@
         row = selectedRows[i];
         lookup[row] = true;
         if (lookup[row] !== _selectedRowsLookup[row]) {
+          tx_args.added.push(row);
+          
           _grid.invalidateRow(row);
           delete _selectedRowsLookup[row];
         }
       }
       for (i in _selectedRowsLookup) {
+        tx_args.removed.push(_selectedRowsLookup[i]);
+          
         _grid.invalidateRow(i);
       }
       _selectedRowsLookup = lookup;
@@ -64,6 +79,8 @@
       } else {
         _grid.updateColumnHeader(_options.columnId, "<input type='checkbox'>", _options.toolTip);
       }
+      
+      selectionChanged.notify(tx_args);
     }
 
     function handleKeyDown(e, args) {
@@ -80,7 +97,7 @@
     }
 
     function handleClick(e, args) {
-      // clicking on a row select checkbox
+      // clicking on a row selects checkbox
       if (_grid.getColumns()[args.cell].id === _options.columnId && $(e.target).is(":checkbox")) {
         // if editing, try to commit
         if (_grid.getEditorLock().isActive() && !_grid.getEditorLock().commitCurrentEdit()) {
@@ -143,6 +160,8 @@
         width: _options.width,
         resizable: false,
         sortable: false,
+        nofilter: true,
+        hideable: false,
         cssClass: _options.cssClass,
         formatter: checkboxSelectionFormatter
       };
@@ -170,7 +189,8 @@
       "init": init,
       "destroy": destroy,
 
-      "getColumnDefinition": getColumnDefinition
+      "getColumnDefinition": getColumnDefinition,
+      "selectionChanged": selectionChanged
     });
   }
 })(jQuery);

@@ -46,14 +46,14 @@
       showExpandedGroupRows: true,
       inlineFilters: false,
       idProperty: "id",
-      stableSortIdProperty: "__stableSortId"
+      stableSort: true
     };
 
     options = $.extend(true, {}, defaults, options);
 
     // private
     var idProperty = options.idProperty;  // property holding a unique row id
-    var stableSortIdProperty = options.stableSortIdProperty;  // property holding a unique row id field which is used and edited internally every time the data is sorted
+    var stableSort = options.stableSort;
     var items = [];         // data by index
     var rows = [];          // data by row
     var idxById = {};       // indexes by id
@@ -181,8 +181,10 @@
     }
 
     function sort(comparer, ascending) {
-      sortAsc = ascending;
-      sortComparer = comparer;
+      sortAsc = (ascending == null ? true : ascending);
+      sortComparer = comparer || function(x, y) {
+      	return x.toString() - y.toString();
+      };
       fastSortField = null;
 
       if (ascending === false) {
@@ -206,6 +208,10 @@
       var map;
       // we also use the mapper phase to turn sort into a stable sort by initializing the stableSortIdProperty for each data item:
       // by including that one in the comparer check we create a stable sort.
+
+
+// property holding a unique row id field which is used and edited internally every time the data is sorted
+      
       var mapper = comparer.mapper || function(e, i) {
         e[stableSortIdProperty] = i;
         return e;
@@ -217,7 +223,7 @@
       map.sort(comparer);
 
       var unmapper = comparer.unmapper || function(e, i) {
-        //delete e[stableSortIdProperty];
+        delete e[stableSortIdProperty];
         return e;
       };
       // apply the map for the resulting order

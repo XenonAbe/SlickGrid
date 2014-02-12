@@ -3,7 +3,7 @@
  * (c) 2009-2013 Michael Leibman
  * michael{dot}leibman{at}gmail{dot}com
  * http://github.com/mleibman/slickgrid
- *
+ *  
  * Distributed under MIT license.
  * All rights reserved.
  *
@@ -1817,7 +1817,7 @@ if (typeof Slick === "undefined") {
       var metadata = data.getItemMetadata && data.getItemMetadata(row, false);
 
       if (metadata && metadata.cssClasses) {
-        rowCss += " " + metadata.cssClasses;
+        rowCss += " " + ( typeof metadata.cssClasses === 'function' ? metadata.cssClasses(row) : metadata.cssClasses);
       }
 
       stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px' role='row'>");
@@ -1845,6 +1845,10 @@ if (typeof Slick === "undefined") {
 
           appendCellHtml(stringArray, row, i, colspan, d);
         }
+      }
+
+      if (metadata && metadata.appendHtml) {
+        stringArray.push(metadata.appendHtml);
       }
 
       stringArray.push("</div>");
@@ -3026,6 +3030,14 @@ if (typeof Slick === "undefined") {
       }
     }
 
+    function getRowFromEvent(e) {
+      var $row = $(e.target).closest(".slick-row", $canvas);
+      if (!$row.length) {
+        return null;
+      }
+      return getRowFromNode($row[0]);
+    }
+
     function getCellNodeBox(row, cell) {
       if (!cellExists(row, cell)) {
         return null;
@@ -4071,6 +4083,7 @@ if (typeof Slick === "undefined") {
 
       "getCellFromPoint": getCellFromPoint,
       "getCellFromEvent": getCellFromEvent,
+      "getRowFromEvent": getRowFromEvent,
       "getActiveCell": getActiveCell,
       "setActiveCell": setActiveCell,
       "getActiveCellNode": getActiveCellNode,

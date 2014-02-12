@@ -38,7 +38,7 @@
       'C':67,
       'V':86,
       'ESC':27
-    }
+    };
 
     function init(grid) {
       _grid = grid;
@@ -75,9 +75,9 @@
       // if a custom getter is not defined, we call serializeValue of the editor to serialize
       if (columnDef.editor) {
         var editorArgs = {
-          'container':$("<p>"),  // a dummy container
-          'column':columnDef,
-          'position':{'top':0, 'left':0}  // a dummy position required by some editors
+          'container': $("<p>"),  // a dummy container
+          'column': columnDef,
+          'position': {'top': 0, 'left': 0}  // a dummy position required by some editors
         };
         var editor = new columnDef.editor(editorArgs);
         editor.loadValue(item);
@@ -99,9 +99,9 @@
       // if a custom setter is not defined, we call applyValue of the editor to unserialize
       if (columnDef.editor){
         var editorArgs = {
-          'container':$("body"),  // a dummy container
-          'column':columnDef,
-          'position':{'top':0, 'left':0}  // a dummy position required by some editors
+          'container': $("body"),  // a dummy container
+          'column': columnDef,
+          'position': {'top': 0, 'left': 0}  // a dummy position required by some editors
         };
         var editor = new columnDef.editor(editorArgs);
         editor.loadValue(item);

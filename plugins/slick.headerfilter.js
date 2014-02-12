@@ -3,87 +3,18 @@
   $.extend(true, window, {
     "Slick": {
       "Plugins": {
-        "HeaderMenu": HeaderMenu
+        "HeaderFilter": HeaderFilter
       }
     }
   });
 
-
-  /***
-   * A plugin to add drop-down menus to column headers.
-   *
-   * USAGE:
-   *
-   * Add the plugin .js & .css files and register it with the grid.
-   *
-   * To specify a menu in a column header, extend the column definition like so:
-   *
-   *   var columns = [
-   *     {
-   *       id: 'myColumn',
-   *       name: 'My column',
-   *
-   *       // This is the relevant part
-   *       header: {
-   *          menu: {
-   *              items: [
-   *                {
-   *                  // menu item options
-   *                },
-   *                {
-   *                  // menu item options
-   *                }
-   *              ]
-   *          }
-   *       }
-   *     }
-   *   ];
-   *
-   *
-   * Available menu options:
-   *    tooltip:      Menu button tooltip.
-   *
-   *
-   * Available menu item options:
-   *    title:        Menu item text.
-   *    disabled:     Whether the item is disabled.
-   *    tooltip:      Item tooltip.
-   *    command:      A command identifier to be passed to the onCommand event handlers.
-   *    iconCssClass: A CSS class to be added to the menu item icon.
-   *    iconImage:    A url to the icon image.
-   *
-   *
-   * The plugin exposes the following events:
-   *    onBeforeMenuShow:   Fired before the menu is shown.  You can customize the menu or dismiss it by returning false.
-   *        Event args:
-   *            grid:     Reference to the grid.
-   *            column:   Column definition.
-   *            menu:     Menu options.  Note that you can change the menu items here.
-   *
-   *    onCommand:    Fired on menu item click for buttons with 'command' specified.
-   *        Event args:
-   *            grid:     Reference to the grid.
-   *            column:   Column definition.
-   *            command:  Button command identified.
-   *            button:   Button options.  Note that you can change the button options in your
-   *                      event handler, and the column header will be automatically updated to
-   *                      reflect them.  This is useful if you want to implement something like a
-   *                      toggle button.
-   *
-   *
-   * @param options {Object} Options:
-   *    buttonCssClass:   an extra CSS class to add to the menu button
-   *    buttonImage:      a url to the menu button image (default '../images/down.gif')
-   * @class Slick.Plugins.HeaderButtons
-   * @constructor
-   */
-  function HeaderMenu(options) {
+  function HeaderFilter(options) {
     var _grid;
     var _self = this;
     var _handler = new Slick.EventHandler();
     var _defaults = {
       buttonCssClass: null,
-      buttonImage: null
+      buttonImage: "../images/filter.gif"
     };
     var $menu;
     var $activeHeaderColumn;
@@ -182,7 +113,7 @@
 
       if (!$menu) {
         $menu = $("<div class='slick-header-menu'></div>")
-          .appendTo(_grid.getContainerNode());
+          .appendTo(document.body);
       }
       $menu.empty();
 
@@ -229,20 +160,15 @@
       }
 
       // Position the menu.
-      $menu.position({
-        my: "left top",
-        at: "left bottom",
-        of: $(this)
-      });
+      $menu
+        .css("top", $(this).offset().top + $(this).height())
+        .css("left", $(this).offset().left);
+
 
       // Mark the header as active to keep the highlighting.
       $activeHeaderColumn = $menuButton.closest(".slick-header-column");
       $activeHeaderColumn
         .addClass("slick-header-column-active");
-
-      // Stop propagation so that it doesn't register as a header click event.
-      e.preventDefault();
-      e.stopPropagation();
     }
 
 
@@ -269,6 +195,7 @@
       // Stop propagation so that it doesn't register as a header click event.
       e.preventDefault();
       e.stopPropagation();
+      return false;
     }
 
     $.extend(this, {

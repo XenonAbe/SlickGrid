@@ -9,6 +9,7 @@
   function RowSelectionModel(options) {
     var _grid;
     var _ranges = [];
+    var _rowIndexes = [];
     var _self = this;
     var _handler = new Slick.EventHandler();
     var _inHandler;
@@ -135,8 +136,18 @@
     }
 
     function setSelectedRanges(ranges) {
+      var 
+        selectionIndexes = $.map(ranges, function(r){ return r.fromRow; }),
+        deleteIndexes = _rowIndexes.filter(function(elem){ return selectionIndexes.indexOf(elem) === -1; });
+
+      _rowIndexes = selectionIndexes;
       _ranges = ranges;
       _self.onSelectedRangesChanged.notify(_ranges);
+      _self.onSelectionChanged.notify({
+        deletes: deleteIndexes,
+        selection: selectionIndexes
+        //multiselect: multiselect === true
+      });
     }
 
     function getSelectedRanges() {
@@ -308,7 +319,8 @@
       "init": init,
       "destroy": destroy,
 
-      "onSelectedRangesChanged": new Slick.Event()
+      "onSelectedRangesChanged": new Slick.Event(),
+      "onSelectionChanged": new Slick.Event()
     });
   }
 })(jQuery);

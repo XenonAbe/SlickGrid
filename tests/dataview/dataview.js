@@ -207,7 +207,9 @@ test("asc by default", function() {
     var items = [{id:2,val:2},{id:1,val:1},{id:0,val:0}];
     var dv = new Slick.Data.DataView();
     dv.setItems(items);
-    dv.sort(function(x,y) { return x.val-y.val });
+    dv.sort(function(x,y) { 
+    	return x.val-y.val; 
+    });
     same(items, [{id:0,val:0},{id:1,val:1},{id:2,val:2}], "sort order");
 });
 

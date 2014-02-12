@@ -1,3 +1,5 @@
+/*jshint -W041*/  // Use '===' to compare with 'null'. (W041)
+
 /***
  * Contains basic SlickGrid editors.
  * @module Editors
@@ -21,7 +23,8 @@
         "RowMulti": RowEditor,
         "ReadOnly": ReadOnlyEditor,
         "Combo": SelectCellEditor,
-        "Color": ColorEditor
+        "Color": ColorEditor,
+        "SelectCell": SelectCellEditor
       }
     }
   });
@@ -1124,4 +1127,64 @@ function isValidModifier(v) {
     this.init();
   }
 
+
+
+  function SelectCellEditor(args){
+    var $select, defaultValue,
+      scope = this;
+
+    this.init = function() {
+      var options = typeof args.column.options === 'function' ? args.column.options() : args.column.options;
+      if (options){
+        var option_str = "";
+        for(var i in options ){
+          v = options[i];
+          option_str += "<OPTION value='" + ( v.key == null ? v.id : v.key ) + "'>" + (v.value == null ? v.label : v.value) + "</OPTION>";
+        }
+        $select = $("<SELECT tabIndex='0' class='editor-select'>" + option_str + "</SELECT>");
+        $select.appendTo(args.container);
+        $select.focus();
+      }
+    };
+
+    this.destroy = function() {
+      $select.remove();
+    };
+
+    this.focus = function() {
+      $select.focus();
+    };
+
+    this.loadValue = function(item) {
+      defaultValue = item[args.column.field] || "";
+      $select.val(defaultValue);
+    };
+
+    this.serializeValue = function() {
+      if(args.column.options){
+        return $select.val();
+      }
+      else {
+        return ($select.val() == "yes");
+      }
+    };
+
+    this.applyValue = function(item,state) {
+        item[args.column.field] = state;
+    };
+
+    this.isValueChanged = function() {
+        return ($select.val() != defaultValue);
+    };
+
+    this.validate = function() {
+        return {
+            valid: true,
+            msg: null
+        };
+    };
+
+    this.init();
+  }
+  
 })(jQuery);

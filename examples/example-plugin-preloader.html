@@ -1,0 +1,114 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <title>SlickGrid example 1: Basic grid</title>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
+  <style>
+    .slick-preloader{
+      position:absolute;
+      top: 0; right: 0; bottom: 0; left: 0;
+      background: rgb(255, 255, 255) transparent; /* default fallback */
+      background: rgba(255, 255, 255, 0.1); /* nice browsers */
+    }
+    .slick-preloader-inner{
+      background-image: url(../images/preloader-hbar.gif);
+      width: 67px;
+      height: 10px;
+    }
+  </style>
+</head>
+<body>
+<table width="100%">
+  <tr>
+    <td valign="top" width="50%">
+      <div id="myGrid" style="width:600px;height:500px;"></div>
+    </td>
+    <td valign="top">
+      <h2>Demonstrates:</h2>
+      <ul>
+        <li>basic grid with preloader</li>
+      </ul>
+      <h2>Controls</h2>
+      <button onclick="refreshData()">Emulate refresh</button>
+    </td>
+  </tr>
+</table>
+
+<script src="../lib/jquery-1.7.min.js"></script>
+<script src="../lib/jquery.event.drag-2.2.js"></script>
+
+<script src="../slick.core.js"></script>
+<script src="../slick.dataview.js"></script>
+<script src="../slick.grid.js"></script>
+<script src="../plugins/slick.preloader.js"></script>
+
+<script>
+  var grid;
+  var dataView = new Slick.Data.DataView();
+  var columns = [
+    {id: "title", name: "Title", field: "title"},
+    {id: "duration", name: "Duration", field: "duration"},
+    {id: "%", name: "% Complete", field: "percentComplete"},
+    {id: "start", name: "Start", field: "start"},
+    {id: "finish", name: "Finish", field: "finish"},
+    {id: "effort-driven", name: "Effort Driven", field: "effortDriven"}
+  ];
+
+  var options = {
+    enableCellNavigation: true,
+    enableColumnReorder: false
+  };
+
+  function loadData(){
+    var dfd = $.Deferred();
+
+    console.log('data load start');
+    setTimeout(function(){
+      var data = [];
+      for (var i = 0; i < 1500; i++) {
+        data[i] = {
+          id: i,
+          title: "Task " + i,
+          duration: Math.round(Math.random()*10) + " days",
+          percentComplete: Math.round(Math.random() * 100),
+          start: "01/01/2009",
+          finish: "01/05/2009",
+          effortDriven: (i % 5 == 0)
+        };
+      }
+      console.log('data load done');
+      dfd.resolve(data);
+    }, 2500);
+
+    return dfd.promise();
+  }
+
+  $(function () {
+    grid = new Slick.Grid("#myGrid", dataView, columns, options);
+
+    dataView.onRowCountChanged.subscribe(function (e, args) {
+      grid.updateRowCount();
+      grid.render();
+    });
+
+    window.refreshData = function(){
+      // emulating async load
+      preloader.show();
+      loadData().then(function(data){
+        dataView.beginUpdate();
+        dataView.setItems(data);
+        dataView.endUpdate();
+        preloader.hide();      
+      });
+    }
+
+    var preloader = new Slick.Preloader();
+    grid.registerPlugin(preloader);
+    window.refreshData();
+  })
+</script>
+</body>
+</html>
