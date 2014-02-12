@@ -102,7 +102,10 @@
     };
 
     this.serializeValue = function () {
-      return {from: parseInt($from.val(), 10), to: parseInt($to.val(), 10)};
+      return {
+        from: parseInt($from.val(), 10), 
+        to: parseInt($to.val(), 10)
+      };
     };
 
     this.applyValue = function (item, state) {

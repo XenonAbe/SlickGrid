@@ -153,13 +153,13 @@
       commandQueue : [],
       commandCtr : 0,
 
-      queueAndExecuteCommand : function(editCommand) {
+      queueAndExecuteCommand: function(editCommand) {
         this.commandQueue[this.commandCtr] = editCommand;
         this.commandCtr++;
         editCommand.execute();
       },
 
-      undo : function() {
+      undo: function() {
         if (this.commandCtr == 0)
           return;
 
@@ -170,7 +170,7 @@
           command.undo();
         }
       },
-      redo : function() {
+      redo: function() {
         if (this.commandCtr >= this.commandQueue.length)
           return;
         var command = this.commandQueue[this.commandCtr];
@@ -194,7 +194,9 @@
   });
 
   var pluginOptions = {
-    clipboardCommandHandler: function(editCommand){ undoRedoBuffer.queueAndExecuteCommand.call(undoRedoBuffer,editCommand); },
+    clipboardCommandHandler: function(editCommand) { 
+      undoRedoBuffer.queueAndExecuteCommand.call(undoRedoBuffer, editCommand); 
+    },
     includeHeaderWhenCopying : false
   };
 
