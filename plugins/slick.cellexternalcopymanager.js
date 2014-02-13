@@ -57,7 +57,8 @@
         throw new Error("Selection model is mandatory for this plugin. Please set a selection model on the grid before adding this plugin: grid.setSelectionModel(new Slick.CellSelectionModel())");
       }
       // we give focus on the grid when a selection is done on it.
-      // without this, if the user selects a range of cell without giving focus on a particular cell, the grid doesn't get the focus and key stroke handles (ctrl+c) don't work
+      // without this, if the user selects a range of cell without giving focus on a particular cell, 
+      // the grid doesn't get the focus and key stroke handles (ctrl+C) don't work.
       cellSelectionModel.onSelectedRangesChanged.subscribe(function(e, args) {
         _grid.focus();
       });
@@ -79,9 +80,10 @@
       var columns = _grid.getColumns();
       assert(columns);
       var m = columns[srcX];
+      assert(m === columnDef);
       var rowMetadata = data.getItemMetadata && data.getItemMetadata(srcY, srcX);
       // look up by id, then index
-      var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[srcX]);
+      var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[srcX]);
       var retVal = row_item[columnDef.field];
 
       // use formatter if available; much faster than editor
@@ -93,9 +95,10 @@
           html: "",
           colspan: 1,
           rowspan: 1,
-          //cellHeight: cellHeight,
+          cellHeight: _grid.getOptions().rowHeight,
           rowMetadata: rowMetadata,
-          cellMetadata: cellMetadata,
+          columnMetadata: columnMetadata,
+          options: $.extend({}, _grid.getOptions().formatterOptions, m.formatterOptions),
           outputPlainText: true         // this signals the formatter that the plaintext value is required.
         };
         return columnDef.formatter(srcY, srcX, row_item[columnDef.field], columnDef, row_item, info);
@@ -103,19 +106,24 @@
 
       // if a custom getter is not defined, we call serializeValue of the editor to serialize
       if (columnDef.editor) {
-        var editorArgs = {
-          container: $("<p>"),  // a dummy container
-          column: columnDef,
-
+        var info = {
           grid: _grid,
           gridPosition: _grid.getGridPosition(),
+          position: {top: srcY, left: srcX},  // a dummy position required by some editors
+          //position: _grid.getActiveCellPosition(),
+          container: $("<p>"),  // a dummy container
+          //container: activeCellNode,
+          column: columnDef,
           item: row_item || {},
+          rowMetadata: rowMetadata,
+          columnMetadata: columnMetadata,
+          options: $.extend({}, options.editorOptions, columnDef.editorOptions), 
+          outputPlainText: true,         // this signals the formatter that the plaintext value is required.
           commitChanges: _grid.commitEditAndSetFocus,
-          cancelChanges: _grid.cancelEditAndSetFocus,
-
-          position: {top: srcY, left: srcX}  // a dummy position required by some editors
+          cancelChanges: _grid.cancelEditAndSetFocus
         };
-        var editor = new columnDef.editor(editorArgs);
+        //currentEditor = new (editor || getEditor(activeRow, activeCell))(info);
+        var editor = new columnDef.editor(info);
         editor.loadValue(row_item);
         retVal = editor.serializeValue();
         editor.destroy();
@@ -132,7 +140,7 @@
       // if a custom setter is not defined, we call applyValue of the editor to unserialize
       if (columnDef.editor) {
         var editorArgs = {
-          container: $(document),  // a dummy container
+          container: $('body'),  // a dummy container
           column: columnDef,
 
           grid: _grid,

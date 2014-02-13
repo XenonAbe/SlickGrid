@@ -111,7 +111,7 @@ if (typeof Slick === "undefined") {
    *      forceFitColumns:    {Boolean}   Should column widths be automatically resized to fit?
    *      syncColumnCellResize:{Boolean}  Should the grid width be changed dynamically during a drag
    *                                      to change column widths, or only once the mouse is released?
-   *      dataItemColumnValueExtractor(item, columnDef, rowMetadata, cellMetadata):
+   *      dataItemColumnValueExtractor(item, columnDef, rowMetadata, columnMetadata):
    *                          {Function}  If present, will be called to retrieve a data value from the
    *                                      specified item for the corresponding column.
    *                                      Analogous to item[columnDef.field], where item is analogous to data[i].
@@ -423,7 +423,7 @@ if (typeof Slick === "undefined") {
               var column = $header && $header.data("column");
               if (column) {
                 console.log("header focus: ", this, column);
-                trigger(self.onHeaderFocusIn, {columnDef: column}, e);
+                trigger(self.onHeaderFocusIn, {column: column}, e);
                 return;
               } else {
                 var info = getCellFromEvent(e);
@@ -441,7 +441,7 @@ if (typeof Slick === "undefined") {
               var column = $header && $header.data("column");
               if (column) {
                 console.log("header focus LOST: ", this, column);
-                trigger(self.onHeaderFocusOut, {columnDef: column}, e);
+                trigger(self.onHeaderFocusOut, {column: column}, e);
                 return;
               } else {
                 var info = getCellFromEvent(e);
@@ -774,7 +774,7 @@ if (typeof Slick === "undefined") {
           rowspan: 1,
           //cellHeight: cellHeight,
           //rowMetadata: rowMetadata,
-          //cellMetadata: cellMetadata,
+          //columnMetadata: columnMetadata,
           columnHeader: {
             column: m,
             level: level,
@@ -839,7 +839,7 @@ if (typeof Slick === "undefined") {
             rowspan: 1,
             //cellHeight: cellHeight,
             //rowMetadata: rowMetadata,
-            //cellMetadata: cellMetadata,
+            //columnMetadata: columnMetadata,
             columnHeader: {
               column: m,
               level: level,
@@ -1253,7 +1253,7 @@ if (typeof Slick === "undefined") {
                 updateColumnCaches();
                 updateCanvasWidth(true);
                 render();
-                trigger(self.onColumnsResized, {e: e, cell: cell, columnDef: c});
+                trigger(self.onColumnsResized, {e: e, cell: cell, column: c});
             });
       });
     }
@@ -1815,90 +1815,88 @@ if (typeof Slick === "undefined") {
       }
     }
 
-    function getCellValueAndInfo(row, cell, options) {
-      var v = {};
-
-      options = options || {
+    function getCellValueAndInfo(row, cell, config) {
+      config = $.extend({
         value: true,
         node: true,
         height: true,
-        formatterOptions: {
-          outputPlainText: true
-        }
-      };
+        uid: true,
+        css: true,
+
+        outputPlainText: true
+      }, config);
 
       // if the cell has other coordinates because of row/cell span, update that cell coordinate
+      var colspan = 1; // getColspan(row, cell);
+      var rowspan = 1; // getRowspan(row, cell);
       var spans = getSpans(row, cell);
       assert(spans ? spans.length === 4 : true);
       assert(spans ? spans[3] >= 1 : true);
-      v.spans = spans;
-      if (spans && (spans[0] != row || spans[1] != cell)) {
+      if (spans) {
         row = spans[0];
         cell = spans[1];
+        rowspan = span[2];
+        colspan = span[3];
       }
+
+      assert(Math.min(columns.length - 1, cell + colspan - 1) === cell + colspan - 1);
 
       var m = columns[cell],
           rowDataItem = getDataItem(row);
 
-      v.columnDef = m;
-      v.rowDataItem = rowDataItem;
-      v.uid = uid + m.id;
-      v.row = row;
-      v.cell = cell;
-      if (options.node) {
-        v.cellNode = getCellNode(row, cell);
-      }
-
-
-      //currentEditor.loadValue(rowDataItem);
-
-
-      var colspan = getColspan(row, cell);
-      var rowspan = getRowspan(row, cell);
-      assert(Math.min(columns.length - 1, cell + colspan - 1) === cell + colspan - 1);
-      v.colspan = colspan;
-      v.rowspan = rowspan;
-
-      var cellHeight = 0;
-      if (options.DOM) {
-        cellHeight = getCellHeight(row, rowspan);
-        v.isNonStandardCellHeight = (cellHeight != options.rowHeight - cellHeightDiff);
-        v.cellHeight = cellHeight;
-      }
-
       var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
       // look up by id, then index
-      var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[cell]);
-      v.rowMetadata = rowMetadata;
-      v.cellMetadata = cellMetadata;
+      var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[cell]);
 
       var cellCss = [];
-      for (var key in cellCssClasses) {
-        if (cellCssClasses[key][row] && cellCssClasses[key][row][m.id]) {
-          cellCss.push(cellCssClasses[key][row][m.id]);
-        }
-      }
-      v.cellCssClasses = cellCss;
+      if (config.css) {
+	      for (var key in cellCssClasses) {
+	        if (cellCssClasses[key][row] && cellCssClasses[key][row][m.id]) {
+	          cellCss.push(cellCssClasses[key][row][m.id]);
+	        }
+	      }
+	  }
 
-      if (rowDataItem) {
-        var value = getDataItemValueForColumn(rowDataItem, m, rowMetadata, cellMetadata);
-        v.value = value;
+      var cellHeight = options.rowHeight - cellHeightDiff;
 
-        var info = $.extend({
+      var info = {
           cellCss: cellCss,
           cellStyles: [],
           html: "",
+          row: row,
+          cell: cell,
           colspan: colspan,
           rowspan: rowspan,
           cellHeight: cellHeight,
+          isNonStandardCellHeight: false,
+          column: m,
+          rowDataItem: rowDataItem,
           rowMetadata: rowMetadata,
-          cellMetadata: cellMetadata
-        }, options.formatterOptions);
-        info.html = getFormatter(row, cell)(row, cell, value, m, rowDataItem, info);
+          columnMetadata: columnMetadata,
+          options: $.extend({}, options.formatterOptions, m.formatterOptions), 
+          outputPlainText: config.outputPlainText || false
+      };
 
-        v.formatterOutput = info;
+      if (config.height) {
+        var altCellHeight = getCellHeight(row, rowspan);
+        info.isNonStandardCellHeight = (cellHeight != altCellHeight);
+        info.cellHeight = cellHeight;
       }
-      return v;
+
+      if (config.uid) {
+      	v.uid = mkSaneId(m, cell);
+      }
+      if (config.node) {
+        v.cellNode = getCellNode(row, cell);
+      }
+
+      if (rowDataItem && config.value) {
+        var value = getDataItemValueForColumn(rowDataItem, m, rowMetadata, columnMetadata);
+        info.value = value;
+        info.formatter = getFormatter(row, cell);
+        info.html = info.formatter(row, cell, value, m, rowDataItem, info);
+      }
+      return info;
     }
 
     function getTopPanel() {
@@ -2218,11 +2216,11 @@ if (typeof Slick === "undefined") {
       var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
 
       // look up by id, then index
-      var columnOverrides = rowMetadata &&
+      var columnMetadata = rowMetadata &&
           rowMetadata.columns &&
           (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
 
-      return (columnOverrides && columnOverrides.formatter) ||
+      return (columnMetadata && columnMetadata.formatter) ||
           (rowMetadata && rowMetadata.formatter) ||
           column.formatter ||
           (options.formatterFactory && options.formatterFactory.getFormatter && options.formatterFactory.getFormatter(column, row, cell)) ||
@@ -2232,14 +2230,13 @@ if (typeof Slick === "undefined") {
     function getEditor(row, cell) {
       var column = columns[cell];
       var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
-      var columnMetadata = rowMetadata && rowMetadata.columns;
 
       // look up by id, then index
-      var columnOverrides = rowMetadata &&
+      var columnMetadata = rowMetadata &&
           rowMetadata.columns &&
           (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
 
-      return (columnOverrides && columnOverrides.editor) ||
+      return (columnMetadata && columnMetadata.editor) ||
           (rowMetadata && rowMetadata.editor) ||
           column.editor ||
           (options.editorFactory && options.editorFactory.getEditor && options.editorFactory.getEditor(column, row, cell)) ||
@@ -2291,11 +2288,11 @@ if (typeof Slick === "undefined") {
       var rowMetadata = data.getHeaderRowItemMetadata && data.getHeaderRowItemMetadata(headerRow, cell);
 
       // look up by id, then index
-      var columnOverrides = rowMetadata &&
+      var columnMetadata = rowMetadata &&
           rowMetadata.columns &&
           (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
 
-      return (columnOverrides && columnOverrides.headerRowFormatter) ||
+      return (columnMetadata && columnMetadata.headerRowFormatter) ||
           (rowMetadata && rowMetadata.headerRowFormatter) ||
           column.headerRowFormatter ||
           (options.formatterFactory && options.formatterFactory.getHeaderRowFormatter && options.formatterFactory.getHeaderRowFormatter(column, row, cell)) ||
@@ -2305,32 +2302,31 @@ if (typeof Slick === "undefined") {
     function getEditor(row, cell) {
       var column = columns[cell];
       var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
-      var columnMetadata = rowMetadata && rowMetadata.columns;
 
       // look up by id, then index
-      var columnOverrides = rowMetadata &&
+      var columnMetadata = rowMetadata &&
           rowMetadata.columns &&
           (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
 
-      return (columnOverrides && columnOverrides.editor) ||
+      return (columnMetadata && columnMetadata.editor) ||
           (rowMetadata && rowMetadata.editor) ||
           column.editor ||
           (options.editorFactory && options.editorFactory.getEditor && options.editorFactory.getEditor(column, row, cell)) ||
           options.defaultEditor;
     }
 
-    function getDataItemValueForColumn(item, columnDef, rowMetadata, cellMetadata) {
-      if (cellMetadata && cellMetadata.dataItemColumnValueExtractor) {
-        return cellMetadata.dataItemColumnValueExtractor(item, columnDef, rowMetadata, cellMetadata);
+    function getDataItemValueForColumn(item, columnDef, rowMetadata, columnMetadata) {
+      if (columnMetadata && columnMetadata.dataItemColumnValueExtractor) {
+        return columnMetadata.dataItemColumnValueExtractor(item, columnDef, rowMetadata, columnMetadata);
       }
       if (rowMetadata && rowMetadata.dataItemColumnValueExtractor) {
-        return rowMetadata.dataItemColumnValueExtractor(item, columnDef, rowMetadata, cellMetadata);
+        return rowMetadata.dataItemColumnValueExtractor(item, columnDef, rowMetadata, columnMetadata);
       }
       if (columnDef && columnDef.dataItemColumnValueExtractor) {
-        return columnDef.dataItemColumnValueExtractor(item, columnDef, rowMetadata, cellMetadata);
+        return columnDef.dataItemColumnValueExtractor(item, columnDef, rowMetadata, columnMetadata);
       }
       if (options.dataItemColumnValueExtractor) {
-        return options.dataItemColumnValueExtractor(item, columnDef, rowMetadata, cellMetadata);
+        return options.dataItemColumnValueExtractor(item, columnDef, rowMetadata, columnMetadata);
       }
       return item[columnDef.field];
     }
@@ -2391,7 +2387,7 @@ if (typeof Slick === "undefined") {
       stringArray.push("</div>");
     }
 
-    function mkCellHtml(row, cell, rowMetadata, cellMetadata, rowDataItem) {
+    function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem) {
       var m = columns[cell];
       var colspan = getColspan(row, cell);
       var rowspan = getRowspan(row, cell);
@@ -2409,10 +2405,10 @@ if (typeof Slick === "undefined") {
         cellCss.push("rowspan");
         cellCss.push("rowspan" + rowspan);
       }
-      if (cellMetadata && cellMetadata.cssClass) {
-        cellCss.push(cellMetadata.cssClass);
+      if (columnMetadata && columnMetadata.cssClass) {
+        cellCss.push(columnMetadata.cssClass);
       }
-      if (cellMetadata && cellMetadata.transparent) {
+      if (columnMetadata && columnMetadata.transparent) {
         cellCss.push("slick-transparent");
       }
       if (row === activeRow && cell === activeCell) {
@@ -2431,7 +2427,7 @@ if (typeof Slick === "undefined") {
       }
 
       // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
-      var info = {
+      var info = $.extend({}, options.formatterOptions, m.formatterOptions, {
         cellCss: cellCss,
         cellStyles: cellStyles,
         html: "",
@@ -2439,19 +2435,19 @@ if (typeof Slick === "undefined") {
         rowspan: rowspan,
         cellHeight: cellHeight,
         rowMetadata: rowMetadata,
-        cellMetadata: cellMetadata
-      };
+        columnMetadata: columnMetadata
+      });
       if (rowDataItem) {
-        var value = getDataItemValueForColumn(rowDataItem, m, rowMetadata, cellMetadata);
+        var value = getDataItemValueForColumn(rowDataItem, m, rowMetadata, columnMetadata);
         // allow the formatter to edit the outer cell's DIV CSS as well:
         info.html = getFormatter(row, cell)(row, cell, value, m, rowDataItem, info);
       }
       return info;
     }
 
-    function appendCellHtml(stringArray, row, cell, rowMetadata, cellMetadata, rowDataItem) {
+    function appendCellHtml(stringArray, row, cell, rowMetadata, columnMetadata, rowDataItem) {
       var m = columns[cell];
-      var fmt = mkCellHtml(row, cell, rowMetadata, cellMetadata, rowDataItem);
+      var fmt = mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem);
       var styles;
       if (fmt.cellStyles.length > 0) {
         styles = "style='" + fmt.cellStyles.join(";") + ";' ";
@@ -2462,7 +2458,7 @@ if (typeof Slick === "undefined") {
                        styles + "aria-describedby='" + mkSaneId(m, cell) +
                        "' tabindex='-1' role='gridcell'");
 
-      appendMetadataAttributes(stringArray, cellMetadata);
+      appendMetadataAttributes(stringArray, columnMetadata);
 
       stringArray.push(">");
 
@@ -2586,11 +2582,11 @@ if (typeof Slick === "undefined") {
 
         // check changes in row/colspans
         for (c = 0; c < columnCount; c += colspan) {
-          var cellMetadata = metadata.columns && (metadata.columns[columns[c].id] || metadata.columns[c]);
+          var columnMetadata = metadata.columns && (metadata.columns[columns[c].id] || metadata.columns[c]);
           colspan = 1;
-          if (cellMetadata) {
-            rowspan = cellMetadata.rowspan || 1;
-            colspan = cellMetadata.colspan || 1;
+          if (columnMetadata) {
+            rowspan = columnMetadata.rowspan || 1;
+            colspan = columnMetadata.colspan || 1;
             span = spanRow[c];
             var oldRowspan = span && span[2] || 1;
             var oldColspan = span && span[3] || 1;
@@ -2654,7 +2650,7 @@ if (typeof Slick === "undefined") {
         }
         var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
         // look up by id, then index
-        var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[cell]);
+        var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[cell]);
 
         var cellHeight = getCellHeight(row, getRowspan(row, cell));
         if (cellHeight != options.rowHeight) {
@@ -2664,7 +2660,7 @@ if (typeof Slick === "undefined") {
         }
 
         if (d) {
-          var fmt = mkCellHtml(row, cell, rowMetadata, cellMetadata, d);
+          var fmt = mkCellHtml(row, cell, rowMetadata, columnMetadata, d);
           var el = $(cellNode);
           el.attr("style", fmt.cellStyles.length ? fmt.cellStyles.join(";") + ";" : null);
           el.attr("class", fmt.cellCss.join(" "));
@@ -2700,8 +2696,8 @@ if (typeof Slick === "undefined") {
           currentEditor.loadValue(d);
         } else if (d) {
           // look up by id, then index
-          var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[columnIdx]);
-          var fmt = mkCellHtml(row, columnIdx, rowMetadata, cellMetadata, d);
+          var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[columnIdx]);
+          var fmt = mkCellHtml(row, columnIdx, rowMetadata, columnMetadata, d);
           var el = $(node);
           el.attr("style", fmt.cellStyles.length ? fmt.cellStyles.join(";") + ";" : null);
           el.attr("class", fmt.cellCss.join(" "));
@@ -2878,7 +2874,7 @@ if (typeof Slick === "undefined") {
         topPx: viewportTop,
         bottomPx: viewportTop + viewportH,
         leftPx: viewportLeft,
-        rightPx: viewportLeft + viewportW
+        rightPx: viewportLeft + viewportW    // availableWidth = viewportHasVScroll ? viewportW - scrollbarDimensions.width : viewportW
       };
     }
 
@@ -3661,13 +3657,13 @@ if (typeof Slick === "undefined") {
 
     function handleHeaderMouseEnter(e) {
       trigger(self.onHeaderMouseEnter, {
-        "column": $(this).data("column")
+        column: $(this).data("column")
       }, e);
     }
 
     function handleHeaderMouseLeave(e) {
       trigger(self.onHeaderMouseLeave, {
-        "column": $(this).data("column")
+        column: $(this).data("column")
       }, e);
     }
 
@@ -3787,8 +3783,8 @@ if (typeof Slick === "undefined") {
         return null;
       } else {
         return {
-          "row": row,
-          "cell": cell
+          row: row,
+          cell: cell
         };
       }
     }
@@ -3851,13 +3847,13 @@ if (typeof Slick === "undefined") {
       }
     }
 
-    function scrollCellIntoView(row, cell, doPaging, doCentering) {
-      scrollRowIntoView(row, doPaging, doCentering);
+    function scrollCellIntoView(row, cell, doPaging, doCenteringY) {
+      scrollRowIntoView(row, doPaging, doCenteringY);
 
       var colspan = getColspan(row, cell);
       var left = columnPosLeft[cell],
           right = columnPosLeft[cell + colspan],
-          scrollRight = scrollLeft + viewportW;
+          scrollRight = scrollLeft + viewportW;    // availableWidth = viewportHasVScroll ? viewportW - scrollbarDimensions.width : viewportW
 
       if (left < scrollLeft) {
         $viewport.scrollLeft(left);
@@ -3971,8 +3967,8 @@ if (typeof Slick === "undefined") {
           var column = columns[activeCell];
           var rowMetadata = data.getItemMetadata && data.getItemMetadata(activeRow, activeCell);
           // look up by id, then index
-          var cellMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
-          var fmt = mkCellHtml(activeRow, activeCell, rowMetadata, cellMetadata, d);
+          var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
+          var fmt = mkCellHtml(activeRow, activeCell, rowMetadata, columnMetadata, d);
           var el = $(activeCellNode);
           el.attr("style", fmt.cellStyles.length ? fmt.cellStyles.join(";") + ";" : null);
           el.attr("class", fmt.cellCss.join(" "));
@@ -4007,8 +4003,21 @@ if (typeof Slick === "undefined") {
 
       var columnDef = columns[activeCell];
       var item = getDataItem(activeRow);
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(activeRow, activeCell);
 
-      if (trigger(self.onBeforeEditCell, {row: activeRow, cell: activeCell, item: item, column: columnDef}) === false) {
+      // look up by id, then index
+      var columnMetadata = rowMetadata &&
+          rowMetadata.columns &&
+          (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
+
+      if (trigger(self.onBeforeEditCell, {
+	      	row: activeRow, 
+	      	cell: activeCell, 
+	      	item: item, 
+	      	column: columnDef,
+            rowMetadata: rowMetadata,
+            columnMetadata: columnMetadata,
+	      }) === false) {
         setFocus();
         return false;
       }
@@ -4021,17 +4030,19 @@ if (typeof Slick === "undefined") {
         activeCellNode.innerHTML = "";
       }
 
-      currentEditor = new (editor || getEditor(activeRow, activeCell))($.extend({}, options.editorOptions, columnDef.editorOptions,
-        {
-          grid: self,
-          gridPosition: getGridPosition(),
-          position: getActiveCellPosition(),
-          container: activeCellNode,
-          column: columnDef,
-          item: item || {},
-          commitChanges: commitEditAndSetFocus,
-          cancelChanges: cancelEditAndSetFocus
-        }));
+      var info = $.extend({}, options.editorOptions, columnDef.editorOptions, {
+        grid: self,
+        gridPosition: getGridPosition(),
+        position: getActiveCellPosition(),
+        container: activeCellNode,
+        column: columnDef,
+        item: item || {},
+        rowMetadata: rowMetadata,
+        columnMetadata: columnMetadata,
+        commitChanges: commitEditAndSetFocus,
+        cancelChanges: cancelEditAndSetFocus
+      });
+      currentEditor = new (editor || getEditor(activeRow, activeCell))(info);
 
       if (item) {
         currentEditor.loadValue(item);
@@ -4406,10 +4417,10 @@ if (typeof Slick === "undefined") {
 
       if (cell < columns.length) {
         return {
-          "row": row,
-          "cell": cell,
-          "posY": posY,
-          "posX": cell
+          row: row,
+          cell: cell,
+          posY: posY,
+          posX: cell
         };
       }
       return null;
@@ -4426,10 +4437,10 @@ if (typeof Slick === "undefined") {
 
       if (cell >= 0) {
         return {
-          "row": row,
-          "cell": cell,
-          "posY": posY,
-          "posX": cell
+          row: row,
+          cell: cell,
+          posY: posY,
+          posX: cell
         };
       }
       return null;
@@ -4444,10 +4455,10 @@ if (typeof Slick === "undefined") {
 
       if (row <= ub) {
         return {
-          "row": row,
-          "cell": cell,
-          "posY": row,
-          "posX": posX
+          row: row,
+          cell: cell,
+          posY: row,
+          posX: posX
         };
       }
       return null;
@@ -4464,10 +4475,10 @@ if (typeof Slick === "undefined") {
 
       if (row >= 0 && cell < columns.length) {
         return {
-          "row": row,
-          "cell": cell,
-          "posY": row,
-          "posX": posX
+          row: row,
+          cell: cell,
+          posY: row,
+          posX: posX
         };
       }
       return null;
@@ -4478,10 +4489,10 @@ if (typeof Slick === "undefined") {
         row = cell = posY = posX = 0;
         if (canCellBeActive(row, cell)) {
           return {
-            "row": row,
-            "cell": cell,
-            "posY": posY,
-            "posX": cell
+            row: row,
+            cell: cell,
+            posY: posY,
+            posX: cell
           };
         }
       }
@@ -4495,10 +4506,10 @@ if (typeof Slick === "undefined") {
           if (firstFocusableCell !== null) {
             row = getSpanRow(posY, firstFocusableCell);
             pos = {
-              "row": row,
-              "cell": firstFocusableCell,
-              "posY": posY,
-              "posX": firstFocusableCell
+              row: row,
+              cell: firstFocusableCell,
+              posY: posY,
+              posX: firstFocusableCell
             };
           }
         }
@@ -4512,10 +4523,10 @@ if (typeof Slick === "undefined") {
         cell = posX = columns.length - 1;
         if (canCellBeActive(row, cell)) {
           return {
-            "row": row,
-            "cell": cell,
-            "posY": posY,
-            "posX": cell
+            row: row,
+            cell: cell,
+            posY: posY,
+            posX: cell
           };
         }
       }
@@ -4528,10 +4539,10 @@ if (typeof Slick === "undefined") {
           if (lastSelectableCell !== null) {
             row = getSpanRow(posY, lastSelectableCell);
             pos = {
-              "row": row,
-              "cell": lastSelectableCell,
-              "posY": posY,
-              "posX": lastSelectableCell
+              row: row,
+              cell: lastSelectableCell,
+              posY: posY,
+              posX: lastSelectableCell
             };
           }
         }
@@ -4820,7 +4831,7 @@ if (typeof Slick === "undefined") {
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Debug
 
-    this.debug = function () {
+    this.debug = function ($dst) {
       var s = "";
 
       s += ("\n" + "counter_rows_rendered:  " + counter_rows_rendered);
@@ -4833,7 +4844,11 @@ if (typeof Slick === "undefined") {
       s += ("\n" + "page height (pageHeight):  " + pageHeight);
       s += ("\n" + "vScrollDir:  " + vScrollDir);
 
-      alert(s);
+      if ($dst) {
+      	$dst.text(s);
+      } else {
+      	alert(s);
+      }
     };
 
     // a debug helper to be able to access private members
