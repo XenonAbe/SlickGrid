@@ -7,7 +7,7 @@
   });
 
   function Preloader() {
-    var 
+    var
       self = this,
       _grid;
 

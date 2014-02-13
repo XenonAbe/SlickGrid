@@ -161,23 +161,23 @@ function myFilter(item, args) {
 
 function stableComparer(field) {
   return {
-  	valueExtractor: function (node) {
-  	  switch (typeof node[field]) {
-  	  case 'boolean':
-  	  case 'number':
-  	  case 'string':
-  	  case 'undefined':
-  	  	return node[field];
-  	  
-  	  case 'object':
-  	  	if (node[field] === null) {
-  	  	  return node[field];
-  	  	}
-  	  default:
-  	  	return "x" + node[field].toString();   // string conversion here ensures the strings come out as NaN when treated as numbers
-  	  }
-  	}
-  	// and depend on the default comparator provided by DataView...
+    valueExtractor: function (node) {
+      switch (typeof node[field]) {
+      case 'boolean':
+      case 'number':
+      case 'string':
+      case 'undefined':
+        return node[field];
+
+      case 'object':
+        if (node[field] === null) {
+          return node[field];
+        }
+      default:
+        return "x" + node[field].toString();   // string conversion here ensures the strings come out as NaN when treated as numbers
+      }
+    }
+    // and depend on the default comparator provided by DataView...
   };
 }
 

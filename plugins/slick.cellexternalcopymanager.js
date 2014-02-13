@@ -319,8 +319,8 @@
                 }
                 clipText += clipTextRows.join("\r\n") + "\r\n";
             }
-              
-            //  
+
+            //
             // Clipboard handling
             // ------------------
             //
@@ -351,7 +351,7 @@
                 var ta = _createTextBox(clipText);
 
                 ta.focus();
-            
+
                 setTimeout(function(){
                     _bodyElement.removeChild(ta);
                     // restore focus

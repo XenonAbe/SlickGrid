@@ -1,7 +1,7 @@
 ﻿/*
     SlickGridTable is a wrapper that simplifies the setup process for creating a simple table.
 
-    SlickGrid is an excellent, customizeable tool.  However, initial setup and configuration can be a 
+    SlickGrid is an excellent, customizeable tool.  However, initial setup and configuration can be a
     bit cumbersome.  SlickGridTable helps make the process easier.
 
     Required scripts:
@@ -68,7 +68,7 @@ var SlickGridTable = (function () {
         if (this.options.includeCheckbox) {
             //Configure Checkboxes
             checkboxSelector = new Slick.CheckboxSelectColumn({
-                cssClass: checkboxClass 
+                cssClass: checkboxClass
             });
 
             this.columns.unshift(checkboxSelector.getColumnDefinition());
@@ -125,7 +125,7 @@ var SlickGridTable = (function () {
 
         return this.deferred.promise();
     };
-	
+
     SlickGridTable.prototype.onDataLoadComplete = function(data) {
         this.deferred.resolve(data);
     };
@@ -154,7 +154,7 @@ var SlickGridTable = (function () {
     };
 
     SlickGridTable.prototype.isFilterMatch = function (item) {
-    	for (var columnId in this.columnFilters) {
+        for (var columnId in this.columnFilters) {
             if (this.columnFilters[columnId] !== "") {
                 var column = this.grid.getColumns()[this.grid.getColumnIndex(columnId)];
                 if (column && item[column.field] != this.columnFilters[columnId]) {

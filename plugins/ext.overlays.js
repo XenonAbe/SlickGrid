@@ -265,22 +265,22 @@
                 .addClass(className)
                 .addClass('left')
                 .appendTo(target);
-            
+
             this.$right = $('<div>')
                 .addClass(className)
                 .addClass('right')
                 .appendTo(target);
-            
+
             this.$top = $('<div>')
                 .addClass(className)
                 .addClass('top')
                 .appendTo(target);
-            
+
             this.$bottom = $('<div>')
                 .addClass(className)
                 .addClass('bottom')
                 .appendTo(target);
-            
+
             this.$handle = $('<div>')
                 .addClass("handle-overlay")
                 .appendTo(target);

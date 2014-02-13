@@ -408,43 +408,43 @@ if (typeof Slick === "undefined") {
             .bind("resize.slickgrid", resizeCanvas)
             /*
             .bind("focusin.slickgrid", function(e) {
-      		  var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-  		  	  var column = $header && $header.data("column");
-      		  if (column) {
-	            console.log("header focus: ", this, column);
-			    trigger(self.onHeaderFocusIn, {columnDef: column}, e);
-			    return;
+              var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
+              var column = $header && $header.data("column");
+              if (column) {
+                console.log("header focus: ", this, column);
+                trigger(self.onHeaderFocusIn, {columnDef: column}, e);
+                return;
               } else {
-			    var info = getCellFromEvent(e);
-			    if (info) {
-	              console.log("cell focus: ", this, info);
-			      trigger(self.onCellFocusIn, info, e);
-			      return;
-			    }
+                var info = getCellFromEvent(e);
+                if (info) {
+                  console.log("cell focus: ", this, info);
+                  trigger(self.onCellFocusIn, info, e);
+                  return;
+                }
               }
               console.log("container focus: ", this, arguments);
-		      trigger(self.onFocusIn, {}, e);
+              trigger(self.onFocusIn, {}, e);
             })
             .bind("focusout.slickgrid", function(e) {
-      		  var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-    		  var column = $header && $header.data("column");
-      		  if (column) {
-	            console.log("header focus LOST: ", this, column);
-			    trigger(self.onHeaderFocusOut, {columnDef: column}, e);
-			    return;
+              var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
+              var column = $header && $header.data("column");
+              if (column) {
+                console.log("header focus LOST: ", this, column);
+                trigger(self.onHeaderFocusOut, {columnDef: column}, e);
+                return;
               } else {
-			    var info = getCellFromEvent(e);
-			    if (info) {
-	              console.log("cell focus LOST: ", this, info);
-			      trigger(self.onCellFocusOut, info, e);
-			      return;
-			    }
+                var info = getCellFromEvent(e);
+                if (info) {
+                  console.log("cell focus LOST: ", this, info);
+                  trigger(self.onCellFocusOut, info, e);
+                  return;
+                }
               }
               console.log("container LOST FOCUS", this, arguments);
-		      trigger(self.onFocusOut, {}, e);
+              trigger(self.onFocusOut, {}, e);
             })
-			*/
-			;
+            */
+            ;
         $viewport
             //.bind("click", handleClick)
             .bind("scroll", handleScroll);
@@ -703,9 +703,9 @@ if (typeof Slick === "undefined") {
 
     function extractCellFromDOMid(id) {
       // format of ID is: uid_c<cell>_<blah>
-	  var m = /_c(\d+)_/.exec(id);
+      var m = /_c(\d+)_/.exec(id);
       if (m[1] == null || m[1] == '') {
-      	return false;
+        return false;
       }
       return +m[1];
     }
@@ -1118,8 +1118,8 @@ if (typeof Slick === "undefined") {
                 var aux_width = calculateWordDimensions(columnElements[cell].children[0].innerHTML).width;
                 assert(columnDef.values === undefined);
                 for (var row = 0, len = getDataLength(); row < len; row++) {
-	                var rowDataItem = getDataItem(row);
-			        var value = getDataItemValueForColumn(rowDataItem, columnDef);
+                    var rowDataItem = getDataItem(row);
+                    var value = getDataItemValueForColumn(rowDataItem, columnDef);
                     aux_width = Math.max(aux_width, calculateWordDimensions(value.toString()).width);
                 }
                 c.width = aux_width;
@@ -1143,8 +1143,8 @@ if (typeof Slick === "undefined") {
 
         var div = document.createElement('div');
         $(div).css({
-        	'position':'absolute',
-        	'visibility':'hidden',
+            'position':'absolute',
+            'visibility':'hidden',
             'height':'auto',
             'width':'auto',
             'white-space':'nowrap',
@@ -1222,13 +1222,13 @@ if (typeof Slick === "undefined") {
       if ($style[0].styleSheet) { // IE
         $style[0].styleSheet.cssText = "";
       } else {
-		// WebKit hack
+        // WebKit hack
         $style[0].appendChild(document.createTextNode(""));
       }
 
-	  // Add a media (and/or media query) here if you'd like!
-	  // $style[0].setAttribute("media", "screen")
-	  // $style[0].setAttribute("media", "@media only screen and (max-width : 1024px)")
+      // Add a media (and/or media query) here if you'd like!
+      // $style[0].setAttribute("media", "screen")
+      // $style[0].setAttribute("media", "@media only screen and (max-width : 1024px)")
 
       var sheet = $style[0].sheet;
       var rowHeight = options.rowHeight - cellHeightDiff;
@@ -1248,11 +1248,11 @@ if (typeof Slick === "undefined") {
       // see also
       //   http://davidwalsh.name/add-rules-stylesheets
       if (sheet) {
-      	rules.forEach(function (d, i) {
+        rules.forEach(function (d, i) {
           addCSSRule(sheet, d[0], d[1], i); /* i could have been -1 here as each rule can be appended at the end */
         });
       } else {
-      	throw new Error("run-time generated slickgrid rules could not be set up");
+        throw new Error("run-time generated slickgrid rules could not be set up");
       }
     }
 

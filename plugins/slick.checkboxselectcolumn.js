@@ -39,7 +39,7 @@
 
     function handleSelectedRowsChanged(e, args) {
       if (!_options.rowselector) return;
-      
+
       var selectedRows = _grid.getSelectedRows();
       var data = _grid.getData();
       var selectableRowCount = 0;
@@ -49,7 +49,7 @@
         added: [],
         removed: []
       };  // eventargs to transmit
-      
+
       for (i = 0; i < _grid.getDataLength(); i++) {
         rowSelectable = isRowSelectable(data, i);
         if (rowSelectable) {
@@ -61,14 +61,14 @@
         lookup[row] = true;
         if (lookup[row] !== _selectedRowsLookup[row]) {
           tx_args.added.push(row);
-          
+
           _grid.invalidateRow(row);
           delete _selectedRowsLookup[row];
         }
       }
       for (i in _selectedRowsLookup) {
         tx_args.removed.push(_selectedRowsLookup[i]);
-          
+
         _grid.invalidateRow(i);
       }
       _selectedRowsLookup = lookup;
@@ -79,7 +79,7 @@
       } else {
         _grid.updateColumnHeader(_options.columnId, "<input type='checkbox'>", _options.toolTip);
       }
-      
+
       selectionChanged.notify(tx_args);
     }
 
