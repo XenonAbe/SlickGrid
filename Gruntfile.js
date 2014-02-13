@@ -103,12 +103,12 @@ module.exports = function (grunt) {
           sourceMap: true
         },
         files: [
-          { 
-          	expand: true, 
-          	cwd: '', 
-          	src: ['*.less', 'controls/*.less', 'plugins/*.less', 'examples/*.less', '!slick.grid.less', '!slick.config.less', '!slick.config.*.less', '!slick.less.macros.less'], 
-          	dest: '', 
-          	ext: '.css' 
+          {
+            expand: true,
+            cwd: '',
+            src: ['*.less', 'controls/*.less', 'plugins/*.less', 'examples/*.less', '!slick.grid.less', '!slick.config.less', '!slick.config.*.less', '!slick.less.macros.less'],
+            dest: '',
+            ext: '.css'
           }
         ]
       },
@@ -121,24 +121,24 @@ module.exports = function (grunt) {
           sourceMap: true
         },
         files: [
-          { 
-          	src: 'slick.grid.less', 
-          	dest: 'slick.grid.css'
+          {
+            src: 'slick.grid.less',
+            dest: 'slick.grid.css'
           }
         ]
       }
     },
 
-	autoprefixer: {
-	    options: {
-	        browsers: ['last 2 versions']
-	    },
-	    dist: {
-	        files: {
-	            '*.css': ['tmp/*.css']
-	        }
-	    }
-	},
+    autoprefixer: {
+        options: {
+            browsers: ['last 2 versions']
+        },
+        dist: {
+            files: {
+                '*.css': ['tmp/*.css']
+            }
+        }
+    },
 
     usebanner: {
       dist: {
@@ -200,7 +200,7 @@ module.exports = function (grunt) {
 
   // Lint task.
   grunt.registerTask('lint', ['csslint', 'jshint', 'jscs']);
-  
+
   // Test task.
   grunt.registerTask('test', ['lint', 'qunit']);
 

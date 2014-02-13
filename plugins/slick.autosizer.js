@@ -11,7 +11,7 @@
   };
 
   function AutoSizer(options) {
-    var 
+    var
       _isDestroyed,
       _options = $.extend(true, defaults, options),
       $container = $(_options.container),

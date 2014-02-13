@@ -226,15 +226,15 @@ function isValidModifier(v) {
   if (sv.indexOf('+') >= 0 || sv.indexOf('-') >= 0 || sv.indexOf('*') >= 0 || sv.indexOf('/') >= 0) return false;  // no more signs please.
   var pct = false;
   if (sv.charAt(sv.length - 1) === '%') {
-  	pct = true;
-  	sv = sv.slice(0, -1);    // remove also the % char if it is there
+    pct = true;
+    sv = sv.slice(0, -1);    // remove also the % char if it is there
   }
   // what remains must be a number
   if (isNaN(sv)) return false;
   return {
-  	operator: ope,
-  	isPercent: pct,
-  	value: parseFloat(sv) / (pct ? 1 : 100)			// when it is a percentage, produce the equivalent perunage
+    operator: ope,
+    isPercent: pct,
+    value: parseFloat(sv) / (pct ? 1 : 100)         // when it is a percentage, produce the equivalent perunage
   };
 }
 
@@ -401,7 +401,7 @@ function isValidModifier(v) {
       }
       // what remains must be a number
       val = roundPerunage(parseFloat(val) / multiplier);
-      if (isNaN(val)) val = 0; 
+      if (isNaN(val)) val = 0;
       return val;
     }
 
@@ -485,16 +485,16 @@ function isValidModifier(v) {
     var imageDir = args.imagesPath || "../images";
     var dateFormat = 0;
     var detectableDateFormats = [
-      "yy-mm-dd",   // ISO 
+      "yy-mm-dd",   // ISO
       $.datepicker.ISO_8601,
       $.datepicker.COOKIE,
       $.datepicker.RFC_1036,
       $.datepicker.RFC_2822,
       $.datepicker.RFC_850,
       $.datepicker.TIMESTAMP,
-      "dd-mm-yyyy",   // European 
+      "dd-mm-yyyy",   // European
       "mm/dd/yy",     // US
-      "dd-mm-yy",     // European 
+      "dd-mm-yy",     // European
       $.datepicker.TICKS
     ];
     var regionSettings = $.datepicker.regional["en"] || $.datepicker.regional;
@@ -585,10 +585,10 @@ function isValidModifier(v) {
         return;
       }
       if (info.position.visible) {
-	    $.datepicker.dpDiv
-	          .css("top", info.position.top + 30)
-	          .css("left", info.position.left);
-	  }
+        $.datepicker.dpDiv
+              .css("top", info.position.top + 30)
+              .css("left", info.position.left);
+      }
     };
 
     this.focus = function () {
@@ -890,20 +890,20 @@ function isValidModifier(v) {
       });
 
       $picker.click(function(e) {
-	    //$helper.toggle();
-	    $helper.show();
-	    if ($helper.is(":visible")) {
-	      $helper.position({
-	        my: "left top",
-	        at: "right top",
-	        of: $picker,
-	        collision: "flipfit"
-	      });
-	    }
+        //$helper.toggle();
+        $helper.show();
+        if ($helper.is(":visible")) {
+          $helper.position({
+            my: "left top",
+            at: "right top",
+            of: $picker,
+            collision: "flipfit"
+          });
+        }
       });
-	  //$helper.blur(function (e) {
-	  //  $helper.hide();
-	  //});
+      //$helper.blur(function (e) {
+      //  $helper.hide();
+      //});
 
       $helper.find(".editor-percentcomplete-buttons button").bind("click", function (e) {
         $input.val($(this).attr("val"));
@@ -1004,15 +1004,15 @@ function isValidModifier(v) {
 
       assert(args.container);
       $picker.click(function(e) {
-	    if (!$wrapper.is(":visible")) {
-	      showPanel();
-	    } else {
-	      hidePanel();
-	    }
+        if (!$wrapper.is(":visible")) {
+          showPanel();
+        } else {
+          hidePanel();
+        }
       });
-	  //$wrapper.blur(function (e) {
+      //$wrapper.blur(function (e) {
       //  hidePanel();
-	  //});
+      //});
 
       $input.focus().select();
 
@@ -1069,14 +1069,14 @@ function isValidModifier(v) {
      *       }
      */
     this.position = function (info) {
-	  if ($wrapper.is(":visible")) {
-	    $wrapper.position({
-	      my: "left top+2",
-	      at: "left bottom",
-	      of: info.container,
-	      collision: "flipfit"
-	    });
-	  }
+      if ($wrapper.is(":visible")) {
+        $wrapper.position({
+          my: "left top+2",
+          at: "left bottom",
+          of: info.container,
+          collision: "flipfit"
+        });
+      }
     };
 
     this.destroy = function () {
@@ -1086,10 +1086,10 @@ function isValidModifier(v) {
     };
 
     this.focus = function () {
-	  if ($wrapper.is(":visible")) {
-      	$wrapped_input.focus();
+      if ($wrapper.is(":visible")) {
+        $wrapped_input.focus();
       } else {
-      	$input.focus();
+        $input.focus();
       }
     };
 
@@ -1108,10 +1108,10 @@ function isValidModifier(v) {
 
     function getValue() {
       var rv;
-	  if ($wrapper.is(":visible")) {
-      	rv = $wrapped_input.val();
+      if ($wrapper.is(":visible")) {
+        rv = $wrapped_input.val();
       } else {
-      	rv = $input.val();
+        rv = $input.val();
       }
       return rv;
     }
@@ -1307,5 +1307,5 @@ function isValidModifier(v) {
 
     this.init();
   }
-  
+
 })(jQuery);

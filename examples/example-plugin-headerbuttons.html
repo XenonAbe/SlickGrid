@@ -39,7 +39,7 @@
       This example demonstrates using the <b>Slick.Plugins.HeaderButtons</b> plugin to easily add buttons to column
       headers.  These buttons can be specified directly in the column definition, and are very easy to configure and use.
     </p>
-	
+
     <h2>Controls</h2>
     <button onclick="toggleShowHideHeaderButton();">Toggle `Dynamic` column header</button>
 
@@ -185,7 +185,7 @@
       grid.invalidate();
       grid.updateColumnHeader(column.id);
     }
-    
+
     function hideColumnFilterDisplay(column) {
       grid.removeColumnHeaderCssClass(column.id, "filtered");
       column.header.buttons[0].hide = true;

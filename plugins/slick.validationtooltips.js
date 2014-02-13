@@ -7,10 +7,10 @@
   });
 
   function ValidationTooltips(options) {
-    var 
+    var
       _grid,
       _self = this,
-      _defaults = { 
+      _defaults = {
         "className": "cell-tooltip-validation-error"
       };
 
@@ -31,10 +31,10 @@
         validationResult = args.validationResults,
         errorMessage = validationResult.msg,
         $node = $(args.cellNode);
-        
-      var ts = $node.data('tooltipsy');    
+
+      var ts = $node.data('tooltipsy');
       if (ts) ts.destroy();
-      
+
       $node.tooltipsy({
         alignTo: "element",
         offset: [0,8],

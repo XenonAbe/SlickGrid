@@ -91,7 +91,7 @@
   function ReferenceValueFormatter(row, cell, value, columnDef, dataContext) {
     var options = typeof columnDef.options === 'function' ? columnDef.options() : columnDef.options;
 
-    if (options) { 
+    if (options) {
       var match;
       for(var i in options) {
         if (options[i].id == value || options[i].key == value) {
@@ -123,8 +123,8 @@
   }
 
   /*
-   * Presents data as href by substituting 
-   * url template with values 
+   * Presents data as href by substituting
+   * url template with values
    */
   function LinkFormatter(options) {
     var urlTemplate = typeof options === 'string' ? options : options.urlTemplate;
@@ -150,7 +150,7 @@
   }
 
   /*
-   *  depends on Moment.js 
+   *  depends on Moment.js
    *  (http://momentjs.com/)
    */
   function DateFormatter(options) {
@@ -167,8 +167,8 @@
   }
 
   function Concatenator(fields, separator) {
-    if (typeof separator === 'undefined') { 
-      separator = ' '; 
+    if (typeof separator === 'undefined') {
+      separator = ' ';
     }
     if (typeof fields === 'string') {
       fields = fields.split(',');

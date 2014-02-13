@@ -6,7 +6,7 @@
   });
 
   function SelectionTracker(options) {
-    var 
+    var
       self = this,
       _grid,
       _options,
@@ -52,15 +52,15 @@
         }
       };
     }
-    
+
     function handleSelectionChanged(e, args){
-      var 
+      var
         PAGE_SIZE = 50,
         id, idx, idents,
         gridData = _grid.getData(),
         deletedIDs = [],
         addedIDs = [];
-        
+
       if (args.deletes && args.deletes.length){
         if (_options.useIdentities){
           idents = _loader.getIdentities();
@@ -73,7 +73,7 @@
             }
           });
         }
-        
+
         else {
           // obsolete
           if (args.deletes.length >= PAGE_SIZE){
@@ -129,24 +129,24 @@
         selection: _selection
       });
     }
-    
+
     function handleLoaderDataLoaded(e, args) {
-      var 
+      var
       _identities = args[options.identitiesAttribute];
       _grid.updateRowCount();
       _grid.render();
     }
-    
+
     function getSelection(){
       return _selection;
     }
-    
+
     function setSelection(ids){
       _selection = ids || [];
-      var 
+      var
         d = _grid.getData(), id,
         selectedRows = [];
-        
+
       _.each(d, function(v,k){
         if (!v) return;
         id = v[options.idMember];
@@ -154,10 +154,10 @@
           selectedRows.push(k);
         }
       });
-      
+
       _grid.setSelectedRows(selectedRows);
     }
-    
+
     function clearSelection(){
       _selection = [];
     }

@@ -34,7 +34,7 @@
 
   function ctorFactory(name){
     return function ctor(options){
-      return new RegexValidator($.extend(true, { 
+      return new RegexValidator($.extend(true, {
         "msg": defaults.messages[name],
         "regex": defaults.regex[name]
       }, options));
@@ -51,7 +51,7 @@
     options = $.extend(true, { "msg": defaults.messages.required }, options);
 
     return function(value){
-      return (value === null || value === undefined || !value.length) ? 
+      return (value === null || value === undefined || !value.length) ?
         { valid: false, msg: options.msg } :
         { valid: true, msg: null };
     };

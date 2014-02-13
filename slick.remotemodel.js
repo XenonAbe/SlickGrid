@@ -16,7 +16,7 @@
     options = $.extend(true, {}, defaults, options);
     return {
       dataLoaded: function(req, res) {
-        var 
+        var
           items = res[options.responseItemsMemberName],
           from = req.fromPage * options.pagesize,
           to = from + items.length,
@@ -51,7 +51,7 @@
 
 
   /*
-    
+
     data provider api: {
       getItem,
       getLength / length if array
@@ -105,9 +105,9 @@
 
     function refresh() {
       var vp = _grid.getViewport();
-      ensureData({ 
-        from: vp.top, 
-        to: vp.bottom, 
+      ensureData({
+        from: vp.top,
+        to: vp.bottom,
         force: true
       });
     }
@@ -131,9 +131,9 @@
       */
     function ensureData(opts) {
       opts = opts || {};
-      
+
       // calculating pages
-      var 
+      var
         fromPage = Math.floor(Math.max(0, opts.from) / options.pagesize),
         toPage = Math.floor(opts.to / options.pagesize);
 
@@ -145,13 +145,13 @@
         toPage--;
       }
 
-      if (fromPage > toPage 
+      if (fromPage > toPage
         || ((fromPage == toPage) && typeof _data[fromPage * options.pagesize] !== 'undefined')
         && (opts.force !== true) ) {
         // TODO:  look-ahead
         return;
       }
-           
+
       // it there's a running request we cancel it. TODO: not cancel but save the result
       if (req) {
         req.abort();
@@ -159,7 +159,7 @@
           delete _data[i * options.pagesize];
         }
       }
-      
+
       // building query
       var queryParams = $.extend(true, {}, {
         $skip: fromPage * options.pagesize,
@@ -248,8 +248,8 @@
       _identities = tx.identities;
 
       req = null;
-     
-      onDataLoaded.notify({ 
+
+      onDataLoaded.notify({
         from: tx.from,
         to: tx.to,
         count: tx.count,
@@ -281,7 +281,7 @@
     }
 
     function onGridSort(e, args) {
-      var 
+      var
         result = [], column,
         cols = _grid.getColumns(),
         sortCols = _grid.getSortColumns();
@@ -329,7 +329,7 @@
       "ensureData": ensureData,
       //"reloadData": reloadData,
       "getIdentities": getIdentities,
-      
+
       "setQuery": setQuery,
       "addQuery": addQuery,
       "clearQuery": clearQuery,
@@ -349,8 +349,8 @@
 
   // Slick.Data.RemoteModel
   RemoteModel.PagingAdapter = PagingAdapter;
-  RemoteModel.ArrayAdapter = ArrayAdapter; 
-  $.extend(true, window, { Slick: { Data: { 
+  RemoteModel.ArrayAdapter = ArrayAdapter;
+  $.extend(true, window, { Slick: { Data: {
     RemoteModel: RemoteModel,
     ODataSortAdapter: ODataSortAdapter
   }}});
