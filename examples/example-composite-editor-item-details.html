@@ -81,7 +81,7 @@
 </div>
 
 <script id="itemDetailsTemplate" type="text/x-jquery-tmpl">
-  <div class='item-details-form'>
+  <div class='item-details-form slickgrid-container'>
     {{each columns}}
     <div class='item-details-label'>
       ${name}
@@ -151,9 +151,7 @@
       return;
     }
 
-    var $modal = $("<div class='item-details-form'></div>");
-
-    $modal = $("#itemDetailsTemplate")
+    var $modal = $("#itemDetailsTemplate")
         .tmpl({
           context: grid.getDataItem(grid.getActiveCell().row),
           columns: columns

@@ -12,7 +12,7 @@
   outline: 0;
   padding: 0;
 }
-.slickgrid-container .slick-cell input.editor-date {
+.slickgrid-container input.editor-date {
   font-family: Arial, sans-serif;
   font-size: 8px;
 }
@@ -36,45 +36,10 @@
   display: inline-block;
   width: 16px;
   height: 100%;
-  background: url("../images/pencil.gif") no-repeat center center;
+  background: url("images/pencil.gif") no-repeat center center;
   overflow: visible;
   z-index: 1000;
   float: right;
-}
-.slickgrid-container .editor-percentcomplete-helper {
-  border: 0 solid gray;
-  position: absolute;
-  top: -2px;
-  left: -9px;
-  background: url("../images/editor-helper-bg.gif") no-repeat top left;
-  padding-left: 9px;
-  width: 120px;
-  height: 140px;
-  display: none;
-  overflow: visible;
-}
-.slickgrid-container .editor-percentcomplete-wrapper {
-  background: beige;
-  padding: 20px 8px;
-  width: 100%;
-  height: 98px;
-  border: 1px solid gray;
-  border-left: 0;
-}
-.slickgrid-container .editor-percentcomplete-buttons {
-  float: right;
-}
-.slickgrid-container .editor-percentcomplete-buttons button {
-  width: 80px;
-}
-.slickgrid-container .editor-percentcomplete-slider {
-  float: left;
-}
-.slickgrid-container .editor-percentcomplete-picker:hover .editor-percentcomplete-helper {
-  display: block;
-}
-.slickgrid-container .editor-percentcomplete-helper:hover {
-  display: block;
 }
 .slickgrid-container select.editor-yesno {
   width: 100%;
@@ -87,4 +52,53 @@
   padding: 0;
   border: 0;
 }
-/*# sourceMappingURL=data:application/json,%7B%22version%22%3A3%2C%22sources%22%3A%5B%22slick-editors.less%22%5D%2C%22names%22%3A%5B%5D%2C%22mappings%22%3A%22AAqBA%2CoBAEC%2CMAAK%3BAAFN%2CoBAGC%2CMAAK%3BAAHN%2CoBAIC%2CMAAK%3BAAJN%2CoBAKC%2CMAAK%3BAALN%2CoBAMC%2CMAAK%3BAANN%2CoBAOC%2CMAAK%3BEAEH%2CWAAA%3BEACA%2CYAAA%3BEACA%2CSAAA%3BEACA%2CSAAA%3BEACA%2CuBAAA%3BEACA%2CUAAA%3BEACA%2CUAAA%3B%3BAAfH%2CoBAkBC%2CYAAY%2CMAAK%3BEAEf%2C8BAAA%3BEACA%2CcAAA%3B%3BAArBH%2CoBAwBC%3BEACE%2CeAAA%3BEACA%2CUAAA%3BEACA%2CmBAAA%3B%3BAA3BH%2CoBAiCC%2CMAAK%3BEACH%2CWAAA%3BEACA%2CYAAA%3BEACA%2CSAAA%3BEACA%2CSAAA%3BEACA%2CuBAAA%3BEACA%2CUAAA%3BEACA%2CUAAA%3BEAEA%2CWAAA%3B%3BAA1CH%2CoBA6CC%3BEACE%2CkBAAA%3BEACA%2CqBAAA%3BEACA%2CWAAA%3BEACA%2CYAAA%3BEACA%2CgBAAgB%2C%2BCAAhB%3BEACA%2CiBAAA%3BEACA%2CaAAA%3BEACA%2CYAAA%3B%3BAArDH%2CoBAwDC%3BEACE%2CoBAAA%3BEACA%2CkBAAA%3BEACA%2CSAAA%3BEACA%2CUAAA%3BEACA%2CgBAAgB%2CoDAAhB%3BEACA%2CiBAAA%3BEAEA%2CYAAA%3BEACA%2CaAAA%3BEACA%2CaAAA%3BEACA%2CiBAAA%3B%3BAAnEH%2CoBAsEC%3BEACE%2CiBAAA%3BEACA%2CiBAAA%3BEAEA%2CWAAA%3BEACA%2CYAAA%3BEACA%2CsBAAA%3BEACA%2CcAAA%3B%3BAA7EH%2CoBAgFC%3BEACE%2CYAAA%3B%3BAAjFH%2CoBAoFC%2CgCAAgC%3BEAC9B%2CWAAA%3B%3BAArFH%2CoBAwFC%3BEACE%2CWAAA%3B%3BAAzFH%2CoBA4FC%2C%2BBAA8B%2CMAAO%3BEACnC%2CcAAA%3B%3BAA7FH%2CoBAgGC%2C%2BBAA8B%3BEAC5B%2CcAAA%3B%3BAAjGH%2CoBAuGC%2COAAM%3BEACJ%2CWAAA%3BEACA%2CSAAA%3BEACA%2CsBAAA%3B%3BAA1GH%2CoBAgHC%2CMAAK%3BEACH%2CSAAA%3BEACA%2CYAAA%3BEACA%2CUAAA%3BEACA%2CSAAA%22%2C%22sourcesContent%22%3A%5B%22%2F%2F%5Cn%2F%2F%20Slick.Editors.Text%20et%20al%20%5Cn%2F%2F%5Cn%5Cn%5Cn%40import%20(less)%20%5C%22slick.config.less%5C%22%3B%5Cn%5Cn%40import%20(less)%20%5C%22slick.less.macros.less%5C%22%3B%5Cn%5Cn%5Cn%2F%2F%5Cn%2F%2F%20As%20most%20editors%20are%20supposed%20to%20show%20up%20inside%20the%20slickgrid%20container%2C%5Cn%2F%2F%20we%20easily%20prevent%20collisions%20with%20other%20website%20components%20out%20there%20by%20%5Cn%2F%2F%20wrapping%20these%20buggers%20in%20the%20container%20class...%5Cn%2F%2F%5Cn%2F%2F%20...%20and%20for%20the%20few%20editors%20which%20need%20to%20'exist%20outside'%20the%20container%5Cn%2F%2F%20(a.k.a.%20%5C%22detached%5C%22%20editor%2C%20e.g.%20when%20the%20editor%20creates%20a%20body-based%20%5Cn%2F%2F%20overlay)%2C%20then%20we%20better%20make%20sure%20the%20editor%20has%20some%20pretty%20unique%20%5Cn%2F%2F%20container%20class%20itself!%5Cn%2F%2F%5Cn%5Cn.slickgrid-container%5Cn%7B%5Cn%5Ctinput.editor-text%2C%20%5Cn%5Ctinput.editor-text-readonly%2C%20%5Cn%5Ctinput.editor-integer%2C%20%5Cn%5Ctinput.editor-float%2C%20%5Cn%5Ctinput.editor-percentage%2C%20%5Cn%5Ctinput.editor-date%20%5Cn%5Ct%7B%5Cn%5Ct%20%20width%3A%20100%25%3B%5Cn%5Ct%20%20height%3A%20100%25%3B%5Cn%5Ct%20%20border%3A%200%3B%5Cn%5Ct%20%20margin%3A%200%3B%5Cn%5Ct%20%20background%3A%20transparent%3B%5Cn%5Ct%20%20outline%3A%200%3B%5Cn%5Ct%20%20padding%3A%200%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.slick-cell%20input.editor-date%20%5Cn%5Ct%7B%5Cn%5Ct%20%20font-family%3A%20Arial%2C%20sans-serif%3B%5Cn%5Ct%20%20font-size%3A%208px%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.ui-datepicker-trigger%20%7B%5Cn%5Ct%20%20margin-top%3A%202px%3B%5Cn%5Ct%20%20padding%3A%200%3B%5Cn%5Ct%20%20vertical-align%3A%20top%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct%2F%2F%5Cn%5Ct%2F%2F%20Slick.Editors.PercentComplete%20%5Cn%5Ct%2F%2F%5Cn%5Ctinput.editor-percentcomplete%20%7B%5Cn%5Ct%20%20width%3A%20100%25%3B%5Cn%5Ct%20%20height%3A%20100%25%3B%5Cn%5Ct%20%20border%3A%200%3B%5Cn%5Ct%20%20margin%3A%200%3B%5Cn%5Ct%20%20background%3A%20transparent%3B%5Cn%5Ct%20%20outline%3A%200%3B%5Cn%5Ct%20%20padding%3A%200%3B%5Cn%5Cn%5Ct%20%20float%3A%20left%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.editor-percentcomplete-picker%20%7B%5Cn%5Ct%20%20position%3A%20relative%3B%5Cn%5Ct%20%20display%3A%20inline-block%3B%5Cn%5Ct%20%20width%3A%2016px%3B%5Cn%5Ct%20%20height%3A%20100%25%3B%5Cn%5Ct%20%20background%3A%20url(%5C%22..%2Fimages%2Fpencil.gif%5C%22)%20no-repeat%20center%20center%3B%5Cn%5Ct%20%20overflow%3A%20visible%3B%5Cn%5Ct%20%20z-index%3A%201000%3B%5Cn%5Ct%20%20float%3A%20right%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.editor-percentcomplete-helper%20%7B%5Cn%5Ct%20%20border%3A%200%20solid%20gray%3B%5Cn%5Ct%20%20position%3A%20absolute%3B%5Cn%5Ct%20%20top%3A%20-2px%3B%5Cn%5Ct%20%20left%3A%20-9px%3B%5Cn%5Ct%20%20background%3A%20url(%5C%22..%2Fimages%2Feditor-helper-bg.gif%5C%22)%20no-repeat%20top%20left%3B%5Cn%5Ct%20%20padding-left%3A%209px%3B%5Cn%5Cn%5Ct%20%20width%3A%20120px%3B%5Cn%5Ct%20%20height%3A%20140px%3B%5Cn%5Ct%20%20display%3A%20none%3B%5Cn%5Ct%20%20overflow%3A%20visible%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.editor-percentcomplete-wrapper%20%7B%5Cn%5Ct%20%20background%3A%20beige%3B%5Cn%5Ct%20%20padding%3A%2020px%208px%3B%5Cn%5Cn%5Ct%20%20width%3A%20100%25%3B%5Cn%5Ct%20%20height%3A%2098px%3B%5Cn%5Ct%20%20border%3A%201px%20solid%20gray%3B%5Cn%5Ct%20%20border-left%3A%200%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.editor-percentcomplete-buttons%20%7B%5Cn%5Ct%20%20float%3A%20right%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.editor-percentcomplete-buttons%20button%20%7B%5Cn%5Ct%20%20width%3A%2080px%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.editor-percentcomplete-slider%20%7B%5Cn%5Ct%20%20float%3A%20left%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.editor-percentcomplete-picker%3Ahover%20.editor-percentcomplete-helper%20%7B%5Cn%5Ct%20%20display%3A%20block%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.editor-percentcomplete-helper%3Ahover%20%7B%5Cn%5Ct%20%20display%3A%20block%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct%2F%2F%5Cn%5Ct%2F%2F%20Slick.Editors.YesNoSelect%20%5Cn%5Ct%2F%2F%5Cn%5Ctselect.editor-yesno%20%7B%5Cn%5Ct%20%20width%3A%20100%25%3B%5Cn%5Ct%20%20margin%3A%200%3B%5Cn%5Ct%20%20vertical-align%3A%20middle%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct%2F%2F%5Cn%5Ct%2F%2F%20Slick.Editors.Checkbox%20%5Cn%5Ct%2F%2F%5Cn%5Ctinput.editor-checkbox%20%7B%5Cn%5Ct%20%20margin%3A%200%3B%5Cn%5Ct%20%20height%3A%20100%25%3B%5Cn%5Ct%20%20padding%3A%200%3B%5Cn%5Ct%20%20border%3A%200%3B%5Cn%5Ct%7D%5Cn%7D%5Cn%5Cn%22%5D%7D */
+.slick-editor-longtext {
+  z-index: 10000;
+  position: absolute;
+  background: white;
+  padding: 5px;
+  border: 3px solid gray;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+}
+.slick-editor-longtext textarea {
+  background: white;
+  width: 250px;
+  height: 80px;
+  border: 0;
+  outline: 0;
+}
+.slick-editor-longtext .buttons-container {
+  text-align: right;
+}
+.editor-percentcomplete-helper {
+  z-index: 12;
+  border: 0 solid gray;
+  position: absolute;
+  top: -2px;
+  left: -9px;
+  background: url("images/editor-helper-bg.gif") no-repeat top left;
+  padding-left: 9px;
+  width: 120px;
+  height: 140px;
+  display: none;
+  overflow: visible;
+}
+.editor-percentcomplete-helper .editor-percentcomplete-wrapper {
+  background: beige;
+  padding: 20px 8px;
+  width: 100%;
+  height: 98px;
+  border: 1px solid gray;
+  border-left: 0;
+}
+.editor-percentcomplete-helper .editor-percentcomplete-buttons {
+  float: right;
+}
+.editor-percentcomplete-helper .editor-percentcomplete-buttons button {
+  width: 80px;
+}
+.editor-percentcomplete-helper .editor-percentcomplete-slider {
+  float: left;
+}
+/*# sourceMappingURL=data:application/json,%7B%22version%22%3A3%2C%22sources%22%3A%5B%22slick-editors.less%22%5D%2C%22names%22%3A%5B%5D%2C%22mappings%22%3A%22AAqBA%2CoBAEC%2CMAAK%3BAAFN%2CoBAGC%2CMAAK%3BAAHN%2CoBAIC%2CMAAK%3BAAJN%2CoBAKC%2CMAAK%3BAALN%2CoBAMC%2CMAAK%3BAANN%2CoBAOC%2CMAAK%3BEAEH%2CWAAA%3BEACA%2CYAAA%3BEACA%2CSAAA%3BEACA%2CSAAA%3BEACA%2CuBAAA%3BEACA%2CUAAA%3BEACA%2CUAAA%3B%3BAAfH%2CoBAkBC%2CMAAK%3BEAEH%2C8BAAA%3BEACA%2CcAAA%3B%3BAArBH%2CoBAwBC%3BEACE%2CeAAA%3BEACA%2CUAAA%3BEACA%2CmBAAA%3B%3BAA3BH%2CoBAiCC%2CMAAK%3BEACH%2CWAAA%3BEACA%2CYAAA%3BEACA%2CSAAA%3BEACA%2CSAAA%3BEACA%2CuBAAA%3BEACA%2CUAAA%3BEACA%2CUAAA%3BEAEA%2CWAAA%3B%3BAA1CH%2CoBA6CC%3BEACE%2CkBAAA%3BEACA%2CqBAAA%3BEACA%2CWAAA%3BEACA%2CYAAA%3BEACA%2CgBAAgB%2C4CAAhB%3BEACA%2CiBAAA%3BEACA%2CaAAA%3BEACA%2CYAAA%3B%3BAArDH%2CoBA4DC%2COAAM%3BEACJ%2CWAAA%3BEACA%2CSAAA%3BEACA%2CsBAAA%3B%3BAA%2FDH%2CoBAqEC%2CMAAK%3BEACH%2CSAAA%3BEACA%2CYAAA%3BEACA%2CUAAA%3BEACA%2CSAAA%3B%3BAAYH%3BEAEE%2CcAAA%3BEACA%2CkBAAA%3BEACA%2CiBAAA%3BEACA%2CYAAA%3BEACA%2CsBAAA%3BEACA%2CwBAAA%3BEACA%2CmBAAA%3B%3BAARF%2CsBAUE%3BEAED%2CiBAAA%3BEACA%2CYAAA%3BEACA%2CYAAA%3BEACA%2CSAAA%3BEACA%2CUAAA%3B%3BAAhBD%2CsBAmBE%3BEAEC%2CiBAAA%3B%3BAAkBH%3BEAEI%2CWAAA%3BEAEH%2CoBAAA%3BEACA%2CkBAAA%3BEACA%2CSAAA%3BEACA%2CUAAA%3BEACA%2CgBAAgB%2CiDAAhB%3BEACA%2CiBAAA%3BEAEA%2CYAAA%3BEACA%2CaAAA%3BEACA%2CaAAA%3BEACA%2CiBAAA%3B%3BAAdD%2C8BAiBC%3BEACE%2CiBAAA%3BEACA%2CiBAAA%3BEAEA%2CWAAA%3BEACA%2CYAAA%3BEACA%2CsBAAA%3BEACA%2CcAAA%3B%3BAAxBH%2C8BA2BC%3BEACE%2CYAAA%3B%3BAA5BH%2C8BA2BC%2CgCAGE%3BEACE%2CWAAA%3B%3BAA%2FBL%2C8BAmCC%3BEACE%2CWAAA%22%2C%22sourcesContent%22%3A%5B%22%2F%2F%5Cn%2F%2F%20Slick.Editors.Text%20et%20al%20%5Cn%2F%2F%5Cn%5Cn%5Cn%40import%20(less)%20%5C%22slick.config.less%5C%22%3B%5Cn%5Cn%40import%20(less)%20%5C%22slick.less.macros.less%5C%22%3B%5Cn%5Cn%5Cn%2F%2F%5Cn%2F%2F%20As%20most%20editors%20are%20supposed%20to%20show%20up%20inside%20the%20slickgrid%20container%2C%5Cn%2F%2F%20we%20easily%20prevent%20collisions%20with%20other%20website%20components%20out%20there%20by%20%5Cn%2F%2F%20wrapping%20these%20buggers%20in%20the%20container%20class...%5Cn%2F%2F%5Cn%2F%2F%20...%20and%20for%20the%20few%20editors%20which%20need%20to%20'exist%20outside'%20the%20container%5Cn%2F%2F%20(a.k.a.%20%5C%22detached%5C%22%20editor%2C%20e.g.%20when%20the%20editor%20creates%20a%20body-based%20%5Cn%2F%2F%20overlay)%2C%20then%20we%20better%20make%20sure%20the%20editor%20has%20some%20pretty%20unique%20%5Cn%2F%2F%20container%20class%20itself!%5Cn%2F%2F%5Cn%5Cn.slickgrid-container%5Cn%7B%5Cn%5Ctinput.editor-text%2C%20%5Cn%5Ctinput.editor-text-readonly%2C%20%5Cn%5Ctinput.editor-integer%2C%20%5Cn%5Ctinput.editor-float%2C%20%5Cn%5Ctinput.editor-percentage%2C%20%5Cn%5Ctinput.editor-date%20%5Cn%5Ct%7B%5Cn%5Ct%20%20width%3A%20100%25%3B%5Cn%5Ct%20%20height%3A%20100%25%3B%5Cn%5Ct%20%20border%3A%200%3B%5Cn%5Ct%20%20margin%3A%200%3B%5Cn%5Ct%20%20background%3A%20transparent%3B%5Cn%5Ct%20%20outline%3A%200%3B%5Cn%5Ct%20%20padding%3A%200%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ctinput.editor-date%20%5Cn%5Ct%7B%5Cn%5Ct%20%20font-family%3A%20Arial%2C%20sans-serif%3B%5Cn%5Ct%20%20font-size%3A%208px%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.ui-datepicker-trigger%20%7B%5Cn%5Ct%20%20margin-top%3A%202px%3B%5Cn%5Ct%20%20padding%3A%200%3B%5Cn%5Ct%20%20vertical-align%3A%20top%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct%2F%2F%5Cn%5Ct%2F%2F%20Slick.Editors.PercentComplete%20%5Cn%5Ct%2F%2F%5Cn%5Ctinput.editor-percentcomplete%20%7B%5Cn%5Ct%20%20width%3A%20100%25%3B%5Cn%5Ct%20%20height%3A%20100%25%3B%5Cn%5Ct%20%20border%3A%200%3B%5Cn%5Ct%20%20margin%3A%200%3B%5Cn%5Ct%20%20background%3A%20transparent%3B%5Cn%5Ct%20%20outline%3A%200%3B%5Cn%5Ct%20%20padding%3A%200%3B%5Cn%5Cn%5Ct%20%20float%3A%20left%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.editor-percentcomplete-picker%20%7B%5Cn%5Ct%20%20position%3A%20relative%3B%5Cn%5Ct%20%20display%3A%20inline-block%3B%5Cn%5Ct%20%20width%3A%2016px%3B%5Cn%5Ct%20%20height%3A%20100%25%3B%5Cn%5Ct%20%20background%3A%20url(%5C%22images%2Fpencil.gif%5C%22)%20no-repeat%20center%20center%3B%5Cn%5Ct%20%20overflow%3A%20visible%3B%5Cn%5Ct%20%20z-index%3A%201000%3B%5Cn%5Ct%20%20float%3A%20right%3B%5Cn%5Ct%7D%5Cn%5Cn%5Cn%5Ct%2F%2F%5Cn%5Ct%2F%2F%20Slick.Editors.YesNoSelect%20%5Cn%5Ct%2F%2F%5Cn%5Ctselect.editor-yesno%20%7B%5Cn%5Ct%20%20width%3A%20100%25%3B%5Cn%5Ct%20%20margin%3A%200%3B%5Cn%5Ct%20%20vertical-align%3A%20middle%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct%2F%2F%5Cn%5Ct%2F%2F%20Slick.Editors.Checkbox%20%5Cn%5Ct%2F%2F%5Cn%5Ctinput.editor-checkbox%20%7B%5Cn%5Ct%20%20margin%3A%200%3B%5Cn%5Ct%20%20height%3A%20100%25%3B%5Cn%5Ct%20%20padding%3A%200%3B%5Cn%5Ct%20%20border%3A%200%3B%5Cn%5Ct%7D%5Cn%7D%5Cn%5Cn%5Cn%5Cn%5Cn%5Cn%5Cn%2F%2F%5Cn%2F%2F%20DIV%20overlay%20of%20the%20LongTextEditor%5Cn%2F%2F%5Cn.slick-editor-longtext%5Cn%7B%5Cn%20%20z-index%3A%2010000%3B%5Cn%20%20position%3A%20absolute%3B%5Cn%20%20background%3A%20white%3B%5Cn%20%20padding%3A%205px%3B%5Cn%20%20border%3A%203px%20solid%20gray%3B%20%5Cn%20%20-moz-border-radius%3A%2010px%3B%20%5Cn%20%20border-radius%3A%2010px%3B%5Cn%5Cn%20%20textarea%5Cn%20%20%7B%5Cn%5Ctbackground%3A%20white%3B%20%5Cn%5Ctwidth%3A%20250px%3B%20%5Cn%5Ctheight%3A%2080px%3B%20%5Cn%5Ctborder%3A%200%3B%20%5Cn%5Ctoutline%3A%200%3B%5Cn%20%20%7D%5Cn%5Cn%20%20.buttons-container%5Cn%20%20%7B%5Cn%20%20%5Cttext-align%3A%20right%3B%5Cn%5Cn%20%20%5Ct.save-button%5Cn%20%20%5Ct%7B%5Cn%20%20%5Ct%7D%5Cn%20%20%5Ct.cancel-button%5Cn%20%20%5Ct%7B%5Cn%20%20%5Ct%7D%5Cn%20%20%7D%5Cn%7D%5Cn%5Cn%5Cn%5Cn%5Cn%5Cn%2F%2F%5Cn%2F%2F%20Slick.Editors.PercentComplete%20%5Cn%2F%2F%5Cn.editor-percentcomplete-helper%20%5Cn%7B%5Cn%20%20%20%20z-index%3A%2012%3B%5Cn%5Cn%5Ctborder%3A%200%20solid%20gray%3B%5Cn%5Ctposition%3A%20absolute%3B%5Cn%5Cttop%3A%20-2px%3B%5Cn%5Ctleft%3A%20-9px%3B%5Cn%5Ctbackground%3A%20url(%5C%22images%2Feditor-helper-bg.gif%5C%22)%20no-repeat%20top%20left%3B%5Cn%5Ctpadding-left%3A%209px%3B%5Cn%5Cn%5Ctwidth%3A%20120px%3B%5Cn%5Ctheight%3A%20140px%3B%5Cn%5Ctdisplay%3A%20none%3B%5Cn%5Ctoverflow%3A%20visible%3B%5Cn%5Cn%5Cn%5Ct.editor-percentcomplete-wrapper%20%7B%5Cn%5Ct%20%20background%3A%20beige%3B%5Cn%5Ct%20%20padding%3A%2020px%208px%3B%5Cn%5Cn%5Ct%20%20width%3A%20100%25%3B%5Cn%5Ct%20%20height%3A%2098px%3B%5Cn%5Ct%20%20border%3A%201px%20solid%20gray%3B%5Cn%5Ct%20%20border-left%3A%200%3B%5Cn%5Ct%7D%5Cn%5Cn%5Ct.editor-percentcomplete-buttons%20%7B%5Cn%5Ct%20%20float%3A%20right%3B%5Cn%5Cn%5Ct%20%20button%20%7B%5Cn%5Ct%20%20%20%20width%3A%2080px%3B%5Cn%5Ct%20%20%7D%5Cn%5Ct%7D%5Cn%5Cn%5Ct.editor-percentcomplete-slider%20%7B%5Cn%5Ct%20%20float%3A%20left%3B%5Cn%5Ct%7D%5Cn%7D%5Cn%5Cn%5Cn%22%5D%7D */

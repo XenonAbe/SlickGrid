@@ -831,7 +831,7 @@ function isValidModifier(v) {
   }
 
   function PercentCompleteEditor(args) {
-    var $input, $picker;
+    var $input, $picker, $helper;
     var defaultValue;
     var scope = this;
 
@@ -851,11 +851,27 @@ function isValidModifier(v) {
       $input.width($(args.container).innerWidth() - 25);
 
       $picker = $("<div class='editor-percentcomplete-picker' />").appendTo(args.container);
-      $picker.append("<div class='editor-percentcomplete-helper'><div class='editor-percentcomplete-wrapper'><div class='editor-percentcomplete-slider' /><div class='editor-percentcomplete-buttons' /></div></div>");
 
-      $picker.find(".editor-percentcomplete-buttons").append("<button val='0'>Not started</button><br/><button val='50'>In Progress</button><br/><button val='100'>Complete</button>");
+      var $body = $("body");
 
-      $picker.find(".editor-percentcomplete-slider").slider({
+      $helper = $("\
+      	<div class='editor-percentcomplete-helper'>\
+      	  <div class='editor-percentcomplete-wrapper'>\
+      	    <div class='editor-percentcomplete-slider'>\
+      	    </div>\
+      	    <div class='editor-percentcomplete-buttons'>\
+      	    </div>\
+      	  </div>\
+      	</div>").appendTo($body);
+
+      $helper.find(".editor-percentcomplete-buttons")
+      .append("<button val='0'>Not started</button>\
+      	<br/>\
+      	<button val='50'>In Progress</button>\
+      	<br/>\
+      	<button val='100'>Complete</button>");
+
+      $helper.find(".editor-percentcomplete-slider").slider({
         orientation: "vertical",
         range: "min",
         value: defaultValue,
@@ -864,15 +880,29 @@ function isValidModifier(v) {
         }
       });
 
-      $picker.find(".editor-percentcomplete-buttons button").bind("click", function (e) {
+      $picker.click(function(e) {
+	    //$helper.toggle();
+	    $helper.show();
+	    if ($helper.is(":visible")) {
+	      $helper.position({
+	        my: "left top",
+	        at: "right top",
+	        of: $picker,
+	        collision: "flipfit"
+	      });
+	    }
+      });
+
+      $helper.find(".editor-percentcomplete-buttons button").bind("click", function (e) {
         $input.val($(this).attr("val"));
-        $picker.find(".editor-percentcomplete-slider").slider("value", $(this).attr("val"));
+        $helper.find(".editor-percentcomplete-slider").slider("value", $(this).attr("val"));
       });
     };
 
     this.destroy = function () {
       $input.remove();
       $picker.remove();
+      $helper.remove();
     };
 
     this.focus = function () {
@@ -884,7 +914,7 @@ function isValidModifier(v) {
       if (isNaN(val)) val = 0;
       defaultValue = val;
       $input.val(val);
-      $picker.find(".editor-percentcomplete-slider").slider("value", val);
+      $helper.find(".editor-percentcomplete-slider").slider("value", val);
     };
 
     this.loadValue = function (item) {
@@ -935,20 +965,26 @@ function isValidModifier(v) {
     this.init = function () {
       var $container = $("body");
 
-      $wrapper = $("<DIV style='z-index:10000;position:absolute;background:white;padding:5px;border:3px solid gray; -moz-border-radius:10px; border-radius:10px;'/>")
+      $wrapper = $("<DIV class='slick-editor-longtext'/>")
           .appendTo($container);
 
-      $input = $("<TEXTAREA hidefocus='true' rows='5' style='background:white; width:250px; height:80px; border:0; outline:0;'>")
+      $input = $("<TEXTAREA hidefocus='true' rows='5'>")
           .appendTo($wrapper);
 
-      $("<DIV style='text-align:right'><BUTTON>Save</BUTTON><BUTTON>Cancel</BUTTON></DIV>")
+      $("<DIV class='buttons-container'><BUTTON class='save-button'>Save</BUTTON><BUTTON class='cancel-button'>Cancel</BUTTON></DIV>")
           .appendTo($wrapper);
 
-      $wrapper.find("button:first").bind("click", scope.save);
-      $wrapper.find("button:last").bind("click", scope.cancel);
+      $wrapper.find("button.save-button").bind("click", scope.save);
+      $wrapper.find("button.cancel-button").bind("click", scope.cancel);
       $input.bind("keydown", scope.handleKeyDown);
 
-      scope.position(args.position);
+      assert(args.container);
+      scope.position({
+      	my: "left top-5",
+      	at: "left bottom",
+      	of: args.container,
+      	collision: "flipfit"
+      });
       $input.focus().select();
 
       defaultValue = '';
@@ -986,10 +1022,8 @@ function isValidModifier(v) {
       $wrapper.show();
     };
 
-    this.position = function (position) {
-      $wrapper
-          .css("top", position.top - 5)
-          .css("left", position.left - 5);
+    this.position = function (positioning) {
+      $wrapper.position(positioning);
     };
 
     this.destroy = function () {
@@ -1145,15 +1179,15 @@ function isValidModifier(v) {
 
 
 
-  function SelectCellEditor(args){
+  function SelectCellEditor(args) {
     var $select, defaultValue,
       scope = this;
 
     this.init = function() {
       var options = typeof args.column.options === 'function' ? args.column.options() : args.column.options;
-      if (options){
+      if (options) {
         var option_str = "";
-        for(var i in options ){
+        for (var i in options) {
           v = options[i];
           option_str += "<OPTION value='" + ( v.key == null ? v.id : v.key ) + "'>" + (v.value == null ? v.label : v.value) + "</OPTION>";
         }
