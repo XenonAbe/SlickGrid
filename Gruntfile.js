@@ -106,6 +106,18 @@ module.exports = function (grunt) {
           'slick.grid.css': 'slick.grid.less'
         }
       },
+      compileEditors: {
+        options: {
+          strictMath: true,
+          sourceMap: true,
+          outputSourceFiles: true,
+          sourceMapURL: 'slick.editors.css.map',
+          sourceMapFilename: 'slick.editors.css.map'
+        },
+        files: {
+          'slick.editors.css': 'slick.editors.less'
+        }
+      },
       compileTheme: {
         options: {
           strictMath: true,
@@ -119,6 +131,17 @@ module.exports = function (grunt) {
         }
       }
     },
+
+	autoprefixer: {
+	    options: {
+	        browsers: ['last 2 versions']
+	    },
+	    dist: {
+	        files: {
+	            '*.css': ['tmp/*.css']
+	        }
+	    }
+	},
 
     usebanner: {
       dist: {
@@ -175,6 +198,7 @@ module.exports = function (grunt) {
 
 
   // These plugins provide necessary tasks.
+  grunt.loadNpmTasks('grunt-autoprefixer');
   require('load-grunt-tasks')(grunt, {scope: 'devDependencies'});
 
   // Lint task.
