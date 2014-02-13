@@ -80,7 +80,7 @@
           range: dd.range,
           currentCell: end
       };
-      if (_self.onCellRangeSelectionOngoing.notify(eventData) ||
+      if (_self.onCellRangeSelectionOngoing.notify(eventData) === false ||
           !eventData.currentCell ||
           !_grid.canCellBeSelected(eventData.currentCell.row, eventData.currentCell.cell)) {
         return;
