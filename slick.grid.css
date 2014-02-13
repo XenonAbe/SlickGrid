@@ -1,25 +1,28 @@
 /*
-IMPORTANT:
-In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.
-No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS
-classes should alter those!
-*/
-
-.slick-header.ui-state-default, .slick-headerrow.ui-state-default {
+ * IMPORTANT:
+ * In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.
+ * No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS
+ * classes should alter those!
+ */
+.slickgrid-container {
+  overflow: hidden;
+  outline: 0;
+}
+.slickgrid-container .slick-header.ui-state-default,
+.slickgrid-container .slick-headerrow.ui-state-default {
   width: 100%;
   overflow: hidden;
   border-left: 0px;
 }
-
-.slick-header-columns, .slick-headerrow-columns {
+.slickgrid-container .slick-header-columns,
+.slickgrid-container .slick-headerrow-columns {
   position: relative;
   white-space: nowrap;
   cursor: default;
   overflow: hidden;
   height: 24px;
 }
-
-.slick-header-column.ui-state-default {
+.slickgrid-container .slick-header-column.ui-state-default {
   position: relative;
   display: inline-block;
   overflow: hidden;
@@ -28,7 +31,7 @@ classes should alter those!
   height: 16px;
   line-height: 16px;
   margin: 0;
-  padding: 4px;
+  padding: 4px 4px 4px 4px;
   border-right: 1px solid silver;
   border-bottom: 0px;
   border-left: 0px;
@@ -48,16 +51,13 @@ classes should alter those!
 .slick-header-columns.slick-header-parents .slick-header-column {
   border-bottom: 1px solid silver;
 }
-
-.slick-headerrow-column.ui-state-default {
-  padding: 4px;
+.slickgrid-container .slick-headerrow-column.ui-state-default {
+  padding: 4px 4px 4px 4px;
 }
-
-.slick-header-column-sorted {
+.slickgrid-container .slick-header-column-sorted {
   font-style: italic;
 }
-
-.slick-sort-indicator {
+.slickgrid-container .slick-sort-indicator {
   display: inline-block;
   width: 8px;
   height: 5px;
@@ -65,52 +65,45 @@ classes should alter those!
   margin-top: 6px;
   position: absolute;
   left: 0;
-  background: url(images/sort-undetermined.png);
+  background: url('images/sort-undetermined.png');
 }
-
-.slick-sort-indicator-desc {
-  background: url(images/sort-desc.png);
+.slickgrid-container .slick-sort-indicator-desc {
+  background: url('images/sort-desc.png');
 }
-
-.slick-sort-indicator-asc {
-  background: url(images/sort-asc.png);
+.slickgrid-container .slick-sort-indicator-asc {
+  background: url('images/sort-asc.png');
 }
-
-.slick-header-sortable .slick-column-name {
+.slickgrid-container .slick-header-sortable .slick-column-name {
   margin-left: 10px;
 }
-
-.slick-resizable-handle {
+.slickgrid-container .slick-resizable-handle {
   position: absolute;
   font-size: 0.1px;
   display: block;
   cursor: col-resize;
   width: 4px;
-  right: 0px;
+  right: 0;
   top: 0;
   height: 100%;
 }
-
-.slick-resizable-handle-hover {
+.slickgrid-container .slick-resizable-handle-hover {
   background-color: #ccc;
 }
-
-.slick-sortable-placeholder {
+.slickgrid-container .slick-sortable-placeholder {
   background: silver;
 }
-
-.grid-canvas {
+.slickgrid-container .grid-canvas {
   position: relative;
   outline: 0;
 }
-
-.slick-row.ui-widget-content, .slick-row.ui-state-active {
+.slickgrid-container .slick-row.ui-widget-content,
+.slickgrid-container .slick-row.ui-state-active {
   position: absolute;
-  border: 0px;
+  border: 0;
   width: 100%;
 }
-
-.slick-cell, .slick-headerrow-column {
+.slickgrid-container .slick-cell,
+.slickgrid-container .slick-headerrow-column {
   position: absolute;
   border: 1px solid transparent;
   border-right: 1px dotted silver;
@@ -130,27 +123,21 @@ classes should alter those!
   visibility: hidden;
 }
 
-.slick-group {
-}
-
-.slick-group-toggle {
+.slickgrid-container .slick-group-toggle {
   display: inline-block;
 }
-
-.slick-cell.highlighted {
+.slickgrid-container .slick-cell.highlighted {
   background: lightskyblue;
   background: rgba(0, 0, 255, 0.2);
   -webkit-transition: all 0.5s;
-  -moz-transition: all 0.5s;
   -o-transition: all 0.5s;
+  -moz-transition: all 0.5s;
   transition: all 0.5s;
 }
-
-.slick-cell.flashing {
+.slickgrid-container .slick-cell.flashing {
   border: 1px solid red !important;
 }
-
-.slick-cell.editable {
+.slickgrid-container .slick-cell.editable {
   z-index: 11;
   overflow: visible;
   background: white;
@@ -162,27 +149,24 @@ classes should alter those!
   z-index: 9;
 }
 
-.slick-cell:focus {
+.slickgrid-container .slick-cell:focus {
   outline: none;
 }
-
-.slick-reorder-proxy {
+.slickgrid-container .slick-reorder-proxy {
   display: inline-block;
   background: blue;
   opacity: 0.15;
   filter: alpha(opacity = 15);
   cursor: move;
 }
-
-.slick-reorder-guide {
+.slickgrid-container .slick-reorder-guide {
   display: inline-block;
   height: 2px;
   background: blue;
   opacity: 0.7;
   filter: alpha(opacity = 70);
 }
-
-.slick-selection {
+.slickgrid-container .slick-selection {
   z-index: 10;
   position: absolute;
   border: 2px dashed black;

@@ -5,6 +5,7 @@
  */
 
 (function ($) {
+
   // register namespace
   $.extend(true, window, {
     "Slick": {

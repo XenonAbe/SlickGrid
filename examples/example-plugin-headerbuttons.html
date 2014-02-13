@@ -5,7 +5,8 @@
   <title>SlickGrid example: Header Buttons</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../plugins/slick.headerbuttons.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
+  <link rel="stylesheet" href="../plugins/slick-headerbuttons.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .icon-highlight-off,
@@ -20,6 +21,10 @@
     .negative-highlight {
       background: red;
     }
+
+    .slick-header-column.filtered {
+      background: #D8E2FF;
+    }
   </style>
 </head>
 <body>
@@ -29,11 +34,14 @@
   </div>
 
   <div class="options-panel">
-    <h2>Demonstrates</h2>
+    <h2>About</h2>
     <p>
       This example demonstrates using the <b>Slick.Plugins.HeaderButtons</b> plugin to easily add buttons to column
       headers.  These buttons can be specified directly in the column definition, and are very easy to configure and use.
     </p>
+	
+    <h2>Controls</h2>
+    <button onclick="toggleShowHideHeaderButton();">Toggle `Dynamic` column header</button>
 
     <h2>View Source:</h2>
       <ul>
@@ -52,6 +60,7 @@
 
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
+<script src="../slick.extensions.js"></script>
 <script src="../plugins/slick.headerbuttons.js"></script>
 
 <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
@@ -123,6 +132,20 @@
   };
 
 
+  //Set a button on the third column to demonstrate how to manipulate it programatically
+  columns[2].name = "Dynamic";
+  columns[2].header = {
+    buttons: [
+      {
+        image: "../images/filter.png",
+        tooltip: "Some initial value",
+        command: 'remove-filter',
+        hide: true
+      }
+    ]
+  };
+
+
 
   // Set up some test data.
   for (var i = 0; i < 100; i++) {
@@ -142,12 +165,35 @@
     }
   }
 
-
-
   $(function () {
     grid = new Slick.Grid("#myGrid", data, columns, options);
 
     var headerButtonsPlugin = new Slick.Plugins.HeaderButtons();
+
+    window.toggleShowHideHeaderButton = function () {
+      var col = columns[2];
+      var tmp = col.is_filtered ? hideColumnFilterDisplay(col) : showColumnFilterDisplay(col);
+    };
+
+
+    function showColumnFilterDisplay(column) {
+      grid.addColumnHeaderCssClass(column.id, "filtered");
+      column.header.buttons[0].hide = false;
+      column.header.buttons[0].tooltip = "Click to remove filter";
+      column.headerCssClass = "filtered";
+      column.is_filtered = true;
+      grid.invalidate();
+      grid.updateColumnHeader(column.id);
+    }
+    
+    function hideColumnFilterDisplay(column) {
+      grid.removeColumnHeaderCssClass(column.id, "filtered");
+      column.header.buttons[0].hide = true;
+      column.headerCssClass = "";
+      column.is_filtered = false;
+      grid.invalidate();
+      grid.updateColumnHeader(column.id);
+    }
 
     headerButtonsPlugin.onCommand.subscribe(function(e, args) {
       var column = args.column;
@@ -166,6 +212,10 @@
         }
 
         grid.invalidate();
+      }
+
+      if (command == "remove-filter") {
+        hideColumnFilterDisplay(column);
       }
     });
 

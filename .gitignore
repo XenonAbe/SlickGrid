@@ -7,7 +7,7 @@
 .project
 .idea
 
-/*.user
+node_modules/
 
 # Editor backup files
 *~

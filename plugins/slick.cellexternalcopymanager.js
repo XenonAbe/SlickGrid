@@ -45,7 +45,7 @@
       'V':86,
       'X':88,
       'ESC':27
-    }
+    };
 
     function init(grid) {
       _grid = grid;

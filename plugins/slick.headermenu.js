@@ -191,37 +191,42 @@
       for (var i = 0; i < menu.items.length; i++) {
         var item = menu.items[i];
 
-        var $li = $("<div class='slick-header-menuitem'></div>")
-          .data("command", item.command || '')
-          .data("column", columnDef)
-          .data("item", item)
-          .bind("click", handleMenuItemClick)
-          .appendTo($menu);
-
-        if (item.disabled) {
-          $li.addClass("slick-header-menuitem-disabled");
+        if (typeof item === 'function'){
+          item.call(this, menu, columnDef)
+            .appendTo($menu);
         }
+        else {
+          var $li = $("<div class='slick-header-menuitem'></div>")
+            .data("command", item.command || '')
+            .data("column", columnDef)
+            .data("item", item)
+            .bind("click", handleMenuItemClick)
+            .appendTo($menu);
 
-        if (item.tooltip) {
-          $li.attr("title", item.tooltip);
+          if (item.disabled) {
+            $li.addClass("slick-header-menuitem-disabled");
+          }
+
+          if (item.tooltip) {
+            $li.attr("title", item.tooltip);
+          }
+
+          var $icon = $("<div class='slick-header-menuicon'></div>")
+            .appendTo($li);
+
+          if (item.iconCssClass) {
+            $icon.addClass(item.iconCssClass);
+          }
+
+          if (item.iconImage) {
+            $icon.css("background-image", "url(" + item.iconImage + ")");
+          }
+
+          $("<span class='slick-header-menucontent'></span>")
+            .text(item.title)
+            .appendTo($li);
         }
-
-        var $icon = $("<div class='slick-header-menuicon'></div>")
-          .appendTo($li);
-
-        if (item.iconCssClass) {
-          $icon.addClass(item.iconCssClass);
-        }
-
-        if (item.iconImage) {
-          $icon.css("background-image", "url(" + item.iconImage + ")");
-        }
-
-        $("<span class='slick-header-menucontent'></span>")
-          .text(item.title)
-          .appendTo($li);
       }
-
 
       // Position the menu.
       $menu.position({
