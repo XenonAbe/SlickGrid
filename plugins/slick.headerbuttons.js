@@ -98,9 +98,7 @@
           var button = column.header.buttons[i];
           if (button.hide === true) continue;
           var btn = $("<div></div>")
-            .addClass(options.buttonCssClass)
-            .data("column", column)
-            .data("button", button);
+            .addClass(options.buttonCssClass);
 
           if (button.showOnHover) {
             btn.addClass("slick-header-button-hidden");
@@ -118,16 +116,14 @@
             btn.attr("title", button.tooltip);
           }
 
-          if (button.command) {
-            btn.data("command", button.command);
-          }
-
           if (button.handler) {
             btn.bind("click", button.handler);
           }
 
           btn
-            .bind("click", handleButtonClick)
+            .bind("click", function (e) {
+            	handleButtonClick.call(this, e, column, button);
+            })
             .appendTo(args.node);
         }
       }
@@ -146,18 +142,14 @@
     }
 
 
-    function handleButtonClick(e) {
-      var command = $(this).data("command");
-      var columnDef = $(this).data("column");
-      var button = $(this).data("button");
-
-      if (command != null) {
+    function handleButtonClick(e, columnDef, button) {
+      if (button.command != null) {
         _self.onCommand.notify({
-            "grid": _grid,
-            "column": columnDef,
-            "command": command,
-            "button": button
-          }, e, _self);
+            grid: _grid,
+            column: columnDef,
+            command: button.command,
+            button: button
+        }, e, _self);
 
         // Update the header in case the user updated the button definition in the handler.
         _grid.updateColumnHeader(columnDef.id);
