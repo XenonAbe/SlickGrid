@@ -106,7 +106,7 @@
           "grid": _grid,
           "column": columnDef,
           "menu": menu
-        }, e, _self) == false) {
+        }, e, _self) === false) {
         return;
       }
 
@@ -122,7 +122,7 @@
       for (var i = 0; i < menu.items.length; i++) {
         var item = menu.items[i];
 
-        if (typeof item === 'function'){
+        if (typeof item === 'function') {
           item.call(this, menu, columnDef)
             .appendTo($menu);
         }
