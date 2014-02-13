@@ -94,7 +94,7 @@
           colspan: 1,
           rowspan: 1,
           //cellHeight: cellHeight,
-          rowMetadata: rowMetadata, 
+          rowMetadata: rowMetadata,
           cellMetadata: cellMetadata,
           outputPlainText: true         // this signals the formatter that the plaintext value is required.
         };
@@ -450,8 +450,8 @@
             }
             var clipText = clipTextArr.join('');
             _copyFingerPrint = clipText.replace(/\r/g, "");
-              
-            //  
+
+            //
             // Clipboard handling
             // ------------------
             //

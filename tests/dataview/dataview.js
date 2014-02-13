@@ -47,7 +47,7 @@ function assertConsistency(dv, idProperty, grouping) {
             deepEqual(dv.getItemById(id), items[dv.getIdxById(id)], "getItem");
         } else {
             ok(item.__group ^ item.__groupTotals, "all non-data rows are either group header rows or group totals rows");
-            if (item.__group) 
+            if (item.__group)
                 groupRows++;
             else if (item.__groupTotals)
                 groupTotalsRows++;
@@ -959,11 +959,11 @@ test("adds no rows per group (options.showExpandedGroupRows = false)", function(
         showExpandedGroupRows: false,
         inlineFilters: false
         // idProperty: "id"
-        // groupItemMetadataProvider: 
+        // groupItemMetadataProvider:
         // globalItemMetadataProvider: { getRowMetadata:       function(item, row, cell, rows) { return meta; } }
-        // groupItemMetadataProvider:  { getGroupRowMetadata:  function(item, row, cell, rows) { return meta; }, 
+        // groupItemMetadataProvider:  { getGroupRowMetadata:  function(item, row, cell, rows) { return meta; },
         //                               getTotalsRowMetadata: function(item, row, cell, rows) { return meta; } }
-        // flattenGroupedRows: (groups, level, groupingInfos, filteredItems, options) { return rows; }         
+        // flattenGroupedRows: (groups, level, groupingInfos, filteredItems, options) { return rows; }
     });
     var gi = [{
         getter: "val",                  // group by 'val' field
@@ -990,11 +990,11 @@ test("adds one row per group when you do not have any aggregators", function() {
         showExpandedGroupRows: true,
         inlineFilters: false
         // idProperty: "id"
-        // groupItemMetadataProvider: 
+        // groupItemMetadataProvider:
         // globalItemMetadataProvider: { getRowMetadata:       function(item, row, cell, rows) { return meta; } }
-        // groupItemMetadataProvider:  { getGroupRowMetadata:  function(item, row, cell, rows) { return meta; }, 
+        // groupItemMetadataProvider:  { getGroupRowMetadata:  function(item, row, cell, rows) { return meta; },
         //                               getTotalsRowMetadata: function(item, row, cell, rows) { return meta; } }
-        // flattenGroupedRows: (groups, level, groupingInfos, filteredItems, options) { return rows; }         
+        // flattenGroupedRows: (groups, level, groupingInfos, filteredItems, options) { return rows; }
     });
 
     var expectation = {
@@ -1002,12 +1002,12 @@ test("adds one row per group when you do not have any aggregators", function() {
         totalGroupTotalsRows: 0,
         totalDataItems: 50,
         oldtotalRows: 50,
-        updatedRows: { 
-            rows: [ 0, 
-                    2, 3, 4, 5, 6, 7, 8, 9, 10, 
-                    12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 
-                    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56 
-                ] 
+        updatedRows: {
+            rows: [ 0,
+                    2, 3, 4, 5, 6, 7, 8, 9, 10,
+                    12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56
+                ]
         }
     };
 
@@ -1055,12 +1055,12 @@ test("adds one row per group when you do not have any aggregators", function() {
     // clear grouping:
     expectation.totalGroupRows = 0;
     expectation.oldtotalRows = 57;
-    expectation.updatedRows = { 
-        "rows": [ 0, 
-            2, 3, 4, 5, 6, 7, 8, 9, 10, 
-            12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 
-            41, 42, 43, 44, 45, 46, 47, 48, 49 
-        ] 
+    expectation.updatedRows = {
+        "rows": [ 0,
+            2, 3, 4, 5, 6, 7, 8, 9, 10,
+            12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+            41, 42, 43, 44, 45, 46, 47, 48, 49
+        ]
     };
 
     dv.setGrouping([]);

@@ -158,7 +158,7 @@
 
     dataView = new Slick.Data.DataView({
         inlineFilters: true,
-        globalItemMetadataProvider: { 
+        globalItemMetadataProvider: {
           getRowMetadata: function (rowData, row, cell /* may be FALSE */, dataRows) {
             return row_metadata[row];
           }

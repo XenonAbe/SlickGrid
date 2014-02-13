@@ -773,7 +773,7 @@ if (typeof Slick === "undefined") {
           colspan: colspan,
           rowspan: 1,
           //cellHeight: cellHeight,
-          //rowMetadata: rowMetadata, 
+          //rowMetadata: rowMetadata,
           //cellMetadata: cellMetadata,
           columnHeader: {
             column: m,
@@ -838,7 +838,7 @@ if (typeof Slick === "undefined") {
             colspan: 1,
             rowspan: 1,
             //cellHeight: cellHeight,
-            //rowMetadata: rowMetadata, 
+            //rowMetadata: rowMetadata,
             //cellMetadata: cellMetadata,
             columnHeader: {
               column: m,
@@ -1837,7 +1837,7 @@ if (typeof Slick === "undefined") {
         cell = spans[1];
       }
 
-      var m = columns[cell], 
+      var m = columns[cell],
           rowDataItem = getDataItem(row);
 
       v.columnDef = m;
@@ -1891,7 +1891,7 @@ if (typeof Slick === "undefined") {
           colspan: colspan,
           rowspan: rowspan,
           cellHeight: cellHeight,
-          rowMetadata: rowMetadata, 
+          rowMetadata: rowMetadata,
           cellMetadata: cellMetadata
         }, options.formatterOptions);
         info.html = getFormatter(row, cell)(row, cell, value, m, rowDataItem, info);
@@ -2438,7 +2438,7 @@ if (typeof Slick === "undefined") {
         colspan: colspan,
         rowspan: rowspan,
         cellHeight: cellHeight,
-        rowMetadata: rowMetadata, 
+        rowMetadata: rowMetadata,
         cellMetadata: cellMetadata
       };
       if (rowDataItem) {
@@ -2639,7 +2639,7 @@ if (typeof Slick === "undefined") {
         return;
       }
 
-      var m = columns[cell], 
+      var m = columns[cell],
           d = getDataItem(row);
       if (currentEditor && activeRow === row && activeCell === cell) {
         currentEditor.loadValue(d);

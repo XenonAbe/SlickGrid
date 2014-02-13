@@ -30,7 +30,7 @@
       }
     }
   });
-                                    
+
   function PercentCompleteFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
     if (value == null || value === "") {
       return "-";

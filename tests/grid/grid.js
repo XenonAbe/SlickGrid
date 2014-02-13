@@ -56,9 +56,9 @@
   test("onColumnsResized is fired on column resize", function () {
     expect(5);
     var count = 0;
-    var cb = function() { 
+    var cb = function() {
       count++;
-      ok(true,"onColumnsResized called"); 
+      ok(true,"onColumnsResized called");
     };
     grid.onColumnsResized.subscribe(cb);
     var oldWidth = cols[0].width;
@@ -77,9 +77,9 @@
   test("onColumnsStartResize is fired on column resize", function() {
     expect(5);
     var count = 0;
-    var cb = function() { 
+    var cb = function() {
       count++;
-      ok(true,"onColumnsStartResize called"); 
+      ok(true,"onColumnsStartResize called");
     };
     grid.onColumnsStartResize.subscribe(cb);
     var oldWidth = cols[0].width;

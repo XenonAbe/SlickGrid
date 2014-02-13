@@ -222,13 +222,13 @@ $(function () {
       }
   };
 
-  var dataView = new Slick.Data.DataView({ 
-  	inlineFilters: true,
-    globalItemMetadataProvider: { 
+  var dataView = new Slick.Data.DataView({
+    inlineFilters: true,
+    globalItemMetadataProvider: {
       getRowMetadata: function (rowData, row, cell /* may be FALSE */, dataRows) {
         return row_metadata[row];
       }
- 	}
+    }
   });
   grid = new Slick.Grid("#myGrid", dataView, columns, options);
 
