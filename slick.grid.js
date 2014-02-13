@@ -695,6 +695,21 @@ if (typeof Slick === "undefined") {
       return $header && $header[0];
     }
 
+    function mkSaneId(columnDef, cell) {
+      s = '' + uid + '_c' + cell + '_' + columnDef.id;
+      s = s.replace(/[^a-zA-Z0-9]+/g, '_');
+      return s;
+    }
+
+    function extractCellFromDOMid(id) {
+      // format of ID is: uid_c<cell>_<blah>
+	  var m = /_c(\d+)_/.exec(id);
+      if (m[1] == null || m[1] == '') {
+      	return false;
+      }
+      return +m[1];
+    }
+
     function createColumnHeaders() {
       function onMouseEnter() {
         $(this).addClass("ui-state-hover");
@@ -729,12 +744,6 @@ if (typeof Slick === "undefined") {
         });
       $headerRow.empty();
 
-      function mkSaneID(columnDef, idx) {
-      	s = '_c' + idx + '_' + columnDef.id;
-      	s = s.replace(/[^a-zA-Z0-9]+/g, '_');
-      	return s;
-      }
-
       for (var i = 0; i < columns.length; i++) {
         var m = columns[i];
 
@@ -744,7 +753,7 @@ if (typeof Slick === "undefined") {
         var html = getHeaderFormatter(-2000, i)(-2000, i, m.name, m, null /* rowDataItem */, 1 /* colspan */, cellCss, cellStyles);
         var header = $("<div role='columnheader' />")
             .html(html)
-            .attr("id", uid + mkSaneID(m, i))
+            .attr("id", mkSaneId(m, i))
             .attr("title", m.toolTip || null)
             .data("column", m)
             .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
@@ -899,7 +908,8 @@ if (typeof Slick === "undefined") {
           var reorderedIds = $headers.sortable("toArray");
           var reorderedColumns = [];
           for (var i = 0; i < reorderedIds.length; i++) {
-            reorderedColumns.push(columns[getColumnIndex(reorderedIds[i].replace(uid, ""))]);
+            var cell = extractCellFromDOMid(reorderedIds[i]);
+            reorderedColumns.push(columns[cell]);
           }
           setColumns(reorderedColumns);
 
@@ -1103,37 +1113,25 @@ if (typeof Slick === "undefined") {
               trigger(self.onColumnsResized, {e:e});
             })
             .bind("dblclick", function(e) {
-                var columnId = $($(this).parent()).attr('id').replace(uid,'');
-                var c;
-                for (var j = 0; j < columns.length; j++) {
-                    c = columns[j];
-                    if (c.id == columnId) {
-                        var aux_width = calculateWordDimensions(columnElements[i].children[0].innerHTML).width;
-                        if (c.values != undefined && c.values.length > 0) {
-                            for (var k = 0; k < c.values.length; k++) {
-                                if (calculateWordDimensions(c.values[k].Description.toString()).width > aux_width) {
-                                    aux_width = calculateWordDimensions(c.values[k].Description.toString()).width;
-                                }
-                            }
-                        } else {
-                            var data_col = $.map(data instanceof Array ? data : data.getItems(), function(e) {
-                                return e[columnId];
-                            });
-                            for (var k = 0; k < data_col.length; k++) {
-                                if (calculateWordDimensions(data_col[k].toString()).width > aux_width) {
-                                    aux_width = calculateWordDimensions(data_col[k].toString()).width;
-                                }
-                            }
-                        }
-                        c.width = aux_width;
-                        break;
-                    }
+                var cell = extractCellFromDOMid($(this).parent().attr('id'));
+                var columnDef = columns[cell];
+                var aux_width = calculateWordDimensions(columnElements[cell].children[0].innerHTML).width;
+                assert(columnDef.values === undefined);
+                for (var row = 0, len = getDataLength(); row < len; row++) {
+	                var rowDataItem = getDataItem(row);
+			        var value = getDataItemValueForColumn(rowDataItem, columnDef);
+                    aux_width = Math.max(aux_width, calculateWordDimensions(value.toString()).width);
                 }
+                c.width = aux_width;
+
+                // TODO: make autosize faster by introducing a bit of heuristic: longer raw string implies wider cell
+                // TODO: apply the proper formatter so that we actually get what we will see when the cell is rendered for real
+
                 applyColumnHeaderWidths();
                 updateColumnCaches();
                 updateCanvasWidth(true);
                 render();
-                trigger(self.onColumnsResized, {e:e});
+                trigger(self.onColumnsResized, {e: e, cell: cell, columnDef: c});
             });
       });
     }
@@ -1144,11 +1142,17 @@ if (typeof Slick === "undefined") {
         }
 
         var div = document.createElement('div');
-        $(div).css({'position':'absolute','visibility':'hidden',
-                    'height':'auto','width':'auto',
-                    'white-space':'nowrap','font-family':'Verdana, Arial, sans-serif',
-                    'font-size':'13px','border':'1px solid transparent',
-                    'padding':'1px 4px 2px'});
+        $(div).css({
+        	'position':'absolute',
+        	'visibility':'hidden',
+            'height':'auto',
+            'width':'auto',
+            'white-space':'nowrap',
+            'font-family':'Verdana, Arial, sans-serif',
+            'font-size':'13px',
+            'border':'1px solid transparent',
+            'padding':'1px 4px 2px'
+        });
         if (escape) {
           $(div).text(text);
         } else {
@@ -1640,11 +1644,11 @@ if (typeof Slick === "undefined") {
       return getDataLength() + (options.enableAddRow ? 1 : 0);
     }
 
-    function getDataItem(i) {
+    function getDataItem(row) {
       if (data.getItem) {
-        return data.getItem(i);
+        return data.getItem(row);
       } else {
-        return data[i];
+        return data[row];
       }
     }
 
@@ -1962,7 +1966,7 @@ if (typeof Slick === "undefined") {
         styles = "";
       }
       stringArray.push("<div class='" + fmt.cellCss.join(" ") + "' " +
-                       styles + "aria-describedby='" + uid + m.id +
+                       styles + "aria-describedby='" + mkSaneId(m, cell) +
                        "' tabindex='-1' role='gridcell'>");
 
       stringArray.push(fmt.html);
