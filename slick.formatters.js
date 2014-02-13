@@ -10,6 +10,7 @@
  * @namespace Slick
  */
 
+
 (function ($) {
   // register namespace
   $.extend(true, window, {
@@ -25,13 +26,22 @@
         "Chain": Chain,
         "Concatenator": Concatenator,
         "ReferenceValue": ReferenceValueFormatter,
-        "LinkFormatter": LinkFormatter,
-        "DateFormatter": DateFormatter
+        "Link": LinkFormatter,
+        "Date": DateFormatter
       }
     }
   });
 
   function PercentCompleteFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+  	assert(cellMetaInfo);
+  	if (cellMetaInfo.outputPlainText) {
+	    if (value == null || value === "") {
+	      return "";
+	    } else {
+	      return "" + value + "%";
+	    }
+  	}
+
     if (value == null || value === "") {
       return "-";
     } else if (value < 50) {
@@ -56,22 +66,47 @@
       color = "green";
     }
 
+  	assert(cellMetaInfo);
+  	if (cellMetaInfo.outputPlainText) {
+      return "" + value + "%";
+  	}
+
     return "<span class='percent-complete-bar' style='background:" + color + ";width:" + value + "%'></span>";
   }
 
   function YesNoFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+  	assert(cellMetaInfo);
+  	if (cellMetaInfo.outputPlainText) {
+	    return !!value;
+  	}
+
     return value ? "Yes" : "No";
   }
 
   function CheckmarkFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+  	assert(cellMetaInfo);
+  	if (cellMetaInfo.outputPlainText) {
+	    return !!value;
+  	}
+
     return value ? "<img src='../images/tick.png'>" : "";
   }
 
   function ColorFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+  	assert(cellMetaInfo);
+  	if (cellMetaInfo.outputPlainText) {
+	    return value;
+  	}
+
     return "<span style='color:" + value  + "'>" + value + "</span>";
   }
 
   function BackColorFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+  	assert(cellMetaInfo);
+  	if (cellMetaInfo.outputPlainText) {
+	    return value;
+  	}
+
     //return "<span style='background:" + value  + "'>" + value + "</span>";
     cellStyles.push("background:" + value);
     return "<span style='color:black; padding-left: 1px; padding-right: 1px; background-color: rgba(255, 255, 255, 0.4); text-shadow: 1px 1px 3px white; -webkit-box-shadow: 0px 0px 3px 1px rgba(255, 255, 255, 0.4); box-shadow: 0px 0px 3px 1px rgba(255, 255, 255, 0.4);'>" + value + "</span>";
@@ -79,21 +114,34 @@
 
   // identical to the SlickGrid internal defaultFormatter except this one wraps the value in a SPAN tag.
   function TextFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+  	assert(cellMetaInfo);
     if (value == null) {
       return "";
     } else {
+      if (cellMetaInfo.outputPlainText) {
+        return "" + value;
+  	  }
       // Safari 6 fix: (value + "") instead of .toString()
       value = (value + "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       return "<span>" + value + "</span>";
     }
   }
 
-  function ReferenceValueFormatter(row, cell, value, columnDef, dataContext) {
-    var options = typeof columnDef.options === 'function' ? columnDef.options() : columnDef.options;
+  function ReferenceValueFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+  	assert(cellMetaInfo);
+    var options = cellMetaInfo.options;
+
+    if (cellMetaInfo.outputPlainText) {
+      if (value == null) {
+        return "";
+      } else {
+        return "" + value;
+  	  }
+  	}
 
     if (options) {
       var match;
-      for(var i in options) {
+      for (var i in options) {
         if (options[i].id == value || options[i].key == value) {
           match = options[i];
           break;
@@ -108,15 +156,46 @@
   }
 
   /*
+   *  depends on Moment.js
+   *  (http://momentjs.com/)
+   */
+  function DateFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+  	var options = $.extend({
+  		format: 'YYYY-MM-DD HH:mm:ss'
+  	}, cellMetaInfo.options);
+
+  	if (cellMetaInfo.outputPlainText) {
+        if (value == null) {
+          return "";
+        } else if (value.toISOString) {
+      	  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString
+		  return value.toISOString();
+		}
+      	return "" + value;
+    }
+
+    if (value == null || value === "") {
+      	return "";
+    } else if (value && typeof moment !== 'undefined') {
+        return moment(value).format(options.format);
+    } else if (value.toISOString) {
+      	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString
+		return value.toISOString();
+	} else {
+	  	return "" + value;
+	}
+  }
+
+  /*
    *  utility for chaining formatters
    */
   function Chain() {
     var formatters = Array.prototype.slice.call(arguments);
 
-    return function(row, cell, value, columnDef, dataContext) {
+    return function(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       var val = value;
       for(var i in formatters) {
-        val = formatters[i](row, cell, val, columnDef, dataContext);
+        val = formatters[i](row, cell, val, columnDef, rowDataItem, cellMetaInfo);
       }
       return val;
     };
@@ -137,7 +216,7 @@
 
     var len = splatParams.length;
 
-    return function(row, cell, value, columnDef, dataContext) {
+    return function(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       result = urlTemplate;
       for(i = 0; i < len; i++) {
         val = dataContext[splatParams[i]];
@@ -146,23 +225,6 @@
         }
       }
       return (typeof value !== 'undefined' && value !== null) ? ('<a href="' + result + '">' + value + '</a>') : null;
-    };
-  }
-
-  /*
-   *  depends on Moment.js
-   *  (http://momentjs.com/)
-   */
-  function DateFormatter(options) {
-    var hasMoment = typeof moment !== 'undefined';
-
-    return function(row, cell, value, columnDef, dataContext) {
-      if (!hasMoment) return value;
-
-      if (value && options && options.format) {
-        return moment(value).format(options.format);
-      }
-      return '';
     };
   }
 
@@ -175,7 +237,7 @@
     }
     var len = fields.length, data;
 
-    return function(row, cell, value, columnDef, dataContext) {
+    return function(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       var result = [];
       for(var i = 0; i < len; i++) {
         data = dataContext[ fields[i] ];
