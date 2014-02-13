@@ -11,9 +11,7 @@
     Based on SlickGrid Header Menu Plugin (https://github.com/mleibman/SlickGrid/blob/master/plugins/slick.headermenu.js)
 
     (Can't be used at the same time as the header menu plugin as it implements the dropdown in the same way)
-
-
-    */
+   */
 
     function HeaderFilter(options) {
         var grid;
@@ -175,7 +173,7 @@
             for (var i = 0; i < filterItems.length; i++) {
                 var filtered = _.contains(workingFilters, filterItems[i].value);
 
-                filterOptions += "<label><input type='checkbox' value='" + i + "'" + 
+                filterOptions += "<label><input type='checkbox' value='" + i + "'" +
                                 (filtered ? " checked='checked'" : "") +
                                 " data-filtervalue='"+ filterItems[i].value +"'"+
                                 "/>" + filterItems[i].title + "</label>";
@@ -274,7 +272,7 @@
                 title = options.messages.falseDesc;
             }
             else if (value === true) {
-                title = options.messages.trueDesc;                
+                title = options.messages.trueDesc;
             }
             else if (column.formatterName === 'sentenceToWords' || column.formatterName === 'date' ){
                 title = column.formatter(null,null,value);

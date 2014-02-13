@@ -573,13 +573,22 @@ function isValidModifier(v) {
       }
     };
 
-    this.position = function (position) {
+    /*
+     * info: {
+     *         gridPosition: getGridPosition(),
+     *         position: cellBox,
+     *         container: activeCellNode
+     *       }
+     */
+    this.position = function (info) {
       if (!calendarOpen) {
         return;
       }
-      $.datepicker.dpDiv
-          .css("top", position.top + 30)
-          .css("left", position.left);
+      if (info.position.visible) {
+	    $.datepicker.dpDiv
+	          .css("top", info.position.top + 30)
+	          .css("left", info.position.left);
+	  }
     };
 
     this.focus = function () {
@@ -892,6 +901,9 @@ function isValidModifier(v) {
 	      });
 	    }
       });
+	  //$helper.blur(function (e) {
+	  //  $helper.hide();
+	  //});
 
       $helper.find(".editor-percentcomplete-buttons button").bind("click", function (e) {
         $input.val($(this).attr("val"));
@@ -958,17 +970,29 @@ function isValidModifier(v) {
    * KeyDown events are also handled to provide handling for Tab, Shift-Tab, Esc and Ctrl-Enter.
    */
   function LongTextEditor(args) {
-    var $input, $wrapper;
+    var $input, $wrapper, $picker, $wrapped_input;
     var defaultValue;
     var scope = this;
 
     this.init = function () {
+      $input = $("<TEXTAREA type='text' class='editor-longtext-basic-input' rows='1' />")
+          .appendTo(args.container)
+          .bind("keydown.nav", function (e) {
+            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+              e.stopImmediatePropagation();
+            }
+          });
+
+      $input.width($(args.container).innerWidth() - 6);   // textarea with 'resize:none' keeps space at right; we move the edit icon over it...
+
+      $picker = $("<div class='editor-longtext-icon' />").appendTo(args.container);
+
       var $container = $("body");
 
-      $wrapper = $("<DIV class='slick-editor-longtext'/>")
+      $wrapper = $("<DIV class='slick-editor-longtext' />")
           .appendTo($container);
 
-      $input = $("<TEXTAREA hidefocus='true' rows='5'>")
+      $wrapped_input = $("<TEXTAREA rows='5'>")
           .appendTo($wrapper);
 
       $("<DIV class='buttons-container'><BUTTON class='save-button'>Save</BUTTON><BUTTON class='cancel-button'>Cancel</BUTTON></DIV>")
@@ -976,15 +1000,20 @@ function isValidModifier(v) {
 
       $wrapper.find("button.save-button").bind("click", scope.save);
       $wrapper.find("button.cancel-button").bind("click", scope.cancel);
-      $input.bind("keydown", scope.handleKeyDown);
+      $wrapped_input.bind("keydown", scope.handleKeyDown);
 
       assert(args.container);
-      scope.position({
-      	my: "left top-5",
-      	at: "left bottom",
-      	of: args.container,
-      	collision: "flipfit"
+      $picker.click(function(e) {
+	    if (!$wrapper.is(":visible")) {
+	      showPanel();
+	    } else {
+	      hidePanel();
+	    }
       });
+	  //$wrapper.blur(function (e) {
+      //  hidePanel();
+	  //});
+
       $input.focus().select();
 
       defaultValue = '';
@@ -1011,27 +1040,57 @@ function isValidModifier(v) {
 
     this.cancel = function () {
       $input.val(defaultValue);
+      $wrapped_input.val(defaultValue);
       args.cancelChanges();
     };
 
-    this.hide = function () {
+    function hidePanel() {
+      $input.prop('readonly', null);
+      $input.val($wrapped_input.val());
+
       $wrapper.hide();
-    };
+    }
 
-    this.show = function () {
+    function showPanel() {
+      // mark regular input as readonly and copy its content into the panel textarea:
+      $input.prop('readonly', true);
+      $wrapped_input.val($input.val());
+
       $wrapper.show();
+
+      scope.position(args);
     };
 
-    this.position = function (positioning) {
-      $wrapper.position(positioning);
+    /*
+     * info: {
+     *         gridPosition: getGridPosition(),
+     *         position: cellBox,
+     *         container: activeCellNode
+     *       }
+     */
+    this.position = function (info) {
+	  if ($wrapper.is(":visible")) {
+	    $wrapper.position({
+	      my: "left top+2",
+	      at: "left bottom",
+	      of: info.container,
+	      collision: "flipfit"
+	    });
+	  }
     };
 
     this.destroy = function () {
       $wrapper.remove();
+      $picker.remove();
+      $input.remove();
     };
 
     this.focus = function () {
-      $input.focus();
+	  if ($wrapper.is(":visible")) {
+      	$wrapped_input.focus();
+      } else {
+      	$input.focus();
+      }
     };
 
     this.setDirectValue = function (val) {
@@ -1039,6 +1098,7 @@ function isValidModifier(v) {
       val += "";
       defaultValue = val;
       $input.val(val);
+      $wrapped_input.val(val);
     };
 
     this.loadValue = function (item) {
@@ -1046,8 +1106,18 @@ function isValidModifier(v) {
       $input.select();
     };
 
+    function getValue() {
+      var rv;
+	  if ($wrapper.is(":visible")) {
+      	rv = $wrapped_input.val();
+      } else {
+      	rv = $input.val();
+      }
+      return rv;
+    }
+
     this.serializeValue = function () {
-      return $input.val();
+      return getValue();
     };
 
     this.applyValue = function (item, state) {
@@ -1056,7 +1126,7 @@ function isValidModifier(v) {
 
     this.isValueChanged = function () {
       assert(defaultValue != null);
-      return $input.val() != defaultValue;
+      return getValue() != defaultValue;
     };
 
     this.validate = function () {

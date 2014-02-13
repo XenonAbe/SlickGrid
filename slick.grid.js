@@ -3343,8 +3343,8 @@ if (typeof Slick === "undefined") {
       currentEditor = new (editor || getEditor(activeRow, activeCell))($.extend({}, options.editorOptions, columnDef.editorOptions,
         {
           grid: self,
-          gridPosition: absBox($container[0]),
-          position: absBox(activeCellNode),
+          gridPosition: getGridPosition(),
+          position: getActiveCellPosition(),
           container: activeCellNode,
           column: columnDef,
           item: item || {},
@@ -3358,9 +3358,15 @@ if (typeof Slick === "undefined") {
 
       serializedEditorValue = currentEditor.serializeValue();
 
-      if (currentEditor.position) {
-        handleActiveCellPositionChange();
+      var cellBox = getActiveCellPosition();
+      if (currentEditor.show && currentEditor.hide) {
+        if (!cellBox.visible) {
+          currentEditor.hide();
+        } else {
+          currentEditor.show();
+        }
       }
+
       return currentEditor; // this is a truthy return value
     }
 
@@ -3478,7 +3484,11 @@ if (typeof Slick === "undefined") {
         }
 
         if (currentEditor.position) {
-          currentEditor.position(cellBox);
+          currentEditor.position({
+            gridPosition: getGridPosition(),
+            position: cellBox,
+            container: activeCellNode
+          });
         }
       }
     }
