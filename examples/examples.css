@@ -1,62 +1,49 @@
 @import url('../slick-default-theme.css');
-
 * {
   font-family: arial;
   font-size: 8pt;
 }
-
 pre {
   font-family: Consolas, monospace;
 }
-
 body {
   background: beige;
   padding: 0;
   margin: 8px;
 }
-
 h2 {
   font-size: 10pt;
   border-bottom: 1px dotted gray;
 }
-
 ul {
   margin-left: 0;
   padding: 0;
   cursor: default;
 }
-
 li {
   background: url("../images/arrow_right_spearmint.png") no-repeat center left;
   padding: 0 0 0 14px;
-
   list-style: none;
   margin: 0;
 }
-
 .grid-outer-wrapper {
   width: 600px;
   float: left;
-
   background-color: white;
   border: 1px solid #CCCCCC;
   padding: 1px;
 }
-
 .grid-inner-wrapper {
   background: white;
   outline: 0;
   /*border: 1px solid gray;*/
-
   width: 100%;
   min-height: 450px;
 }
-
 .grid-pager {
   width: 100%;
   height: 20px;
 }
-
 .grid-header {
   border: 1px solid gray;
   border-bottom: 0;
@@ -66,23 +53,19 @@ li {
   height: 24px;
   line-height: 24px;
 }
-
 .grid-header label {
   display: inline-block;
   font-weight: bold;
   margin: auto auto auto 6px;
 }
-
 .grid-header .ui-icon {
   margin: 4px 4px auto 6px;
   background-color: transparent;
   border-color: transparent;
 }
-
 .grid-header .ui-icon.ui-state-hover {
   background-color: white;
 }
-
 .grid-header #txtSearch {
   margin: 0 4px 0 4px;
   padding: 2px 2px;
@@ -91,50 +74,40 @@ li {
   -webkit-border-radius: 2px;
   border: 1px solid silver;
 }
-
 .options-panel {
   border-radius: 6px;
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px;
   border: 1px solid silver;
   background: #f0f0f0;
-  padding: 10px;
   margin-bottom: 20px;
-
   float: left;
   margin-left: 10px;
   padding: 10px;
-
   max-width: 260px;
 }
-
 #viewsource {
   cursor: pointer;
   color: darkblue;
 }
-
 .diagnostics-panel {
   clear: both;
   min-width: 600px;
   padding: 10px 0 0 0;
   margin: 0;
 }
-
 .diagnostics-view {
   min-width: 600px;
   margin-top: 20px;
-
   border-radius: 6px;
   -moz-border-radius: 6px;
   -webkit-border-radius: 6px;
   border: 1px solid silver;
   background: #f0f0f0;
-  padding: 10px;
   margin-bottom: 20px;
   margin-left: 0;
   padding: 10px;
 }
-
 #debug-output {
   white-space: pre-wrap;
   background: white;
@@ -142,43 +115,34 @@ li {
   border: 1px solid gray;
   min-height: 100px;
 }
-
 /* Individual cell styles */
 .slick-cell.task-name {
   font-weight: bold;
   text-align: right;
 }
-
 .slick-cell.task-percent {
   text-align: right;
 }
-
 .slick-cell.cell-move-handle {
   font-weight: bold;
   text-align: right;
   border-right: solid gray;
-
   background: #efefef;
   cursor: move;
 }
-
 .cell-move-handle:hover {
   background: #b6b9bd;
 }
-
 .slick-row.selected .cell-move-handle {
   background: #D5DC8D;
 }
-
 .slick-row .cell-actions {
   text-align: left;
 }
-
 .slick-row.complete {
   background-color: #DFD;
   color: #555;
 }
-
 .percent-complete-bar {
   display: inline-block;
   height: 6px;
@@ -186,17 +150,15 @@ li {
   -moz-border-radius: 3px;
   -webkit-border-radius: 3px;
 }
-
-
 #displaycode {
-    display:none; /*initially hidden */
+  display: none;
+  /*initially hidden */
 }
-
 /* Formatted Code Block */
 #displaycode pre {
   font-size: normal;
-  background-color : #ffffff;
-  overflow:scroll;
-  height:500px;
+  background-color: #ffffff;
+  overflow: scroll;
+  height: 500px;
 }
-
+/*# sourceMappingURL=data:application/json,%7B%22version%22%3A3%2C%22sources%22%3A%5B%22examples%2Fexamples.less%22%5D%2C%22names%22%3A%5B%5D%2C%22mappings%22%3A%22YAAY%3BAAEZ%3BEACE%2CkBAAA%3BEACA%2CcAAA%3B%3BAAGF%3BEACE%2CgCAAA%3B%3BAAGF%3BEACE%2CiBAAA%3BEACA%2CUAAA%3BEACA%2CWAAA%3B%3BAAGF%3BEACE%2CeAAA%3BEACA%2C8BAAA%3B%3BAAGF%3BEACE%2CcAAA%3BEACA%2CUAAA%3BEACA%2CeAAA%3B%3BAAGF%3BEACE%2CgBAAgB%2C4DAAhB%3BEACA%2CmBAAA%3BEAEA%2CgBAAA%3BEACA%2CSAAA%3B%3BAAGF%3BEACE%2CYAAA%3BEACA%2CWAAA%3BEAEA%2CuBAAA%3BEACA%2CyBAAA%3BEACA%2CYAAA%3B%3BAAGF%3BEACE%2CiBAAA%3BEACA%2CUAAA%3B%3BEAGA%2CWAAA%3BEACA%2CiBAAA%3B%3BAAGF%3BEACE%2CWAAA%3BEACA%2CYAAA%3B%3BAAGF%3BEACE%2CsBAAA%3BEACA%2CgBAAA%3BEACA%2CaAAA%3BEACA%2CgBAAgB%2C8CAAhB%3BEACA%2CYAAA%3BEACA%2CYAAA%3BEACA%2CiBAAA%3B%3BAAGF%2CYAAa%3BEACX%2CqBAAA%3BEACA%2CiBAAA%3BEACA%2C0BAAA%3B%3BAAGF%2CYAAa%3BEACX%2CwBAAA%3BEACA%2C6BAAA%3BEACA%2CyBAAA%3B%3BAAGF%2CYAAa%2CSAAQ%3BEACnB%2CuBAAA%3B%3BAAGF%2CYAAa%3BEACX%2CmBAAA%3BEACA%2CgBAAA%3BEACA%2CkBAAA%3BEACA%2CuBAAA%3BEACA%2C0BAAA%3BEACA%2CwBAAA%3B%3BAAGF%3BEACE%2CkBAAA%3BEACA%2CuBAAA%3BEACA%2C0BAAA%3BEACA%2CwBAAA%3BEACA%2CmBAAA%3BEAEA%2CmBAAA%3BEAEA%2CWAAA%3BEACA%2CiBAAA%3BEACA%2CaAAA%3BEAEA%2CgBAAA%3B%3BAAGF%3BEACE%2CeAAA%3BEACA%2CeAAA%3B%3BAAGF%3BEACE%2CWAAA%3BEACA%2CgBAAA%3BEACA%2CmBAAA%3BEACA%2CSAAA%3B%3BAAGF%3BEACE%2CgBAAA%3BEACA%2CgBAAA%3BEAEA%2CkBAAA%3BEACA%2CuBAAA%3BEACA%2C0BAAA%3BEACA%2CwBAAA%3BEACA%2CmBAAA%3BEAEA%2CmBAAA%3BEACA%2CcAAA%3BEACA%2CaAAA%3B%3BAAGF%3BEACE%2CqBAAA%3BEACA%2CiBAAA%3BEACA%2CUAAA%3BEACA%2CsBAAA%3BEACA%2CiBAAA%3B%3B%3BAAIF%2CWAAW%3BEACT%2CiBAAA%3BEACA%2CiBAAA%3B%3BAAGF%2CWAAW%3BEACT%2CiBAAA%3B%3BAAGF%2CWAAW%3BEACT%2CiBAAA%3BEACA%2CiBAAA%3BEACA%2CwBAAA%3BEAEA%2CmBAAA%3BEACA%2CYAAA%3B%3BAAGF%2CiBAAiB%3BEACf%2CmBAAA%3B%3BAAGF%2CUAAU%2CSAAU%3BEAClB%2CmBAAA%3B%3BAAGF%2CUAAW%3BEACT%2CgBAAA%3B%3BAAGF%2CUAAU%3BEACR%2CsBAAA%3BEACA%2CWAAA%3B%3BAAGF%3BEACE%2CqBAAA%3BEACA%2CWAAA%3BEACA%2CkBAAA%3BEACA%2CuBAAA%3BEACA%2C0BAAA%3B%3BAAIF%3BEACI%2CaAAA%3B%3B%3B%3BAAIJ%2CYAAa%3BEACX%2CiBAAA%3BEACA%2CyBAAA%3BEACA%2CgBAAA%3BEACA%2CaAAA%22%2C%22sourcesContent%22%3A%5B%22%40import%20url('..%2Fslick-default-theme.css')%3B%5Cn%5Cn*%20%7B%5Cn%20%20font-family%3A%20arial%3B%5Cn%20%20font-size%3A%208pt%3B%5Cn%7D%5Cn%5Cnpre%20%7B%5Cn%20%20font-family%3A%20Consolas%2C%20monospace%3B%5Cn%7D%5Cn%5Cnbody%20%7B%5Cn%20%20background%3A%20beige%3B%5Cn%20%20padding%3A%200%3B%5Cn%20%20margin%3A%208px%3B%5Cn%7D%5Cn%5Cnh2%20%7B%5Cn%20%20font-size%3A%2010pt%3B%5Cn%20%20border-bottom%3A%201px%20dotted%20gray%3B%5Cn%7D%5Cn%5Cnul%20%7B%5Cn%20%20margin-left%3A%200%3B%5Cn%20%20padding%3A%200%3B%5Cn%20%20cursor%3A%20default%3B%5Cn%7D%5Cn%5Cnli%20%7B%5Cn%20%20background%3A%20url(%5C%22..%2Fimages%2Farrow_right_spearmint.png%5C%22)%20no-repeat%20center%20left%3B%5Cn%20%20padding%3A%200%200%200%2014px%3B%5Cn%5Cn%20%20list-style%3A%20none%3B%5Cn%20%20margin%3A%200%3B%5Cn%7D%5Cn%5Cn.grid-outer-wrapper%20%7B%5Cn%20%20width%3A%20600px%3B%5Cn%20%20float%3A%20left%3B%5Cn%5Cn%20%20background-color%3A%20white%3B%5Cn%20%20border%3A%201px%20solid%20%23CCCCCC%3B%5Cn%20%20padding%3A%201px%3B%5Cn%7D%5Cn%5Cn.grid-inner-wrapper%20%7B%5Cn%20%20background%3A%20white%3B%5Cn%20%20outline%3A%200%3B%5Cn%20%20%2F*border%3A%201px%20solid%20gray%3B*%2F%5Cn%5Cn%20%20width%3A%20100%25%3B%5Cn%20%20min-height%3A%20450px%3B%5Cn%7D%5Cn%5Cn.grid-pager%20%7B%5Cn%20%20width%3A%20100%25%3B%5Cn%20%20height%3A%2020px%3B%5Cn%7D%5Cn%5Cn.grid-header%20%7B%5Cn%20%20border%3A%201px%20solid%20gray%3B%5Cn%20%20border-bottom%3A%200%3B%5Cn%20%20border-top%3A%200%3B%5Cn%20%20background%3A%20url('..%2Fimages%2Fheader-bg.gif')%20repeat-x%20center%20top%3B%5Cn%20%20color%3A%20black%3B%5Cn%20%20height%3A%2024px%3B%5Cn%20%20line-height%3A%2024px%3B%5Cn%7D%5Cn%5Cn.grid-header%20label%20%7B%5Cn%20%20display%3A%20inline-block%3B%5Cn%20%20font-weight%3A%20bold%3B%5Cn%20%20margin%3A%20auto%20auto%20auto%206px%3B%5Cn%7D%5Cn%5Cn.grid-header%20.ui-icon%20%7B%5Cn%20%20margin%3A%204px%204px%20auto%206px%3B%5Cn%20%20background-color%3A%20transparent%3B%5Cn%20%20border-color%3A%20transparent%3B%5Cn%7D%5Cn%5Cn.grid-header%20.ui-icon.ui-state-hover%20%7B%5Cn%20%20background-color%3A%20white%3B%5Cn%7D%5Cn%5Cn.grid-header%20%23txtSearch%20%7B%5Cn%20%20margin%3A%200%204px%200%204px%3B%5Cn%20%20padding%3A%202px%202px%3B%5Cn%20%20border-radius%3A%202px%3B%5Cn%20%20-moz-border-radius%3A%202px%3B%5Cn%20%20-webkit-border-radius%3A%202px%3B%5Cn%20%20border%3A%201px%20solid%20silver%3B%5Cn%7D%5Cn%5Cn.options-panel%20%7B%5Cn%20%20border-radius%3A%206px%3B%5Cn%20%20-moz-border-radius%3A%206px%3B%5Cn%20%20-webkit-border-radius%3A%206px%3B%5Cn%20%20border%3A%201px%20solid%20silver%3B%5Cn%20%20background%3A%20%23f0f0f0%3B%5Cn%20%20padding%3A%2010px%3B%5Cn%20%20margin-bottom%3A%2020px%3B%5Cn%5Cn%20%20float%3A%20left%3B%5Cn%20%20margin-left%3A%2010px%3B%5Cn%20%20padding%3A%2010px%3B%5Cn%5Cn%20%20max-width%3A%20260px%3B%5Cn%7D%5Cn%5Cn%23viewsource%20%7B%5Cn%20%20cursor%3A%20pointer%3B%5Cn%20%20color%3A%20darkblue%3B%5Cn%7D%5Cn%5Cn.diagnostics-panel%20%7B%5Cn%20%20clear%3A%20both%3B%5Cn%20%20min-width%3A%20600px%3B%5Cn%20%20padding%3A%2010px%200%200%200%3B%5Cn%20%20margin%3A%200%3B%5Cn%7D%5Cn%5Cn.diagnostics-view%20%7B%5Cn%20%20min-width%3A%20600px%3B%5Cn%20%20margin-top%3A%2020px%3B%5Cn%5Cn%20%20border-radius%3A%206px%3B%5Cn%20%20-moz-border-radius%3A%206px%3B%5Cn%20%20-webkit-border-radius%3A%206px%3B%5Cn%20%20border%3A%201px%20solid%20silver%3B%5Cn%20%20background%3A%20%23f0f0f0%3B%5Cn%20%20padding%3A%2010px%3B%5Cn%20%20margin-bottom%3A%2020px%3B%5Cn%20%20margin-left%3A%200%3B%5Cn%20%20padding%3A%2010px%3B%5Cn%7D%5Cn%5Cn%23debug-output%20%7B%5Cn%20%20white-space%3A%20pre-wrap%3B%5Cn%20%20background%3A%20white%3B%5Cn%20%20outline%3A%200%3B%5Cn%20%20border%3A%201px%20solid%20gray%3B%5Cn%20%20min-height%3A%20100px%3B%5Cn%7D%5Cn%5Cn%2F*%20Individual%20cell%20styles%20*%2F%5Cn.slick-cell.task-name%20%7B%5Cn%20%20font-weight%3A%20bold%3B%5Cn%20%20text-align%3A%20right%3B%5Cn%7D%5Cn%5Cn.slick-cell.task-percent%20%7B%5Cn%20%20text-align%3A%20right%3B%5Cn%7D%5Cn%5Cn.slick-cell.cell-move-handle%20%7B%5Cn%20%20font-weight%3A%20bold%3B%5Cn%20%20text-align%3A%20right%3B%5Cn%20%20border-right%3A%20solid%20gray%3B%5Cn%5Cn%20%20background%3A%20%23efefef%3B%5Cn%20%20cursor%3A%20move%3B%5Cn%7D%5Cn%5Cn.cell-move-handle%3Ahover%20%7B%5Cn%20%20background%3A%20%23b6b9bd%3B%5Cn%7D%5Cn%5Cn.slick-row.selected%20.cell-move-handle%20%7B%5Cn%20%20background%3A%20%23D5DC8D%3B%5Cn%7D%5Cn%5Cn.slick-row%20.cell-actions%20%7B%5Cn%20%20text-align%3A%20left%3B%5Cn%7D%5Cn%5Cn.slick-row.complete%20%7B%5Cn%20%20background-color%3A%20%23DFD%3B%5Cn%20%20color%3A%20%23555%3B%5Cn%7D%5Cn%5Cn.percent-complete-bar%20%7B%5Cn%20%20display%3A%20inline-block%3B%5Cn%20%20height%3A%206px%3B%5Cn%20%20border-radius%3A%203px%3B%5Cn%20%20-moz-border-radius%3A%203px%3B%5Cn%20%20-webkit-border-radius%3A%203px%3B%5Cn%7D%5Cn%5Cn%5Cn%23displaycode%20%7B%5Cn%20%20%20%20display%3Anone%3B%20%2F*initially%20hidden%20*%2F%5Cn%7D%5Cn%5Cn%2F*%20Formatted%20Code%20Block%20*%2F%5Cn%23displaycode%20pre%20%7B%5Cn%20%20font-size%3A%20normal%3B%5Cn%20%20background-color%20%3A%20%23ffffff%3B%5Cn%20%20overflow%3Ascroll%3B%5Cn%20%20height%3A500px%3B%5Cn%7D%5Cn%5Cn%5Cn%22%5D%7D */

@@ -1,10 +1,11 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
-  <link rel="stylesheet" href="../plugins/slick.headermenu.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../plugins/slick-headermenu.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     /**
@@ -166,7 +167,7 @@
 
     // Event fired when a menu option is selected
     filterPlugin.onCommand.subscribe(function (e, args) {
-      dataView.fastSort(args.column.field, args.command === "sort-asc");
+      dataView.sort(args.column.field, args.command === "sort-asc");
     });
 
     grid.registerPlugin(filterPlugin);

@@ -1,0 +1,36 @@
+.slick-column-name,
+.slick-sort-indicator {
+  /**
+   * This makes all "float:right" elements after it that spill over to the next line
+   * display way below the lower boundary of the column thus hiding them.
+   */
+  display: inline-block;
+  float: left;
+  margin-bottom: 100px;
+}
+.slick-header-button {
+  display: inline-block;
+  float: right;
+  vertical-align: top;
+  margin: 1px;
+  /**
+  * This makes all "float:right" elements after it that spill over to the next line
+  * display way below the lower boundary of the column thus hiding them.
+  */
+  margin-bottom: 100px;
+  height: 15px;
+  width: 15px;
+  background-repeat: no-repeat;
+  background-position: center center;
+  cursor: pointer;
+}
+.slick-header-button-hidden {
+  width: 0;
+  -webkit-transition: 0.2s width;
+  -ms-transition: 0.2s width;
+  transition: 0.2s width;
+}
+.slick-header-column:hover > .slick-header-button {
+  width: 15px;
+}
+/*# sourceMappingURL=data:application/json,%7B%22version%22%3A3%2C%22sources%22%3A%5B%22plugins%2Fslick-headerbuttons.less%22%5D%2C%22names%22%3A%5B%5D%2C%22mappings%22%3A%22AAAA%3BAACA%3B%3B%3B%3B%3BEAKE%2CqBAAA%3BEACA%2CWAAA%3BEACA%2CoBAAA%3B%3BAAGF%3BEACE%2CqBAAA%3BEACA%2CYAAA%3BEACA%2CmBAAA%3BEACA%2CWAAA%3B%3B%3B%3B%3BEAKA%2CoBAAA%3BEACA%2CYAAA%3BEACA%2CWAAA%3BEACA%2C4BAAA%3BEACA%2CkCAAA%3BEACA%2CeAAA%3B%3BAAGF%3BEACE%2CQAAA%3BEAEA%2C8BAAA%3BEACA%2C0BAAA%3BEACA%2CsBAAA%3B%3BAAGF%2CoBAAoB%2CMAAO%3BEACzB%2CWAAA%22%2C%22sourcesContent%22%3A%5B%22.slick-column-name%2C%5Cn.slick-sort-indicator%20%7B%5Cn%20%20%2F**%5Cn%20%20%20*%20This%20makes%20all%20%5C%22float%3Aright%5C%22%20elements%20after%20it%20that%20spill%20over%20to%20the%20next%20line%5Cn%20%20%20*%20display%20way%20below%20the%20lower%20boundary%20of%20the%20column%20thus%20hiding%20them.%5Cn%20%20%20*%2F%5Cn%20%20display%3A%20inline-block%3B%5Cn%20%20float%3A%20left%3B%5Cn%20%20margin-bottom%3A%20100px%3B%5Cn%7D%5Cn%5Cn.slick-header-button%20%7B%5Cn%20%20display%3A%20inline-block%3B%5Cn%20%20float%3A%20right%3B%5Cn%20%20vertical-align%3A%20top%3B%5Cn%20%20margin%3A%201px%3B%5Cn%20%20%2F**%5Cn%20%20*%20This%20makes%20all%20%5C%22float%3Aright%5C%22%20elements%20after%20it%20that%20spill%20over%20to%20the%20next%20line%5Cn%20%20*%20display%20way%20below%20the%20lower%20boundary%20of%20the%20column%20thus%20hiding%20them.%5Cn%20%20*%2F%5Cn%20%20margin-bottom%3A%20100px%3B%5Cn%20%20height%3A%2015px%3B%5Cn%20%20width%3A%2015px%3B%5Cn%20%20background-repeat%3A%20no-repeat%3B%5Cn%20%20background-position%3A%20center%20center%3B%5Cn%20%20cursor%3A%20pointer%3B%5Cn%7D%5Cn%5Cn.slick-header-button-hidden%20%7B%5Cn%20%20width%3A%200%3B%5Cn%5Cn%20%20-webkit-transition%3A%200.2s%20width%3B%5Cn%20%20-ms-transition%3A%200.2s%20width%3B%5Cn%20%20transition%3A%200.2s%20width%3B%5Cn%7D%5Cn%5Cn.slick-header-column%3Ahover%20%3E%20.slick-header-button%20%7B%5Cn%20%20width%3A%2015px%3B%5Cn%7D%5Cn%5Cn%22%5D%7D */

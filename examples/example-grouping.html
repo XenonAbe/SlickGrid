@@ -5,8 +5,9 @@
   <title>SlickGrid example: Grouping</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../controls/slick.pager.css" type="text/css"/>
-  <link rel="stylesheet" href="../controls/slick.columnpicker.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-pager.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-columnpicker.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-effort-driven {
@@ -136,8 +137,6 @@ var options = {
   editable: true
 };
 
-var sortcol = "title";
-var sortdir = 1;
 var percentCompleteThreshold = 0;
 var prevPercentCompleteThreshold = 0;
 
@@ -159,11 +158,6 @@ function sumTotalsFormatter(totals, columnDef) {
 
 function myFilter(item, args) {
   return item["percentComplete"] >= args.percentComplete;
-}
-
-function comparer(a, b) {
-  var x = a[sortcol], y = b[sortcol];
-  return (x == y ? 0 : (x > y ? 1 : -1));
 }
 
 function groupByDuration() {
@@ -247,7 +241,7 @@ function groupByDurationEffortDrivenPercent() {
       formatter: function (g) {
         return "Effort-Driven:  " + (g.value ? "True" : "False") + "  <span style='color:green'>(" + g.count + " items)</span>";
       },
-      aggregators :[
+      aggregators: [
         new Slick.Data.Aggregators.Sum("duration"),
         new Slick.Data.Aggregators.Sum("cost")
       ],
@@ -325,31 +319,8 @@ $(function () {
 
 
   grid.onSort.subscribe(function (e, args) {
-    sortdir = args.sortAsc ? 1 : -1;
-    sortcol = args.sortCol.field;
-
-    if ($.browser.msie && $.browser.version <= 8) {
-      // using temporary Object.prototype.toString override
-      // more limited and does lexicographic sort only by default, but can be much faster
-
-      var percentCompleteValueFn = function () {
-        var val = this["percentComplete"];
-        if (val < 10) {
-          return "00" + val;
-        } else if (val < 100) {
-          return "0" + val;
-        } else {
-          return val;
-        }
-      };
-
-      // use numeric sort of % and lexicographic for everything else
-      dataView.fastSort((sortcol == "percentComplete") ? percentCompleteValueFn : sortcol, args.sortAsc);
-    } else {
-      // using native sort with comparer
-      // preferred method but can be very slow in IE with huge datasets
-      dataView.sort(comparer, args.sortAsc);
-    }
+    // use numeric sort for % and any other numeric values; lexicographic for everything else
+    dataView.fastSort(args.sortCol.field, args.sortAsc);
   });
 
   // wire up model events to drive the grid
