@@ -28,17 +28,44 @@
         <script src="../slick.grid.js"></script>
         <script src="../slick.formatters.js"></script>
 
-        <button onclick="grid.debug()">Debug info</button>
-        <button onclick="startBench(100)">Run (+= 100px)</button>
-        <button onclick="startBench(300)">Run (+= 300px)</button>
-        <button onclick="startBench(550)">Run (+= 550px; simulate paging)</button>
-        <button onclick="startBench(1000)">Run (+= 1'000px)</button>
-        <button onclick="startBench(5000)">Run (+= 5'000px)</button>
+        <button id="grid_debug">Debug info <span /></button>
+        <button id="startBench_100">Run (+= 100px) <span /></button>
+        <button id="startBench_300">Run (+= 300px) <span /></button>
+        <button id="startBench_550">Run (+= 550px; simulate paging) <span /></button>
+        <button id="startBench_1000">Run (+= 1'000px) <span /></button>
+        <button id="startBench_5000">Run (+= 5'000px) <span /></button>
         <hr/>
 
         <div id="myGrid" style="width:600px;height:600px;"></div>
 
         <script>
+        $("#grid_debug").click(function(e) {
+        	e.preventDefault();
+        	grid.debug();
+        });
+        $("#startBench_100").click(function(e) {
+        	e.preventDefault();
+        	startBench(100, $(this));
+        });
+        $("#startBench_300").click(function(e) {
+        	e.preventDefault();
+        	startBench(300, $(this));
+        });
+        $("#startBench_550").click(function(e) {
+        	e.preventDefault();
+        	startBench(550, $(this));
+        });
+        $("#startBench_1000").click(function(e) {
+        	e.preventDefault();
+        	startBench(1000, $(this));
+        });
+        $("#startBench_5000").click(function(e) {
+        	e.preventDefault();
+        	startBench(5000, $(this));
+        });
+
+        //------------------------------------------------------------
+
         var grid;
         var data = [];
         var extraColumns = 100;
@@ -56,7 +83,7 @@
             {id:"effort-driven", name:"Effort Driven", width:80, minWidth:20, maxWidth:80, cssClass:"cell-effort-driven", field:"effortDriven", formatter:Slick.Formatters.Checkmark, asyncPostRender:testPostRender}
         ];
 
-        for (var i=0; i<extraColumns; i++) {
+        for (var i = 0; i < extraColumns; i++) {
             columns.push({id:"col" + i, name:"col" + i, field:"title"});
         }
 
@@ -109,7 +136,7 @@
         var startTime;
         var scrollAmount = 1000;
 
-        function startBench(scroll) {
+        function startBench(scroll, $msg_el_parent) {
             scrollAmount = scroll;
             lastScrollTop = 0;
             $grid.scrollTop(0);
@@ -118,19 +145,22 @@
                 startTime = new Date();
                 bench();
             }, 500);
-        }
+        
 
-        function bench() {
-            var scrollTop = $grid[0].scrollTop = lastScrollTop + scrollAmount;
+	        function bench() {
+	            var scrollTop = $grid[0].scrollTop = lastScrollTop + scrollAmount;
 
-            if ($grid[0].scrollTop == lastScrollTop + scrollAmount) {
-                lastScrollTop = scrollTop;
-                window.setTimeout(bench, 10);
-            }
-            else {
-                alert((new Date() - startTime));
-            }
-        }
+	            if ($grid[0].scrollTop == lastScrollTop + scrollAmount) {
+	                lastScrollTop = scrollTop;
+	                window.setTimeout(bench, 10);
+	            }
+	            else {
+			        var delta = new Date() - startTime;
+			        delta /= 1000;
+			        $msg_el_parent.find('span').text(" (" + delta.toFixed(3) + "s)");
+	            }
+	        }
+	    }
 
         </script>
     </body>
