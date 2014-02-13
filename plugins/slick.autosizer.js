@@ -29,11 +29,11 @@
       _isDestroyed = true;
     }
 
-    function pollSizeChanged(){
+    function pollSizeChanged() {
       if (_isDestroyed) return;
 
       ch = $container.height();
-      if (h !== ch){
+      if (h !== ch) {
         h = ch;
         $container.trigger('resize.slickgrid');
       }
