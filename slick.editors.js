@@ -197,40 +197,45 @@
   }
 
 function applyModifier(val, mod) {
-  if (!isValidModifier(mod))
+  var m = isValidModifier(mod);
+  if (!m)
     return mod;
-  var sv = mod.toString();
-  var ope = sv.charAt(0);
-  sv = sv.substr(1);    // remove operation
-  var isPercent = sv.charAt(sv.length - 1) === "%";
-  if (isPercent) sv = sv.slice(0, -1);
   var dv = parseFloat(val);
-  var dsv = parseFloat(sv);
-  switch(ope) {
-    case "+":
-      return isPercent ? dv + dv * dsv / 100.0 : dv + dsv;
+  switch (m.operator) {
+  case "+":
+    return m.isPercent ? dv * (1 + m.value) : dv + m.value;
     break;
-    case "-":
-      return isPercent ? dv - dv * dsv / 100.0 : dv - dsv;
+  case "-":
+    return m.isPercent ? dv * (1 - m.value) : dv - m.value;
     break;
-    case "*":
-      return dv * dsv;
+  case "*":
+    return dv * m.value;
     break;
-    case "/":
-      return dv / dsv;
+  case "/":
+    return dv / m.value;
     break;
   }
-  return dv;
+  assert(0); // should never get here
 }
 
 function isValidModifier(v) {
-  var sv = v.toString();
-  if ("+-*/".indexOf(sv.charAt(0)) < 0) return false;  // no good if it does not start with an operation
+  var sv = v.toString().trim();
+  var ope = sv.charAt(0);
+  if ("+-*/".indexOf(ope) < 0) return false;  // no good if it does not start with an operation
   sv = sv.substr(1);    //remove first char
   if (sv.indexOf('+') >= 0 || sv.indexOf('-') >= 0 || sv.indexOf('*') >= 0 || sv.indexOf('/') >= 0) return false;  // no more signs please.
-  if (sv.charAt(sv.length - 1) === '%') sv = sv.slice(0, -1);    // remove also the % char if it is there
+  var pct = false;
+  if (sv.charAt(sv.length - 1) === '%') {
+  	pct = true;
+  	sv = sv.slice(0, -1);    // remove also the % char if it is there
+  }
   // what remains must be a number
-  return !isNaN(sv);
+  if (isNaN(sv)) return false;
+  return {
+  	operator: ope,
+  	isPercent: pct,
+  	value: parseFloat(sv) / (pct ? 1 : 100)			// when it is a percentage, produce the equivalent perunage
+  };
 }
 
   function IntegerEditor(args) {
@@ -288,7 +293,8 @@ function isValidModifier(v) {
     };
 
     this.validate = function () {
-      if (isNaN($input.val()) && !isValidModifier($input.val())) {
+      var val = $input.val();
+      if (isNaN(val) && !isValidModifier(val)) {
         return {
           valid: false,
           msg: "Please enter a valid integer"
@@ -359,7 +365,8 @@ function isValidModifier(v) {
     };
 
     this.validate = function () {
-      if (isNaN($input.val()) && !isValidModifier($input.val())) {
+      var val = $input.val();
+      if (isNaN(val) && !isValidModifier(val)) {
         return {
           valid: false,
           msg: "Please enter a valid float"
@@ -382,7 +389,7 @@ function isValidModifier(v) {
     var scope = this;
 
     function roundPerunage(v) {
-      return Math.round(v * 1000) / 10;
+      return Math.round(v * 1E6) / 1E6;
     }
 
     function stringToPerunage(val) {
@@ -435,7 +442,8 @@ function isValidModifier(v) {
     this.serializeValue = function () {
       var v = $input.val();
       if (v === '') return 0;
-      return stringToPerunage(v);
+      var sv = stringToPerunage(defaultValue) * 100;
+      return stringToPerunage(applyModifier(sv, v) / 100) || 0;
     };
 
     this.applyValue = function (item, state) {
@@ -452,7 +460,7 @@ function isValidModifier(v) {
       if (val.charAt(val.length - 1) === '%') {
         val = val.slice(0, -1);    // remove also the % char if it is there
       }
-      if (isNaN(parseFloat(val))) {
+      if (isNaN(val) && !isValidModifier(val)) {
         return {
           valid: false,
           msg: "Please enter a valid percentage"
