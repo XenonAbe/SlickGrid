@@ -3,7 +3,7 @@
  * (c) 2009-2013 Michael Leibman
  * michael{dot}leibman{at}gmail{dot}com
  * http://github.com/mleibman/slickgrid
- *  
+ *
  * Distributed under MIT license.
  * All rights reserved.
  *
@@ -329,11 +329,8 @@ if (typeof Slick === "undefined") {
 
       $container
           .empty()
-          .css("overflow", "hidden")
-          .css("outline", 0)
-          .addClass(uid)
-          .attr('role', 'grid')
-          .addClass("ui-widget");
+          .addClass("slickgrid-container ui-widget " + uid)
+          .attr('role', 'grid');
 
       // set up a positioning container if needed
       if (!/relative|absolute|fixed/.test($container.css("position"))) {
@@ -409,14 +406,45 @@ if (typeof Slick === "undefined") {
 
         $container
             .bind("resize.slickgrid", resizeCanvas)
+            /*
             .bind("focusin.slickgrid", function(e) {
+      		  var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
+  		  	  var column = $header && $header.data("column");
+      		  if (column) {
+	            console.log("header focus: ", this, column);
+			    trigger(self.onHeaderFocusIn, {columnDef: column}, e);
+			    return;
+              } else {
+			    var info = getCellFromEvent(e);
+			    if (info) {
+	              console.log("cell focus: ", this, info);
+			      trigger(self.onCellFocusIn, info, e);
+			      return;
+			    }
+              }
               console.log("container focus: ", this, arguments);
-		      trigger(self.onFocusIn, {e: e}, e);
+		      trigger(self.onFocusIn, {}, e);
             })
             .bind("focusout.slickgrid", function(e) {
+      		  var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
+    		  var column = $header && $header.data("column");
+      		  if (column) {
+	            console.log("header focus LOST: ", this, column);
+			    trigger(self.onHeaderFocusOut, {columnDef: column}, e);
+			    return;
+              } else {
+			    var info = getCellFromEvent(e);
+			    if (info) {
+	              console.log("cell focus LOST: ", this, info);
+			      trigger(self.onCellFocusOut, info, e);
+			      return;
+			    }
+              }
               console.log("container LOST FOCUS", this, arguments);
-		      trigger(self.onFocusOut, {e: e}, e);
-            });
+		      trigger(self.onFocusOut, {}, e);
+            })
+			*/
+			;
         $viewport
             //.bind("click", handleClick)
             .bind("scroll", handleScroll);
@@ -701,6 +729,12 @@ if (typeof Slick === "undefined") {
         });
       $headerRow.empty();
 
+      function mkSaneID(columnDef, idx) {
+      	s = '_c' + idx + '_' + columnDef.id;
+      	s = s.replace(/[^a-zA-Z0-9]+/g, '_');
+      	return s;
+      }
+
       for (var i = 0; i < columns.length; i++) {
         var m = columns[i];
 
@@ -710,7 +744,7 @@ if (typeof Slick === "undefined") {
         var html = getHeaderFormatter(-2000, i)(-2000, i, m.name, m, null /* rowDataItem */, 1 /* colspan */, cellCss, cellStyles);
         var header = $("<div role='columnheader' />")
             .html(html)
-            .attr("id", "" + uid + m.id)
+            .attr("id", uid + mkSaneID(m, i))
             .attr("title", m.toolTip || null)
             .data("column", m)
             .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
@@ -833,7 +867,7 @@ if (typeof Slick === "undefined") {
     }
 
     function setupColumnReorder() {
-      if (!(jQuery.isEmptyObject($.data( $headers, $headers.sortable.prototype.widgetFullName ) ))){
+      if (!jQuery.isEmptyObject($.data( $headers, $headers.sortable.prototype.widgetFullName ))) {
         $headers.filter(":ui-sortable").sortable("destroy");
       }
       $headers.sortable({
@@ -854,7 +888,7 @@ if (typeof Slick === "undefined") {
           $(ui.helper).removeClass("slick-header-column-active");
         },
         sort: function (e, ui) {
-          trigger(self.onColumnsReordering, {e:e, ui:ui});
+          trigger(self.onColumnsReordering, {e: e, ui: ui});
         },
         stop: function (e, ui) {
           if (!getEditorLock().commitCurrentEdit()) {
@@ -869,7 +903,7 @@ if (typeof Slick === "undefined") {
           }
           setColumns(reorderedColumns);
 
-          trigger(self.onColumnsReordered, {e:e, ui:ui});
+          trigger(self.onColumnsReordered, {e: e, ui: ui});
           e.stopPropagation();
           setupColumnResize();
         }
@@ -1175,30 +1209,59 @@ if (typeof Slick === "undefined") {
       absoluteColumnMinWidth = Math.max(headerColumnWidthDiff, cellWidthDiff);
     }
 
+    // See also github issue #223: stylesheet variable is undefined in Chrome
+    //
+    // This code is based on
+    //     http://davidwalsh.name/add-rules-stylesheets
     function createCssRules() {
       $style = $("<style type='text/css' rel='stylesheet' />").appendTo($("head"));
+      if ($style[0].styleSheet) { // IE
+        $style[0].styleSheet.cssText = "";
+      } else {
+		// WebKit hack
+        $style[0].appendChild(document.createTextNode(""));
+      }
+
+	  // Add a media (and/or media query) here if you'd like!
+	  // $style[0].setAttribute("media", "screen")
+	  // $style[0].setAttribute("media", "@media only screen and (max-width : 1024px)")
+
+      var sheet = $style[0].sheet;
       var rowHeight = options.rowHeight - cellHeightDiff;
       var rules = [
-        "." + uid + " .slick-header-column { left: 1000px; }",
-        "." + uid + " .slick-top-panel { height:" + options.topPanelHeight + "px; }",
-        "." + uid + " .slick-headerrow-columns { height:" + options.headerRowHeight + "px; }",
-        "." + uid + " .slick-cell { height:" + rowHeight + "px; }",
-        "." + uid + " .slick-row { height:" + options.rowHeight + "px; }"
+        [".slickgrid-container." + uid + " .slick-header-column", "left: 1000px"],
+        [".slickgrid-container." + uid + " .slick-top-panel", "height: " + options.topPanelHeight + "px"],
+        [".slickgrid-container." + uid + " .slick-headerrow-columns", "height: " + options.headerRowHeight + "px"],
+        [".slickgrid-container." + uid + " .slick-cell", "height:" + rowHeight + "px"],
+        [".slickgrid-container." + uid + " .slick-row", "height:" + options.rowHeight + "px"]
       ];
 
       for (var i = 0; i < columns.length; i++) {
-        rules.push("." + uid + " .l" + i + " { }");
-        rules.push("." + uid + " .r" + i + " { }");
+        rules.push([".slickgrid-container." + uid + " .l" + i, ""]);
+        rules.push([".slickgrid-container." + uid + " .r" + i, ""]);
       }
 
-      if ($style[0].styleSheet) { // IE
-        $style[0].styleSheet.cssText = rules.join(" ");
+      // see also
+      //   http://davidwalsh.name/add-rules-stylesheets
+      if (sheet) {
+      	rules.forEach(function (d, i) {
+          addCSSRule(sheet, d[0], d[1], i); /* i could have been -1 here as each rule can be appended at the end */
+        });
       } else {
-        $style[0].appendChild(document.createTextNode(rules.join(" ")));
+      	throw new Error("run-time generated slickgrid rules could not be set up");
       }
     }
 
-    // return FALSE when the relevant stylesheet has not been parsed yet (previously slickgrid would throw an exception for this!)
+    function addCSSRule(sheet, selector, rules, index) {
+        if (sheet.insertRule) {
+            sheet.insertRule(selector + " {" + rules + "}", index);
+        } else {
+            sheet.addRule(selector, rules, index);
+        }
+    }
+
+    // Return FALSE when the relevant stylesheet has not been parsed yet
+    // (previously slickgrid would throw an exception for this!)
     // otherwise return the style reference.
     function getColumnCssRules(idx) {
       if (!stylesheet) {
@@ -1241,6 +1304,7 @@ if (typeof Slick === "undefined") {
 
     function removeCssRules() {
       $style.remove();
+      $style = null;
       stylesheet = null;
     }
 
@@ -2859,9 +2923,9 @@ if (typeof Slick === "undefined") {
         // don't steal it back - keyboard events will still bubble up
         // IE9+ seems to default DIVs to tabIndex=0 instead of -1, so check for cell clicks directly.
         if (e.target != document.activeElement || $(e.target).hasClass("slick-cell")) {
-          var selection = getTextSelection(); //store text-selection and restore it after
+          var selection = getTextSelection(); // store text-selection and restore it after
           setFocus();
-          setTextSelection(selection); 
+          setTextSelection(selection);
         }
       }
 
@@ -4023,8 +4087,12 @@ if (typeof Slick === "undefined") {
       "onDblClick": new Slick.Event(),
       "onContextMenu": new Slick.Event(),
       "onKeyDown": new Slick.Event(),
-      "onFocusIn": new Slick.Event(),
-      "onFocusOut": new Slick.Event(),
+      //"onHeaderFocusIn": new Slick.Event(),
+      //"onHeaderFocusOut": new Slick.Event(),
+      //"onCellFocusIn": new Slick.Event(),
+      //"onCellFocusOut": new Slick.Event(),
+      //"onFocusIn": new Slick.Event(),
+      //"onFocusOut": new Slick.Event(),
       "onAddNewRow": new Slick.Event(),
       "onValidationError": new Slick.Event(),
       "onCanvasWidthChanged": new Slick.Event(),
