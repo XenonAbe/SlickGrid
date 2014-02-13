@@ -2710,7 +2710,7 @@ if (typeof Slick === "undefined") {
 
         // and make sure intermediate .render() actions keep the 'flashing' class intact too!
         var id = columns[cell].id;
-        var start_state = !$cell.hasClass(flash_options);
+        var start_state = !$cell.hasClass(flash_options.cssClass);
 
         function toggleCellClass(times) {
           $cell.queue(function () {
@@ -2743,9 +2743,9 @@ if (typeof Slick === "undefined") {
             return;
           }
           setTimeout(function () {
-                toggleCellClass(times);
-              },
-              flash_options.speed);
+            toggleCellClass(times);
+          },
+          flash_options.speed);
         }
 
         if (flash_options.delay) {
