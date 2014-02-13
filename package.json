@@ -20,7 +20,7 @@
     "grunt-contrib-csslint": ">=0.2.0",
     "grunt-contrib-cssmin": ">=0.7.0",
     "grunt-contrib-jshint": ">=0.8.0",
-    "grunt-contrib-less": ">=0.9.0",
+    "assemble-less": ">=0.4.0",
     "grunt-contrib-qunit": ">=0.4.0",
     "grunt-contrib-uglify": ">=0.3.0",
     "grunt-contrib-watch": ">=0.5.3",

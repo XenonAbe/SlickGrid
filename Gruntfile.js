@@ -94,41 +94,23 @@ module.exports = function (grunt) {
     },
 
     less: {
-      compileCore: {
+      components: {
         options: {
+          ieCompat: false,
           strictMath: true,
-          sourceMap: true,
+          strictUnits: true,
           outputSourceFiles: true,
-          sourceMapURL: 'slick.grid.css.map',
-          sourceMapFilename: 'slick.grid.css.map'
+          sourceMap: true
         },
-        files: {
-          'slick.grid.css': 'slick.grid.less'
-        }
-      },
-      compileEditors: {
-        options: {
-          strictMath: true,
-          sourceMap: true,
-          outputSourceFiles: true,
-          sourceMapURL: 'slick.editors.css.map',
-          sourceMapFilename: 'slick.editors.css.map'
-        },
-        files: {
-          'slick.editors.css': 'slick.editors.less'
-        }
-      },
-      compileTheme: {
-        options: {
-          strictMath: true,
-          sourceMap: true,
-          outputSourceFiles: true,
-          sourceMapURL: 'slick-default-theme.css.map',
-          sourceMapFilename: 'slick-default-theme.css.map'
-        },
-        files: {
-          'slick-default-theme.css': 'slick-default-theme.less'
-        }
+        files: [
+          { 
+          	expand: true, 
+          	cwd: './', 
+          	src: ['*.less', 'controls/*.less', 'plugins/*.less', 'examples/*.less', '!slick.config.less', '!slick.less.macros.less'], 
+          	dest: './', 
+          	ext: '.css' 
+          }
+        ]
       }
     },
 
@@ -197,9 +179,9 @@ module.exports = function (grunt) {
   });
 
 
-  // These plugins provide necessary tasks.
-  grunt.loadNpmTasks('grunt-autoprefixer');
+  // Load all files starting with `grunt-`
   require('load-grunt-tasks')(grunt, {scope: 'devDependencies'});
+  grunt.loadNpmTasks('assemble-less');
 
   // Lint task.
   grunt.registerTask('lint', ['csslint', 'jshint', 'jscs']);
