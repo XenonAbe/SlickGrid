@@ -898,7 +898,7 @@
         var i = group.groups.length;
         while (i--) {
           if (!group.groups[i].initialized) {
-            calculateTotals(group.groups[i]);
+            calculateTotals(group.groups[i].totals);
           }
         }
       }
