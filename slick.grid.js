@@ -1265,15 +1265,15 @@ if (typeof Slick === "undefined") {
 
         var div = document.createElement('div');
         $(div).css({
-            'position':'absolute',
-            'visibility':'hidden',
-            'height':'auto',
-            'width':'auto',
-            'white-space':'nowrap',
-            'font-family':'Verdana, Arial, sans-serif',
-            'font-size':'13px',
-            'border':'1px solid transparent',
-            'padding':'1px 4px 2px'
+            'position': 'absolute',
+            'visibility': 'hidden',
+            'height': 'auto',
+            'width': 'auto',
+            'white-space': 'nowrap',
+            'font-family': 'Verdana, Arial, sans-serif',
+            'font-size': '13px',
+            'border': '1px solid transparent',
+            'padding': '1px 4px 2px'
         });
         if (escape) {
           $(div).text(text);
@@ -1873,7 +1873,7 @@ if (typeof Slick === "undefined") {
           rowDataItem: rowDataItem,
           rowMetadata: rowMetadata,
           columnMetadata: columnMetadata,
-          options: $.extend({}, options.formatterOptions, m.formatterOptions), 
+          options: $.extend({}, options.formatterOptions, m.formatterOptions),
           outputPlainText: config.outputPlainText || false
       };
 
@@ -3830,7 +3830,8 @@ if (typeof Slick === "undefined") {
       }
     }
 
-    //This get/set methods are used for keeping text-selection. These don't consider IE because they don't loose text-selection.
+    // This get/set methods are used for keeping text-selection.
+    // These don't consider IE because they don't loose text-selection.
     function getTextSelection() {
       var selection = null;
       if (window.getSelection && window.getSelection().rangeCount > 0) {
@@ -4011,9 +4012,9 @@ if (typeof Slick === "undefined") {
           (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
 
       if (trigger(self.onBeforeEditCell, {
-	      	row: activeRow, 
-	      	cell: activeCell, 
-	      	item: item, 
+	      	row: activeRow,
+	      	cell: activeCell,
+	      	item: item,
 	      	column: columnDef,
             rowMetadata: rowMetadata,
             columnMetadata: columnMetadata,

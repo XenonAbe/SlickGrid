@@ -137,8 +137,12 @@
 
     function setSelectedRanges(ranges) {
       var
-        selectionIndexes = $.map(ranges, function(r){ return r.fromRow; }),
-        deleteIndexes = _rowIndexes.filter(function(elem){ return selectionIndexes.indexOf(elem) === -1; });
+        selectionIndexes = $.map(ranges, function(r) {
+          return r.fromRow;
+        }),
+        deleteIndexes = _rowIndexes.filter(function(elem) {
+          return selectionIndexes.indexOf(elem) === -1;
+        });
 
       _rowIndexes = selectionIndexes;
       _ranges = ranges;

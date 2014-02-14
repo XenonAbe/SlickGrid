@@ -70,7 +70,6 @@
     }
 
     function show(range) {
-
       if (!range) {
         range = _elem_range;
       } else {

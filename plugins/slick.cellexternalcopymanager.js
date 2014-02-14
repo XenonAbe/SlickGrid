@@ -41,10 +41,10 @@
     var _externalCopyPastaCatcherEl = null;
 
     var keyCodes = {
-      'C':67,
-      'V':86,
-      'X':88,
-      'ESC':27
+      'C': 67,
+      'V': 86,
+      'X': 88,
+      'ESC': 27
     };
 
     function init(grid) {
@@ -57,7 +57,7 @@
         throw new Error("Selection model is mandatory for this plugin. Please set a selection model on the grid before adding this plugin: grid.setSelectionModel(new Slick.CellSelectionModel())");
       }
       // we give focus on the grid when a selection is done on it.
-      // without this, if the user selects a range of cell without giving focus on a particular cell, 
+      // without this, if the user selects a range of cell without giving focus on a particular cell,
       // the grid doesn't get the focus and key stroke handles (ctrl+C) don't work.
       cellSelectionModel.onSelectedRangesChanged.subscribe(function(e, args) {
         _grid.focus();
@@ -117,7 +117,7 @@
           item: row_item || {},
           rowMetadata: rowMetadata,
           columnMetadata: columnMetadata,
-          options: $.extend({}, options.editorOptions, columnDef.editorOptions), 
+          options: $.extend({}, options.editorOptions, columnDef.editorOptions),
           outputPlainText: true,         // this signals the formatter that the plaintext value is required.
           commitChanges: _grid.commitEditAndSetFocus,
           cancelChanges: _grid.cancelEditAndSetFocus

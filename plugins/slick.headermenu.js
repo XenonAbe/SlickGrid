@@ -191,11 +191,10 @@
       for (var i = 0; i < menu.items.length; i++) {
         var item = menu.items[i];
 
-        if (typeof item === 'function'){
+        if (typeof item === 'function') {
           item.call(this, menu, columnDef)
             .appendTo($menu);
-        }
-        else {
+        } else {
           var $li = $("<div class='slick-header-menuitem'></div>")
             .data("command", item.command || '')
             .data("column", columnDef)
