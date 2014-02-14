@@ -38,21 +38,22 @@
     }
 
     function handleDragInit(e, dd) {
+      _dragging = false;
       // prevent the grid from cancelling drag'n'drop by default
       e.stopImmediatePropagation();
     }
 
     function handleDragStart(e, dd) {
       var cell = _grid.getCellFromEvent(e);
-      if (_self.onBeforeCellRangeSelected.notify(cell) !== false) {
-        if (_grid.canCellBeSelected(cell.row, cell.cell)) {
-          _dragging = true;
-          e.stopImmediatePropagation();
-        }
-      }
-      if (!_dragging) {
+      var evt = new Slick.EventData(e);
+      var state = _self.onBeforeCellRangeSelected.notify(cell, evt);
+      if (state === false ||
+          evt.isPropagationStopped() || evt.isImmediatePropagationStopped() ||
+          !_grid.canCellBeSelected(cell.row, cell.cell)) {
         return;
       }
+      _dragging = true;
+      e.stopImmediatePropagation();
 
       _grid.focus();
 
@@ -80,7 +81,10 @@
           range: dd.range,
           currentCell: end
       };
-      if (_self.onCellRangeSelectionOngoing.notify(eventData) === false ||
+      var evt = new Slick.EventData(e);
+      var state = _self.onCellRangeSelectionOngoing.notify(eventData, evt);
+      if (state === false ||
+          evt.isPropagationStopped() || evt.isImmediatePropagationStopped() ||
           !eventData.currentCell ||
           !_grid.canCellBeSelected(eventData.currentCell.row, eventData.currentCell.cell)) {
         return;
@@ -99,6 +103,7 @@
       e.stopImmediatePropagation();
 
       _decorator.hide();
+      var evt = new Slick.EventData(e);
       _self.onCellRangeSelected.notify({
         range: new Slick.Range(
             dd.range.start.row,
@@ -106,7 +111,7 @@
             dd.range.end.row,
             dd.range.end.cell
         )
-      });
+      }, evt);
     }
 
     $.extend(this, {
