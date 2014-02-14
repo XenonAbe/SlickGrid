@@ -5,7 +5,6 @@
  */
 
 (function ($) {
-
   // register namespace
   $.extend(true, window, {
     "Slick": {
@@ -34,7 +33,7 @@
    * @class EventData
    * @constructor
    */
-  function EventData() {
+  function EventData(sourceEvent) {
     var isPropagationStopped = false;
     var isImmediatePropagationStopped = false;
 
@@ -71,6 +70,10 @@
      */
     this.isImmediatePropagationStopped = function () {
       return isImmediatePropagationStopped;
+    }
+
+    if (sourceEvent) {
+      this.sourceEvent = sourceEvent;
     }
   }
 
