@@ -57,7 +57,7 @@
             $(document.body).unbind("mousedown", handleBodyMouseDown);
         }
 
-        function isValue(val){
+        function isValue(val) {
             return typeof val !== 'undefined' && val !== null && val !== '';
         }
 
@@ -147,8 +147,7 @@
             if (workingFilters.length === 0) {
                 // Filter based all available values
                 filterItems = getFilterValues(grid.getData(), columnDef);
-            }
-            else {
+            } else {
                 // Filter based on current dataView subset
                 filterItems = getAllFilterValues(grid.getData().getItems(), columnDef);
             }
@@ -159,16 +158,16 @@
 
             $menu.empty();
 
-            if (options.sortMenuitems){
+            if (options.sortMenuitems) {
                 addMenuItem($menu, columnDef, options.messages.sortAsc, 'sort-asc', options.sortAscImage);
                 addMenuItem($menu, columnDef, options.messages.sortDesc, 'sort-desc', options.sortDescImage);
             }
 
-            if (columnDef.textFilter){
+            if (columnDef.textFilter) {
                 addTextFilter($menu, columnDef, columnDef.textFilterValue);
             }
 
-            var filterOptions = "<label><input type='checkbox' value='-1' />("+options.messages.selectAll+")</label>";
+            var filterOptions = "<label><input type='checkbox' value='-1' />(" + options.messages.selectAll + ")</label>";
 
             for (var i = 0; i < filterItems.length; i++) {
                 var filtered = _.contains(workingFilters, filterItems[i].value);
@@ -187,7 +186,7 @@
                 .appendTo($menu)
                 .bind('click', function (ev) {
                     columnDef.filterValues = workingFilters.splice(0);
-                    setButtonImage($menuButton, columnDef.filterValues.length > 0 || isValue(columnDef.textFilterValue) );
+                    setButtonImage($menuButton, columnDef.filterValues.length > 0 || isValue(columnDef.textFilterValue));
                     handleApply(ev, columnDef);
                 });
 
@@ -237,11 +236,8 @@
 
                 if ($checkbox.prop('checked') && index < 0) {
                     workingFilters.push(filterItems[value].value);
-                }
-                else {
-                    if (index > -1) {
-                        workingFilters.splice(index, 1);
-                    }
+                } else if (index > -1) {
+                    workingFilters.splice(index, 1);
                 }
             }
 
@@ -257,15 +253,18 @@
         function handleApply(e, columnDef) {
             hideMenu();
 
-            self.onFilterApplied.notify({ "grid": grid, "column": columnDef }, e, self);
+            self.onFilterApplied.notify({ 
+            	grid: grid, 
+            	column: columnDef 
+            }, e, self);
 
             e.preventDefault();
             e.stopPropagation();
         }
 
-        function sanitizeFilterValue(value, column){
+        function sanitizeFilterValue(value, column) {
             var title = value;
-            if (typeof value === 'undefined' || value === null || value === ''){
+            if (typeof value === 'undefined' || value === null || value === '') {
                 title = options.messages.empty;
             }
             else if (value === false) {
@@ -274,8 +273,8 @@
             else if (value === true) {
                 title = options.messages.trueDesc;
             }
-            else if (column.formatterName === 'sentenceToWords' || column.formatterName === 'date' ){
-                title = column.formatter(null,null,value);
+            else if (column.formatterName === 'sentenceToWords' || column.formatterName === 'date' ) {
+                title = column.formatter(null, null, value);
             }
 
             return { title: title, value: value };
@@ -292,7 +291,9 @@
                 }
             }
 
-            return _.sortBy(items, function (v) { return v.title; });
+            return _.sortBy(items, function (v) { 
+            	return v.title; 
+            });
         }
 
         function getAllFilterValues(data, column) {
@@ -306,7 +307,9 @@
                 }
             }
 
-            return _.sortBy(items, function (v) { return v.title; });
+            return _.sortBy(items, function (v) { 
+            	return v.title; 
+            });
         }
 
         function handleMenuItemClick(e) {
@@ -316,9 +319,9 @@
             hideMenu();
 
             self.onCommand.notify({
-                "grid": grid,
-                "column": columnDef,
-                "command": command
+                grid: grid,
+                column: columnDef,
+                command: command
             }, e, self);
 
             e.preventDefault();

@@ -252,7 +252,10 @@
 
             dragDecorator.hideHandle();
 
-            self.onFillUpDown.notify({ "grid": grid, "range": dragDecorator.getSelectedRange() }, e, self);
+            self.onFillUpDown.notify({ 
+            	grid: grid, 
+            	range: dragDecorator.getSelectedRange() 
+            }, e, self);
 
             e.preventDefault();
             e.stopPropagation();
