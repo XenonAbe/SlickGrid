@@ -101,6 +101,7 @@
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
 <script src="../lib/jquery.browser.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
@@ -238,7 +239,7 @@ $(function () {
 
   grid.onSort.subscribe(function (e, args) {
     // use numeric sort for % and any other numeric values; lexicographic for everything else
-    dataView.fastSort(args.sortCol.field, args.sortAsc);
+    dataView.sort(args.sortCol.field, args.sortAsc);
   });
 
   // wire up model events to drive the grid

@@ -6,8 +6,8 @@
   <title>SlickGrid example: Variable Row Height + DataView</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../controls/slick.pager.css" type="text/css"/>
-  <link rel="stylesheet" href="../controls/slick.columnpicker.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-pager.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-columnpicker.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
@@ -103,6 +103,7 @@
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
 <script src="../lib/jquery.browser.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
@@ -298,7 +299,7 @@ $(function () {
       };
 
       // use numeric sort of % and lexicographic for everything else
-      dataView.fastSort((sortcol == "percentComplete") ? percentCompleteValueFn : sortcol, args.sortAsc);
+      dataView.sort((sortcol == "percentComplete") ? percentCompleteValueFn : sortcol, args.sortAsc);
     } else {
       // using native sort with comparer
       // preferred method but can be very slow in IE with huge datasets
