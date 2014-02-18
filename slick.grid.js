@@ -315,6 +315,7 @@ if (typeof Slick === "undefined") {
       	isBrowser = get_browser_info();
       	isBrowser.safari    = /safari/i.test(isBrowser.browser);
       	isBrowser.safari605 = isBrowser.safari && /6\.0/.test(isBrowser.version);
+      	isBrowser.msie      = /msie/i.test(isBrowser.browser);
       }
 
       // calculate these only once and share between grid instances
@@ -427,46 +428,7 @@ if (typeof Slick === "undefined") {
         bindAncestorScrollEvents();
 
         $container
-            .bind("resize.slickgrid", resizeCanvas)
-            /*
-            .bind("focusin.slickgrid", function(e) {
-              var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-              var column = $header && $header.data("column");
-              if (column) {
-                console.log("header focus: ", this, column);
-                trigger(self.onHeaderFocusIn, {column: column}, e);
-                return;
-              } else {
-                var info = getCellFromEvent(e);
-                if (info) {
-                  console.log("cell focus: ", this, info);
-                  trigger(self.onCellFocusIn, info, e);
-                  return;
-                }
-              }
-              console.log("container focus: ", this, arguments);
-              trigger(self.onFocusIn, {}, e);
-            })
-            .bind("focusout.slickgrid", function(e) {
-              var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-              var column = $header && $header.data("column");
-              if (column) {
-                console.log("header focus LOST: ", this, column);
-                trigger(self.onHeaderFocusOut, {column: column}, e);
-                return;
-              } else {
-                var info = getCellFromEvent(e);
-                if (info) {
-                  console.log("cell focus LOST: ", this, info);
-                  trigger(self.onCellFocusOut, info, e);
-                  return;
-                }
-              }
-              console.log("container LOST FOCUS", this, arguments);
-              trigger(self.onFocusOut, {}, e);
-            })
-            */
-            ;
+            .bind("resize.slickgrid", resizeCanvas);
         $viewport
             //.bind("click", handleClick)
             .bind("scroll", handleScroll);
@@ -667,10 +629,10 @@ if (typeof Slick === "undefined") {
     }
 
     function updateColumnHeader(columnId, title, toolTip) {
-      if (!initialized) { return; }
+      if (!initialized) { return false; }
       var idx = getColumnIndex(columnId);
       if (idx == null) {
-        return;
+        return false;
       }
 
       var columnDef = columns[idx];
@@ -688,6 +650,9 @@ if (typeof Slick === "undefined") {
           column: columnDef,
           cell: idx
         });
+        if (e.isImmediatePropagationStopped()) {
+          return false;
+        }
 
         // TODO: RISK: when formatter produces more than ONE outer HTML element, we're toast with nuking the .eq(0) element down here:
         $header
@@ -699,7 +664,9 @@ if (typeof Slick === "undefined") {
           column: columnDef,
           cell: idx
         });
+        return true;
       }
+      return false;
     }
 
     function getHeaderRow() {
@@ -909,9 +876,6 @@ if (typeof Slick === "undefined") {
 
     function setupColumnSort() {
       $headers.click(function (e) {
-        // temporary workaround for a bug in jQuery 1.7.1 (http://bugs.jquery.com/ticket/11328)
-        e.metaKey = e.metaKey || e.ctrlKey;
-
         if ($(e.target).hasClass("slick-resizable-handle")) {
           return;
         }
@@ -937,13 +901,13 @@ if (typeof Slick === "undefined") {
             }
           }
 
-          if (e.metaKey && options.multiColumnSort) {
+          if ((e.metaKey || e.ctrlKey) && options.multiColumnSort) {
             if (sortOpts) {
               sortColumns.splice(i, 1);
             }
           }
           else {
-            if ((!e.shiftKey && !e.metaKey) || !options.multiColumnSort) {
+            if ((!e.shiftKey && !e.metaKey && !e.ctrlKey) || !options.multiColumnSort) {
               sortColumns = [];
             }
 
@@ -1224,7 +1188,7 @@ if (typeof Slick === "undefined") {
                 //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
                 updateCanvasWidth(true);
               }
-              trigger(self.onColumnsResizing, {e:e});
+              trigger(self.onColumnsResizing, {e: e});
             })
             .bind("dragend touchend", function (e, dd) {
               var newWidth, j, c;
@@ -1242,7 +1206,7 @@ if (typeof Slick === "undefined") {
               updateCanvasWidth(true);
               handleScroll();
               render();
-              trigger(self.onColumnsResized, {e:e});
+              trigger(self.onColumnsResized, {e: e});
             })
             .bind("dblclick", function(e) {
                 var cell = extractCellFromDOMid($(this).parent().attr('id'));
@@ -1436,8 +1400,8 @@ if (typeof Slick === "undefined") {
       }
 
       return {
-        "left": columnCssRulesL[idx],
-        "right": columnCssRulesR[idx]
+        left: columnCssRulesL[idx],
+        right: columnCssRulesR[idx]
       };
     }
 
@@ -1453,7 +1417,7 @@ if (typeof Slick === "undefined") {
       trigger(self.onBeforeDestroy, {});
 
       var i = plugins.length;
-      while(i--) {
+      while (i--) {
         unregisterPlugin(plugins[i]);
       }
 
@@ -3203,7 +3167,6 @@ if (typeof Slick === "undefined") {
 
       lastRenderedScrollTop = scrollTop;
       lastRenderedScrollLeft = scrollLeft;
-      h_render = null;
     }
 
     function handleHeaderRowScroll() {
@@ -3251,6 +3214,7 @@ if (typeof Slick === "undefined") {
       if (hScrollDist || vScrollDist) {
         if (h_render) {
           clearTimeout(h_render);
+          h_render = null;
         }
 
         if (Math.abs(lastRenderedScrollTop - scrollTop) > 20 ||
@@ -3260,7 +3224,10 @@ if (typeof Slick === "undefined") {
               Math.abs(lastRenderedScrollLeft - scrollLeft) < viewportW)) {
             render();
           } else {
-            h_render = setTimeout(render, 50);
+            h_render = setTimeout(function () {
+		        h_render = null;
+            	render();
+            }, 50);
           }
 
           trigger(self.onViewportChanged, {});
@@ -3476,7 +3443,7 @@ if (typeof Slick === "undefined") {
       }
 
       dd.column = column;
-      retval = trigger(self.onHeaderDragInit, dd, e);
+      var retval = trigger(self.onHeaderDragInit, dd, e);
       if (e.isImmediatePropagationStopped()) {
         return retval;
       }
@@ -3508,7 +3475,7 @@ if (typeof Slick === "undefined") {
     }
 
     function handleHeaderDragEnd(e, dd) {
-      trigger(self.onHeaderDragEnd, dd, e);
+      return trigger(self.onHeaderDragEnd, dd, e);
     }
 
     function handleMouseWheel(e) {
@@ -3557,7 +3524,7 @@ if (typeof Slick === "undefined") {
     }
 
     function handleDragEnd(e, dd) {
-      trigger(self.onDragEnd, dd, e);
+      return trigger(self.onDragEnd, dd, e);
     }
 
     function handleKeyDown(e) {
@@ -3665,7 +3632,7 @@ if (typeof Slick === "undefined") {
         return;
       }
 
-      trigger(self.onContextMenu, {}, e);
+      return trigger(self.onContextMenu, {}, e);
     }
 
     function handleDblClick(e) {
@@ -3685,13 +3652,13 @@ if (typeof Slick === "undefined") {
     }
 
     function handleHeaderMouseEnter(e) {
-      trigger(self.onHeaderMouseEnter, {
+      return trigger(self.onHeaderMouseEnter, {
         column: $(this).data("column")
       }, e);
     }
 
     function handleHeaderMouseLeave(e) {
-      trigger(self.onHeaderMouseLeave, {
+      return trigger(self.onHeaderMouseLeave, {
         column: $(this).data("column")
       }, e);
     }
@@ -3712,7 +3679,7 @@ if (typeof Slick === "undefined") {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
       if (column) {
-        trigger(self.onHeaderClick, {column: column}, e);
+        return trigger(self.onHeaderClick, {column: column}, e);
       }
     }
 
@@ -3720,16 +3687,16 @@ if (typeof Slick === "undefined") {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
       if (column) {
-        trigger(self.onHeaderDblClick, {column: column}, e);
+        return trigger(self.onHeaderDblClick, {column: column}, e);
       }
     }
 
     function handleMouseEnter(e) {
-      trigger(self.onMouseEnter, {}, e);
+      return trigger(self.onMouseEnter, {}, e);
     }
 
     function handleMouseLeave(e) {
-      trigger(self.onMouseLeave, {}, e);
+      return trigger(self.onMouseLeave, {}, e);
     }
 
     function cellExists(row, cell) {
@@ -3916,6 +3883,7 @@ if (typeof Slick === "undefined") {
       }
 
       var activeCellChanged = (activeCellNode !== newCell);
+      var prevActiveCell = activeCellNode;
       activeCellNode = newCell;
 
       if (activeCellNode != null) {
@@ -3930,8 +3898,27 @@ if (typeof Slick === "undefined") {
         $(activeCellNode).parent().addClass("active-row");
         $(rowsCache[activeRow].rowNode).parent().addClass("active-row");
 
+	    // onActiveCellChanged should fire before we *might* instantiate an editor!
+	    // This order of events is important so that the editor-augmented cell instance doesn't get
+	    // influenced by any initial onActiveCellChanged that concerns the cell itself.
+	    //
+	    // It also allows us to renege on the 'cell change' inside this event handler without
+	    // too much trouble (or so we can hope)...
+	    if (activeCellChanged) {
+	      //activeCellNode.focus();
+	      trigger(self.onActiveCellChanged, {
+	      	activeCell: getActiveCell(),
+	      	prevActiveCell: prevActiveCell,
+	      	editMode:   opt_editMode,
+	      });
+	      if (e.isImmediatePropagationStopped()) {
+	        return;
+	      }
+	    }
+
         if (options.editable && opt_editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
           clearTimeout(h_editorLoader);
+          h_editorLoader = null;
 
           // if opt_editMode > 1 then show the editor immediately (this happens for instance when the cell is double-clicked)
           if (options.asyncEditorLoading >= opt_editMode) {
@@ -3944,11 +3931,6 @@ if (typeof Slick === "undefined") {
         }
       } else {
         activeRow = activeCell = null;
-      }
-
-      if (activeCellChanged) {
-        //activeCellNode.focus();
-        trigger(self.onActiveCellChanged, getActiveCell());
       }
     }
 
@@ -3996,6 +3978,9 @@ if (typeof Slick === "undefined") {
       var editor = currentEditor;
       currentEditor = null;
       trigger(self.onBeforeCellEditorDestroy, {editor: editor});
+      if (e.isImmediatePropagationStopped()) {
+        return;
+      }
       editor.destroy();
 
       if (activeCellNode) {
@@ -4017,7 +4002,7 @@ if (typeof Slick === "undefined") {
 
       // if there previously was text selected on a page (such as selected text in the edit cell just removed),
       // IE can't set focus to anything else correctly
-      if (navigator.userAgent.toLowerCase().match(/msie/)) {
+      if (isBrowser.msie) {
         clearTextSelection();
       }
 
@@ -4034,6 +4019,7 @@ if (typeof Slick === "undefined") {
 
       // cancel pending async call if there is one
       clearTimeout(h_editorLoader);
+      h_editorLoader = null;
 
       if (!isCellPotentiallyEditable(activeRow, activeCell)) {
         return false;
@@ -4048,14 +4034,15 @@ if (typeof Slick === "undefined") {
           rowMetadata.columns &&
           (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
 
-      if (trigger(self.onBeforeEditCell, {
-	      	row: activeRow,
-	      	cell: activeCell,
-	      	item: item,
-	      	column: columnDef,
-            rowMetadata: rowMetadata,
-            columnMetadata: columnMetadata,
-	      }) === false) {
+      trigger(self.onBeforeEditCell, {
+      	row: activeRow,
+      	cell: activeCell,
+      	item: item,
+      	column: columnDef,
+        rowMetadata: rowMetadata,
+        columnMetadata: columnMetadata,
+      });
+      if (e.isImmediatePropagationStopped()) {
         setFocus();
         return false;
       }
@@ -4202,6 +4189,9 @@ if (typeof Slick === "undefined") {
       }
 
       trigger(self.onActiveCellPositionChanged, {});
+      if (e.isImmediatePropagationStopped()) {
+        return;
+      }
 
       if (currentEditor) {
         var cellBox = getActiveCellPosition();
@@ -4651,7 +4641,7 @@ if (typeof Slick === "undefined") {
       var stepFn = stepFunctions[dir];
       var pos = stepFn(activeRow, activeCell, activePosY, activePosX);
       if (pos) {
-        var isAddNewRow = (pos.row == getDataLength());
+        var isAddNewRow = (pos.row === getDataLength());
         scrollCellIntoView(pos.row, pos.cell, !isAddNewRow);
         setActiveCellInternal(getCellNode(pos.row, pos.cell), null);
         activePosY = pos.posY;
@@ -4815,7 +4805,7 @@ if (typeof Slick === "undefined") {
             $(activeCellNode).width();  // force layout
             $(activeCellNode).addClass("invalid");
 
-            trigger(self.onValidationError, {
+            var retval = trigger(self.onValidationError, {
               row: activeRow,
               cell: activeCell,
               item: item,
@@ -4826,6 +4816,9 @@ if (typeof Slick === "undefined") {
               cellNode: activeCellNode,
               validationResults: validationResults
             });
+		    if (e.isImmediatePropagationStopped()) {
+		      return retval;
+		    }
 
             currentEditor.focus();
             return false;
