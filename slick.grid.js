@@ -2187,18 +2187,18 @@ if (typeof Slick === "undefined") {
     }
 
     function defaultHeaderFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+      // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
       var output = defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo);
       if (!cellMetaInfo.outputPlainText) {
-        // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
         output = "<span class='slick-column-name'>" + output + "</span>";
       }
       return output;
     }
 
     function defaultHeaderRowFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+      // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
       var output = defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo);
       if (!cellMetaInfo.outputPlainText) {
-        // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
         output = "<span class='slick-extra-headerrow-column'>" + output + "</span>";
       }
       return output;
@@ -4266,7 +4266,10 @@ if (typeof Slick === "undefined") {
       var topRow = getRowWithFractionFromPosition(scrollTop + pageOffset);
       var bottomRow = getRowWithFractionFromPosition(scrollTop + pageOffset + viewportH);
       var deltaRows = dir * (bottomRow.position - topRow.position);
-      scrollTo(getRowTop(bottomRow.position));
+      // adjust the page positions according to the scroll direction and 'speed' (`dir` can be a number other than +1 or -1):
+      topRow.position += deltaRows;
+      bottomRow.position += deltaRows;
+      scrollTo(getRowTop(topRow.position));
       render();
 
       if (options.enableCellNavigation && activeRow != null) {
