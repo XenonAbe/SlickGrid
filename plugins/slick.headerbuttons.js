@@ -122,7 +122,7 @@
 
           btn
             .bind("click", function (e) {
-            	handleButtonClick.call(this, e, column, button);
+                handleButtonClick.call(this, e, column, button);
             })
             .appendTo(args.node);
         }

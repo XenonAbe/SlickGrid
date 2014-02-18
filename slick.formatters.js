@@ -33,14 +33,14 @@
   });
 
   function PercentCompleteFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
-  	assert(cellMetaInfo);
-  	if (cellMetaInfo.outputPlainText) {
-	    if (value == null || value === "") {
-	      return "";
-	    } else {
-	      return "" + value + "%";
-	    }
-  	}
+    assert(cellMetaInfo);
+    if (cellMetaInfo.outputPlainText) {
+      if (value == null || value === "") {
+        return "";
+      } else {
+        return "" + value + "%";
+      }
+    }
 
     if (value == null || value === "") {
       return "-";
@@ -66,46 +66,46 @@
       color = "green";
     }
 
-  	assert(cellMetaInfo);
-  	if (cellMetaInfo.outputPlainText) {
+    assert(cellMetaInfo);
+    if (cellMetaInfo.outputPlainText) {
       return "" + value + "%";
-  	}
+    }
 
     return "<span class='percent-complete-bar' style='background:" + color + ";width:" + value + "%'></span>";
   }
 
   function YesNoFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
-  	assert(cellMetaInfo);
-  	if (cellMetaInfo.outputPlainText) {
-	    return !!value;
-  	}
+    assert(cellMetaInfo);
+    if (cellMetaInfo.outputPlainText) {
+      return !!value;
+    }
 
     return value ? "Yes" : "No";
   }
 
   function CheckmarkFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
-  	assert(cellMetaInfo);
-  	if (cellMetaInfo.outputPlainText) {
-	    return !!value;
-  	}
+    assert(cellMetaInfo);
+    if (cellMetaInfo.outputPlainText) {
+      return !!value;
+    }
 
     return value ? "<img src='../images/tick.png'>" : "";
   }
 
   function ColorFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
-  	assert(cellMetaInfo);
-  	if (cellMetaInfo.outputPlainText) {
-	    return value;
-  	}
+    assert(cellMetaInfo);
+    if (cellMetaInfo.outputPlainText) {
+      return value;
+    }
 
     return "<span style='color:" + value  + "'>" + value + "</span>";
   }
 
   function BackColorFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
-  	assert(cellMetaInfo);
-  	if (cellMetaInfo.outputPlainText) {
-	    return value;
-  	}
+    assert(cellMetaInfo);
+    if (cellMetaInfo.outputPlainText) {
+      return value;
+    }
 
     //return "<span style='background:" + value  + "'>" + value + "</span>";
     cellStyles.push("background:" + value);
@@ -114,13 +114,13 @@
 
   // identical to the SlickGrid internal defaultFormatter except this one wraps the value in a SPAN tag.
   function TextFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
-  	assert(cellMetaInfo);
+    assert(cellMetaInfo);
     if (value == null) {
       return "";
     } else {
       if (cellMetaInfo.outputPlainText) {
         return "" + value;
-  	  }
+      }
       // Safari 6 fix: (value + "") instead of .toString()
       value = (value + "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       return "<span>" + value + "</span>";
@@ -128,7 +128,7 @@
   }
 
   function ReferenceValueFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
-  	assert(cellMetaInfo);
+    assert(cellMetaInfo);
     var options = cellMetaInfo.options;
 
     if (cellMetaInfo.outputPlainText) {
@@ -136,8 +136,8 @@
         return "";
       } else {
         return "" + value;
-  	  }
-  	}
+      }
+    }
 
     if (options) {
       var match;
@@ -160,30 +160,30 @@
    *  (http://momentjs.com/)
    */
   function DateFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
-  	var options = $.extend({
-  		format: 'YYYY-MM-DD HH:mm:ss'
-  	}, cellMetaInfo.options);
+    var options = $.extend({
+        format: 'YYYY-MM-DD HH:mm:ss'
+    }, cellMetaInfo.options);
 
-  	if (cellMetaInfo.outputPlainText) {
-        if (value == null) {
-          return "";
-        } else if (value.toISOString) {
-      	  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString
-		  return value.toISOString();
-		}
-      	return "" + value;
+    if (cellMetaInfo.outputPlainText) {
+      if (value == null) {
+        return "";
+      } else if (value.toISOString) {
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString
+        return value.toISOString();
+      }
+      return "" + value;
     }
 
     if (value == null || value === "") {
-      	return "";
+      return "";
     } else if (value && typeof moment !== 'undefined') {
-        return moment(value).format(options.format);
+      return moment(value).format(options.format);
     } else if (value.toISOString) {
-      	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString
-		return value.toISOString();
-	} else {
-	  	return "" + value;
-	}
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString
+      return value.toISOString();
+    } else {
+      return "" + value;
+    }
   }
 
   /*

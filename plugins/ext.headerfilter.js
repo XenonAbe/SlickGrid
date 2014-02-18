@@ -253,9 +253,9 @@
         function handleApply(e, columnDef) {
             hideMenu();
 
-            self.onFilterApplied.notify({ 
-            	grid: grid, 
-            	column: columnDef 
+            self.onFilterApplied.notify({
+                grid: grid,
+                column: columnDef
             }, e, self);
 
             e.preventDefault();
@@ -291,8 +291,8 @@
                 }
             }
 
-            return _.sortBy(items, function (v) { 
-            	return v.title; 
+            return _.sortBy(items, function (v) {
+                return v.title;
             });
         }
 
@@ -307,8 +307,8 @@
                 }
             }
 
-            return _.sortBy(items, function (v) { 
-            	return v.title; 
+            return _.sortBy(items, function (v) {
+                return v.title;
             });
         }
 

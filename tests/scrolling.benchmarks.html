@@ -41,28 +41,28 @@
 
         <script>
         $("#grid_debug").click(function(e) {
-        	e.preventDefault();
-        	grid.debug();
+            e.preventDefault();
+            grid.debug();
         });
         $("#startBench_100").click(function(e) {
-        	e.preventDefault();
-        	startBench(100, $(this));
+            e.preventDefault();
+            startBench(100, $(this));
         });
         $("#startBench_300").click(function(e) {
-        	e.preventDefault();
-        	startBench(300, $(this));
+            e.preventDefault();
+            startBench(300, $(this));
         });
         $("#startBench_550").click(function(e) {
-        	e.preventDefault();
-        	startBench(550, $(this));
+            e.preventDefault();
+            startBench(550, $(this));
         });
         $("#startBench_1000").click(function(e) {
-        	e.preventDefault();
-        	startBench(1000, $(this));
+            e.preventDefault();
+            startBench(1000, $(this));
         });
         $("#startBench_5000").click(function(e) {
-        	e.preventDefault();
-        	startBench(5000, $(this));
+            e.preventDefault();
+            startBench(5000, $(this));
         });
 
         //------------------------------------------------------------
@@ -146,22 +146,21 @@
                 startTime = new Date();
                 bench();
             }, 500);
-        
 
-	        function bench() {
-	            var scrollTop = $grid[0].scrollTop = lastScrollTop + scrollAmount;
 
-	            if ($grid[0].scrollTop == lastScrollTop + scrollAmount) {
-	                lastScrollTop = scrollTop;
-	                window.setTimeout(bench, 10);
-	            }
-	            else {
-			        var delta = new Date() - startTime;
-			        delta /= 1000;
-			        $msg_el_parent.find('span').text(" (" + delta.toFixed(3) + "s)");
-	            }
-	        }
-	    }
+            function bench() {
+                var scrollTop = $grid[0].scrollTop = lastScrollTop + scrollAmount;
+
+                if ($grid[0].scrollTop == lastScrollTop + scrollAmount) {
+                    lastScrollTop = scrollTop;
+                    window.setTimeout(bench, 10);
+                } else {
+                    var delta = new Date() - startTime;
+                    delta /= 1000;
+                    $msg_el_parent.find('span').text(" (" + delta.toFixed(3) + "s)");
+                }
+            }
+        }
 
         </script>
     </body>

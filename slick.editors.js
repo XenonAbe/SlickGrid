@@ -527,9 +527,9 @@ function isValidModifier(v) {
         args.column.datePickerOptions, datePickerFixedOptions);
 
     function parseDateStringAndDetectFormat(s) {
-	  dateFormat = 0;
+      dateFormat = 0;
       if (s instanceof Date) {
-      	return s;
+        return s;
       }
       var fmt, d;
       for (dateFormat = 0; fmt = detectableDateFormats[dateFormat]; dateFormat++) {
