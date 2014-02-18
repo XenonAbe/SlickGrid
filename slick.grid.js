@@ -38,7 +38,8 @@ if (typeof Slick === "undefined") {
 
   // shared across all grids on the page
   var scrollbarDimensions;
-  var maxSupportedCssHeight;  // browser's breaking point
+  var maxSupportedCssHeight;  	// browser's breaking point
+  var isBrowser;				// browser info to be used for those very special browser quirks & ditto hacks where feature detection doesn't cut it
 
   //////////////////////////////////////////////////////////////////////////////////////////////
   // SlickGrid class implementation (available as Slick.Grid)
@@ -171,6 +172,7 @@ if (typeof Slick === "undefined") {
       topPanelHeight: 25,
       formatterFactory: null,
       editorFactory: null,
+      formatterOptions: {},
       editorOptions: {},
       cellFlashingCssClass: "flashing",
       selectedCellCssClass: "selected",
@@ -304,6 +306,15 @@ if (typeof Slick === "undefined") {
 
       if (!columns || !columns.length) {
         columns = [{}];
+      }
+
+      if (typeof get_browser_info === 'undefined') {
+        throw new Error("SlickGrid requires detect_browser.js to be loaded.");
+      }
+      if (!isBrowser) {
+      	isBrowser = get_browser_info();
+      	isBrowser.safari    = /safari/i.test(isBrowser.browser);
+      	isBrowser.safari605 = isBrowser.safari && /6\.0/.test(isBrowser.version);
       }
 
       // calculate these only once and share between grid instances
@@ -1873,7 +1884,8 @@ if (typeof Slick === "undefined") {
           rowDataItem: rowDataItem,
           rowMetadata: rowMetadata,
           columnMetadata: columnMetadata,
-          options: $.extend({}, options.formatterOptions, m.formatterOptions),
+          formatterOptions: $.extend({}, options.formatterOptions, m.formatterOptions),
+          editorOptions: $.extend({}, options.editorOptions, m.editorOptions),
           outputPlainText: config.outputPlainText || false
       };
 
@@ -2197,18 +2209,31 @@ if (typeof Slick === "undefined") {
         return "";
       } else {
         // Safari 6 fix: (value + "") instead of .toString()
-        return (value + "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        value = "" + value;
+  		if (cellMetaInfo.outputPlainText) {
+          return value;
+        } else {
+          return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
       }
     }
 
     function defaultHeaderFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
-      // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
-      return "<span class='slick-column-name'>" + defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) + "</span>";
+      var output = defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo);
+	  if (!cellMetaInfo.outputPlainText) {
+        // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
+        output = "<span class='slick-column-name'>" + output + "</span>";
+      }
+      return output;
     }
 
     function defaultHeaderRowFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
-      // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
-      return "<span class='slick-extra-headerrow-column'>" + defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) + "</span>";
+      var output = defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo);
+	  if (!cellMetaInfo.outputPlainText) {
+        // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
+        output = "<span class='slick-extra-headerrow-column'>" + output + "</span>";
+      }
+      return output;
     }
 
     function getFormatter(row, cell) {
@@ -3126,7 +3151,8 @@ if (typeof Slick === "undefined") {
         rowNodes.push(rowsCache[rows[i]]);
         // Safari 6.0.5 doesn't always render the new row immediately.
         // "Touching" the node's offsetWidth is sufficient to force redraw.
-        if (1) {
+        if (isBrowser.safari605) {
+          // this is a very costly operation in all browsers, so only run it for those which need it here:
           rowsCache[rows[i]].rowNode.offsetWidth;
         }
       }
