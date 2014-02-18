@@ -157,7 +157,7 @@
     function getColumnDefinition() {
       return {
         id: _options.columnId,
-        name: "<input type='checkbox'>",
+        name: 'checkbox',
         toolTip: _options.toolTip,
         field: _options.field,
         width: _options.width,
@@ -166,17 +166,31 @@
         nofilter: true,
         hideable: false,
         cssClass: _options.cssClass,
-        formatter: checkboxSelectionFormatter
+        formatter: checkboxSelectionFormatter,
+        headerFormatter: checkboxSelectionHeaderFormatter
       };
     }
 
-    function checkboxSelectionFormatter(row, cell, value, columnDef, dataContext) {
-      if (dataContext) {
-        return _selectedRowsLookup[row]
-            ? "<input type='checkbox' checked='checked'>"
-            : "<input type='checkbox'>";
+    function checkboxSelectionHeaderFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+      var output = columnDef.formatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo);
+      if (!cellMetaInfo.outputPlainText) {
+        output = "<span class='slick-column-name'>" + output + "</span>";
       }
-      return null;
+      return output;
+    }
+
+    function checkboxSelectionFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+      if (cellMetaInfo.outputPlainText) {
+        if (_selectedRowsLookup[row]) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        return _selectedRowsLookup[row]
+          ? "<input type='checkbox' checked='checked'>"
+          : "<input type='checkbox'>";
+      }
     }
 
     function isRowSelectable(data, row) {
