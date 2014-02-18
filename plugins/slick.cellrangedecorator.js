@@ -15,7 +15,7 @@
    * Could also construct the borders separately using 4 individual DIVs.
    *
    * Currently the above issue is 'fixed' by providing onClick, etc handlers
-   * which produce the cell coordinate as partt of the event data.
+   * which produce the cell coordinate as part of the event data.
    *
    * @param {Grid} grid
    * @param {Object} options
