@@ -1146,7 +1146,7 @@ if (typeof Slick === "undefined") {
               }
               maxPageX = pageX + Math.min(shrinkLeewayOnRight, stretchLeewayOnLeft);
               minPageX = pageX - Math.min(shrinkLeewayOnLeft, stretchLeewayOnRight);
-              trigger(self.onColumnsStartResize, {e:e}); // onColumnsResizeStart
+              trigger(self.onColumnsStartResize, {e: e}); // onColumnsResizeStart
             })
             .bind("drag touchmove", function (e, dd) {
               var actualMinWidth, d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX, x;
@@ -1255,7 +1255,7 @@ if (typeof Slick === "undefined") {
                     var value = getDataItemValueForColumn(rowDataItem, columnDef);
                     aux_width = Math.max(aux_width, calculateWordDimensions(value.toString()).width);
                 }
-                c.width = aux_width;
+                columnDef.width = aux_width;
 
                 // TODO: make autosize faster by introducing a bit of heuristic: longer raw string implies wider cell
                 // TODO: apply the proper formatter so that we actually get what we will see when the cell is rendered for real
@@ -1264,7 +1264,7 @@ if (typeof Slick === "undefined") {
                 updateColumnCaches();
                 updateCanvasWidth(true);
                 render();
-                trigger(self.onColumnsResized, {e: e, cell: cell, column: c});
+                trigger(self.onColumnsResized, {e: e, cell: cell, column: columnDef});
             });
       });
     }
@@ -2053,14 +2053,17 @@ if (typeof Slick === "undefined") {
     }
 
     function getRowTop(row) {
+      assert(row >= 0);
       return getRowPosition(row).top;
     }
 
     function getRowHeight(row) {
+      assert(row >= 0);
       return getRowPosition(row).height;
     }
 
     function getRowBottom(row) {
+      assert(row >= 0);
       var pos = getRowPosition(row);
       return pos.top + pos.height;
     }
@@ -2078,6 +2081,7 @@ if (typeof Slick === "undefined") {
     // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>),
     // unless the Y coordinate points outside the grid.
     function getRowWithFractionFromPosition(maxPosition) {
+      assert(maxPosition >= 0);
       var rowsInPosCache = getDataLength();
 
       if (!rowsInPosCache) {
@@ -2372,7 +2376,7 @@ if (typeof Slick === "undefined") {
       var metadata = data.getItemMetadata && data.getItemMetadata(row, false);
 
       if (metadata && metadata.cssClasses) {
-        rowCss += " " + ( typeof metadata.cssClasses === 'function' ? metadata.cssClasses(row) : metadata.cssClasses);
+        rowCss += " " + (typeof metadata.cssClasses === 'function' ? metadata.cssClasses(row) : metadata.cssClasses);
       }
 
       stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px" +
@@ -4260,7 +4264,7 @@ if (typeof Slick === "undefined") {
       var topRow = getRowWithFractionFromPosition(scrollTop + pageOffset);
       var bottomRow = getRowWithFractionFromPosition(scrollTop + pageOffset + viewportH);
       var deltaRows = dir * (bottomRow.position - topRow.position);
-      scrollTo(getRowTop(bottomRow));
+      scrollTo(getRowTop(bottomRow.position));
       render();
 
       if (options.enableCellNavigation && activeRow != null) {
@@ -4906,12 +4910,6 @@ if (typeof Slick === "undefined") {
       "onDblClick": new Slick.Event(),
       "onContextMenu": new Slick.Event(),
       "onKeyDown": new Slick.Event(),
-      //"onHeaderFocusIn": new Slick.Event(),
-      //"onHeaderFocusOut": new Slick.Event(),
-      //"onCellFocusIn": new Slick.Event(),
-      //"onCellFocusOut": new Slick.Event(),
-      //"onFocusIn": new Slick.Event(),
-      //"onFocusOut": new Slick.Event(),
       "onAddNewRow": new Slick.Event(),
       "onValidationError": new Slick.Event(),
       "onCanvasWidthChanged": new Slick.Event(),
