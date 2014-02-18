@@ -203,6 +203,8 @@ if (typeof Slick === "undefined") {
       focusable: true,
       selectable: true,
       dataItemColumnValueExtractor: null
+      // childrenFirstIndex: <N>                set to the first flattened column index covered by this column when this column is a parent (forming an inclusive range)
+      // childrenLastIndex:  <N>                set to the last flattened column index covered by this column when this column is a parent (forming an inclusive range)
     };
 
     // scroller
@@ -1905,10 +1907,14 @@ if (typeof Slick === "undefined") {
       var maxDepth = 0;
       var resultColumns = [];
 
-      function parse(input, depth) {
+      function parse(input, depth, parent) {
         var totalWidth = 0;
         if (depth > maxDepth) {
           maxDepth = depth;
+        }
+        if (parent) {
+          assert(input.length > 0);
+          parent.childrenFirstIndex = resultColumns.length;
         }
         for (var i = 0; i < input.length; i++) {
           var column = input[i];
@@ -1917,7 +1923,7 @@ if (typeof Slick === "undefined") {
             column.width = parse(column.children, depth + 1);
           } else {
             column = input[i] = $.extend({}, columnDefaults, column);
-            columnsById[column.id] = i;
+            columnsById[column.id] = resultColumns.length;
             if (column.minWidth && column.width < column.minWidth) {
               column.width = column.minWidth;
             }
@@ -1927,6 +1933,9 @@ if (typeof Slick === "undefined") {
             totalWidth += column.width;
             resultColumns.push(column);
           }
+        }
+        if (parent) {
+          parent.childrenLastIndex = resultColumns.length;
         }
         return totalWidth;
       }
@@ -1952,7 +1961,12 @@ if (typeof Slick === "undefined") {
             var spacer;
             var spacers = [];
             for (var d = depth + 1; d <= maxDepth; d++) {
-              spacer = {spacer: true, width: column.width || columnDefaults.width, name: "", id: "spacer" + spacerIndex};
+              spacer = {
+                spacer: true, 
+                width: column.width || columnDefaults.width, 
+                name: "", 
+                id: "spacer" + spacerIndex
+              };
               addToNested(spacer, d);
               spacers.push(spacer);
               spacerIndex++;
@@ -1963,7 +1977,7 @@ if (typeof Slick === "undefined") {
       }
 
       hasNestedColumns = false;
-      parse(columnsInput, 0);
+      parse(columnsInput, 0, null);
 
       if (maxDepth > 0) {
         splitIntoLayers(columnsInput, 0);
