@@ -472,7 +472,7 @@ if (typeof Slick === "undefined") {
             .bind("scroll", handleScroll);
         $headerScroller
             .bind("contextmenu", handleHeaderContextMenu)
-            .bind("click", handleHeaderClick)
+            .fixClick(handleHeaderClick, handleHeaderDblClick)
             .delegate(".slick-header-column", "mouseenter", handleHeaderMouseEnter)
             .delegate(".slick-header-column", "mouseleave", handleHeaderMouseLeave)
             .bind("draginit", handleHeaderDragInit)
@@ -485,8 +485,7 @@ if (typeof Slick === "undefined") {
             .bind("keydown", handleKeyDown);
         $canvas
             .bind("keydown", handleKeyDown)
-            .bind("click", handleClick)
-            .bind("dblclick", handleDblClick)
+            .fixClick(handleClick, handleDblClick)
             .bind("contextmenu", handleContextMenu)
             .bind("draginit", handleDragInit)
             .bind("dragstart", {distance: 3}, handleDragStart)
@@ -3717,6 +3716,14 @@ if (typeof Slick === "undefined") {
       }
     }
 
+    function handleHeaderDblClick(e) {
+      var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
+      var column = $header && $header.data("column");
+      if (column) {
+        trigger(self.onHeaderDblClick, {column: column}, e);
+      }
+    }
+
     function handleMouseEnter(e) {
       trigger(self.onMouseEnter, {}, e);
     }
@@ -4900,6 +4907,7 @@ if (typeof Slick === "undefined") {
       "onHeaderMouseLeave": new Slick.Event(),
       "onHeaderContextMenu": new Slick.Event(),
       "onHeaderClick": new Slick.Event(),
+      "onHeaderDblClick": new Slick.Event(),
       "onHeaderCellRendered": new Slick.Event(),
       "onBeforeHeaderCellDestroy": new Slick.Event(),
       "onHeaderRowCellRendered": new Slick.Event(),
