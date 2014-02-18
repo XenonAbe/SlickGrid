@@ -645,11 +645,12 @@ if (typeof Slick === "undefined") {
           columnDef.toolTip = toolTip;
         }
 
+        var e = new Slick.EventData();
         trigger(self.onBeforeHeaderCellDestroy, {
           node: $header[0],
           column: columnDef,
           cell: idx
-        });
+        }, e);
         if (e.isImmediatePropagationStopped()) {
           return false;
         }
@@ -3906,11 +3907,12 @@ if (typeof Slick === "undefined") {
 	    // too much trouble (or so we can hope)...
 	    if (activeCellChanged) {
 	      //activeCellNode.focus();
+        var e = new Slick.EventData();
 	      trigger(self.onActiveCellChanged, {
 	      	activeCell: getActiveCell(),
 	      	prevActiveCell: prevActiveCell,
 	      	editMode:   opt_editMode,
-	      });
+	      }, e);
 	      if (e.isImmediatePropagationStopped()) {
 	        return;
 	      }
@@ -3977,7 +3979,8 @@ if (typeof Slick === "undefined") {
       // can we prevent nested invocations of this code (and consequent crashes in jQuery).
       var editor = currentEditor;
       currentEditor = null;
-      trigger(self.onBeforeCellEditorDestroy, {editor: editor});
+      var e = new Slick.EventData();
+      trigger(self.onBeforeCellEditorDestroy, {editor: editor}, e);
       if (e.isImmediatePropagationStopped()) {
         return;
       }
@@ -4034,6 +4037,7 @@ if (typeof Slick === "undefined") {
           rowMetadata.columns &&
           (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
 
+      var e = new Slick.EventData();
       trigger(self.onBeforeEditCell, {
       	row: activeRow,
       	cell: activeCell,
@@ -4041,7 +4045,7 @@ if (typeof Slick === "undefined") {
       	column: columnDef,
         rowMetadata: rowMetadata,
         columnMetadata: columnMetadata,
-      });
+      }, e);
       if (e.isImmediatePropagationStopped()) {
         setFocus();
         return false;
@@ -4188,7 +4192,8 @@ if (typeof Slick === "undefined") {
         return;
       }
 
-      trigger(self.onActiveCellPositionChanged, {});
+      var e = new Slick.EventData();
+      trigger(self.onActiveCellPositionChanged, {}, e);
       if (e.isImmediatePropagationStopped()) {
         return;
       }
@@ -4805,6 +4810,7 @@ if (typeof Slick === "undefined") {
             $(activeCellNode).width();  // force layout
             $(activeCellNode).addClass("invalid");
 
+            var e = new Slick.EventData();
             var retval = trigger(self.onValidationError, {
               row: activeRow,
               cell: activeCell,
@@ -4815,10 +4821,10 @@ if (typeof Slick === "undefined") {
 
               cellNode: activeCellNode,
               validationResults: validationResults
-            });
-		    if (e.isImmediatePropagationStopped()) {
-		      return retval;
-		    }
+            }, e);
+    		    if (e.isImmediatePropagationStopped()) {
+    		      return retval;
+    		    }
 
             currentEditor.focus();
             return false;
