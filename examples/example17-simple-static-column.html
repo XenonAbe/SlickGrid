@@ -93,15 +93,15 @@ for (var i = 0; i < 9; i++) {
     children.push({
       id: "cell" + i,
       name: i,
-      field: i
+      field: i,
+      width: 160,
+      editor: Slick.Editors.Formula,
     });
 }
 columns.push({
     id: "Today",
     name: "Today",
     field: "Today",
-    width: 160,
-    editor: FormulaEditor,
     children: children
 });
 

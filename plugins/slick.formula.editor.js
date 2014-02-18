@@ -1,8 +1,18 @@
+(function ($) {
+  // register namespace
+  $.extend(true, window, {
+    "Slick": {
+      "Editors": {
+        "Formula": FormulaEditor
+      }
+    }
+  });
 
-/**
- * A proof-of-concept cell editor with Excel-like range selection and insertion.
- */
-function FormulaEditor(args) {
+
+  /**
+   * A proof-of-concept cell editor with Excel-like range selection and insertion.
+   */
+  function FormulaEditor(args) {
     var _self = this;
     var _editor = new Slick.Editors.Text(args);
     var _selector;
@@ -25,18 +35,34 @@ function FormulaEditor(args) {
         _editor.destroy();
     };
 
-    this.handleCellRangeSelected = function (e, args) {
-        _editor.setDirectValue(
-            _editor.serializeValue() +
-                " " +
-                args.grid.getColumns()[args.range.fromCell].name +
-                args.range.fromRow +
+    this.handleCellRangeSelected = function (e, e_data) {
+        var columnDefs = args.grid.getColumns();
+        var range = e_data.range;
+        var fromColumnName = columnDefs[range.fromCell].name;
+        var toColumnName = columnDefs[range.toCell].name;
+        var fv = _editor.serializeValue();
+
+        // When the 'column header names' are not purely alphanumeric, switch to a different representation
+        // of the selected range.
+        if (/^[a-z]+$/i.test(fromColumnName) && /^[a-z]+$/i.test(toColumnName)) {
+            fv += " " +
+                fromColumnName +
+                range.fromRow +
                 ":" +
-                args.grid.getColumns()[args.range.toCell].name +
-                args.range.toRow
-        );
+                toColumnName +
+                range.toRow;
+        } else {
+            fv += " (" +
+                fromColumnName + "," +
+                range.fromRow +
+                "):(" +
+                toColumnName + "," +
+                range.toRow + ")";
+        }
+        _editor.setDirectValue(fv);
     };
 
     init();
-}
+  }
 
+})(jQuery);

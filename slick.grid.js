@@ -1962,9 +1962,9 @@ if (typeof Slick === "undefined") {
             var spacers = [];
             for (var d = depth + 1; d <= maxDepth; d++) {
               spacer = {
-                spacer: true, 
-                width: column.width || columnDefaults.width, 
-                name: "", 
+                spacer: true,
+                width: column.width || columnDefaults.width,
+                name: "",
                 id: "spacer" + spacerIndex
               };
               addToNested(spacer, d);
