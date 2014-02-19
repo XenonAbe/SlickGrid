@@ -1,7 +1,13 @@
 .gitk*
-.idea/*          
+.idea/*
+*.orig
+.project
+.DS_Store
+.settings/
+.project
+.idea
 
-.DS_Store      
+node_modules/
 
 # Editor backup files
 *~
