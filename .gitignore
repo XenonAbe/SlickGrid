@@ -1,7 +1,11 @@
 .gitk*
-.idea/*          
-
-.DS_Store  
+.idea/*
+*.orig
+.project
+.DS_Store
+.settings/
+.project
+.idea
 
 node_modules/
 
