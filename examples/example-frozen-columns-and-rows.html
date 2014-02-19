@@ -215,6 +215,18 @@
 		sortable: true
 	}];
 
+    for (var i = 5; i < 100; i += 1) {
+        columns.push({
+            id: "title" + i,
+            name: "Title"  + i,
+            field: "title"  + i,
+            cssClass: "cell-title",
+            editor: Slick.Editors.Text,
+            validator: requiredFieldValidator,
+            sortable: true
+        });
+    }
+
 	var columnFilters = {};
 
 	var options = {
@@ -328,6 +340,11 @@
 			d["title2"] = i;
 			d["title3"] = i;
 			d["title4"] = i;
+
+            for (var j = 5; j < 100; j += 1) {
+                d["title" + j] = i;
+            }
+
 		}
 
 
