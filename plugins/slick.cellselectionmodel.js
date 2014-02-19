@@ -98,15 +98,17 @@
           (e.which == 37 || e.which == 39 || e.which == 38 || e.which == 40) ) {
 
         ranges = getSelectedRanges();
-        if (!ranges.length)
-         ranges.push(new Slick.Range(active.row, active.cell));
+        if (!ranges.length) {
+          ranges.push(new Slick.Range(active.row, active.cell));
+        }
 
         // keyboard can work with last range only
         last = ranges.pop();
 
-        // can't handle selection out of active cell
-        if (!last.contains(active.row, active.cell))
+        // can't handle selection which is outside the active cell
+        if (!last.contains(active.row, active.cell)) {
           last = new Slick.Range(active.row, active.cell);
+        }
 
         var dRow = last.toRow - last.fromRow,
             dCell = last.toCell - last.fromCell,
@@ -117,7 +119,7 @@
         if (e.which == 37) {
           dCell -= dirCell;
         } else if (e.which == 39) {
-          dCell += dirCell ;
+          dCell += dirCell;
         } else if (e.which == 38) {
           dRow -= dirRow;
         } else if (e.which == 40) {
@@ -125,7 +127,7 @@
         }
 
         // define new selection range
-        var new_last = new Slick.Range(active.row, active.cell, active.row + dirRow*dRow, active.cell + dirCell*dCell);
+        var new_last = new Slick.Range(active.row, active.cell, active.row + dirRow * dRow, active.cell + dirCell * dCell);
         if (removeInvalidRanges([new_last]).length) {
           ranges.push(new_last);
           var viewRow = dirRow > 0 ? new_last.toRow : new_last.fromRow;
