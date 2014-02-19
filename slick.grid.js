@@ -2003,6 +2003,7 @@ if (typeof Slick === "undefined") {
     }
 
     function getRowPosition(row) {
+      assert(row >= 0);
       var pos = rowPositionCache[row];
       if (!pos || pos.top == null) {
         var r, top, rowMetadata;
@@ -2025,6 +2026,7 @@ if (typeof Slick === "undefined") {
             height: 0
           };
         }
+        assert(pos);
         while (++r <= row) {
           top = pos.top + pos.height;
           pos = rowPositionCache[r];
@@ -2035,17 +2037,14 @@ if (typeof Slick === "undefined") {
     }
 
     function getRowTop(row) {
-      assert(row >= 0);
       return getRowPosition(row).top;
     }
 
     function getRowHeight(row) {
-      assert(row >= 0);
       return getRowPosition(row).height;
     }
 
     function getRowBottom(row) {
-      assert(row >= 0);
       var pos = getRowPosition(row);
       return pos.top + pos.height;
     }
