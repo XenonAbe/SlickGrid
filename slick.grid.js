@@ -1800,6 +1800,7 @@ if (typeof Slick === "undefined") {
         height: true,
         uid: true,
         css: true,
+        format: true,
 
         outputPlainText: true
       }, config);
@@ -1873,7 +1874,9 @@ if (typeof Slick === "undefined") {
         var value = getDataItemValueForColumn(rowDataItem, m, rowMetadata, columnMetadata);
         info.value = value;
         info.formatter = getFormatter(row, cell);
-        info.html = info.formatter(row, cell, value, m, rowDataItem, info);
+        if (config.format) {
+          info.html = info.formatter(row, cell, value, m, rowDataItem, info);
+        }
       }
       return info;
     }
@@ -2339,11 +2342,18 @@ if (typeof Slick === "undefined") {
       return item[columnDef.field];
     }
 
-    function setDataItemValueForColumn(item, columnDef, value) {
+    function setDataItemValueForColumn(item, columnDef, value, rowMetadata, columnMetadata) {
+      if (columnMetadata && columnMetadata.dataItemColumnValueSetter) {
+        return columnMetadata.dataItemColumnValueSetter(item, columnDef, value, rowMetadata, columnMetadata);
+      }
+      if (rowMetadata && rowMetadata.dataItemColumnValueSetter) {
+        return rowMetadata.dataItemColumnValueSetter(item, columnDef, value, rowMetadata, columnMetadata);
+      }
+      if (columnDef && columnDef.dataItemColumnValueSetter) {
+        return columnDef.dataItemColumnValueSetter(item, columnDef, value, rowMetadata, columnMetadata);
+      }
       if (options.dataItemColumnValueSetter) {
-         options.dataItemColumnValueSetter(item, columnDef, value);
-
-         return getDataItemValueForColumn(item, columnDef);
+        return options.dataItemColumnValueSetter(item, columnDef, value, rowMetadata, columnMetadata);
       }
       return item[columnDef.field] = value;
     }
