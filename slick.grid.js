@@ -179,6 +179,7 @@ if (typeof Slick === "undefined") {
       multiSelect: true,
       enableTextSelectionOnCells: true,
       dataItemColumnValueExtractor: null,
+      dataItemColumnValueSetter: null,
       fullWidthRows: false,
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
@@ -2336,6 +2337,15 @@ if (typeof Slick === "undefined") {
         return options.dataItemColumnValueExtractor(item, columnDef, rowMetadata, columnMetadata);
       }
       return item[columnDef.field];
+    }
+
+    function setDataItemValueForColumn(item, columnDef, value) {
+      if (options.dataItemColumnValueSetter) {
+         options.dataItemColumnValueSetter(item, columnDef, value);
+
+         return getDataItemValueForColumn(item, columnDef);
+      }
+      return item[columnDef.field] = value;
     }
 
     function appendRowHtml(stringArray, row, range, dataLength) {
@@ -4984,6 +4994,8 @@ if (typeof Slick === "undefined") {
       "getSelectedRows": getSelectedRows,
       "setSelectedRows": setSelectedRows,
       "getContainerNode": getContainerNode,
+      "getDataItemValueForColumn" : getDataItemValueForColumn,
+      "setDataItemValueForColumn" : setDataItemValueForColumn,
       "isInitialized": isInitialized,
 
       "render": render,

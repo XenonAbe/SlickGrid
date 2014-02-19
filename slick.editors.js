@@ -114,7 +114,7 @@
     };
 
     this.loadValue = function (item) {
-      scope.setDirectValue(item[args.column.field]);
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
       $input.select();
     };
 
@@ -123,7 +123,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -170,7 +170,7 @@
     };
 
     this.loadValue = function (item) {
-      scope.setDirectValue(item[args.column.field]);
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
       $input.select();
     };
 
@@ -179,7 +179,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -273,7 +273,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      scope.setDirectValue(item[args.column.field]);
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
       $input.select();
     };
 
@@ -284,7 +284,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -345,7 +345,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      scope.setDirectValue(item[args.column.field]);
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
       $input.select();
     };
 
@@ -356,7 +356,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -435,7 +435,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      scope.setDirectValue(item[args.column.field]);
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
       $input.select();
     };
 
@@ -447,7 +447,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -607,7 +607,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      scope.setDirectValue(item[args.column.field]);
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
       $input.select();
     };
 
@@ -617,7 +617,8 @@ function isValidModifier(v) {
 
     this.applyValue = function (item, state) {
       var fmt = detectableDateFormats[dateFormat] || detectableDateFormats[0];
-      item[args.column.field] = $.datepicker.formatDate(fmt, state); // state.format('isoDate');
+      state = $.datepicker.formatDate(fmt, state); // state.format('isoDate');
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -709,7 +710,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      scope.setDirectValue(item[args.column.field]);
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
       $select.select();
     };
 
@@ -718,7 +719,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function(item, state) {
-        item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function() {
@@ -762,7 +763,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      scope.setDirectValue(item[args.column.field]);
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
       $select.select();
     };
 
@@ -771,7 +772,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -816,7 +817,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      scope.setDirectValue(item[args.column.field]);
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
       $select.select();
     };
 
@@ -825,7 +826,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -934,7 +935,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      scope.setDirectValue(item[args.column.field]);
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
       $input.select();
     };
 
@@ -943,7 +944,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -1106,7 +1107,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      scope.setDirectValue(item[args.column.field]);
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
       $input.select();
     };
 
@@ -1125,7 +1126,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -1224,7 +1225,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      scope.setDirectValue(item[args.column.field]);
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
       $input.select();
     };
 
@@ -1233,7 +1234,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -1281,21 +1282,20 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function(item) {
-      defaultValue = item[args.column.field] || "";
+      defaultValue = args.grid.getDataItemValueForColumn(item, args.column) || "";
       $select.val(defaultValue);
     };
 
     this.serializeValue = function() {
-      if(args.column.options){
+      if (args.column.options) {
         return $select.val();
-      }
-      else {
+      } else {
         return ($select.val() == "yes");
       }
     };
 
     this.applyValue = function(item,state) {
-        item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function() {
