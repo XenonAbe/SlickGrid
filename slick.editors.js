@@ -1277,21 +1277,20 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function(item) {
-      defaultValue = item[args.column.field] || "";
+      defaultValue = args.grid.getDataItemValueForColumn(item, args.column) || "";
       $select.val(defaultValue);
     };
 
     this.serializeValue = function() {
-      if(args.column.options){
+      if (args.column.options) {
         return $select.val();
-      }
-      else {
+      } else {
         return ($select.val() == "yes");
       }
     };
 
     this.applyValue = function(item,state) {
-        item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function() {
