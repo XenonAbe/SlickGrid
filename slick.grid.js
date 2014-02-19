@@ -4725,15 +4725,15 @@ if (typeof Slick === "undefined") {
           // look up by id, then index
           columnMetadata = columnMetadata && (columnMetadata[column.id] || columnMetadata[cell]);
           if (columnMetadata) {
-            if (columnMetadata.transparent === true) {
+            if (columnMetadata.transparent) {
               return false;
             }
-            if (typeof columnMetadata.focusable === "boolean") {
+            if (columnMetadata.focusable != null) {
               return columnMetadata.focusable;
             }
           }
 
-          if (typeof rowMetadata.focusable === "boolean") {
+          if (rowMetadata.focusable != null) {
             return rowMetadata.focusable;
           }
         }
@@ -4747,14 +4747,14 @@ if (typeof Slick === "undefined") {
       // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
       if (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0) {
         var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
-        if (rowMetadata && typeof rowMetadata.selectable === "boolean") {
+        if (rowMetadata && rowMetadata.selectable != null) {
           return rowMetadata.selectable;
         }
 
         var column = columns[cell];
         // look up by id, then index
         var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
-        if (columnMetadata && typeof columnMetadata.selectable === "boolean") {
+        if (columnMetadata && columnMetadata.selectable != null) {
           return columnMetadata.selectable;
         }
 
