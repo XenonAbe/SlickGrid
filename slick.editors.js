@@ -177,7 +177,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field] || "";
+      defaultValue = args.grid.getDataItemValueForColumn(item, args.column) || "";
       $input.text(defaultValue);
       $input.select();
     };
@@ -187,7 +187,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -332,7 +332,8 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      defaultValue = parseFloat(item[args.column.field]);
+      defaultValue = args.grid.getDataItemValueForColumn(item, args.column);
+      defaultValue = parseFloat(defaultValue);
       if (isNaN(defaultValue)) defaultValue = '';
       $input.val(defaultValue);
       $input[0].defaultValue = defaultValue;
@@ -346,7 +347,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -399,7 +400,8 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      defaultValue = parseFloat(item[args.column.field]) * 100;
+      defaultValue = args.grid.getDataItemValueForColumn(item, args.column);
+      defaultValue = parseFloat(defaultValue) * 100;
       if (isNaN(defaultValue)) {
         defaultValue = ''; 
       } else {
@@ -418,7 +420,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -558,7 +560,8 @@ function isValidModifier(v) {
 
     this.applyValue = function (item, state) {
       var fmt = detectableDateFormats[dateFormat] || detectableDateFormats[0];
-      item[args.column.field] = $.datepicker.formatDate(fmt, state); // state.format('isoDate');
+      state = $.datepicker.formatDate(fmt, state); // state.format('isoDate');
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -640,7 +643,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function(item) {
-        defaultValue = item[args.column.field];
+        defaultValue = args.grid.getDataItemValueForColumn(item, args.column);
         var key = getKeyFromKeyVal(opt, defaultValue);
         $select.val(key);
         $select.multiselect("refresh");
@@ -1046,7 +1049,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field] || "";
+      defaultValue = args.grid.getDataItemValueForColumn(item, args.column) || "";
       $input.spectrum("set", defaultValue);
       $input[0].defaultValue = defaultValue;
       $input.select();
@@ -1057,7 +1060,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
