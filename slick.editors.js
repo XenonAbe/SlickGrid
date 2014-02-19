@@ -116,7 +116,7 @@
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field] || "";
+      defaultValue = args.grid.getDataItemValueForColumn(item, args.column) || "";
       $input.val(defaultValue);
       $input[0].defaultValue = defaultValue;
       $input.select();
@@ -127,7 +127,7 @@
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -268,7 +268,8 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      defaultValue = parseInt(item[args.column.field]);
+      defaultValue = args.grid.getDataItemValueForColumn(item, args.column);
+      defaultValue = parseInt(defaultValue, 10);
       if (isNaN(defaultValue)) defaultValue = '';
       $input.val(defaultValue);
       $input[0].defaultValue = defaultValue;
@@ -280,7 +281,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -545,7 +546,8 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      defaultValue = parseDateStringAndDetectFormat(item[args.column.field]); /* parseISODate() */
+      defaultValue = args.grid.getDataItemValueForColumn(item, args.column);
+      defaultValue = parseDateStringAndDetectFormat(defaultValue); /* parseISODate() */
       $input.datepicker("setDate", defaultValue);
       $input.select();
     };
@@ -653,7 +655,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function(item, state) {
-        item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function() {
@@ -691,7 +693,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      $select.val((defaultValue = item[args.column.field]) ? "yes" : "no");
+      $select.val((defaultValue = args.grid.getDataItemValueForColumn(item, args.column)) ? "yes" : "no");
       $select.select();
     };
 
@@ -700,7 +702,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -738,7 +740,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      defaultValue = item[args.column.field];
+      defaultValue = args.grid.getDataItemValueForColumn(item, args.column);
       if (defaultValue) {
         $select.prop('checked', true);
       } else {
@@ -751,7 +753,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -816,7 +818,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      $input.val(defaultValue = item[args.column.field]);
+      $input.val(defaultValue = args.grid.getDataItemValueForColumn(item, args.column));
       $input.select();
     };
 
@@ -825,7 +827,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
@@ -926,7 +928,7 @@ function isValidModifier(v) {
     };
 
     this.loadValue = function (item) {
-      $input.val(defaultValue = item[args.column.field]);
+      $input.val(defaultValue = args.grid.getDataItemValueForColumn(item, args.column));
       $input.select();
     };
 
@@ -935,7 +937,7 @@ function isValidModifier(v) {
     };
 
     this.applyValue = function (item, state) {
-      item[args.column.field] = state;
+      args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function () {
