@@ -248,6 +248,12 @@
         activeCell = selectedCell.cell;
       } else {
         // we don't know where to paste
+        _self.onCopyCancelled.notify({
+          rangeIsCopied: true, // outside source coming in: always regarded as COPY rather than CUT
+          rangeDataFromExternalSource: true,
+          externalDataSet: clippedRange,
+          status: "No destination cell or range has been provided"
+        });
         return;
       }
 
@@ -536,6 +542,22 @@
               assert(_copiedRanges);
 
               ranges = _grid.getSelectionModel().getSelectedRanges();
+              var selectedCell = _grid.getActiveCell();
+              if (!ranges || ranges.length == 0) {
+                if (selectedCell) {
+                  ranges = [new Slick.Range(selectedCell.row, selectedCell.cell, selectedCell.row, selectedCell.cell)];
+                } else {
+                  // we don't know where to paste
+                  _self.onCopyCancelled.notify({
+                    ranges: _copiedRanges,
+                    rangeIsCopied: _copiedRanges.copy,
+                    rangeDataFromExternalSource: false,
+                    status: "No destination cell or range has been provided"
+                  });
+                  return false;
+                }
+              }
+
               _self.onPasteCells.notify({
                 from: _copiedRanges,
                 to: ranges,
