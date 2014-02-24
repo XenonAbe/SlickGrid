@@ -12,7 +12,7 @@ $('document').ready(function(){
     {
       var scripthtml = $('#script_tag_example').html();
       var escapedScript = pretag.text(scripthtml).html();
-      pretag.html('<pre class=class="prettyprint language-js"><code class="prettyprint">' + escapedScript + '</code></pre>');
+      pretag.html('<pre class="prettyprint language-js"><code class="prettyprint">' + escapedScript + '</code></pre>');
 
       //call google prettify
       PR.prettyPrint();

@@ -6,8 +6,9 @@
   <title>SlickGrid example: Variable Row Height + DataView</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../controls/slick.pager.css" type="text/css"/>
-  <link rel="stylesheet" href="../controls/slick.columnpicker.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-pager.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-columnpicker.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
@@ -99,9 +100,11 @@
 <script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/jquery.event.drag.js"></script>
 <script src="../lib/jquery.browser.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
@@ -222,13 +225,13 @@ $(function () {
       }
   };
 
-  var dataView = new Slick.Data.DataView({ 
-  	inlineFilters: true,
-    globalItemMetadataProvider: { 
+  var dataView = new Slick.Data.DataView({
+    inlineFilters: true,
+    globalItemMetadataProvider: {
       getRowMetadata: function (rowData, row, cell /* may be FALSE */, dataRows) {
         return row_metadata[row];
       }
- 	}
+    }
   });
   grid = new Slick.Grid("#myGrid", dataView, columns, options);
 
@@ -297,7 +300,7 @@ $(function () {
       };
 
       // use numeric sort of % and lexicographic for everything else
-      dataView.fastSort((sortcol == "percentComplete") ? percentCompleteValueFn : sortcol, args.sortAsc);
+      dataView.sort((sortcol == "percentComplete") ? percentCompleteValueFn : sortcol, args.sortAsc);
     } else {
       // using native sort with comparer
       // preferred method but can be very slow in IE with huge datasets

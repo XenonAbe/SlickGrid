@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "CellSelectionModel": CellSelectionModel
+    Slick: {
+      CellSelectionModel: CellSelectionModel
     }
   });
 
@@ -13,8 +13,8 @@
     var _ranges = [];
     var _self = this;
     var _selector = new Slick.CellRangeSelector({
-      "selectionCss": {
-        "border": "2px solid black"
+      selectionCss: {
+        border: "2px solid black"
       }
     });
     var _options;
@@ -95,18 +95,20 @@
       var active = _grid.getActiveCell();
 
       if (active && e.shiftKey && !e.ctrlKey && !e.altKey &&
-          (e.which == 37 || e.which == 39 || e.which == 38 || e.which == 40) ) {
+          (e.which === $.ui.keyCode.LEFT || e.which === $.ui.keyCode.RIGHT || e.which === $.ui.keyCode.UP || e.which === $.ui.keyCode.DOWN) ) {
 
         ranges = getSelectedRanges();
-        if (!ranges.length)
-         ranges.push(new Slick.Range(active.row, active.cell));
+        if (!ranges.length) {
+          ranges.push(new Slick.Range(active.row, active.cell));
+        }
 
         // keyboard can work with last range only
         last = ranges.pop();
 
-        // can't handle selection out of active cell
-        if (!last.contains(active.row, active.cell))
+        // can't handle selection which is outside the active cell
+        if (!last.contains(active.row, active.cell)) {
           last = new Slick.Range(active.row, active.cell);
+        }
 
         var dRow = last.toRow - last.fromRow,
             dCell = last.toCell - last.fromCell,
@@ -114,18 +116,18 @@
             dirRow = active.row == last.fromRow ? 1 : -1,
             dirCell = active.cell == last.fromCell ? 1 : -1;
 
-        if (e.which == 37) {
+        if (e.which === $.ui.keyCode.LEFT) {
           dCell -= dirCell;
-        } else if (e.which == 39) {
-          dCell += dirCell ;
-        } else if (e.which == 38) {
+        } else if (e.which === $.ui.keyCode.RIGHT) {
+          dCell += dirCell;
+        } else if (e.which === $.ui.keyCode.UP) {
           dRow -= dirRow;
-        } else if (e.which == 40) {
+        } else if (e.which === $.ui.keyCode.DOWN) {
           dRow += dirRow;
         }
 
         // define new selection range
-        var new_last = new Slick.Range(active.row, active.cell, active.row + dirRow*dRow, active.cell + dirCell*dCell);
+        var new_last = new Slick.Range(active.row, active.cell, active.row + dirRow * dRow, active.cell + dirCell * dCell);
         if (removeInvalidRanges([new_last]).length) {
           ranges.push(new_last);
           var viewRow = dirRow > 0 ? new_last.toRow : new_last.fromRow;

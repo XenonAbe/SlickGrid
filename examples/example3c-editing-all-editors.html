@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="../lib/jquery.multiselect.filter.css" type="text/css" />
   <link rel="stylesheet" href="../lib/spectrum.css" type="text/css" />
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
@@ -51,11 +52,13 @@
 <script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/jquery.event.drag.js"></script>
 <script src="../lib/jquery.multiselect.js"></script>
 <script src="../lib/jquery.multiselect.filter.js"></script>
 <script src="../lib/spectrum.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
@@ -116,8 +119,8 @@
         finish: "01/05/2009",
         effortDriven: (i % 5 == 0),
         color: "#" + ("000000" + ((i * 999999 / 500) | 0)).slice(-6),
-		option: (i * 7) % 4 + 1,
-		okay: ((i * 11) % 5) > 1,
+        option: (i * 7) % 4 + 1,
+        okay: ((i * 11) % 5) > 1,
       };
     }
 

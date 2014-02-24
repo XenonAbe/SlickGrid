@@ -5,6 +5,7 @@
   <title>SlickGrid example 3a: Advanced Editing</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
@@ -39,8 +40,10 @@
 <script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
 <script src="../lib/jquery-ui.js"></script>
-<script src="../lib/jquery.event.drag.js"></script>
+<script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
@@ -102,7 +105,10 @@
     };
 
     this.serializeValue = function () {
-      return {from: parseInt($from.val(), 10), to: parseInt($to.val(), 10)};
+      return {
+        from: parseInt($from.val(), 10),
+        to: parseInt($to.val(), 10)
+      };
     };
 
     this.applyValue = function (item, state) {

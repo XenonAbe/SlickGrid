@@ -2,15 +2,24 @@
   function SlickColumnPicker(columns, grid, options) {
     var $menu;
     var columnCheckboxes;
+    var onUpdateColumns = new Slick.Event();
+
+    var columnsLookup = {};
+
+    for (var i = 0; i < columns.length; i++) {
+      columnsLookup[ columns[i].id ] = columns[i];
+    }
 
     var defaults = {
-      fadeSpeed: 250
+      fadeSpeed: 250,
+      forceFitColumnsText: "Force fit columns",
+      syncColumnCellResizeText: "Synchronous resize"
     };
 
     function init() {
+      options = $.extend({}, defaults, options);
       grid.onHeaderContextMenu.subscribe(handleHeaderContextMenu);
       grid.onColumnsReordered.subscribe(updateColumnOrder);
-      options = $.extend({}, defaults, options);
 
       $menu = $("<span class='slick-columnpicker' style='display:none;position:absolute;z-index:20;' />").appendTo(document.body);
 
@@ -34,6 +43,8 @@
 
       var $li, $input;
       for (var i = 0; i < columns.length; i++) {
+        if (columns[i].id == "_checkbox_selector") continue;
+
         $li = $("<li />").appendTo($menu);
         $input = $("<input type='checkbox' />").data("column-id", columns[i].id);
         columnCheckboxes.push($input);
@@ -52,7 +63,7 @@
       $li = $("<li />").appendTo($menu);
       $input = $("<input type='checkbox' />").data("option", "autoresize");
       $("<label />")
-          .text("Force fit columns")
+          .text(options.forceFitColumnsText)
           .prepend($input)
           .appendTo($li);
       if (grid.getOptions().forceFitColumns) {
@@ -62,7 +73,7 @@
       $li = $("<li />").appendTo($menu);
       $input = $("<input type='checkbox' />").data("option", "syncresize");
       $("<label />")
-          .text("Synchronous resize")
+          .text(options.syncColumnCellResizeText)
           .prepend($input)
           .appendTo($li);
       if (grid.getOptions().syncColumnCellResize) {
@@ -85,7 +96,7 @@
       var current = grid.getColumns().slice(0);
       var ordered = new Array(columns.length);
       for (var i = 0; i < ordered.length; i++) {
-        if ( grid.getColumnIndex(columns[i].id) === undefined ) {
+        if (grid.getColumnIndex(columns[i].id) === undefined) {
           // If the column doesn't return a value from getColumnIndex,
           // it is hidden. Leave it in this position.
           ordered[i] = columns[i];
@@ -98,12 +109,12 @@
     }
 
     function updateColumn(e) {
-      if ($(e.target).data("option") == "autoresize") {
+      if ($(e.target).data("option") === "autoresize") {
         if (e.target.checked) {
-          grid.setOptions({forceFitColumns:true});
+          grid.setOptions({forceFitColumns: true});
           grid.autosizeColumns();
         } else {
-          grid.setOptions({forceFitColumns:false});
+          grid.setOptions({forceFitColumns: false});
         }
         return;
       }
@@ -119,9 +130,13 @@
 
       if ($(e.target).is(":checkbox")) {
         var visibleColumns = [];
+
         $.each(columnCheckboxes, function (i, e) {
-          if ($(this).is(":checked")) {
-            visibleColumns.push(columns[i]);
+          var columnID = $(e).data('column-id');
+          if (columnID && columnsLookup[columnID]) {
+            if ($(this).is(":checked")) {
+              visibleColumns.push( columnsLookup[columnID] );
+            }
           }
         });
 
@@ -130,8 +145,12 @@
           return;
         }
 
-        grid.setColumns(visibleColumns);
+        if (columnsLookup._checkbox_selector) {
+          visibleColumns.push(columnsLookup._checkbox_selector);
+        }
 
+        grid.setColumns(visibleColumns);
+        onUpdateColumns.notify(visibleColumns, new Slick.EventData());
         _self.onColumnChanged.notify();
       }
     }
@@ -144,10 +163,17 @@
 
     return {
       "getAllColumns": getAllColumns,
+      "onUpdateColumns": onUpdateColumns,
       "onColumnChanged": new Slick.Event(),
       "destroy": destroy
     };
   }
   // Slick.Controls.ColumnPicker
-  $.extend(true, window, { Slick:{ Controls:{ ColumnPicker:SlickColumnPicker }}});
+  $.extend(true, window, { 
+    Slick: { 
+      Controls: { 
+        ColumnPicker: SlickColumnPicker 
+      }
+    }
+  });
 })(jQuery);

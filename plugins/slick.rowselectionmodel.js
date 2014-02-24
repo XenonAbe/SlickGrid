@@ -1,14 +1,15 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "RowSelectionModel": RowSelectionModel
+    Slick: {
+      RowSelectionModel: RowSelectionModel
     }
   });
 
   function RowSelectionModel(options) {
     var _grid;
     var _ranges = [];
+    var _rowIndexes = [];
     var _self = this;
     var _handler = new Slick.EventHandler();
     var _inHandler;
@@ -89,11 +90,12 @@
     }
 
     function unionArrays(x, y) {
+      var i;
       var obj = {};
-      for (var i = x.length - 1; i >= 0; i--) {
+      for (i = x.length - 1; i >= 0; i--) {
         obj[x[i]] = x[i];
       }
-      for (var i = y.length - 1; i >= 0; i--) {
+      for (i = y.length - 1; i >= 0; i--) {
         obj[y[i]] = y[i];
       }
       var res = [];
@@ -106,11 +108,12 @@
     }
 
     function xorArrays(x, y) {
+      var i;
       var obj = {};
-      for (var i = x.length - 1; i >= 0; i--) {
+      for (i = x.length - 1; i >= 0; i--) {
         obj[x[i]] = x[i];
       }
-      for (var i = y.length - 1; i >= 0; i--) {
+      for (i = y.length - 1; i >= 0; i--) {
         if (obj.hasOwnProperty(y[i])) {
           delete obj[y[i]];
         } else {
@@ -135,8 +138,22 @@
     }
 
     function setSelectedRanges(ranges) {
+      var
+        selectionIndexes = $.map(ranges, function(r) {
+          return r.fromRow;
+        }),
+        deleteIndexes = _rowIndexes.filter(function(elem) {
+          return selectionIndexes.indexOf(elem) === -1;
+        });
+
+      _rowIndexes = selectionIndexes;
       _ranges = ranges;
       _self.onSelectedRangesChanged.notify(_ranges);
+      _self.onSelectionChanged.notify({
+        deletes: deleteIndexes,
+        selection: selectionIndexes
+        //multiselect: multiselect === true
+      });
     }
 
     function getSelectedRanges() {
@@ -308,7 +325,8 @@
       "init": init,
       "destroy": destroy,
 
-      "onSelectedRangesChanged": new Slick.Event()
+      "onSelectedRangesChanged": new Slick.Event(),
+      "onSelectionChanged": new Slick.Event()
     });
   }
 })(jQuery);

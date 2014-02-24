@@ -33,7 +33,7 @@
    * @class EventData
    * @constructor
    */
-  function EventData() {
+  function EventData(sourceEvent) {
     var isPropagationStopped = false;
     var isImmediatePropagationStopped = false;
 
@@ -59,6 +59,7 @@
      * @method stopImmediatePropagation
      */
     this.stopImmediatePropagation = function () {
+      isPropagationStopped = true;
       isImmediatePropagationStopped = true;
     };
 
@@ -69,6 +70,10 @@
      */
     this.isImmediatePropagationStopped = function () {
       return isImmediatePropagationStopped;
+    }
+
+    if (sourceEvent) {
+      this.sourceEvent = sourceEvent;
     }
   }
 
@@ -138,7 +143,7 @@
       scope = scope || this;
 
       var returnValue = true;
-      for (var i = 0; i < handlers.length && !(e.isPropagationStopped() || e.isImmediatePropagationStopped()); i++) {
+      for (var i = 0; i < handlers.length && !e.isImmediatePropagationStopped(); i++) {
         returnValue = handlers[i].call(scope, e, args, returnValue);
       }
 
@@ -433,13 +438,13 @@
         return;
       }
       if (activeEditController !== null) {
-        throw "SlickGrid.EditorLock.activate: an editController is still active, can't activate another editController";
+        throw new Error("SlickGrid.EditorLock.activate: an editController is still active, can't activate another editController");
       }
       if (!editController.commitCurrentEdit) {
-        throw "SlickGrid.EditorLock.activate: editController must implement .commitCurrentEdit()";
+        throw new Error("SlickGrid.EditorLock.activate: editController must implement .commitCurrentEdit()");
       }
       if (!editController.cancelCurrentEdit) {
-        throw "SlickGrid.EditorLock.activate: editController must implement .cancelCurrentEdit()";
+        throw new Error("SlickGrid.EditorLock.activate: editController must implement .cancelCurrentEdit()");
       }
       activeEditController = editController;
     };
@@ -453,7 +458,7 @@
     this.deactivate = function (editController) {
       assert(editController && assert(typeof editController.commitCurrentEdit === 'function') && assert(typeof editController.cancelCurrentEdit === 'function'));
       if (activeEditController !== editController) {
-        throw "SlickGrid.EditorLock.deactivate: specified editController is not the currently active one";
+        throw new Error("SlickGrid.EditorLock.deactivate: specified editController is not the currently active one");
       }
       activeEditController = null;
     };

@@ -1,173 +1,364 @@
 (function ($) {
-  /***
-   * A sample AJAX data store implementation.
-   * Right now, it's hooked up to load Hackernews stories, but can
-   * easily be extended to support any JSONP-compatible backend that accepts paging parameters.
-   */
-  function RemoteModel() {
-    // private
-    var PAGESIZE = 50;
-    var data = {length: 0};
-    var searchstr = "";
-    var sortcol = null;
-    var sortdir = 1;
-    var h_request = null;
-    var req = null; // ajax request
+  var defaults = {
+    pagesize: 50,
+    page_margin: 150,
 
-    // events
-    var onDataLoading = new Slick.Event();
-    var onDataLoaded = new Slick.Event();
+    responseItemsMemberName:          "items",
+    responseTotalCountMemberName:     "total",
+    responseItemsCountMemberName:     "count",
+    responseOffsetMemberName:         "offset",
+    responseLimitMemberName:          "limit",
+    responseIdentitiesMemberName:     "identities"
+  };
+
+  function PagingAdapter(options) {
+    options = $.extend(true, {}, defaults, options);
+    return {
+      dataLoaded: function(req, res) {
+        var
+          items = res[options.responseItemsMemberName],
+          from = req.fromPage * options.pagesize,
+          to = from + items.length,
+          count = items.length,
+          total = parseInt(res[options.responseTotalCountMemberName], 10);
+
+        return {
+          items: items,
+          from: from,
+          to: to,
+          count: count,
+          total: total,
+          identities: res[options.responseItemsMemberName]
+        };
+      }
+    };
+  }
+
+  function ArrayAdapter(options) {
+    return {
+      dataLoaded: function(req, res) {
+        return {
+          items: res,
+          from: 0,
+          to: res.lenth,
+          count: res.length,
+          total: res.length
+        };
+      }
+    };
+  }
 
 
-    function init() {
+  /*
+
+    data provider api: {
+      getItem,
+      getLength / length if array
+      getItemMetadata
     }
 
+
+  */
+
+  function RemoteModel(options) {
+    options = $.extend({ adapter: new PagingAdapter() }, defaults, options);
+    var
+      _data = { length: 0 },
+      _grid,
+      _lastQueryParams,
+      _identities,
+      _sortCols = [],
+      _filters = [],
+      _ajaxOptions = options.ajaxOptions || {},
+      _url = options.url,
+      _query = options.query || {},
+      //queryStringSep,
+      h_request,
+      req; // ajax request
+
+    //var urlSplit = urlRoot.split('/');
+    //queryStringSep = urlSplit[urlSplit.length-1].indexOf('?') > -1 ? '&' : '?';
+
+    // events
+    var
+      onDataLoading = new Slick.Event(),
+      onDataLoaded = new Slick.Event(),
+      onDataLoadError = new Slick.Event(),
+      onDataLoadAbort = new Slick.Event();
 
     function isDataLoaded(from, to) {
       for (var i = from; i <= to; i++) {
-        if (data[i] == undefined || data[i] == null) {
+        if (_data[i] === undefined || _data[i] === null) {
           return false;
         }
       }
-
       return true;
     }
 
-
     function clear() {
-      for (var key in data) {
-        delete data[key];
+      for (var key in _data) {
+        delete _data[key];
       }
-      data.length = 0;
+      _data.length = 0;
+    }
+
+    function refresh() {
+      var vp = _grid.getViewport();
+      ensureData({
+        from: vp.top,
+        to: vp.bottom,
+        force: true
+      });
     }
 
 
-    function ensureData(from, to) {
-      if (req) {
-        req.abort();
-        for (var i = req.fromPage; i <= req.toPage; i++)
-          data[i * PAGESIZE] = undefined;
-      }
+    function setQuery(obj) {
+      _query = obj;
+    }
 
-      if (from < 0) {
-        from = 0;
-      }
+    function addQuery(obj) {
+      _query = $.extend(true, _query, obj);
+    }
 
-      if (data.length > 0) {
-        to = Math.min(to, data.length - 1);
-      }
+    function clearQuery() {
+      setQuery({});
+    }
 
-      var fromPage = Math.floor(from / PAGESIZE);
-      var toPage = Math.floor(to / PAGESIZE);
 
-      while (data[fromPage * PAGESIZE] !== undefined && fromPage < toPage)
+    /**
+      * from, to, ajaxOptions, force
+      */
+    function ensureData(opts) {
+      opts = opts || {};
+
+      // calculating pages
+      var
+        fromPage = Math.floor(Math.max(0, opts.from) / options.pagesize),
+        toPage = Math.floor(opts.to / options.pagesize);
+      var i;
+
+      while (typeof _data[fromPage * options.pagesize] !== 'undefined' && fromPage < toPage) {
         fromPage++;
+      }
 
-      while (data[toPage * PAGESIZE] !== undefined && fromPage < toPage)
+      while (typeof _data[toPage * options.pagesize] !== 'undefined' && fromPage < toPage) {
         toPage--;
+      }
 
-      if (fromPage > toPage || ((fromPage == toPage) && data[fromPage * PAGESIZE] !== undefined)) {
+      if (fromPage > toPage
+        || ((fromPage == toPage) && typeof _data[fromPage * options.pagesize] !== 'undefined')
+        && (opts.force !== true) ) {
         // TODO:  look-ahead
-        onDataLoaded.notify({from: from, to: to});
         return;
       }
 
-      var url = "http://api.thriftdb.com/api.hnsearch.com/items/_search?filter[fields][type][]=submission&q=" + searchstr + "&start=" + (fromPage * PAGESIZE) + "&limit=" + (((toPage - fromPage) * PAGESIZE) + PAGESIZE);
-
-      if (sortcol != null) {
-          url += ("&sortby=" + sortcol + ((sortdir > 0) ? "+asc" : "+desc"));
+      // it there's a running request we cancel it. 
+      // TODO: not cancel but save the result
+      if (req) {
+        req.abort();
+        for (i = req.fromPage; i <= req.toPage; i++) {
+          delete _data[i * options.pagesize];
+        }
       }
 
-      if (h_request != null) {
+      // building query
+      var queryParams = $.extend(true, {}, {
+        $skip: fromPage * options.pagesize,
+        $top: ((toPage - fromPage) * options.pagesize) + options.pagesize
+      }, _query);
+
+      if (_sortCols && _sortCols.length) {
+        var order = '', current;
+        for (i = 0; i < _sortCols.length; i++) {
+          current = _sortCols[i];
+          order += (i > 0 ? ',' : '') + current.field;
+          if (i === _sortCols.length - 1
+            || (i < _sortCols.length - 1 && _sortCols[i + 1].dir !== current.dir)) {
+            order += current.dir === 1 ? ' asc' : ' desc';
+          }
+        }
+        queryParams.$orderby = order;
+      }
+
+      // ------------------------------
+      // hack to ensure not bombing server with the same requests
+      if (!opts.force && _.isEqual(queryParams, _lastQueryParams)) {
+        return false;
+      }
+      _lastQueryParams = queryParams;
+      // ------------------------------
+
+      url = _url + '?' + $.param(queryParams).replace(/\%24/g, '$');
+
+      if (h_request !== null) {
         clearTimeout(h_request);
       }
 
-      h_request = setTimeout(function () {
-        for (var i = fromPage; i <= toPage; i++)
-          data[i * PAGESIZE] = null; // null indicates a 'requested but not available yet'
+      h_request = setTimeout(function() {
+        for (var i = fromPage; i <= toPage; i++) {
+          _data[i * options.pagesize] = null; // null indicates a 'requested but not available yet'
+        }
 
-        onDataLoading.notify({from: from, to: to});
+        onDataLoading.notify({from: opts.from, to: opts.to});
 
-        req = $.jsonp({
+        req = $.ajax({
           url: url,
-          callbackParameter: "callback",
-          cache: true,
+          contentType: 'application/json',
+          dataType: 'json',
           success: onSuccess,
-          error: function () {
-            onError(fromPage, toPage)
+          error: function(err) {
+            onError(fromPage, toPage, err);
           }
-        });
+        }/*, ajaxOptions)*/);
+
         req.fromPage = fromPage;
         req.toPage = toPage;
       }, 50);
     }
 
 
-    function onError(fromPage, toPage) {
-      alert("error loading pages " + fromPage + " to " + toPage);
+    function onError(fromPage, toPage, error) {
+      if (error && error.statusText === 'abort') {
+        onDataLoadAbort.notify({
+          fromPage: fromPage,
+          toPage: toPage,
+          error: error
+        });
+        return;
+      }
+
+      console.error("error loading pages " + fromPage + " to " + toPage, error);
+      onDataLoadError.notify({
+        fromPage: fromPage,
+        toPage: toPage,
+        error: error
+      });
     }
 
-    function onSuccess(resp) {
-      var from = resp.request.start, to = from + resp.results.length;
-      data.length = Math.min(parseInt(resp.hits), 1000); // limitation of the API
+    function onSuccess(res) {
+      //Solution to keep the data array bounded to pagesize + window: Call the clear method to have only 2*PAGESIZE elements in the data array at any given point
+      clear();
+      var tx = options.adapter.dataLoaded(req, res);
+      _data.length = tx.total;
 
-      for (var i = 0; i < resp.results.length; i++) {
-        var item = resp.results[i].item;
-
-        // Old IE versions can't parse ISO dates, so change to universally-supported format.
-        item.create_ts = item.create_ts.replace(/^(\d+)-(\d+)-(\d+)T(\d+:\d+:\d+)Z$/, "$2/$3/$1 $4 UTC");
-        item.create_ts = new Date(item.create_ts);
-
-        data[from + i] = item;
-        data[from + i].index = from + i;
+      for (var i = 0; i < tx.count; i++) {
+        _data[tx.from + i] = tx.items[i];
+        _data[tx.from + i].index = tx.from + i;
       }
+
+      _identities = tx.identities;
 
       req = null;
 
-      onDataLoaded.notify({from: from, to: to});
+      onDataLoaded.notify({
+        from: tx.from,
+        to: tx.to,
+        count: tx.count,
+        total: tx.total,
+        identities: _identities
+      });
     }
 
 
-    function reloadData(from, to) {
-      for (var i = from; i <= to; i++)
-        delete data[i];
-
-      ensureData(from, to);
+    function getIdentities() {
+      return _identities;
     }
 
 
-    function setSort(column, dir) {
-      sortcol = column;
-      sortdir = dir;
-      clear();
+    /*
+     *  Plugin
+     */
+    function init(slickgrid) {
+      _grid = slickgrid;
+      slickgrid.onViewportChanged.subscribe(refresh);
+      slickgrid.onSort.subscribe(onGridSort);
+      onDataLoaded.subscribe(updatreGridOnDataLoaded);
     }
 
-    function setSearch(str) {
-      searchstr = str;
-      clear();
+    function destroy() {
+      onDataLoaded.unsubscribe(updatreGridOnDataLoaded);
+      _grid.onSort.unsubscribe(onGridSort);
+      _grid.onViewportChanged.unsubscribe(onGridViewportChanged);
     }
 
+    function onGridSort(e, args) {
+      var
+        result = [], column,
+        cols = _grid.getColumns(),
+        sortCols = _grid.getSortColumns();
 
-    init();
+      $.each(sortCols, function(k, col) {
+        column = cols[_grid.getColumnIndex(col.columnId)];
+
+        var direction = col.sortAsc ? 1 : -1;
+        if (column.order_fields) {
+          $.each(column.order_fields, function(k,v) {
+            result.push({
+              field: v,
+              dir: direction
+            });
+          });
+        } else {
+          result.push({
+            field: column.field,
+            dir: direction
+          });
+        }
+      });
+      _sortCols = result;
+      refresh();
+    }
+
+    function updatreGridOnDataLoaded(e,args) {
+      for (var i = args.from; i <= args.to; i++) {
+        _grid.invalidateRow(i);
+      }
+      _grid.updateRowCount();
+      _grid.render();
+    }
 
     return {
       // properties
-      "data": data,
+      "data": _data,
+      "defaults": defaults,
 
       // methods
       "clear": clear,
+      "init": init,
       "isDataLoaded": isDataLoaded,
+      "refresh": refresh,
       "ensureData": ensureData,
-      "reloadData": reloadData,
-      "setSort": setSort,
-      "setSearch": setSearch,
+      //"reloadData": reloadData,
+      "getIdentities": getIdentities,
+
+      "setQuery": setQuery,
+      "addQuery": addQuery,
+      "clearQuery": clearQuery,
 
       // events
       "onDataLoading": onDataLoading,
-      "onDataLoaded": onDataLoaded
+      "onDataLoaded": onDataLoaded,
+      "onDataLoadError" : onDataLoadError,
+      "onDataLoadAbort": onDataLoadAbort
     };
   }
 
+  function ODataSortAdapter(argument) {
+    // ...
+  }
+
+
   // Slick.Data.RemoteModel
-  $.extend(true, window, { Slick: { Data: { RemoteModel: RemoteModel }}});
+  RemoteModel.PagingAdapter = PagingAdapter;
+  RemoteModel.ArrayAdapter = ArrayAdapter;
+
+
+  $.extend(true, window, { 
+    Slick: { 
+      Data: {
+        RemoteModel: RemoteModel,
+        ODataSortAdapter: ODataSortAdapter
+      }
+    }
+  });
 })(jQuery);

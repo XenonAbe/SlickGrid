@@ -5,12 +5,14 @@
   <title>SlickGrid example: Commit when edit control loses focus</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .slick-headerrow-column {
       background: #87ceeb;
       text-overflow: clip;
       -moz-box-sizing: border-box;
+      -webkit-box-sizing: border-box;
       box-sizing: border-box;
     }
 
@@ -20,6 +22,7 @@
       width: 100%;
       height: 100%;
       -moz-box-sizing: border-box;
+      -webkit-box-sizing: border-box;
       box-sizing: border-box;
     }
 
@@ -71,8 +74,10 @@
 <script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
 <script src="../lib/jquery-ui.js"></script>
-<script src="../lib/jquery.event.drag.js"></script>
+<script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 <script src="../lib/ba-debug.js"></script>
 
@@ -94,14 +99,14 @@
   document.querySelector("#clear-debug-output").onclick = function() {
     document.querySelector("#debug-output").innerHTML = "";
   };
-  
+
   var dataView;
   var grid;
   var data = [];
   var options = {
     enableCellNavigation: true,
     showHeaderRow: true,
-    headerRowHeight: 30,
+    headerRowHeight: 20,
     syncColumnCellResize: true,
     editable: true,
     autoEdit: true,

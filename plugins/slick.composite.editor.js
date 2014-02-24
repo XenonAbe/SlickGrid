@@ -1,4 +1,3 @@
-;
 (function ($) {
   $.extend(true, window, {
     Slick: {

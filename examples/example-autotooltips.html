@@ -5,6 +5,7 @@
   <title>SlickGrid plugin example: AutoTooltips</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
 </head>
 <body>
@@ -23,7 +24,7 @@
       <h2>Instructions:</h2>
       <p>Resize the columns until see ellipsis in column or header.  Hover over cell to see tooltip.</p>
       <h2>Usage:</h2>
-      <pre style="background-color: white; font-size: 110%; border-radius: 5px; padding: 20px; ">plugin = new Slick.AutoTooltips(pluginOptions);
+      <pre class="prettyprint prettyprinted" style="background-color: white; font-size: 90%; font-family: Consolas, monospace; border-radius: 5px; padding: 10px; overflow: auto;">plugin = new Slick.AutoTooltips(pluginOptions);
 grid.registerPlugin(plugin);
 grid.render();</pre>
 
@@ -38,7 +39,9 @@ grid.render();</pre>
 <script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
-<script src="../lib/jquery.event.drag.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
+<script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>

@@ -1,0 +1,200 @@
+@import url('../slick-default-theme.css');
+
+.border-radius(@radius) {
+  -moz-border-radius: @radius;
+  -webkit-border-radius: @radius;
+  border-radius: @radius;
+}
+
+* {
+  font-family: arial;
+  font-size: 8pt;
+}
+
+pre {
+  font-family: Consolas, monospace;
+}
+
+body {
+  background: beige;
+  padding: 0;
+  margin: 8px;
+}
+
+h2 {
+  font-size: 10pt;
+  border-bottom: 1px dotted gray;
+}
+
+ul {
+  margin-left: 0;
+  padding: 0;
+  cursor: default;
+}
+
+li {
+  background: url("../images/arrow_right_spearmint.png") no-repeat center left;
+  padding: 0 0 0 14px;
+
+  list-style: none;
+  margin: 0;
+}
+
+.grid-outer-wrapper {
+  width: 600px;
+  float: left;
+
+  background-color: white;
+  border: 1px solid #CCCCCC;
+  padding: 1px;
+}
+
+.grid-inner-wrapper {
+  background: white;
+  outline: 0;
+  // border: 1px solid gray;
+
+  width: 100%;
+  min-height: 450px;
+}
+
+.grid-pager {
+  width: 100%;
+  height: 20px;
+}
+
+.grid-header {
+  border: 1px solid gray;
+  border-bottom: 0;
+  border-top: 0;
+  background: url('../images/header-bg.gif') repeat-x center top;
+  color: black;
+  height: 24px;
+  line-height: 24px;
+}
+
+.grid-header label {
+  display: inline-block;
+  font-weight: bold;
+  margin: auto auto auto 6px;
+}
+
+.grid-header .ui-icon {
+  margin: 4px 4px auto 6px;
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.grid-header .ui-icon.ui-state-hover {
+  background-color: white;
+}
+
+.grid-header #txtSearch {
+  margin: 0 4px 0 4px;
+  padding: 2px 2px;
+  .border-radius(2px);
+  border: 1px solid silver;
+}
+
+.options-panel {
+  .border-radius(6px);
+  border: 1px solid silver;
+  background: #f0f0f0;
+  padding: 10px;
+  margin-bottom: 20px;
+
+  float: left;
+  margin-left: 10px;
+  padding: 10px;
+
+  max-width: 260px;
+}
+
+#viewsource {
+  cursor: pointer;
+  color: darkblue;
+}
+
+.diagnostics-panel {
+  clear: both;
+  min-width: 600px;
+  padding: 10px 0 0 0;
+  margin: 0;
+}
+
+.diagnostics-view {
+  min-width: 600px;
+  margin-top: 20px;
+
+  .border-radius(6px);
+  border: 1px solid silver;
+  background: #f0f0f0;
+
+  margin-bottom: 20px;
+  margin-left: 0;
+  padding: 10px;
+}
+
+#debug-output {
+  white-space: pre-wrap;
+  background: white;
+  outline: 0;
+  border: 1px solid gray;
+  min-height: 100px;
+}
+
+// Individual cell styles
+.slick-cell.task-name {
+  font-weight: bold;
+  text-align: right;
+}
+
+.slick-cell.task-percent {
+  text-align: right;
+}
+
+.slick-cell.cell-move-handle {
+  font-weight: bold;
+  text-align: right;
+  border-right: solid gray;
+
+  background: #efefef;
+  cursor: move;
+}
+
+.cell-move-handle:hover {
+  background: #b6b9bd;
+}
+
+.slick-row.selected .cell-move-handle {
+  background: #D5DC8D;
+}
+
+.slick-row .cell-actions {
+  text-align: left;
+}
+
+.slick-row.complete {
+  background-color: #DFD;
+  color: #555;
+}
+
+.percent-complete-bar {
+  display: inline-block;
+  height: 6px;
+  .border-radius(3px);
+}
+
+
+#displaycode {
+    display:none; // initially hidden
+}
+
+// Formatted Code Block
+#displaycode pre {
+  font-size: normal;
+  background-color : #ffffff;
+  overflow:scroll;
+  height:500px;
+}
+

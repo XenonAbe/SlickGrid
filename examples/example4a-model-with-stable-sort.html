@@ -6,8 +6,9 @@
   <title>SlickGrid example: Variable Row Height + DataView</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../controls/slick.pager.css" type="text/css"/>
-  <link rel="stylesheet" href="../controls/slick.columnpicker.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-pager.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-columnpicker.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
@@ -97,9 +98,11 @@
 <script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/jquery.event.drag.js"></script>
 <script src="../lib/jquery.browser.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
@@ -135,8 +138,6 @@ var options = {
   topPanelHeight: 25
 };
 
-var sortcol = "title";
-var sortdir = 1;
 var percentCompleteThreshold = 0;
 var searchString = "";
 
@@ -160,23 +161,26 @@ function myFilter(item, args) {
   return true;
 }
 
-function stableComparer() {
-  var comparer = function(a, b) {
-    var x = a[sortcol], y = b[sortcol];
-    return (x == y ? (a.seqno > b.seqno ? 1 : -1) : (x > y ? 1 : -1));
-  };
+function stableComparer(field) {
+  return {
+    valueExtractor: function (node) {
+      switch (typeof node[field]) {
+      case 'boolean':
+      case 'number':
+      case 'string':
+      case 'undefined':
+        return node[field];
 
-  comparer.mapper = function(e, i) {
-    e.seqno = i;
-    return e;
+      case 'object':
+        if (node[field] === null) {
+          return node[field];
+        }
+      default:
+        return "x" + node[field].toString();   // string conversion here ensures the strings come out as NaN when treated as numbers
+      }
+    }
+    // and depend on the default comparator provided by DataView...
   };
-
-  comparer.unmapper = function(e, i) {
-    delete e.seqno;
-    return e;
-  };
-
-  return comparer;
 }
 
 function toggleFilterRow() {
@@ -259,31 +263,7 @@ $(function () {
   });
 
   grid.onSort.subscribe(function (e, args) {
-    sortdir = args.sortAsc ? 1 : -1;
-    sortcol = args.sortCol.field;
-
-    if ($.browser.msie && $.browser.version <= 8) {
-      // using temporary Object.prototype.toString override
-      // more limited and does lexicographic sort only by default, but can be much faster
-
-      var percentCompleteValueFn = function () {
-        var val = this["percentComplete"];
-        if (val < 10) {
-          return "00" + val;
-        } else if (val < 100) {
-          return "0" + val;
-        } else {
-          return val;
-        }
-      };
-
-      // use numeric sort of % and lexicographic for everything else
-      dataView.fastSort((sortcol == "percentComplete") ? percentCompleteValueFn : sortcol, args.sortAsc);
-    } else {
-      // using native sort with comparer
-      // preferred method but can be very slow in IE with huge datasets
-      dataView.sort(stableComparer(), args.sortAsc);
-    }
+    dataView.sort(stableComparer(args.sortCol.field), args.sortAsc);
   });
 
   // wire up model events to drive the grid

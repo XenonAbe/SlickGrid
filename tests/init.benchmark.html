@@ -5,10 +5,12 @@
         <title>SlickGrid Initialization Benchmark</title>
         <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css" media="screen" charset="utf-8" />
         <link rel="stylesheet" href="../slick.grid.css" type="text/css" media="screen" charset="utf-8" />
+        <link rel="stylesheet" href="../slick-editors.css" type="text/css" media="screen" charset="utf-8" />
         <link rel="stylesheet" href="../examples/examples.css" type="text/css" media="screen" charset="utf-8" />
     </head>
     <body>
         <script src="../lib/jquery.js"></script>
+        <script src="../lib/jquery-fixclick.js"></script>
         <script src="../lib/jquery-ui.js"></script>
         <script src="../lib/jquery.event.drag.js"></script>
         <script src="../lib/assert.js"></script>
@@ -17,15 +19,24 @@
         <script src="../slick.grid.js"></script>
         <script src="../slick.formatters.js"></script>
 
-        <button onclick="bench(false)">Run w/o disposing</button>
-        <button onclick="bench(true)">Run w/ disposing</button>
+        <button id="sans_dispose">Run w/o disposing <span /></button>
+        <button id="avec_dispose">Run w/ disposing <span /></button>
 
         <hr/>
 
         <div id="container" style="width:600px;height:100000px;"></div>
 
         <script>
-        function bench(dispose) {
+        $("#sans_dispose").click(function(e) {
+            e.preventDefault();
+            bench(false, $(this));
+        });
+        $("#avec_dispose").click(function(e) {
+            e.preventDefault();
+            bench(true, $(this));
+        });
+
+        function bench(dispose, $msg_el_parent) {
           var startTime = new Date();
           var container = $("#container");
           for (var i = 0; i < 20; i++) {
@@ -36,7 +47,9 @@
               parentEl.remove();
             }
           }
-          alert((new Date() - startTime));
+          var delta = new Date() - startTime;
+          delta /= 1000;
+          $msg_el_parent.find('span').text(" (" + delta.toFixed(3) + "s)");
         }
 
         function createGrid(parentEl) {
