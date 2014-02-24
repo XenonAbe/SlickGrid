@@ -1,9 +1,9 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "Plugins": {
-        "HeaderButtons": HeaderButtons
+    Slick: {
+      Plugins: {
+        HeaderButtons: HeaderButtons
       }
     }
   });
@@ -121,13 +121,22 @@
           }
 
           btn
-            .bind("click", function (e) {
-                handleButtonClick.call(this, e, column, button);
-            })
+            .bind("click", getHeaderCellClickHandler(column, button))
             .appendTo(args.node);
         }
       }
     }
+
+
+    // Return a function so that this call serves as a closure.
+    //
+    // See http://bonsaiden.github.io/JavaScript-Garden/#function.closures ('Closures inside loops') why this function factory is required.
+    function getHeaderCellClickHandler(column, button) {
+      return function (e) {
+        handleButtonClick.call(this, e, column, button);
+      }
+    }
+
 
 
     function handleBeforeHeaderCellDestroy(e, args) {
