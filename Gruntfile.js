@@ -198,17 +198,20 @@ module.exports = function (grunt) {
   require('load-grunt-tasks')(grunt, {scope: 'devDependencies'});
   grunt.loadNpmTasks('assemble-less');
 
+  // Preparation (compile) task.
+  grunt.registerTask('compile', ['clean', 'less']);
+
   // Lint task.
   grunt.registerTask('lint', ['csslint', 'jshint', 'jscs']);
 
   // Test task.
-  grunt.registerTask('test', ['lint', 'qunit']);
+  grunt.registerTask('test', ['compile', 'lint', 'qunit']);
 
   // CSS distribution task.
-  grunt.registerTask('dist-css', ['less', 'cssmin', 'csscomb', 'usebanner']);
+  grunt.registerTask('dist-css', ['compile', 'cssmin', 'csscomb', 'usebanner']);
 
   // Full distribution task.
-  grunt.registerTask('dist', ['clean', 'dist-css']);
+  grunt.registerTask('dist', ['dist-css']);
 
   // Default task.
   grunt.registerTask('default', ['test', 'dist']);

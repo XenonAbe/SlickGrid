@@ -438,13 +438,13 @@
         return;
       }
       if (activeEditController !== null) {
-        throw "SlickGrid.EditorLock.activate: an editController is still active, can't activate another editController";
+        throw new Error("SlickGrid.EditorLock.activate: an editController is still active, can't activate another editController");
       }
       if (!editController.commitCurrentEdit) {
-        throw "SlickGrid.EditorLock.activate: editController must implement .commitCurrentEdit()";
+        throw new Error("SlickGrid.EditorLock.activate: editController must implement .commitCurrentEdit()");
       }
       if (!editController.cancelCurrentEdit) {
-        throw "SlickGrid.EditorLock.activate: editController must implement .cancelCurrentEdit()";
+        throw new Error("SlickGrid.EditorLock.activate: editController must implement .cancelCurrentEdit()");
       }
       activeEditController = editController;
     };
@@ -458,7 +458,7 @@
     this.deactivate = function (editController) {
       assert(editController && assert(typeof editController.commitCurrentEdit === 'function') && assert(typeof editController.cancelCurrentEdit === 'function'));
       if (activeEditController !== editController) {
-        throw "SlickGrid.EditorLock.deactivate: specified editController is not the currently active one";
+        throw new Error("SlickGrid.EditorLock.deactivate: specified editController is not the currently active one");
       }
       activeEditController = null;
     };

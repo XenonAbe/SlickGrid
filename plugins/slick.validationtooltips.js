@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "ValidationTooltips": ValidationTooltips
+    Slick: {
+      ValidationTooltips: ValidationTooltips
     }
   });
 
@@ -11,7 +11,7 @@
       _grid,
       _self = this,
       _defaults = {
-        "className": "cell-tooltip-validation-error"
+        className: "cell-tooltip-validation-error"
       };
 
     function init(grid) {
@@ -26,7 +26,7 @@
       _grid.onBeforeCellEditorDestroy.unsubscribe(handleBeforeCellEditDestroy);
     }
 
-    function handleValidationError(e, args){
+    function handleValidationError(e, args) {
       var
         validationResult = args.validationResults,
         errorMessage = validationResult.msg,
@@ -46,9 +46,9 @@
       $node.data('tooltipsy').show();
     }
 
-    function handleBeforeCellEditDestroy(e, args){
+    function handleBeforeCellEditDestroy(e, args) {
       var ts = $(args.grid.getActiveCellNode()).data('tooltipsy');
-      if (ts){
+      if (ts) {
         ts.destroy();
       }
     }

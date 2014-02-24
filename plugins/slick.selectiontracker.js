@@ -1,7 +1,7 @@
 (function ($) {
   $.extend(true, window, {
-    "Slick": {
-      "SelectionTracker": SelectionTracker
+    Slick: {
+      SelectionTracker: SelectionTracker
     }
   });
 
@@ -18,9 +18,9 @@
       _selection = [],
       _identities = null,
       _defaults = {
-        "idMember": "id",
-        "useIdentities": false,
-        "identitiesAttribute": "identities"
+        idMember: "id",
+        useIdentities: false,
+        identitiesAttribute: "identities"
       };
 
     function init(grid) {
@@ -29,11 +29,11 @@
       _rowSelectionModel = grid.getSelectionModel();
       _loader = _options.loader;
 
-      if (_rowSelectionModel && _rowSelectionModel.onSelectionChanged){
+      if (_rowSelectionModel && _rowSelectionModel.onSelectionChanged) {
         _handler.subscribe(_rowSelectionModel.onSelectionChanged, wrapHandler(handleSelectionChanged));
       }
 
-      if (_loader){
+      if (_loader) {
         _handler.subscribe(_loader.onDataLoaded, wrapHandler(handleLoaderDataLoaded));
         setSelection(_.pluck(_loader.data, _options.idMember));
       }
@@ -53,7 +53,7 @@
       };
     }
 
-    function handleSelectionChanged(e, args){
+    function handleSelectionChanged(e, args) {
       var
         PAGE_SIZE = 50,
         id, idx, idents,
@@ -61,29 +61,26 @@
         deletedIDs = [],
         addedIDs = [];
 
-      if (args.deletes && args.deletes.length){
+      if (args.deletes && args.deletes.length) {
         if (_options.useIdentities){
           idents = _loader.getIdentities();
-          _.each(args.deletes, function(row){
+          _.each(args.deletes, function(row) {
             id = idents[row];
             idx = _selection.indexOf(id);
-            if (idx > -1){
+            if (idx > -1) {
               deletedIDs.push(id);
               _selection.splice(idx,1);
             }
           });
-        }
-
-        else {
+        } else {
           // obsolete
-          if (args.deletes.length >= PAGE_SIZE){
+          if (args.deletes.length >= PAGE_SIZE) {
             deletedIDs = 'page';
-          }
-          else {
-            _.each(args.deletes, function(row){
+          } else {
+            _.each(args.deletes, function(row) {
               id = gridData[row][_options.idMember];
               idx = _selection.indexOf(id);
-              if (idx > -1){
+              if (idx > -1) {
                 deletedIDs.push(id);
                 _selection.splice(idx,1);
               }
@@ -91,30 +88,27 @@
           }
         }
       }
-      else if (args.selection && args.selection.length){
-        if (_options.useIdentities){
+      else if (args.selection && args.selection.length) {
+        if (_options.useIdentities) {
           idents = _loader.getIdentities();
-          _.each(args.selection, function(row){
+          _.each(args.selection, function(row) {
             id = idents[row];
-            addedIDs.push( idents[row] );
+            addedIDs.push(idents[row]);
             idx = _selection.indexOf(id);
-            if (idx == -1){
+            if (idx == -1) {
               addedIDs.push(id);
               _selection.push(id);
             }
           });
-        }
-
-        else {
+        } else {
           // obsolete
-          if (args.selection.length >= PAGE_SIZE){
+          if (args.selection.length >= PAGE_SIZE) {
             addedIDs = 'page';
-          }
-          else {
-            _.each(args.selection, function(row){
+          } else {
+            _.each(args.selection, function(row) {
               id = gridData[row][_options.idMember];
               idx = _selection.indexOf(id);
-              if (idx == -1){
+              if (idx == -1) {
                 addedIDs.push(id);
                 _selection.push(id);
               }
@@ -137,20 +131,20 @@
       _grid.render();
     }
 
-    function getSelection(){
+    function getSelection() {
       return _selection;
     }
 
-    function setSelection(ids){
+    function setSelection(ids) {
       _selection = ids || [];
       var
         d = _grid.getData(), id,
         selectedRows = [];
 
-      _.each(d, function(v,k){
+      _.each(d, function(v, k) {
         if (!v) return;
         id = v[options.idMember];
-        if (id && _selection.indexOf(id) > -1){
+        if (id && _selection.indexOf(id) > -1) {
           selectedRows.push(k);
         }
       });
@@ -158,7 +152,7 @@
       _grid.setSelectedRows(selectedRows);
     }
 
-    function clearSelection(){
+    function clearSelection() {
       _selection = [];
     }
 

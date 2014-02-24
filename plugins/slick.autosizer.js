@@ -1,13 +1,13 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "AutoSizer": AutoSizer
+    Slick: {
+      AutoSizer: AutoSizer
     }
   });
 
   var defaults = {
-    "pollInterval": 1500
+    pollInterval: 1500
   };
 
   function AutoSizer(options) {
@@ -15,9 +15,9 @@
       _isDestroyed,
       _options = $.extend(true, defaults, options),
       $container = $(_options.container),
-      h,ch;
+      h, ch;
 
-    if ($container.length !== 1){
+    if ($container.length !== 1) {
       throw new Error('missing argument: container');
     }
 

@@ -1,21 +1,21 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "State": State
+    Slick: {
+      State: State
     }
   });
 
-  var localStorageWrapper = function(){
+  var localStorageWrapper = function() {
     var localStorage = window.localStorage;
 
-    if (typeof localStorage === 'undefined'){
+    if (typeof localStorage === 'undefined') {
       console.error('localStorage is not available. slickgrid statepersistor disabled.');
     }
 
     return {
-      get: function(key){
-        return $.Deferred(function(dfd){
+      get: function(key) {
+        return $.Deferred(function(dfd) {
           if (!localStorage) return dfd.reject("missing localStorage");
           try {
             var d = localStorage.getItem(key);
@@ -24,14 +24,14 @@
             }
             dfd.resolve();
           }
-          catch(exc) {
+          catch (exc) {
             dfd.reject(exc);
           }
         });
       },
-      set: function(key, obj){
+      set: function(key, obj) {
         if (!localStorage) return;
-        if (typeof obj !== 'undefined'){
+        if (typeof obj !== 'undefined') {
           obj = JSON.stringify(obj);
         }
         localStorage.setItem(key, obj);
@@ -54,12 +54,11 @@
     function init(grid) {
       _grid = grid;
       _cid = grid.cid || options.cid;
-      if (_cid){
+      if (_cid) {
         grid.onColumnsResized.subscribe(save);
         grid.onColumnsReordered.subscribe(save);
         grid.onSort.subscribe(save);
-      }
-      else {
+      } else {
         console.warn("grid has no client id. state persisting is disabled.");
       }
     }
@@ -71,7 +70,7 @@
       save();
     }
 
-    function save(){
+    function save() {
       if (_cid && _store){
         var state = {
           sortcols: getSortColumns(),
@@ -83,31 +82,31 @@
       }
     }
 
-    function restore(){
-      return $.Deferred(function(dfd){
+    function restore() {
+      return $.Deferred(function(dfd) {
         if (!_cid) { return dfd.reject("missing client id"); }
         if (!_store) { return dfd.reject("missing store"); }
 
         _store.get(options.key_prefix + _cid)
-          .then(function success(state){
-            if (state){
-              if (state.sortcols){
+          .then(function success(state) {
+            if (state) {
+              if (state.sortcols) {
                 _grid.setSortColumns(state.sortcols);
               }
-              if (state.viewport){
+              if (state.viewport) {
                 _grid.scrollRowIntoView(state.viewport.top, true);
               }
-              if (state.columns){
+              if (state.columns) {
                 var defaultColumns = options.defaultColumns;
-                if (defaultColumns){
+                if (defaultColumns) {
                   var defaultColumnsLookup = {};
-                  $.each(defaultColumns, function(idx, colDef){
+                  $.each(defaultColumns, function(idx, colDef) {
                     defaultColumnsLookup[colDef.id] = colDef;
                   });
 
                   var cols = [];
-                  $.each(state.columns, function(idx, columnDef){
-                    if (defaultColumnsLookup[columnDef.id]){
+                  $.each(state.columns, function(idx, columnDef) {
+                    if (defaultColumnsLookup[columnDef.id]) {
                       cols.push($.extend(true, {}, defaultColumnsLookup[columnDef.id], {
                         width: columnDef.width,
                         headerCssClass: columnDef.headerCssClass
@@ -126,8 +125,8 @@
       });
     }
 
-    function getColumns(){
-      return $.map(_grid.getColumns(), function(col){
+    function getColumns() {
+      return $.map(_grid.getColumns(), function(col) {
         return {
           id: col.id,
           width: col.width
@@ -135,7 +134,7 @@
       });
     }
 
-    function getSortColumns(){
+    function getSortColumns() {
       var sortCols = _grid.getSortColumns();
       return sortCols;
     }

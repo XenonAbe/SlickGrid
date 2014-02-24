@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "CellRangeDecorator": CellRangeDecorator
+    Slick: {
+      CellRangeDecorator: CellRangeDecorator
     }
   });
 
@@ -29,8 +29,8 @@
       borderThickness: 2,
       selectionCssClass: 'slick-range-decorator',
       selectionCss: {
-        "zIndex": "9999",
-        "border": "2px dashed red"
+        zIndex: "9999",
+        border: "2px dashed red"
       }
     };
 

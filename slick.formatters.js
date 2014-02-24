@@ -14,20 +14,20 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "Formatters": {
-        "Text": TextFormatter,
-        "PercentComplete": PercentCompleteFormatter,
-        "PercentCompleteBar": PercentCompleteBarFormatter,
-        "YesNo": YesNoFormatter,
-        "Checkmark": CheckmarkFormatter,
-        "Color": ColorFormatter,
-        "BackColor": BackColorFormatter,
-        "Chain": Chain,
-        "Concatenator": Concatenator,
-        "ReferenceValue": ReferenceValueFormatter,
-        "Link": LinkFormatter,
-        "Date": DateFormatter
+    Slick: {
+      Formatters: {
+        Text: TextFormatter,
+        PercentComplete: PercentCompleteFormatter,
+        PercentCompleteBar: PercentCompleteBarFormatter,
+        YesNo: YesNoFormatter,
+        Checkmark: CheckmarkFormatter,
+        Color: ColorFormatter,
+        BackColor: BackColorFormatter,
+        Chain: Chain,
+        Concatenator: Concatenator,
+        ReferenceValue: ReferenceValueFormatter,
+        Link: LinkFormatter,
+        Date: DateFormatter
       }
     }
   });
@@ -194,7 +194,7 @@
 
     return function(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       var val = value;
-      for(var i in formatters) {
+      for (var i in formatters) {
         val = formatters[i](row, cell, val, columnDef, rowDataItem, cellMetaInfo);
       }
       return val;
@@ -210,7 +210,7 @@
     var matches = urlTemplate.match(/:(\w+)/g);
     var splatParams = [], i, result, val;
 
-    for(i in matches) {
+    for (i in matches) {
       splatParams.push(matches[i].substring(1));
     }
 
@@ -218,7 +218,7 @@
 
     return function(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       result = urlTemplate;
-      for(i = 0; i < len; i++) {
+      for (i = 0; i < len; i++) {
         val = dataContext[splatParams[i]];
         if (typeof val !== null) {
           result = result.replace(':' + splatParams[i], val);
@@ -239,7 +239,7 @@
 
     return function(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       var result = [];
-      for(var i = 0; i < len; i++) {
+      for (var i = 0; i < len; i++) {
         data = dataContext[ fields[i] ];
         if (data) {
           result.push(data);

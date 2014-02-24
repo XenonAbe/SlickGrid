@@ -18,13 +18,13 @@
 
 // make sure required JavaScript modules are loaded
 if (typeof jQuery === "undefined") {
-  throw "SlickGrid requires jquery module to be loaded";
+  throw new Error("SlickGrid requires jquery module to be loaded");
 }
 if (!jQuery.fn.drag) {
-  throw "SlickGrid requires jquery.event.drag module to be loaded";
+  throw new Error("SlickGrid requires jquery.event.drag module to be loaded");
 }
 if (typeof Slick === "undefined") {
-  throw "slick.core.js not loaded";
+  throw new Error("slick.core.js not loaded");
 }
 
 
@@ -698,7 +698,7 @@ if (typeof Slick === "undefined") {
     function extractCellFromDOMid(id) {
       // format of ID is: uid_c<cell>_<blah>
       var m = /_c(\d+)_/.exec(id);
-      if (m[1] == null || m[1] == '') {
+      if (m[1] == null || m[1] === '') {
         return false;
       }
       return +m[1];
@@ -788,6 +788,7 @@ if (typeof Slick === "undefined") {
 
       function createBaseColumnHeader(m, level, cell) {
         var header = createColumnHeader(m, $headers, level, cell);
+        var i, j, column;
 
         if (options.enableColumnReorder || m.sortable) {
           header
@@ -845,16 +846,16 @@ if (typeof Slick === "undefined") {
       }
 
       if (hasNestedColumns) {
-        for (var i = 0; i < nestedColumns.length; i++) {
+        for (i = 0; i < nestedColumns.length; i++) {
           var $row;
           var isParent = false;
           var layer = nestedColumns[i];
           if (i + 1 < nestedColumns.length) {
-            $row = $("<div class='slick-header-columns slick-header-parents level" + i +"' style='left:-1000px' />").appendTo($headerParents);
+            $row = $("<div class='slick-header-columns slick-header-parents level" + i + "' style='left:-1000px' />").appendTo($headerParents);
             isParent = true;
           }
-          for (var j = 0; j < layer.length; j++) {
-            var column = layer[j];
+          for (j = 0; j < layer.length; j++) {
+            column = layer[j];
             if (isParent) {
               createColumnHeader(column, $row, i, j);
             } else {
@@ -863,9 +864,9 @@ if (typeof Slick === "undefined") {
           }
         }
       } else {
-        for (var i = 0; i < columns.length; i++) {
-          var m = columns[i];
-          createBaseColumnHeader(m, 0, i);
+        for (i = 0; i < columns.length; i++) {
+          column = columns[i];
+          createBaseColumnHeader(column, 0, i);
         }
       }
 
@@ -896,8 +897,8 @@ if (typeof Slick === "undefined") {
           }
 
           var sortOpts = null;
-          var i = 0;
-          for (; i < sortColumns.length; i++) {
+          var i;
+          for (i = 0; i < sortColumns.length; i++) {
             if (sortColumns[i].columnId == column.id) {
               sortOpts = sortColumns[i];
               sortOpts.sortAsc = !sortOpts.sortAsc;
@@ -909,8 +910,7 @@ if (typeof Slick === "undefined") {
             if (sortOpts) {
               sortColumns.splice(i, 1);
             }
-          }
-          else {
+          } else {
             if ((!e.shiftKey && !e.metaKey && !e.ctrlKey) || !options.multiColumnSort) {
               sortColumns = [];
             }
@@ -918,7 +918,7 @@ if (typeof Slick === "undefined") {
             if (!sortOpts) {
               sortOpts = { columnId: column.id, sortAsc: column.defaultSortAsc };
               sortColumns.push(sortOpts);
-            } else if (sortColumns.length == 0) {
+            } else if (sortColumns.length === 0) {
               sortColumns.push(sortOpts);
             }
           }
@@ -1371,9 +1371,10 @@ if (typeof Slick === "undefined") {
     // (previously slickgrid would throw an exception for this!)
     // otherwise return the style reference.
     function getColumnCssRules(idx) {
+      var i;
       if (!stylesheet) {
         var sheets = document.styleSheets;
-        for (var i = 0; i < sheets.length; i++) {
+        for (i = 0; i < sheets.length; i++) {
           if ((sheets[i].ownerNode || sheets[i].owningElement) == $style[0]) {
             stylesheet = sheets[i];
             break;
@@ -1391,7 +1392,7 @@ if (typeof Slick === "undefined") {
         columnCssRulesR = [];
         var cssRules = (stylesheet.cssRules || stylesheet.rules);
         var matches, columnIdx;
-        for (var i = 0; i < cssRules.length; i++) {
+        for (i = 0; i < cssRules.length; i++) {
           var selector = cssRules[i].selectorText;
           if (matches = /\.l\d+/.exec(selector)) {
             columnIdx = parseInt(matches[0].substr(2, matches[0].length - 2), 10);
@@ -2237,22 +2238,6 @@ if (typeof Slick === "undefined") {
           options.defaultFormatter;
     }
 
-    function getEditor(row, cell) {
-      var column = columns[cell];
-      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
-
-      // look up by id, then index
-      var columnMetadata = rowMetadata &&
-          rowMetadata.columns &&
-          (rowMetadata.columns[column.id] || rowMetadata.columns[cell]);
-
-      return (columnMetadata && columnMetadata.editor) ||
-          (rowMetadata && rowMetadata.editor) ||
-          column.editor ||
-          (options.editorFactory && options.editorFactory.getEditor && options.editorFactory.getEditor(column, row, cell)) ||
-          options.defaultEditor;
-    }
-
     /**
      * Returns the header cell formatter for the given header row / column
      *
@@ -2861,7 +2846,7 @@ if (typeof Slick === "undefined") {
 
       var oldScrollTopInRange = (scrollTop + pageOffset <= virtualTotalHeight - viewportH);
 
-      if (virtualTotalHeight == 0 || scrollTop == 0) {
+      if (virtualTotalHeight === 0 || scrollTop === 0) {
         page = pageOffset = 0;
       } else if (oldScrollTopInRange) {
         // maintain virtual position
@@ -2995,6 +2980,7 @@ if (typeof Slick === "undefined") {
       var totalCellsAdded = 0;
       var colspan;
       var columnData;
+      var i, ii;
 
       for (var row = range.top, btm = range.bottom; row <= btm; row++) {
         cacheEntry = rowsCache[row];
@@ -3016,7 +3002,7 @@ if (typeof Slick === "undefined") {
         var d = getDataItem(row);
 
         // TODO:  shorten this loop (index? heuristics? binary search?)
-        for (var i = 0, ii = columns.length; i < ii; i += colspan) {
+        for (i = 0, ii = columns.length; i < ii; i += colspan) {
           // Cells to the right are outside the range.
           if (columnPosLeft[i] > range.rightPx) {
             break;
@@ -3113,7 +3099,7 @@ if (typeof Slick === "undefined") {
       }
 
       // collect not rendered range rows
-      for (var i = range.top, ii = range.bottom; i <= ii; i++) {
+      for (i = range.top, ii = range.bottom; i <= ii; i++) {
         if (rowsCache[i]) {
           continue;
         }
@@ -3339,7 +3325,7 @@ if (typeof Slick === "undefined") {
 
     function addCellCssStyles(key, hash) {
       if (cellCssClasses[key]) {
-        throw "addCellCssStyles: cell CSS hash with key '" + key + "' already exists.";
+        throw new Error("addCellCssStyles: cell CSS hash with key '" + key + "' already exists.");
       }
 
       cellCssClasses[key] = hash;
@@ -3408,49 +3394,15 @@ if (typeof Slick === "undefined") {
         cssClass: options.cellFlashingCssClass
       }, flash_options);
       var key = "flashing";
+      var id, start_state;
+      var $cell;
 
       if (rowsCache[row]) {
-        var $cell = $(getCellNode(row, cell));
+        $cell = $(getCellNode(row, cell));
 
         // and make sure intermediate .render() actions keep the 'flashing' class intact too!
-        var id = columns[cell].id;
-        var start_state = !$cell.hasClass(flash_options.cssClass);
-
-        function toggleCellClass(times) {
-          $cell.queue(function () {
-            var hash = getCellCssStyles(key, { clone: true });
-            var new_state = !$cell.hasClass(flash_options.cssClass);
-            if (new_state) {
-              // switch to ON
-              if (!hash[row]) {
-                hash[row] = {};
-              }
-              hash[row][id] = flash_options.cssClass;
-
-              $cell.addClass(flash_options.cssClass);
-            } else {
-              // switch to OFF
-              if (hash[row]) {
-                delete hash[row][id];
-              }
-
-              $cell.removeClass(flash_options.cssClass);
-            }
-            setCellCssStyles(key, hash);
-            execNextFlashPhase(times - 1);
-            $cell.dequeue();
-          });
-        }
-
-        function execNextFlashPhase(times) {
-          if (times <= 0) {
-            return;
-          }
-          setTimeout(function () {
-            toggleCellClass(times);
-          },
-          flash_options.speed);
-        }
+        id = columns[cell].id;
+        start_state = !$cell.hasClass(flash_options.cssClass);
 
         if (flash_options.delay) {
           setTimeout(function () {
@@ -3460,6 +3412,42 @@ if (typeof Slick === "undefined") {
         } else {
           toggleCellClass(flash_options.times | 0);
         }
+      }
+
+      function toggleCellClass(times) {
+        $cell.queue(function () {
+          var hash = getCellCssStyles(key, { clone: true });
+          var new_state = !$cell.hasClass(flash_options.cssClass);
+          if (new_state) {
+            // switch to ON
+            if (!hash[row]) {
+              hash[row] = {};
+            }
+            hash[row][id] = flash_options.cssClass;
+
+            $cell.addClass(flash_options.cssClass);
+          } else {
+            // switch to OFF
+            if (hash[row]) {
+              delete hash[row][id];
+            }
+
+            $cell.removeClass(flash_options.cssClass);
+          }
+          setCellCssStyles(key, hash);
+          execNextFlashPhase(times - 1);
+          $cell.dequeue();
+        });
+      }
+
+      function execNextFlashPhase(times) {
+        if (times <= 0) {
+          return;
+        }
+        setTimeout(function () {
+          toggleCellClass(times);
+        },
+        flash_options.speed);
       }
     }
 
@@ -3793,7 +3781,7 @@ if (typeof Slick === "undefined") {
       // read column number from .l<columnNumber> CSS class
       var cls = /l\d+/.exec(cellNode.className);
       if (!cls) {
-        throw "getCellFromNode: cannot get cell - " + cellNode.className;
+        throw new Error("getCellFromNode: cannot get cell - " + cellNode.className);
       }
       return parseInt(cls[0].substr(1, cls[0].length - 1), 10);
     }
@@ -4051,7 +4039,7 @@ if (typeof Slick === "undefined") {
         return false;
       }
       if (!options.editable) {
-        throw "Grid : makeActiveCellEditable : should never get called when options.editable is false";
+        throw new Error("Grid : makeActiveCellEditable : should never get called when options.editable is false");
       }
 
       // cancel pending async call if there is one
@@ -4105,7 +4093,9 @@ if (typeof Slick === "undefined") {
         commitChanges: commitEditAndSetFocus,
         cancelChanges: cancelEditAndSetFocus
       });
+      /* jshint -W056 */     //! jshint : bad constructor
       currentEditor = new (editor || getEditor(activeRow, activeCell))(info);
+      /* jshint +W056 */
 
       if (item) {
         currentEditor.loadValue(item);
@@ -4887,14 +4877,14 @@ if (typeof Slick === "undefined") {
 
     function getSelectedRows() {
       if (!selectionModel) {
-        throw "Selection model is not set";
+        throw new Error("Selection model is not set");
       }
       return selectedRows;
     }
 
     function setSelectedRows(rows) {
       if (!selectionModel) {
-        throw "Selection model is not set";
+        throw new Error("Selection model is not set");
       }
       selectionModel.setSelectedRanges(rowsToRanges(rows));
     }
@@ -4902,6 +4892,11 @@ if (typeof Slick === "undefined") {
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Debug
+
+    //
+    // --STRIP-THIS-CODE--START--
+    //
+    /* jshint -W061 */     //! jshint : eval can be harmful
 
     this.debug = function ($dst) {
       var s = "";
@@ -4927,6 +4922,11 @@ if (typeof Slick === "undefined") {
     this.eval = function (expr) {
       return eval(expr);
     };
+
+    /* jshint +W061 */
+    //
+    // --STRIP-THIS-CODE--END--
+    //
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Public API

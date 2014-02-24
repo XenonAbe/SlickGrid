@@ -1,9 +1,9 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "Editors": {
-        "Formula": FormulaEditor
+    Slick: {
+      Editors: {
+        Formula: FormulaEditor
       }
     }
   });
@@ -64,5 +64,4 @@
 
     init();
   }
-
 })(jQuery);

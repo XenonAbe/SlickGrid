@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "RowMoveManager": RowMoveManager
+    Slick: {
+      RowMoveManager: RowMoveManager
     }
   });
 
@@ -52,7 +52,7 @@
 
       var selectedRows = _grid.getSelectedRows();
 
-      if (selectedRows.length == 0 || $.inArray(cell.row, selectedRows) == -1) {
+      if (selectedRows.length === 0 || $.inArray(cell.row, selectedRows) === -1) {
         selectedRows = [cell.row];
         _grid.setSelectedRows(selectedRows);
       }
@@ -125,7 +125,7 @@
           "rows": dd.selectedRows,
           "insertBefore": dd.insertBefore
         };
-        // TODO:  _grid.remapCellCssClasses ?
+        // TODO: _grid.remapCellCssClasses ?
         _self.onMoveRows.notify(eventData);
       }
     }
@@ -136,7 +136,6 @@
 
       "init": init,
       "destroy": destroy
-
     });
   }
 })(jQuery);

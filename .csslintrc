@@ -16,5 +16,7 @@
   "unique-headings": false,
   "universal-selector": false,
   "unqualified-attributes": false,
-  "overqualified-elements": false
+  "overqualified-elements": false,
+  "import": false,
+  "ids": false
 }

@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "Preloader": Preloader
+    Slick: {
+      Preloader: Preloader
     }
   });
 
@@ -18,31 +18,33 @@
 
     function destroy() { }
 
-    function getPreloader(center){
+    function getPreloader(center) {
       var $grid = $(_grid.getContainerNode());
 
-      if (!self.$preloader){
+      if (!self.$preloader) {
         self.$preloader = $('<div>').addClass('slick-preloader')
           .append($('<div>').addClass('slick-preloader-inner'))
           .appendTo($grid);
       }
 
-      var pos = $grid.offset(), height = $grid.height(), width = $grid.width();
+      var pos = $grid.offset(); 
+      var height = $grid.height(); 
+      var width = $grid.width();
       var $inner = $grid.find('.slick-preloader-inner');
       $inner
         .css("position", "relative")
-        .css("top", height/2 - $inner.height()/2 )
-        .css("left", width/2 - $inner.width()/2 );
+        .css("top", height / 2 - $inner.height() / 2 )
+        .css("left", width / 2 - $inner.width() / 2 );
 
       return self.$preloader;
     }
 
-    function show(){
+    function show() {
       getPreloader().show();
       return self;
     }
 
-    function hide(){
+    function hide() {
       getPreloader().fadeOut();
       return self;
     }
@@ -53,7 +55,7 @@
 
     var isDataLoading = [];
 
-    function onLoaderDataLoading(){
+    function onLoaderDataLoading() {
       isDataLoading.push(true);
       show();
     }
@@ -63,24 +65,24 @@
       if (!isDataLoading.length) hide();
     }
 
-    function onLoaderDataLoadError(e, args){
+    function onLoaderDataLoadError(e, args) {
       isDataLoading.pop();
       if (!isDataLoading.length) hide();
     }
 
-    function onLoaderDataLoadAbort(e, args){
+    function onLoaderDataLoadAbort(e, args) {
       isDataLoading.pop();
       if (!isDataLoading.length) hide();
     }
 
-    function registerLoader(loader){
+    function registerLoader(loader) {
       loader.onDataLoading.subscribe(onLoaderDataLoading);
       loader.onDataLoaded.subscribe(onLoaderDataLoaded);
       loader.onDataLoadError.subscribe(onLoaderDataLoadError);
       loader.onDataLoadAbort.subscribe(onLoaderDataLoadAbort);
     }
 
-    function unregisterLoader(loader){
+    function unregisterLoader(loader) {
       loader.onDataLoading.unsubscribe(onLoaderDataLoading);
       loader.onDataLoaded.unsubscribe(onLoaderDataLoaded);
       loader.onDataLoadError.unsubscribe(onLoaderDataLoadError);

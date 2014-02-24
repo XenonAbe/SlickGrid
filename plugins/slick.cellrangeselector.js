@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "CellRangeSelector": CellRangeSelector
+    Slick: {
+      CellRangeSelector: CellRangeSelector
     }
   });
 
@@ -16,7 +16,7 @@
     var _handler = new Slick.EventHandler();
     var _defaults = {
       selectionCss: {
-        "border": "2px dashed blue"
+        border: "2px dashed blue"
       }
     };
 

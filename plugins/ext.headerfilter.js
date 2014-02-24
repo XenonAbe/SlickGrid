@@ -1,8 +1,8 @@
 (function ($) {
     $.extend(true, window, {
-        "Ext": {
-            "Plugins": {
-                "HeaderFilter": HeaderFilter
+        Ext: {
+            Plugins: {
+                HeaderFilter: HeaderFilter
             }
         }
     });
@@ -11,7 +11,7 @@
     Based on SlickGrid Header Menu Plugin (https://github.com/mleibman/SlickGrid/blob/master/plugins/slick.headermenu.js)
 
     (Can't be used at the same time as the header menu plugin as it implements the dropdown in the same way)
-   */
+    */
 
     function HeaderFilter(options) {
         var grid;
@@ -25,16 +25,16 @@
             sortMenuitems: true,
             textFilter: true,
             messages: {
-                "ok": "OK",
-                "clear": "Clear",
-                "cancel": "Cancel",
-                "textFilter": "Filter",
-                "selectAll": "Select All",
-                "sortAsc": "Sort Ascending",
-                "sortDesc": "Sort Descending",
-                "empty": "empty",
-                "trueDesc": "True",
-                "falseDesc": "False"
+                ok: "OK",
+                clear: "Clear",
+                cancel: "Cancel",
+                textFilter: "Filter",
+                selectAll: "Select All",
+                sortAsc: "Sort Ascending",
+                sortDesc: "Sort Descending",
+                empty: "empty",
+                trueDesc: "True",
+                falseDesc: "False"
             }
         };
         var $menu;
@@ -114,14 +114,14 @@
              .appendTo($item);
         }
 
-        function addTextFilter(menu, columnDef, value){
+        function addTextFilter(menu, columnDef, value) {
             var $li = $("<div class='textfilter'>");
 
             $('<label>').text(options.messages.textFilter).appendTo($li);
 
             $('<input type="text">')
                 .val(value)
-                .on('change', function(e){
+                .on('change', function(e) {
                     var value = $(e.target).val();
                     columnDef.textFilterValue = isValue(value) ? value : null;
                 })
@@ -174,7 +174,7 @@
 
                 filterOptions += "<label><input type='checkbox' value='" + i + "'" +
                                 (filtered ? " checked='checked'" : "") +
-                                " data-filtervalue='"+ filterItems[i].value +"'"+
+                                " data-filtervalue='" + filterItems[i].value + "'" +
                                 "/>" + filterItems[i].title + "</label>";
             }
 
@@ -182,7 +182,7 @@
                            .append($(filterOptions))
                            .appendTo($menu);
 
-            $('<button>'+options.messages.ok+'</button>')
+            $('<button>' + options.messages.ok + '</button>')
                 .appendTo($menu)
                 .bind('click', function (ev) {
                     columnDef.filterValues = workingFilters.splice(0);
@@ -190,7 +190,7 @@
                     handleApply(ev, columnDef);
                 });
 
-            $('<button>'+options.messages.clear+'</button>')
+            $('<button>' + options.messages.clear + '</button>')
                 .appendTo($menu)
                 .bind('click', function (ev) {
                     columnDef.filterValues.length = 0;
@@ -199,7 +199,7 @@
                     handleApply(ev, columnDef);
                 });
 
-            $('<button>'+options.messages.cancel+'</button>')
+            $('<button>' + options.messages.cancel + '</button>')
                 .appendTo($menu)
                 .bind('click', hideMenu);
 
@@ -324,6 +324,7 @@
                 command: command
             }, e, self);
 
+            // Stop propagation so that it doesn't register as a header click event.
             e.preventDefault();
             e.stopPropagation();
         }
@@ -331,6 +332,7 @@
         $.extend(this, {
             "init": init,
             "destroy": destroy,
+
             "onFilterApplied": new Slick.Event(),
             "onCommand": new Slick.Event()
         });

@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "CellSelectionModel": CellSelectionModel
+    Slick: {
+      CellSelectionModel: CellSelectionModel
     }
   });
 
@@ -13,8 +13,8 @@
     var _ranges = [];
     var _self = this;
     var _selector = new Slick.CellRangeSelector({
-      "selectionCss": {
-        "border": "2px solid black"
+      selectionCss: {
+        border: "2px solid black"
       }
     });
     var _options;
@@ -95,7 +95,7 @@
       var active = _grid.getActiveCell();
 
       if (active && e.shiftKey && !e.ctrlKey && !e.altKey &&
-          (e.which == 37 || e.which == 39 || e.which == 38 || e.which == 40) ) {
+          (e.which === $.ui.keyCode.LEFT || e.which === $.ui.keyCode.RIGHT || e.which === $.ui.keyCode.UP || e.which === $.ui.keyCode.DOWN) ) {
 
         ranges = getSelectedRanges();
         if (!ranges.length) {
@@ -116,13 +116,13 @@
             dirRow = active.row == last.fromRow ? 1 : -1,
             dirCell = active.cell == last.fromCell ? 1 : -1;
 
-        if (e.which == 37) {
+        if (e.which === $.ui.keyCode.LEFT) {
           dCell -= dirCell;
-        } else if (e.which == 39) {
+        } else if (e.which === $.ui.keyCode.RIGHT) {
           dCell += dirCell;
-        } else if (e.which == 38) {
+        } else if (e.which === $.ui.keyCode.UP) {
           dRow -= dirRow;
-        } else if (e.which == 40) {
+        } else if (e.which === $.ui.keyCode.DOWN) {
           dRow += dirRow;
         }
 

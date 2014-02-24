@@ -155,7 +155,7 @@
       for (var i = startingIndex, l = items.length; i < l; i++) {
         id = items[i][idProperty];
         if (id === undefined) {
-          throw "Each data element must implement a unique 'id' property";
+          throw new Error("Each data element must implement a unique 'id' property");
         }
         idxById[id] = i;
       }
@@ -166,7 +166,7 @@
       for (var i = 0, l = items.length; i < l; i++) {
         id = items[i][idProperty];
         if (id === undefined || idxById[id] !== i) {
-          throw "Each data element must implement a unique 'id' property";
+          throw new Error("Each data element must implement a unique 'id' property");
         }
       }
     }
@@ -176,7 +176,7 @@
     }
 
     function setItems(data, objectIdProperty) {
-      if (objectIdProperty !== undefined) {
+      if (objectIdProperty != null) {
         idProperty = objectIdProperty;
       }
       items = filteredItems = data;
@@ -187,12 +187,12 @@
     }
 
     function setPagingOptions(args) {
-      if (args.pageSize != undefined) {
+      if (args.pageSize != null) {
         pagesize = args.pageSize;
         pagenum = pagesize ? Math.min(pagenum, Math.max(0, Math.ceil(totalRows / pagesize) - 1)) : 0;
       }
 
-      if (args.pageNum != undefined) {
+      if (args.pageNum != null) {
         pagenum = Math.min(args.pageNum, Math.max(0, Math.ceil(totalRows / pagesize) - 1));
       }
 
@@ -212,6 +212,7 @@
     }
 
     var defaultSortComparator = {
+        /*! jshint -W086 */
         valueExtractor: function (node) {
           switch (typeof node) {
           case 'boolean':
@@ -224,6 +225,7 @@
             if (node === null) {
               return node;
             }
+            /*! fall through */
           default:
             return "x" + node.toString();   // string conversion here ensures the strings come out as NaN when treated as numbers
           }
@@ -443,6 +445,7 @@
             // we don't care and treat them as equals
             return x.order - y.order;
         }
+        /*! jshint +W086 */
     };
 
     function getDefaultSortComparator() {
@@ -659,7 +662,7 @@
 
     function updateItem(id, item) {
       if (idxById[id] === undefined || id !== item[idProperty]) {
-        throw "Invalid or non-matching id";
+        throw new Error("Invalid or non-matching id");
       }
       items[idxById[id]] = item;
       if (!updated) {
@@ -684,7 +687,7 @@
     function deleteItem(id) {
       var idx = idxById[id];
       if (idx === undefined) {
-        throw "Invalid id";
+        throw new Error("Invalid id");
       }
       delete idxById[id];
       items.splice(idx, 1);
@@ -838,7 +841,7 @@
       var val;
       var groups = [];
       var groupsByVal = {};
-      var r;
+      var r, i;
       var level = parentGroup ? parentGroup.level + 1 : 0;
       var gi = groupingInfos[level];
 
@@ -846,7 +849,7 @@
         rows = gi.getGroupRows.call(self, gi, rows, allFilteredItems, level, parentGroup);
       }
 
-      for (var i = 0, l = gi.predefinedValues.length; i < l; i++) {
+      for (i = 0, l = gi.predefinedValues.length; i < l; i++) {
         val = gi.predefinedValues[i];
         group = groupsByVal[val];
         if (!group) {
@@ -859,7 +862,7 @@
         }
       }
 
-      for (var i = 0, l = rows.length; i < l; i++) {
+      for (i = 0, l = rows.length; i < l; i++) {
         r = rows[i];
         val = gi.getterIsAFn ? gi.getter(r) : r[gi.getter];
         group = groupsByVal[val];
@@ -876,7 +879,7 @@
       }
 
       if (level < groupingInfos.length - 1) {
-        for (var i = 0; i < groups.length; i++) {
+        for (i = 0; i < groups.length; i++) {
           group = groups[i];
           group.groups = extractGroups(group.rows, group, allFilteredItems);
         }
@@ -1162,7 +1165,7 @@
               // no good way to compare totals since they are arbitrary DTOs
               // deep object comparison is pretty expensive
               // always considering them 'dirty' seems easier for the time being
-              (item.__groupTotals || r.__groupTotals))
+                  (item.__groupTotals || r.__groupTotals))
               || item[idProperty] != r[idProperty]
               || (updated && updated[item[idProperty]])
               ) {
@@ -1326,7 +1329,7 @@
           var newHash = {};
           for (var id in hashById) {
             var row = rowsById[id];
-            if (row != undefined) {
+            if (row != null) {
               newHash[row] = hashById[id];
             }
           }
@@ -1399,6 +1402,8 @@
       "onPagingInfoChanged": onPagingInfoChanged
     });
   }
+
+
 
   function AvgAggregator(field) {
     this.field_ = field;
@@ -1599,7 +1604,7 @@
       if (!groupTotals.std) {
         groupTotals.std = {};
       }
-      if (this.nonNullCount_ != 0) {
+      if (this.nonNullCount_) {
         groupTotals.std[this.field_] = Math.sqrt(this.Qk_ / this.nonNullCount_);
       }
     };

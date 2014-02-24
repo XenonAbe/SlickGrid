@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "CellCopyManager": CellCopyManager
+    Slick: {
+      CellCopyManager: CellCopyManager
     }
   });
 
@@ -65,7 +65,7 @@
           // also remember whether this was Ctrl-C (copy) or Ctrl-X (cut):
           ranges.copy = (e.which == keyCodes.C);
 
-          if (ranges.length != 0) {
+          if (ranges.length !== 0) {
             e.preventDefault();
             _copiedRanges = ranges;
             markCopySelection(ranges);

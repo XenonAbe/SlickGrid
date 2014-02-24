@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "RowSelectionModel": RowSelectionModel
+    Slick: {
+      RowSelectionModel: RowSelectionModel
     }
   });
 
@@ -90,11 +90,12 @@
     }
 
     function unionArrays(x, y) {
+      var i;
       var obj = {};
-      for (var i = x.length - 1; i >= 0; i--) {
+      for (i = x.length - 1; i >= 0; i--) {
         obj[x[i]] = x[i];
       }
-      for (var i = y.length - 1; i >= 0; i--) {
+      for (i = y.length - 1; i >= 0; i--) {
         obj[y[i]] = y[i];
       }
       var res = [];
@@ -107,11 +108,12 @@
     }
 
     function xorArrays(x, y) {
+      var i;
       var obj = {};
-      for (var i = x.length - 1; i >= 0; i--) {
+      for (i = x.length - 1; i >= 0; i--) {
         obj[x[i]] = x[i];
       }
-      for (var i = y.length - 1; i >= 0; i--) {
+      for (i = y.length - 1; i >= 0; i--) {
         if (obj.hasOwnProperty(y[i])) {
           delete obj[y[i]];
         } else {

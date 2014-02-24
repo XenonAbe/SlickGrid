@@ -1,9 +1,9 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "Plugins": {
-        "HeaderMenu": HeaderMenu
+    Slick: {
+      Plugins: {
+        HeaderMenu: HeaderMenu
       }
     }
   });
@@ -171,21 +171,20 @@
 
       // Let the user modify the menu or cancel altogether,
       // or provide alternative menu implementation.
-      if (_self.onBeforeMenuShow.notify({
-          "grid": _grid,
-          "column": columnDef,
-          "menu": menu
-        }, e, _self) == false) {
+      var rv = _self.onBeforeMenuShow.notify({
+          grid: _grid,
+          column: columnDef,
+          menu: menu
+        }, e, _self);
+      if (rv === false || e.isImmediatePropagationStopped() || e.isPropagationStopped()) {
         return;
       }
-
 
       if (!$menu) {
         $menu = $("<div class='slick-header-menu'></div>")
           .appendTo(_grid.getContainerNode());
       }
       $menu.empty();
-
 
       // Construct the menu items.
       for (var i = 0; i < menu.items.length; i++) {
@@ -256,12 +255,12 @@
 
       hideMenu();
 
-      if (command != null && command != '') {
+      if (command != null && command !== '') {
         _self.onCommand.notify({
-            "grid": _grid,
-            "column": columnDef,
-            "command": command,
-            "item": item
+            grid: _grid,
+            column: columnDef,
+            command: command,
+            item: item
           }, e, _self);
       }
 

@@ -1,15 +1,14 @@
 (function ($) {
-
   var defaults = {
-    "pagesize": 50,
-    "page_margin": 150,
+    pagesize: 50,
+    page_margin: 150,
 
-    "responseItemsMemberName":          "items",
-    "responseTotalCountMemberName":     "total",
-    "responseItemsCountMemberName":     "count",
-    "responseOffsetMemberName":         "offset",
-    "responseLimitMemberName":          "limit",
-    "responseIdentitiesMemberName":     "identities"
+    responseItemsMemberName:          "items",
+    responseTotalCountMemberName:     "total",
+    responseItemsCountMemberName:     "count",
+    responseOffsetMemberName:         "offset",
+    responseLimitMemberName:          "limit",
+    responseIdentitiesMemberName:     "identities"
   };
 
   function PagingAdapter(options) {
@@ -136,6 +135,7 @@
       var
         fromPage = Math.floor(Math.max(0, opts.from) / options.pagesize),
         toPage = Math.floor(opts.to / options.pagesize);
+      var i;
 
       while (typeof _data[fromPage * options.pagesize] !== 'undefined' && fromPage < toPage) {
         fromPage++;
@@ -152,10 +152,11 @@
         return;
       }
 
-      // it there's a running request we cancel it. TODO: not cancel but save the result
+      // it there's a running request we cancel it. 
+      // TODO: not cancel but save the result
       if (req) {
         req.abort();
-        for (var i = req.fromPage; i <= req.toPage; i++) {
+        for (i = req.fromPage; i <= req.toPage; i++) {
           delete _data[i * options.pagesize];
         }
       }
@@ -168,10 +169,10 @@
 
       if (_sortCols && _sortCols.length) {
         var order = '', current;
-        for(var i = 0; i < _sortCols.length; i++) {
+        for (i = 0; i < _sortCols.length; i++) {
           current = _sortCols[i];
           order += (i > 0 ? ',' : '') + current.field;
-          if ( i === _sortCols.length - 1
+          if (i === _sortCols.length - 1
             || (i < _sortCols.length - 1 && _sortCols[i + 1].dir !== current.dir)) {
             order += current.dir === 1 ? ' asc' : ' desc';
           }
@@ -217,7 +218,7 @@
 
 
     function onError(fromPage, toPage, error) {
-      if (error && error.statusText == 'abort') {
+      if (error && error.statusText === 'abort') {
         onDataLoadAbort.notify({
           fromPage: fromPage,
           toPage: toPage,
@@ -293,14 +294,14 @@
         if (column.order_fields) {
           $.each(column.order_fields, function(k,v) {
             result.push({
-              "field": v,
-              "dir": direction
+              field: v,
+              dir: direction
             });
           });
         } else {
           result.push({
-            "field": column.field,
-            "dir": direction
+            field: column.field,
+            dir: direction
           });
         }
       });
@@ -343,15 +344,21 @@
   }
 
   function ODataSortAdapter(argument) {
-
+    // ...
   }
 
 
   // Slick.Data.RemoteModel
   RemoteModel.PagingAdapter = PagingAdapter;
   RemoteModel.ArrayAdapter = ArrayAdapter;
-  $.extend(true, window, { Slick: { Data: {
-    RemoteModel: RemoteModel,
-    ODataSortAdapter: ODataSortAdapter
-  }}});
+
+
+  $.extend(true, window, { 
+    Slick: { 
+      Data: {
+        RemoteModel: RemoteModel,
+        ODataSortAdapter: ODataSortAdapter
+      }
+    }
+  });
 })(jQuery);

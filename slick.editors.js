@@ -9,22 +9,22 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "Editors": {
-        "Text": TextEditor,
-        "Integer": IntegerEditor,
-        "Date": DateEditor,
-        "YesNoSelect": YesNoSelectEditor,
-        "Checkbox": CheckboxEditor,
-        "PercentComplete": PercentCompleteEditor,
-        "LongText": LongTextEditor,
-        "Float": FloatEditor,
-        "Percentage": PercentageEditor,
-        "RowMulti": RowEditor,
-        "ReadOnly": ReadOnlyEditor,
-        "Combo": SelectCellEditor,
-        "Color": ColorEditor,
-        "SelectCell": SelectCellEditor
+    Slick: {
+      Editors: {
+        Text: TextEditor,
+        Integer: IntegerEditor,
+        Date: DateEditor,
+        YesNoSelect: YesNoSelectEditor,
+        Checkbox: CheckboxEditor,
+        PercentComplete: PercentCompleteEditor,
+        LongText: LongTextEditor,
+        Float: FloatEditor,
+        Percentage: PercentageEditor,
+        RowMulti: RowEditor,
+        ReadOnly: ReadOnlyEditor,
+        Combo: SelectCellEditor,
+        Color: ColorEditor,
+        SelectCell: SelectCellEditor
       }
     }
   });
@@ -32,7 +32,7 @@
 
 
   function RowEditor(args) {
-     var theEditor = undefined;
+     var theEditor;
      var scope = this;
 
      this.init = function () {
@@ -204,16 +204,15 @@ function applyModifier(val, mod) {
   switch (m.operator) {
   case "+":
     return m.isPercent ? dv * (1 + m.value) : dv + m.value;
-    break;
+
   case "-":
     return m.isPercent ? dv * (1 - m.value) : dv - m.value;
-    break;
+
   case "*":
     return dv * m.value;
-    break;
+
   case "/":
     return dv / m.value;
-    break;
   }
   assert(0); // should never get here
 }
@@ -497,7 +496,9 @@ function isValidModifier(v) {
       "dd-mm-yy",     // European
       $.datepicker.TICKS
     ];
+    /* jshint -W069 */     //! jshint : ['...'] is better written in dot notation
     var regionSettings = $.datepicker.regional["en"] || $.datepicker.regional;
+    /* jshint +W069 */
     var datepickerParseSettings = {
         shortYearCutoff: 20,
         dayNamesShort: regionSettings.dayNamesShort,
@@ -665,6 +666,8 @@ function isValidModifier(v) {
     }
 
     this.init = function() {
+        var i;
+
         defaultValue = null;
         opt = (args.metadataColumn && args.metadataColumn.options) || args.column.options;
         assert(opt);
@@ -1064,7 +1067,7 @@ function isValidModifier(v) {
       $wrapper.show();
 
       scope.position(args);
-    };
+    }
 
     /*
      * info: {

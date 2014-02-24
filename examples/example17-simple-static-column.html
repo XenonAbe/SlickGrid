@@ -137,7 +137,7 @@ $(function() {
 
     copyManager.onPasteCells.subscribe(function (e, args) {
         if (args.from.length !== 1 || args.to.length !== 1) {
-            throw "This implementation only supports single range copy and paste operations";
+            throw new Error("This implementation only supports single range copy and paste operations");
         }
 
         var from = args.from[0];

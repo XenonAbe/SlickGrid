@@ -1,5 +1,11 @@
 @import url('../slick-default-theme.css');
 
+.border-radius(@radius) {
+  -moz-border-radius: @radius;
+  -webkit-border-radius: @radius;
+  border-radius: @radius;
+}
+
 * {
   font-family: arial;
   font-size: 8pt;
@@ -86,16 +92,12 @@ li {
 .grid-header #txtSearch {
   margin: 0 4px 0 4px;
   padding: 2px 2px;
-  border-radius: 2px;
-  -moz-border-radius: 2px;
-  -webkit-border-radius: 2px;
+  .border-radius(2px);
   border: 1px solid silver;
 }
 
 .options-panel {
-  border-radius: 6px;
-  -moz-border-radius: 6px;
-  -webkit-border-radius: 6px;
+  .border-radius(6px);
   border: 1px solid silver;
   background: #f0f0f0;
   padding: 10px;
@@ -124,9 +126,7 @@ li {
   min-width: 600px;
   margin-top: 20px;
 
-  border-radius: 6px;
-  -moz-border-radius: 6px;
-  -webkit-border-radius: 6px;
+  .border-radius(6px);
   border: 1px solid silver;
   background: #f0f0f0;
 
@@ -182,9 +182,7 @@ li {
 .percent-complete-bar {
   display: inline-block;
   height: 6px;
-  border-radius: 3px;
-  -moz-border-radius: 3px;
-  -webkit-border-radius: 3px;
+  .border-radius(3px);
 }
 
 

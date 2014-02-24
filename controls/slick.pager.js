@@ -17,10 +17,10 @@
       var lastPage = pagingInfo.totalPages - 1;
 
       return {
-        canGotoFirst: !cannotLeaveEditMode && pagingInfo.pageSize != 0 && pagingInfo.pageNum > 0,
-        canGotoLast: !cannotLeaveEditMode && pagingInfo.pageSize != 0 && pagingInfo.pageNum != lastPage,
-        canGotoPrev: !cannotLeaveEditMode && pagingInfo.pageSize != 0 && pagingInfo.pageNum > 0,
-        canGotoNext: !cannotLeaveEditMode && pagingInfo.pageSize != 0 && pagingInfo.pageNum < lastPage,
+        canGotoFirst: !cannotLeaveEditMode && pagingInfo.pageSize !== 0 && pagingInfo.pageNum > 0,
+        canGotoLast: !cannotLeaveEditMode && pagingInfo.pageSize !== 0 && pagingInfo.pageNum != lastPage,
+        canGotoPrev: !cannotLeaveEditMode && pagingInfo.pageSize !== 0 && pagingInfo.pageNum > 0,
+        canGotoNext: !cannotLeaveEditMode && pagingInfo.pageSize !== 0 && pagingInfo.pageNum < lastPage,
         pagingInfo: pagingInfo
       }
     }
@@ -71,7 +71,7 @@
 
       $settings.find("a[data]").click(function (e) {
         var pagesize = $(e.target).attr("data");
-        if (pagesize != undefined) {
+        if (pagesize != null) {
           pagesize = parseInt(pagesize);
           if (pagesize == -1) {
             var vp = grid.getViewport();
@@ -135,7 +135,7 @@
         $container.find(".ui-icon-seek-prev").addClass("ui-state-disabled");
       }
 
-      if (pagingInfo.pageSize == 0) {
+      if (pagingInfo.pageSize === 0) {
         var totalRowsCount = dataView.getItems().length;
         var visibleRowsCount = pagingInfo.totalRows;
         if (visibleRowsCount < totalRowsCount) {
@@ -152,5 +152,11 @@
   }
 
   // Slick.Controls.Pager
-  $.extend(true, window, { Slick:{ Controls:{ Pager:SlickGridPager }}});
+  $.extend(true, window, { 
+    Slick: { 
+      Controls: { 
+        Pager: SlickGridPager 
+      }
+    }
+  });
 })(jQuery);

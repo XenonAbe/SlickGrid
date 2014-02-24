@@ -1,8 +1,8 @@
 ﻿(function ($) {
     $.extend(true, window, {
-        "Ext": {
-            "Plugins": {
-                "Overlays": Overlays
+        Ext: {
+            Plugins: {
+                Overlays: Overlays
             }
         }
     });
@@ -374,6 +374,7 @@
         $.extend(this, {
             "init": init,
             "destroy": destroy,
+
             "onFillUpDown": new Slick.Event()
         });
     }

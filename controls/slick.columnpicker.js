@@ -6,7 +6,7 @@
 
     var columnsLookup = {};
 
-    for(var i = 0; i < columns.length; i++) {
+    for (var i = 0; i < columns.length; i++) {
       columnsLookup[ columns[i].id ] = columns[i];
     }
 
@@ -96,7 +96,7 @@
       var current = grid.getColumns().slice(0);
       var ordered = new Array(columns.length);
       for (var i = 0; i < ordered.length; i++) {
-        if ( grid.getColumnIndex(columns[i].id) === undefined ) {
+        if (grid.getColumnIndex(columns[i].id) === undefined) {
           // If the column doesn't return a value from getColumnIndex,
           // it is hidden. Leave it in this position.
           ordered[i] = columns[i];
@@ -109,12 +109,12 @@
     }
 
     function updateColumn(e) {
-      if ($(e.target).data("option") == "autoresize") {
+      if ($(e.target).data("option") === "autoresize") {
         if (e.target.checked) {
-          grid.setOptions({forceFitColumns:true});
+          grid.setOptions({forceFitColumns: true});
           grid.autosizeColumns();
         } else {
-          grid.setOptions({forceFitColumns:false});
+          grid.setOptions({forceFitColumns: false});
         }
         return;
       }
@@ -169,5 +169,11 @@
     };
   }
   // Slick.Controls.ColumnPicker
-  $.extend(true, window, { Slick:{ Controls:{ ColumnPicker:SlickColumnPicker }}});
+  $.extend(true, window, { 
+    Slick: { 
+      Controls: { 
+        ColumnPicker: SlickColumnPicker 
+      }
+    }
+  });
 })(jQuery);
