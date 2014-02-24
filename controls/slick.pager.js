@@ -152,10 +152,10 @@
   }
 
   // Slick.Controls.Pager
-  $.extend(true, window, { 
-    Slick: { 
-      Controls: { 
-        Pager: SlickGridPager 
+  $.extend(true, window, {
+    Slick: {
+      Controls: {
+        Pager: SlickGridPager
       }
     }
   });

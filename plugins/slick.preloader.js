@@ -27,8 +27,8 @@
           .appendTo($grid);
       }
 
-      var pos = $grid.offset(); 
-      var height = $grid.height(); 
+      var pos = $grid.offset();
+      var height = $grid.height();
       var width = $grid.width();
       var $inner = $grid.find('.slick-preloader-inner');
       $inner

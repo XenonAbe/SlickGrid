@@ -169,10 +169,10 @@
     };
   }
   // Slick.Controls.ColumnPicker
-  $.extend(true, window, { 
-    Slick: { 
-      Controls: { 
-        ColumnPicker: SlickColumnPicker 
+  $.extend(true, window, {
+    Slick: {
+      Controls: {
+        ColumnPicker: SlickColumnPicker
       }
     }
   });

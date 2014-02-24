@@ -222,9 +222,9 @@
       grid.render();
     }
 
-    grid.onSort.subscribe(function (e, args) { 
-	  sortDataView(args.sortCols); 
-	});
+    grid.onSort.subscribe(function (e, args) {
+      sortDataView(args.sortCols);
+    });
 
     // Filter the data (using userscore's _.contains)
     function filter(item) {

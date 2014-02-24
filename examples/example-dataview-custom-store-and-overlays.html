@@ -155,15 +155,15 @@
       d["num"] = i;
     }
 
-	dataView = new Slick.Data.DataView({
-		inlineFilters: false,
-		globalItemMetadataProvider: {
-		  getRowMetadata: function (rowData, row, cell /* may be FALSE */, dataRows) {
-		    return row_metadata[row];
-		  }
-		}
-	});
-	grid = new Slick.Grid("#myGrid", data, columns, options);
+      dataView = new Slick.Data.DataView({
+          inlineFilters: false,
+          globalItemMetadataProvider: {
+            getRowMetadata: function (rowData, row, cell /* may be FALSE */, dataRows) {
+              return row_metadata[row];
+            }
+          }
+      });
+    grid = new Slick.Grid("#myGrid", data, columns, options);
 
     grid.setSelectionModel(new Slick.CellSelectionModel());
     grid.registerPlugin(new Slick.AutoTooltips());
