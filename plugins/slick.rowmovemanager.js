@@ -44,7 +44,7 @@
       }
 
       if (_grid.getEditorLock().isActive() || !/move|selectAndMove/.test(_grid.getColumns()[cell.cell].behavior)) {
-        return false;
+        return;
       }
 
       _dragging = true;
@@ -106,7 +106,7 @@
         dd.insertBefore = insertBefore;
 
         // TODO: Implement in a timer
-        _grid.scrollRowIntoView( insertBefore );
+        _grid.scrollRowIntoView(insertBefore);
       }
     }
 
