@@ -2003,7 +2003,7 @@ if (typeof Slick === "undefined") {
     }
 
     function getRowPosition(row) {
-      assert(row >= 0);
+      assert(row >= -1);
       var pos = rowPositionCache[row];
       if (!pos || pos.top == null) {
         var r, top, rowMetadata;
@@ -3525,7 +3525,7 @@ if (typeof Slick === "undefined") {
 
     function handleDragInit(e, dd) {
       var cell = getCellFromEvent(e);
-      if (!cell || !cellExists(cell.row, cell.cell)) {
+      if (!cell) {
         return false;
       }
 
@@ -3541,7 +3541,7 @@ if (typeof Slick === "undefined") {
 
     function handleDragStart(e, dd) {
       var cell = getCellFromEvent(e);
-      if (!cell || !cellExists(cell.row, cell.cell)) {
+      if (!cell) {
         return false;
       }
 
@@ -3820,6 +3820,7 @@ if (typeof Slick === "undefined") {
       if (row == null || cell == null) {
         return null;
       } else {
+        assert(cellExists(row, cell));
         return {
           row: row,
           cell: cell
@@ -4501,8 +4502,7 @@ if (typeof Slick === "undefined") {
       }
       do {
         cell = getSpanCell(posY, cell - 1);
-        row = getSpanRow(posY, cell);
-      } while (cell >= 0 && !canCellBeActive(row, cell));
+      } while (cell >= 0 && !canCellBeActive((row = getSpanRow(posY, cell)), cell));
 
       if (cell >= 0) {
         return {
@@ -4539,8 +4539,7 @@ if (typeof Slick === "undefined") {
       }
       do {
         row = getSpanRow(row - 1, posX);
-        cell = getSpanCell(row, posX);
-      } while (row >= 0 && !canCellBeActive(row, cell));
+      } while (row >= 0 && !canCellBeActive(row, (cell = getSpanCell(row, posX))));
 
       if (row >= 0 && cell < columns.length) {
         return {
@@ -4705,7 +4704,7 @@ if (typeof Slick === "undefined") {
     function setActiveCell(row, cell) {
       if (!initialized) { return; }
       // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
-      if (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0) {
+      if (cellExists(row, cell)) {
         if (!options.enableCellNavigation) {
           return;
         }
@@ -4745,7 +4744,7 @@ if (typeof Slick === "undefined") {
 
     function canCellBeSelected(row, cell) {
       // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
-      if (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0) {
+      if (cellExists(row, cell)) {
         var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
         if (rowMetadata && rowMetadata.selectable != null) {
           return rowMetadata.selectable;
@@ -5043,6 +5042,7 @@ if (typeof Slick === "undefined") {
       "getCellNodeBox": getCellNodeBox,
       "canCellBeSelected": canCellBeSelected,
       "canCellBeActive": canCellBeActive,
+      "cellExists": cellExists,
       "navigatePrev": navigatePrev,
       "navigateNext": navigateNext,
       "navigateUp": navigateUp,
