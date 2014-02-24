@@ -32,7 +32,7 @@
 
     .slick-header-column.ui-state-default {
       position: relative;
-      display: inline-block;
+      // display: inline-block;  -- clashes with (float: left) below
       overflow: hidden;
       .text-overflow(ellipsis);
       height: (@row-box-height - @cell-padding-top - @cell-padding-bottom);
@@ -47,7 +47,9 @@
     }
 
     .slick-headerrow-column.ui-state-default {
-      padding: @cell-padding-top @cell-padding-right @cell-padding-bottom @cell-padding-left;
+      //padding: @cell-padding-top @cell-padding-right @cell-padding-bottom @cell-padding-left;
+      padding: 0;
+      margin: 0;
     }
 
     .slick-header-column-sorted {
@@ -119,10 +121,18 @@
       .text-overflow(ellipsis);
       vertical-align: middle;
       z-index: 1;
-      padding: 1px 2px 2px 1px;
-      margin: 0;
       white-space: nowrap;
       cursor: default;
+    }
+
+    .slick-cell {
+      padding: 1px 2px 2px 1px;
+      margin: 0;
+    }
+
+    .slick-headerrow-column {
+      padding: 0;
+      margin: 0;
     }
 
     .slick-group {
