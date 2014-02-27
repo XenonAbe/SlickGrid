@@ -3154,7 +3154,7 @@ if (typeof Slick === "undefined") {
       if (!options.enableAsyncPostRender) {
         return;
       }
-      clearTimeout(h_postrender);
+      if (h_postrender) clearTimeout(h_postrender);
       h_postrender = setTimeout(asyncPostProcessRows, options.asyncPostRenderDelay);
     }
 
@@ -3162,6 +3162,11 @@ if (typeof Slick === "undefined") {
       delete postProcessedRows[row];
       postProcessFromRow = Math.min(postProcessFromRow, row);
       postProcessToRow = Math.max(postProcessToRow, row);
+      startPostProcessing();
+    }
+
+    function invalidateAllPostProcessingResults() {
+      postProcessedRows = {};
       startPostProcessing();
     }
 
@@ -3258,6 +3263,7 @@ if (typeof Slick === "undefined") {
     }
 
     function asyncPostProcessRows() {
+      h_postrender = null;
       var dataLength = getDataLength();
       while (postProcessFromRow <= postProcessToRow) {
         var row = (vScrollDir >= 0) ? postProcessFromRow++ : postProcessToRow--;
@@ -5011,6 +5017,7 @@ if (typeof Slick === "undefined") {
       "invalidateRow": invalidateRow,
       "invalidateRows": invalidateRows,
       "invalidateAllRows": invalidateAllRows,
+      "invalidateAllPostProcessingResults": invalidateAllPostProcessingResults,
       "updateCell": updateCell,
       "updateRow": updateRow,
       "getViewport": getVisibleRange,
