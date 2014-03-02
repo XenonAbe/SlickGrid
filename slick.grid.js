@@ -190,7 +190,8 @@ if (typeof Slick === "undefined") {
       addNewRowCssClass: "new-row",
       syncColumnCellResize: false,
       editCommandHandler: null,
-      clearCellBeforeEdit: true
+      clearCellBeforeEdit: true,
+      createCssRulesCallback: null
     };
 
     var columnDefaults = {
@@ -1346,6 +1347,10 @@ if (typeof Slick === "undefined") {
       for (var i = 0; i < columns.length; i++) {
         rules.push([".slickgrid-container." + uid + " .l" + i, ""]);
         rules.push([".slickgrid-container." + uid + " .r" + i, ""]);
+      }
+
+      if (options.createCssRulesCallback) {
+        options.createCssRulesCallback(uid, rules);
       }
 
       // see also
