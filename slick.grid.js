@@ -176,7 +176,8 @@ if (typeof Slick === "undefined") {
       forceSyncScrolling: false,
       addNewRowCssClass: "new-row",
       syncColumnCellResize: false,
-      editCommandHandler: null
+      editCommandHandler: null,
+      createCssRulesCallback: null
     };
 
     var columnDefaults = {
@@ -1153,6 +1154,10 @@ if (typeof Slick === "undefined") {
       for (var i = 0; i < columns.length; i++) {
         rules.push("." + uid + " .l" + i + " { }");
         rules.push("." + uid + " .r" + i + " { }");
+      }
+
+      if (options.createCssRulesCallback) {
+        options.createCssRulesCallback(uid, rules);
       }
 
       if ($style[0].styleSheet) { // IE
