@@ -974,8 +974,10 @@
 
         if (!g.collapsed) {
           rows = g.groups ? options.flattenGroupedRows(g.groups, level + 1, groupingInfos, filteredItems, options) : g.rows;
-          for (var j = 0, jj = rows.length; j < jj; j++) {
-            groupedRows[gl++] = rows[j];
+          if (!options.rollupSingleChildGroup || (rows && rows.length > 1)) {
+            for (var j = 0, jj = rows.length; j < jj; j++) {
+              groupedRows[gl++] = rows[j];
+            }
           }
         }
 
