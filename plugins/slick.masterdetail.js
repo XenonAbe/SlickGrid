@@ -1,12 +1,13 @@
 (function($) {
     // Register namespace
     $.extend(true, window, {
-        "SlickGrid" : {
-            "MasterDetail" : MasterDetail
+        SlickGrid : {
+            MasterDetail : MasterDetail
         }
     });
 
     /**
+     *
      */
     function MasterDetail(options) {
         var _grid;
@@ -22,26 +23,23 @@
          * Initialize plugin.
          */
         function init(grid) {
-
             options = $.extend(true, {}, _defaults, options);
             _grid = grid;
 
             _grid.onRowsRendered.subscribe(function(e, args) {
                 renderExt(args.rows, args.nodes);
             });
-
         }
 
         function defaultDetailsPaneProcessor(row, dataContext) {
             if (dataContext.detailsPane === undefined) {
-                throw "Each data element must implement a 'detailsPane' property";
+                throw new Error("Each data element must implement a 'detailsPane' property");
             }
 
             return $(dataContext.detailsPane);
         }
 
         function renderExt(rows, rowNodes) {
-
             for (i = 0; i < rows.length; i++) {
                 var rowIndex = rows[i];
                 var parentRow = $(rowNodes[i]);
@@ -58,17 +56,17 @@
                 var dataItem = _grid.getDataItem(rowIndex);
                 var detailsNode = null;
                 if (options.cacheDetailsNodes) {
-                    detailsNode = dataItem["__CACHED_DETAILS_NODE__"];
+                    detailsNode = dataItem.__CACHED_DETAILS_NODE__;
                 }
 
-                if (detailsNode == undefined || detailsNode == null) {
+                if (detailsNode == null) {
                     detailsNode = options.detailsPaneProcessor(rowIndex, dataItem);
                     if (options.cacheDetailsNodes) {
-                        dataItem["__CACHED_DETAILS_NODE__"] = detailsNode;
+                        dataItem.__CACHED_DETAILS_NODE__ = detailsNode;
                     }
                 }
 
-                if (detailsNode != undefined && detailsNode != null) {
+                if (detailsNode != null) {
                     detailsBlock.append(detailsNode);
                 }
             }
@@ -93,7 +91,6 @@
                             "margin-top" : gridRowHeight,
                             "width" : "100%"
                         });
-
                     } else {
                         parentRow.removeClass('expanded');
                     }
@@ -117,7 +114,6 @@
         }
 
         function getExpandedRows() {
-
             var er = [];
             $.each(_expandedRows, function(key, value) {
                 er.push(value);
@@ -135,51 +131,47 @@
         }
 
         function expandAllDetailsRows() {
-
             var gridCanvas = $(_grid.getCanvasNode());
 
             var heightOffset = 0;
             var gridRowHeight = _grid.getOptions().rowHeight;
 
             gridCanvas.children(".slick-row")
-                .each(function() {
+            .each(function() {
+                var parentRow = $(this);
+                var top = parseInt(parentRow.css('top'))
+                        + heightOffset;
+                var rowIndex = parentRow.index();
 
-                    var parentRow = $(this);
-                    var top = parseInt(parentRow.css('top'))
-                            + heightOffset;
-                    var rowIndex = parentRow.index();
+                var childRowDetails = parentRow.children('.slick-row-details');
+                if (childRowDetails.size() > 0 && !parentRow.hasClass('expanded')) {
+                    parentRow.addClass('expanded');
 
-                    var childRowDetails = parentRow
-                            .children('.slick-row-details');
-                    if (childRowDetails.size() > 0
-                            && !parentRow.hasClass('expanded')) {
-                        parentRow.addClass('expanded');
+                    var e = new Slick.EventData();
+                    _grid.onDetailsRowExpanded.notify({
+                        "grid" : _grid,
+                        "row" : rowIndex,
+                        "expanded" : true,
+                        "target" : childRowDetails
+                    }, e, _self);
 
-                        var e = new Slick.EventData();
-                        _grid.onDetailsRowExpanded.notify({
-                            "grid" : _grid,
-                            "row" : rowIndex,
-                            "expanded" : true,
-                            "target" : childRowDetails
-                        }, e, _self);
+                    childRowDetails.css({
+                        "margin-top" : gridRowHeight
+                    });
 
-                        childRowDetails.css({
-                            "margin-top" : gridRowHeight
-                        });
-
-                        var height = childRowDetails.outerHeight();
-                        parentRow.css({
-                            "height" : gridRowHeight + height,
-                            "top" : top
-                        });
-                        heightOffset += height;
-                        _expandedRows[rowIndex] = rowIndex;
-                    } else {
-                        parentRow.css({
-                            "top" : top
-                        });
-                    }
-                });
+                    var height = childRowDetails.outerHeight();
+                    parentRow.css({
+                        "height" : gridRowHeight + height,
+                        "top" : top
+                    });
+                    heightOffset += height;
+                    _expandedRows[rowIndex] = rowIndex;
+                } else {
+                    parentRow.css({
+                        "top" : top
+                    });
+                }
+            });
 
             gridCanvas.height(gridCanvas.height() + heightOffset);
         }
@@ -215,7 +207,6 @@
         }
 
         function toggleDetailsRow(row) {
-
             var gridCanvas = $(_grid.getCanvasNode());
 
             var currentTop = 0;
@@ -232,28 +223,28 @@
                 gridCanvas.height(heightOffset + gridCanvas.height());
             }
 
+            var childRowDetails, e, height;
+
             if (parentRow.hasClass('expanded')) {
-                var childRowDetails = parentRow.children(".slick-row-details");
-                var height = -(childRowDetails.outerHeight());
+                childRowDetails = parentRow.children(".slick-row-details");
+                height = -(childRowDetails.outerHeight());
                 parentRow.css("height", gridRowHeight);
                 adjustHeight(height);
                 parentRow.removeClass("expanded");
                 delete _expandedRows[row];
 
-                var e = new Slick.EventData();
+                e = new Slick.EventData();
                 _grid.onDetailsRowExpanded.notify({
                     "grid" : _grid,
                     "row" : row,
                     "expanded" : false,
                     "target" : childRowDetails
                 }, e, _self);
-
             } else {
-
                 parentRow.addClass('expanded');
-                var childRowDetails = parentRow.children(".slick-row-details");
+                childRowDetails = parentRow.children(".slick-row-details");
 
-                var e = new Slick.EventData();
+                e = new Slick.EventData();
                 _grid.onDetailsRowExpanded.notify({
                     "grid" : _grid,
                     "row" : row,
@@ -265,7 +256,7 @@
                     "margin-top" : gridRowHeight,
                 });
 
-                var height = childRowDetails.outerHeight();
+                height = childRowDetails.outerHeight();
                 parentRow.css("height", _grid.getOptions().rowHeight + height);
                 adjustHeight(height);
                 _expandedRows[row] = row;
@@ -284,6 +275,5 @@
             "init" : init,
             "destroy" : destroy
         });
-
     }
 })(jQuery);

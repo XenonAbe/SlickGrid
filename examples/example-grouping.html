@@ -3,10 +3,11 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example: Grouping</title>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../controls/slick.pager.css" type="text/css"/>
-  <link rel="stylesheet" href="../controls/slick.columnpicker.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-pager.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-columnpicker.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-effort-driven {
@@ -96,9 +97,11 @@
 <script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
 <script src="../lib/jquery.browser.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
@@ -136,8 +139,6 @@ var options = {
   editable: true
 };
 
-var sortcol = "title";
-var sortdir = 1;
 var percentCompleteThreshold = 0;
 var prevPercentCompleteThreshold = 0;
 
@@ -152,22 +153,13 @@ function avgTotalsFormatter(totals, columnDef) {
 function sumTotalsFormatter(totals, columnDef) {
   var val = totals.sum && totals.sum[columnDef.field];
   if (val != null) {
-    return "total: " + ((Math.round(parseFloat(val)*100)/100));
+    return "total: " + ((Math.round(parseFloat(val) * 100) / 100));
   }
   return "";
 }
 
 function myFilter(item, args) {
   return item["percentComplete"] >= args.percentComplete;
-}
-
-function percentCompleteSort(a, b) {
-  return a["percentComplete"] - b["percentComplete"];
-}
-
-function comparer(a, b) {
-  var x = a[sortcol], y = b[sortcol];
-  return (x == y ? 0 : (x > y ? 1 : -1));
 }
 
 function groupByDuration() {
@@ -180,7 +172,8 @@ function groupByDuration() {
       new Slick.Data.Aggregators.Avg("percentComplete"),
       new Slick.Data.Aggregators.Sum("cost")
     ],
-    aggregateCollapsed: false
+    aggregateCollapsed: false,
+    lazyTotalsCalculation: true
   });
 }
 
@@ -197,7 +190,8 @@ function groupByDurationOrderByCount(aggregateCollapsed) {
       new Slick.Data.Aggregators.Avg("percentComplete"),
       new Slick.Data.Aggregators.Sum("cost")
     ],
-    aggregateCollapsed: aggregateCollapsed
+    aggregateCollapsed: aggregateCollapsed,
+    lazyTotalsCalculation: true
   });
 }
 
@@ -212,7 +206,8 @@ function groupByDurationEffortDriven() {
         new Slick.Data.Aggregators.Sum("duration"),
         new Slick.Data.Aggregators.Sum("cost")
       ],
-      aggregateCollapsed: true
+      aggregateCollapsed: true,
+      lazyTotalsCalculation: true
     },
     {
       getter: "effortDriven",
@@ -223,7 +218,8 @@ function groupByDurationEffortDriven() {
         new Slick.Data.Aggregators.Avg("percentComplete"),
         new Slick.Data.Aggregators.Sum("cost")
       ],
-      collapsed: true
+      collapsed: true,
+      lazyTotalsCalculation: true
     }
   ]);
 }
@@ -239,17 +235,19 @@ function groupByDurationEffortDrivenPercent() {
         new Slick.Data.Aggregators.Sum("duration"),
         new Slick.Data.Aggregators.Sum("cost")
       ],
-      aggregateCollapsed: true
+      aggregateCollapsed: true,
+      lazyTotalsCalculation: true
     },
     {
       getter: "effortDriven",
       formatter: function (g) {
         return "Effort-Driven:  " + (g.value ? "True" : "False") + "  <span style='color:green'>(" + g.count + " items)</span>";
       },
-      aggregators :[
+      aggregators: [
         new Slick.Data.Aggregators.Sum("duration"),
         new Slick.Data.Aggregators.Sum("cost")
-      ]
+      ],
+      lazyTotalsCalculation: true
     },
     {
       getter: "percentComplete",
@@ -260,7 +258,8 @@ function groupByDurationEffortDrivenPercent() {
         new Slick.Data.Aggregators.Avg("percentComplete")
       ],
       aggregateCollapsed: true,
-      collapsed: true
+      collapsed: true,
+      lazyTotalsCalculation: true
     }
   ]);
 }
@@ -275,7 +274,7 @@ function loadData(count) {
     d["id"] = "id_" + i;
     d["num"] = i;
     d["title"] = "Task " + i;
-    d["duration"] = Math.round(Math.random() * 14);
+    d["duration"] = Math.round(Math.random() * 30);
     d["percentComplete"] = Math.round(Math.random() * 100);
     d["start"] = someDates[ Math.floor((Math.random()*2)) ];
     d["finish"] = someDates[ Math.floor((Math.random()*2)) ];
@@ -322,31 +321,8 @@ $(function () {
 
 
   grid.onSort.subscribe(function (e, args) {
-    sortdir = args.sortAsc ? 1 : -1;
-    sortcol = args.sortCol.field;
-
-    if ($.browser.msie && $.browser.version <= 8) {
-      // using temporary Object.prototype.toString override
-      // more limited and does lexicographic sort only by default, but can be much faster
-
-      var percentCompleteValueFn = function () {
-        var val = this["percentComplete"];
-        if (val < 10) {
-          return "00" + val;
-        } else if (val < 100) {
-          return "0" + val;
-        } else {
-          return val;
-        }
-      };
-
-      // use numeric sort of % and lexicographic for everything else
-      dataView.fastSort((sortcol == "percentComplete") ? percentCompleteValueFn : sortcol, args.sortAsc);
-    } else {
-      // using native sort with comparer
-      // preferred method but can be very slow in IE with huge datasets
-      dataView.sort(comparer, args.sortAsc);
-    }
+    // use numeric sort for % and any other numeric values; lexicographic for everything else
+    dataView.sort(args.sortCol.field, args.sortAsc);
   });
 
   // wire up model events to drive the grid

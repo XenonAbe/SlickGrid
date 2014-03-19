@@ -1,8 +1,8 @@
 (function ($) {
   // Register namespace
   $.extend(true, window, {
-    "Slick": {
-      "AutoTooltips": AutoTooltips
+    Slick: {
+      AutoTooltips: AutoTooltips
     }
   });
 

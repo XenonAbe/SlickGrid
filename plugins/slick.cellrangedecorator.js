@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "CellRangeDecorator": CellRangeDecorator
+    Slick: {
+      CellRangeDecorator: CellRangeDecorator
     }
   });
 
@@ -14,18 +14,23 @@
    * Use FF and WebKit-specific "pointer-events" CSS style, or some kind of event forwarding.
    * Could also construct the borders separately using 4 individual DIVs.
    *
+   * Currently the above issue is 'fixed' by providing onClick, etc handlers
+   * which produce the cell coordinate as part of the event data.
+   *
    * @param {Grid} grid
    * @param {Object} options
    */
   function CellRangeDecorator(grid, options) {
     var _elem;
     var _elem_range;
+    var $canvas;
+    var _self = this;
     var _defaults = {
       borderThickness: 2,
       selectionCssClass: 'slick-range-decorator',
       selectionCss: {
-        "zIndex": "9999",
-        "border": "2px dashed red"
+        zIndex: "9999",
+        border: "2px dashed red"
       }
     };
 
@@ -53,13 +58,18 @@
       }
     }
 
+    function getClickedCellInfo(e) {
+      // obtain clicked pixel coordinate relative to CanvasNode:
+      var x, y, o;
+      o = $canvas.offset();
+      x = e.pageX - o.left;
+      y = e.pageY - o.top;
+      var nodeInfo = grid.getCellFromPoint(x, y);
+      nodeInfo.innerEvent = e;
+      return nodeInfo;
+    }
+
     function show(range) {
-      if (!_elem) {
-        _elem = $("<div></div>", {css: options.selectionCss})
-            .addClass(options.selectionCssClass)
-            .css("position", "absolute")
-            .appendTo(grid.getActiveCanvasNode());
-      }
       if (!range) {
         range = _elem_range;
       } else {
@@ -70,6 +80,35 @@
           toRow: range.toRow,
           toCell: range.toCell
         };
+      }
+
+      if (!_elem) {
+        $canvas = $(grid.getActiveCanvasNode());
+        _elem = $("<div></div>", {css: options.selectionCss})
+            .addClass(options.selectionCssClass)
+            .css("position", "absolute")
+            .appendTo($canvas);
+
+        _elem.on('click', function(e) {
+          console.log("range decorator slickgrid ", e);
+
+          var nodeInfo = getClickedCellInfo(e);
+
+          var ev = new Slick.EventData();
+          _self.onClick.notify(nodeInfo, ev, _self);
+
+          if (ev.isPropagationStopped() || ev.isImmediatePropagationStopped()) {
+            e.preventDefault();
+          }
+        });
+
+        var ev = new Slick.EventData();
+        _self.onCreate.notify({
+          el: _elem,
+          range: _elem_range,
+          grid: grid,
+          getClickedCellInfo: getClickedCellInfo
+        }, ev, _self);
       }
 
       var box;
@@ -87,6 +126,14 @@
 
     function hide() {
       if (_elem) {
+        var ev = new Slick.EventData();
+        _self.onDestroy.notify({
+          el: _elem,
+          range: _elem_range,
+          grid: grid
+        }, ev, _self);
+
+        _elem.unbind("click");
         _elem.remove();
         _elem = null;
       }
@@ -96,11 +143,16 @@
       return {
         el: _elem,
         range: _elem_range,
+        grid: grid,
         gridRect: calcRangeBox(_elem_range)
       };
     }
 
     $.extend(this, {
+      "onCreate": new Slick.Event(),
+      "onDestroy": new Slick.Event(),
+      "onClick": new Slick.Event(),
+
       "show": show,
       "hide": hide,
       "getInfo": getInfo

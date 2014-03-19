@@ -3,8 +3,9 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example 6: AJAX Load</title>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-story {
@@ -45,6 +46,7 @@
         </span>
     </div>
     <div id="myGrid" class="grid-inner-wrapper"></div>
+    <div id="pager" class="grid-pager"></div>
   </div>
 
   <div class="options-panel">
@@ -71,14 +73,18 @@
 <script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
 <script src="../lib/jquery.jsonp-2.4.min.js"></script>
+<script src="../lib/moment.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.remotemodel.js"></script>
 <script src="../slick.grid.js"></script>
+<script src="../slick.formatters.js"></script>
 
 <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
 <script src="examples.showcode.js"></script>
@@ -97,15 +103,11 @@
     return s;
   };
 
-  var dateFormatter = function (row, cell, value, columnDef, dataContext) {
-    return (value.getMonth()+1) + "/" + value.getDate() + "/" + value.getFullYear();
-  };
-
 
   var columns = [
     {id: "num", name: "#", field: "index", width: 40},
     {id: "story", name: "Story", width: 420, formatter: storyTitleFormatter, cssClass: "cell-story"},
-    {id: "date", name: "Date", field: "create_ts", width: 60, formatter: dateFormatter, sortable: true},
+    {id: "date", name: "Date", field: "create_ts", width: 60, formatter: Slick.Formatters.Date, sortable: true},
     {id: "points", name: "Points", field: "points", width: 60, sortable: true}
   ];
 

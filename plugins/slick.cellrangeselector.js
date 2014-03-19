@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "CellRangeSelector": CellRangeSelector
+    Slick: {
+      CellRangeSelector: CellRangeSelector
     }
   });
 
@@ -17,7 +17,7 @@
     var _handler = new Slick.EventHandler();
     var _defaults = {
       selectionCss: {
-        "border": "2px dashed blue"
+        border: "2px dashed blue"
       }
     };
 
@@ -47,6 +47,7 @@
       // Set the active canvas node because the decorator needs to append its
       // box to the correct canvas
       _$activeCanvas = $( _grid.getActiveCanvasNode( e ) );
+      _dragging = false;
 
       var c = _$activeCanvas.offset();
 
@@ -70,15 +71,15 @@
 
     function handleDragStart(e, dd) {
       var cell = _grid.getCellFromEvent(e);
-      if (_self.onBeforeCellRangeSelected.notify(cell) !== false) {
-        if (_grid.canCellBeSelected(cell.row, cell.cell)) {
-          _dragging = true;
-          e.stopImmediatePropagation();
-        }
-      }
-      if (!_dragging) {
+      var evt = new Slick.EventData(e);
+      var state = _self.onBeforeCellRangeSelected.notify(cell, evt);
+      if (state === false ||
+          evt.isPropagationStopped() || evt.isImmediatePropagationStopped() ||
+          !_grid.canCellBeSelected(cell.row, cell.cell)) {
         return;
       }
+      _dragging = true;
+      e.stopImmediatePropagation();
 
       _grid.focus();
 
@@ -108,7 +109,10 @@
           range: dd.range,
           currentCell: end
       };
-      if (_self.onCellRangeSelectionOngoing.notify(eventData) ||
+      var evt = new Slick.EventData(e);
+      var state = _self.onCellRangeSelectionOngoing.notify(eventData, evt);
+      if (state === false ||
+          evt.isPropagationStopped() || evt.isImmediatePropagationStopped() ||
           !eventData.currentCell ||
           !_grid.canCellBeSelected(eventData.currentCell.row, eventData.currentCell.cell) ||
           ( !_isRightCanvas && ( eventData.currentCell.cell > _gridOptions.frozenColumn ) ) ||
@@ -131,6 +135,7 @@
       e.stopImmediatePropagation();
 
       _decorator.hide();
+      var evt = new Slick.EventData(e);
       _self.onCellRangeSelected.notify({
         range: new Slick.Range(
             dd.range.start.row,
@@ -138,7 +143,7 @@
             dd.range.end.row,
             dd.range.end.cell
         )
-      });
+      }, evt);
     }
 
     $.extend(this, {

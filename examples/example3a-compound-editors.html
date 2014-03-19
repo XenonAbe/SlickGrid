@@ -3,8 +3,9 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example 3a: Advanced Editing</title>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
@@ -39,8 +40,10 @@
 <script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
@@ -71,16 +74,17 @@
   function NumericRangeEditor(args) {
     var $from, $to;
     var scope = this;
+    var $container = $(args.container);
 
     this.init = function () {
       $from = $("<INPUT type=text style='width:40px' />")
-          .appendTo(args.container)
+          .appendTo($container)
           .bind("keydown", scope.handleKeyDown);
 
       $(args.container).append("&nbsp; to &nbsp;");
 
       $to = $("<INPUT type=text style='width:40px' />")
-          .appendTo(args.container)
+          .appendTo($container)
           .bind("keydown", scope.handleKeyDown);
 
       scope.focus();
@@ -93,7 +97,7 @@
     };
 
     this.destroy = function () {
-      $(args.container).empty();
+      $container.empty();
     };
 
     this.focus = function () {
@@ -101,7 +105,10 @@
     };
 
     this.serializeValue = function () {
-      return {from: parseInt($from.val(), 10), to: parseInt($to.val(), 10)};
+      return {
+        from: parseInt($from.val(), 10),
+        to: parseInt($to.val(), 10)
+      };
     };
 
     this.applyValue = function (item, state) {

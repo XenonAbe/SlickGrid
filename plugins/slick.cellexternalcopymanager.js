@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "CellExternalCopyManager": CellExternalCopyManager
+    Slick: {
+      CellExternalCopyManager: CellExternalCopyManager
     }
   });
 
@@ -37,13 +37,15 @@
     var _clearCopyTI = 0;
     var _externalCopyActionWrapupDelay = 100;
     var _bodyElement = _options.bodyElement || document.body;
+    var _externalCopyPastaCatcherTI = 0;
+    var _externalCopyPastaCatcherEl = null;
 
     var keyCodes = {
-      'C':67,
-      'V':86,
-      'X':88,
-      'ESC':27
-    }
+      'C': 67,
+      'V': 86,
+      'X': 88,
+      'ESC': 27
+    };
 
     function init(grid) {
       _grid = grid;
@@ -55,7 +57,8 @@
         throw new Error("Selection model is mandatory for this plugin. Please set a selection model on the grid before adding this plugin: grid.setSelectionModel(new Slick.CellSelectionModel())");
       }
       // we give focus on the grid when a selection is done on it.
-      // without this, if the user selects a range of cell without giving focus on a particular cell, the grid doesn't get the focus and key stroke handles (ctrl+c) don't work
+      // without this, if the user selects a range of cell without giving focus on a particular cell,
+      // the grid doesn't get the focus and key stroke handles (ctrl+C) don't work.
       cellSelectionModel.onSelectedRangesChanged.subscribe(function(e, args) {
         _grid.focus();
       });
@@ -72,21 +75,56 @@
 
       assert(columnDef.field !== undefined);
       assert(columnDef.field !== null);
+      var data = _grid.getData();
+      assert(data);
+      var columns = _grid.getColumns();
+      assert(columns);
+      var m = columns[srcX];
+      assert(m === columnDef);
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(srcY, srcX);
+      // look up by id, then index
+      var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[srcX]);
       var retVal = row_item[columnDef.field];
+      var info;
 
       // use formatter if available; much faster than editor
       if (columnDef.formatter) {
-          return columnDef.formatter(0, 0, item[columnDef.field], columnDef, item);
+        // fake these: we only want the raw entry value anyway:
+        info = {
+          cellCss: [], // ["slick-cell", "l" + cell, "r" + (cell + colspan - 1)],
+          cellStyles: [],
+          html: "",
+          colspan: 1,
+          rowspan: 1,
+          cellHeight: _grid.getOptions().rowHeight,
+          rowMetadata: rowMetadata,
+          columnMetadata: columnMetadata,
+          options: $.extend({}, _grid.getOptions().formatterOptions, m.formatterOptions),
+          outputPlainText: true         // this signals the formatter that the plaintext value is required.
+        };
+        return columnDef.formatter(srcY, srcX, row_item[columnDef.field], columnDef, row_item, info);
       }
 
       // if a custom getter is not defined, we call serializeValue of the editor to serialize
       if (columnDef.editor) {
-        var editorArgs = {
-          'container': $(document),  // a dummy container
-          'column': columnDef,
-          'position': {'top':0, 'left':0}  // a dummy position required by some editors
+        info = {
+          grid: _grid,
+          gridPosition: _grid.getGridPosition(),
+          position: {top: srcY, left: srcX},  // a dummy position required by some editors
+          //position: _grid.getActiveCellPosition(),
+          container: $("<p>"),  // a dummy container
+          //container: activeCellNode,
+          column: columnDef,
+          item: row_item || {},
+          rowMetadata: rowMetadata,
+          columnMetadata: columnMetadata,
+          options: $.extend({}, options.editorOptions, columnDef.editorOptions),
+          outputPlainText: true,         // this signals the formatter that the plaintext value is required.
+          commitChanges: _grid.commitEditAndSetFocus,
+          cancelChanges: _grid.cancelEditAndSetFocus
         };
-        var editor = new columnDef.editor(editorArgs);
+        //currentEditor = new (editor || getEditor(activeRow, activeCell))(info);
+        var editor = new columnDef.editor(info);
         editor.loadValue(row_item);
         retVal = editor.serializeValue();
         editor.destroy();
@@ -103,9 +141,16 @@
       // if a custom setter is not defined, we call applyValue of the editor to unserialize
       if (columnDef.editor) {
         var editorArgs = {
-          'container': $(document),  // a dummy container
-          'column': columnDef,
-          'position': {'top':0, 'left':0}  // a dummy position required by some editors
+          container: $('body'),  // a dummy container
+          column: columnDef,
+
+          grid: _grid,
+          gridPosition: _grid.getGridPosition(),
+          item: row_item || {},
+          commitChanges: _grid.commitEditAndSetFocus,
+          cancelChanges: _grid.cancelEditAndSetFocus,
+
+          position: {top: srcY, left: srcX}  // a dummy position required by some editors
         };
         var editor = new columnDef.editor(editorArgs);
         editor.loadValue(row_item);
@@ -116,37 +161,78 @@
 
 
     function _createTextBox(innerText) {
-      var ta = document.createElement('textarea');
-      ta.style.position = 'absolute';
-      ta.style.left = '-1000px';
-      ta.style.top = document.body.scrollTop + 'px';
-      ta.className = _copiedCellStyleExternalHelperKey;
-      ta.value = innerText;
-      _bodyElement.appendChild(ta);
-      ta.select();
+      if (!_externalCopyPastaCatcherEl) {
+        var ta = document.createElement('textarea');
+        ta.style.position = 'absolute';
+        ta.style.left = '-1000px';
+        ta.style.top = document.body.scrollTop + 'px';
+        ta.className = _copiedCellStyleExternalHelperKey;
+        ta.value = innerText;
+        _bodyElement.appendChild(ta);
+        ta.select(); // .focus();
 
-      return ta;
+        _externalCopyPastaCatcherEl = ta;
+
+        // 'side effect': clear the pending 'catch external copy/pasta action' timeout
+        if (_externalCopyPastaCatcherTI) {
+          clearTimeout(_externalCopyPastaCatcherTI);
+          _externalCopyPastaCatcherTI = 0;
+        }
+      }
     }
 
-    function _decodeTabularData(_grid, ta) {
-      // stuff has been pasted into ta=textarea; now allow user to preprocess the pasted data.
+    function _destroyTextBox() {
+      if (_externalCopyPastaCatcherEl) {
+        _bodyElement.removeChild(_externalCopyPastaCatcherEl);
+        _externalCopyPastaCatcherEl = null;
+
+        if (_externalCopyPastaCatcherTI) {
+          clearTimeout(_externalCopyPastaCatcherTI);
+          _externalCopyPastaCatcherTI = 0;
+        }
+      }
+    }
+
+    function _decodeTabularData(_grid) {
+      // stuff has been pasted into _externalCopyPastaCatcherEl textarea; now allow user to preprocess the pasted data.
       _self.onPasteCellsPrepare.notify({
-        helperDOMelement: ta,
+        helperDOMelement: _externalCopyPastaCatcherEl,
         rangeIsCopied: true /* outside source coming in: always regarded as COPY rather than CUT */,
         rangeDataFromExternalSource: true
       });
 
       var columns = _grid.getColumns();
-      var clipText = ta.value;
+      var clipText = _externalCopyPastaCatcherEl.value;
       var clipRows = clipText.split(/[\n\f\r]/);
       var clippedRange = [];
 
-      _bodyElement.removeChild(ta);
+      _destroyTextBox();
+      assert(!_externalCopyPastaCatcherTI);
 
       for (var i = 0; i < clipRows.length; i++) {
-        if (clipRows[i] != "") {
+        if (clipRows[i] !== "") {
           clippedRange[i] = clipRows[i].split("\t");
         }
+      }
+
+      /*
+      HACKY FIX for this exec scenario in User App:
+
+          copy item as text from someplace in UI,
+          select other cell in slickgrid,
+          hit Paste (Ctrl-V)
+
+      which will exec this code as slickgrid will assume the import is tabular data ('external excel import' feature)
+
+      The end result is that w==0 and h==0 and you get at least very odd bRange numbers in the resulting event notification.
+
+      Cause: clipText is NOT tabular data but simply a single formula/value expression
+      */
+      if (clippedRange.length === 0) {
+        assert(0); // should never get here!
+
+        clippedRange[0] = [];
+        clippedRange[0][0] = clipText;
       }
 
       var selectedCell = _grid.getActiveCell();
@@ -163,6 +249,12 @@
         activeCell = selectedCell.cell;
       } else {
         // we don't know where to paste
+        _self.onCopyCancelled.notify({
+          rangeIsCopied: true, // outside source coming in: always regarded as COPY rather than CUT
+          rangeDataFromExternalSource: true,
+          externalDataSet: clippedRange,
+          status: "No destination cell or range has been provided"
+        });
         return;
       }
 
@@ -237,10 +329,10 @@
           }
 
           var bRange = {
-            'fromCell': this.destX,
-            'fromRow': this.destY,
-            'toCell': this.destX + this.destW - 1,
-            'toRow': this.destY + this.destH - 1
+            fromCell: this.destX,
+            fromRow: this.destY,
+            toCell: this.destX + this.destW - 1,
+            toRow: this.destY + this.destH - 1
           }
 
           this.markCopySelection([bRange]);
@@ -278,10 +370,10 @@
           }
 
           var bRange = {
-            'fromCell': this.destX,
-            'fromRow': this.destY,
-            'toCell': this.destX + this.destW - 1,
-            'toRow': this.destY + this.destH - 1
+            fromCell: this.destX,
+            fromRow: this.destY,
+            toCell: this.destX + this.destW - 1,
+            toRow: this.destY + this.destH - 1
           }
 
           this.markCopySelection([bRange]);
@@ -332,39 +424,40 @@
         }
 
         // Control+C / Control+X  -- these have the same effect on initial range
-        if ((e.which == keyCodes.C || e.which == keyCodes.X) && (e.ctrlKey || e.metaKey)) {
+        if ((e.which === keyCodes.C || e.which === keyCodes.X) && (e.ctrlKey || e.metaKey)) {
           ranges = _grid.getSelectionModel().getSelectedRanges();
 
           // also remember whether this was Ctrl-C (copy) or Ctrl-X (cut):
-          ranges.copy = (e.which == keyCodes.C);
+          ranges.copy = (e.which === keyCodes.C);
 
-          if (ranges.length != 0) {
+          if (ranges.length !== 0) {
             _copiedRanges = ranges;
             markCopySelection(ranges);
             _self.onCopyCells.notify({ranges: ranges, rangeIsCopied: ranges.copy });
 
             var columns = _grid.getColumns();
             var clipTextArr = [];
+            var range, i, j;
 
             // Note: this feature only works well when you have either a single range or all ranges address the same columns
             if (_options.includeHeaderWhenCopying) {
                 var clipTextHeaders = [];
-                var range = ranges[0];
+                range = ranges[0];
 
-                for (var j = range.fromCell; j < range.toCell + 1; j++) {
+                for (j = range.fromCell; j < range.toCell + 1; j++) {
                     clipTextHeaders.push(columns[j].name || '');
                 }
                 clipTextArr.push(clipTextHeaders.join("\t") + "\r\n");
             }
 
             for (var rg = 0; rg < ranges.length; rg++) {
-                var range = ranges[rg];
+                range = ranges[rg];
                 var clipTextRows = [];
-                for (var i = range.fromRow; i < range.toRow + 1; i++) {
+                for (i = range.fromRow; i < range.toRow + 1; i++) {
                     var clipTextCells = [];
                     var dt = _grid.getDataItem(i);
 
-                    for (var j = range.fromCell; j < range.toCell + 1; j++) {
+                    for (j = range.fromCell; j < range.toCell + 1; j++) {
                         clipTextCells.push(getDataItemValueForColumn(dt, columns[j], clipTextRows.length, clipTextCells.length, i, j));
                     }
                     clipTextRows.push(clipTextCells.join("\t"));
@@ -374,28 +467,64 @@
             var clipText = clipTextArr.join('');
             _copyFingerPrint = clipText.replace(/\r/g, "");
 
-            var activeCell = _grid.getActiveCell();
-            var ta = _createTextBox(clipText);
+            //
+            // Clipboard handling
+            // ------------------
+            //
+            // See also:
+            //
+            //   - http://help.dottoro.com/ljctuhrg.php
+            //
+            //   - http://stackoverflow.com/questions/7713182/copy-to-clipboard-for-all-browsers-using-javascript#11603131
+            //     (where the hash in the URL points you at the solution approach which is also employed in slickgrid:
+            //      no Flash, only a hidden (off screen) TEXTAREA DOM node, some arbitrary (heuristically determined)
+            //      timeout and **the subtle requirement that these particular keypresses (Ctrl-C/Ctrl-X/Ctrl-V | Cmd-C/Cmd-X/Cmd-V)
+            //      have their keyboard events 'bubble up' all the way into the browser default handler** so no
+            //      event.stopPropagation() or `return true` in this (or any outer level) keyboard handler for you!**
+            //
+            //   - http://stackoverflow.com/questions/400212/how-to-copy-to-the-clipboard-in-javascript
+            //     (note the by now obsoleted FF approach in there; just for completeness listed here: do not even consider this!)
+            //
+            //   - https://github.com/mojombo/clippy
+            //     (Flash-based solution. Need I say more?)
+            //
+            if (window.clipboardData) {
+              // MSIE browser supports clipboard access from JavaScript
+              window.clipboardData.setData("Text", clipText);
+              return true;
+            } else {
+              var activeCell = _grid.getActiveCell();
+              _createTextBox(clipText);
 
-            ta.select(); // .focus();
+              _externalCopyPastaCatcherTI = setTimeout(function() {
+                  _destroyTextBox();
+                  assert(!_externalCopyPastaCatcherTI);
 
-            setTimeout(function() {
-                _bodyElement.removeChild(ta);
-                // restore focus
-                if (activeCell) {
-                    //$focus.attr('tabIndex', '-1');
-                    //$focus.focus();
-                    //$focus.removeAttr('tabIndex');
-                    _grid.setActiveCell(activeCell.row, activeCell.cell);
-                }
-            }, _externalCopyActionWrapupDelay);
+                  // restore focus
+                  if (activeCell) {
+                      //$focus.attr('tabIndex', '-1');
+                      //$focus.focus();
+                      //$focus.removeAttr('tabIndex');
+                      _grid.setActiveCell(activeCell.row, activeCell.cell);
+                  }
+              }, _externalCopyActionWrapupDelay);
 
-            return false;
+              return false;
+            }
           }
         }
 
         // Control+V
         if (e.which == keyCodes.V && (e.ctrlKey || e.metaKey)) {
+          // when we still have a copy/pasta action pending, we IGNORE this one
+          // (this code might even have been invoked recursively as Ctrl+C/Ctrl+V
+          // do NOT mark the keyboard event as 'handled' when they actually do,
+          // just because they only do so after a timeout...)
+          if (_externalCopyPastaCatcherTI) {
+            // simply ignore...
+            return false;
+          }
+
           /*
            * We have a slightly different behaviour than the regular 'copy manager' here:
            *
@@ -403,17 +532,33 @@
            * when we do NOT have marked a cell range for ourselves during a previous Ctrl-C/X:
            * that would mean we are doing an INTERNAL copy/paste -- or at least PASTE -- anyhow.
            */
-          var ta = _createTextBox('');
+          _createTextBox('');
 
-          setTimeout(function() {
+          _externalCopyPastaCatcherTI = setTimeout(function() {
             // check the 'copy fingerprint' to detect if we are copying/pasting cell data 'internally' i.e. within the same slickgrid grid:
-            var fp = ta.value;
+            var fp = _externalCopyPastaCatcherEl.value;
             assert(typeof fp === 'string');
             fp = fp.replace(/\r/g, "");
             if (_copyFingerPrint === fp) {
               assert(_copiedRanges);
 
               ranges = _grid.getSelectionModel().getSelectedRanges();
+              var selectedCell = _grid.getActiveCell();
+              if (!ranges || ranges.length === 0) {
+                if (selectedCell) {
+                  ranges = [new Slick.Range(selectedCell.row, selectedCell.cell, selectedCell.row, selectedCell.cell)];
+                } else {
+                  // we don't know where to paste
+                  _self.onCopyCancelled.notify({
+                    ranges: _copiedRanges,
+                    rangeIsCopied: _copiedRanges.copy,
+                    rangeDataFromExternalSource: false,
+                    status: "No destination cell or range has been provided"
+                  });
+                  return false;
+                }
+              }
+
               _self.onPasteCells.notify({
                 from: _copiedRanges,
                 to: ranges,
@@ -428,14 +573,19 @@
                 _copiedRanges = null;
                 _copyFingerPrint = null;
               }
+              assert(_externalCopyPastaCatcherTI);
             } else {
               // pasting externally obtained data: nuke the internal Ctrl-C range buffer et al:
               clearCopySelection();
               _copiedRanges = null;
               _copyFingerPrint = null;
 
-              _decodeTabularData(_grid, ta);
+              _decodeTabularData(_grid);
+              assert(!_externalCopyPastaCatcherTI);
             }
+
+            _destroyTextBox();
+            assert(!_externalCopyPastaCatcherTI);
           }, _externalCopyActionWrapupDelay);
 
           //e.preventDefault(); <-- DO exec the default behaviour as that will fill the textbox we just created!

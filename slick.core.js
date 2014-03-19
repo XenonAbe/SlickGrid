@@ -33,7 +33,7 @@
    * @class EventData
    * @constructor
    */
-  function EventData() {
+  function EventData(sourceEvent) {
     var isPropagationStopped = false;
     var isImmediatePropagationStopped = false;
 
@@ -59,16 +59,21 @@
      * @method stopImmediatePropagation
      */
     this.stopImmediatePropagation = function () {
+      isPropagationStopped = true;
       isImmediatePropagationStopped = true;
     };
 
     /***
-     * Returns whether stopImmediatePropagation was called on this event object.\
+     * Returns whether stopImmediatePropagation was called on this event object.
      * @method isImmediatePropagationStopped
      * @return {Boolean}
      */
     this.isImmediatePropagationStopped = function () {
       return isImmediatePropagationStopped;
+    }
+
+    if (sourceEvent) {
+      this.sourceEvent = sourceEvent;
     }
   }
 
@@ -111,6 +116,15 @@
     };
 
     /***
+     * Returns the list of registered event handlers as an array.
+     * @method handlers
+     * @return the list of registered event handlers as an array. When no handlers are registered the array is empty.
+     */
+    this.handlers = function () {
+      return handlers;
+    };
+
+    /***
      * Fires an event notifying all subscribers.
      * @method notify
      * @param args {Object} Additional data object to be passed to all handlers.
@@ -122,14 +136,15 @@
      *      Optional.
      *      The scope ("this") within which the handler will be executed.
      *      If not specified, the scope will be set to the <code>Event</code> instance.
+     * @return {boolean} the return value produced by the event handlers; boolean TRUE by default.
      */
     this.notify = function (args, e, scope) {
       e = e || new EventData();
       scope = scope || this;
 
-      var returnValue;
-      for (var i = 0; i < handlers.length && !(e.isPropagationStopped() || e.isImmediatePropagationStopped()); i++) {
-        returnValue = handlers[i].call(scope, e, args);
+      var returnValue = true;
+      for (var i = 0; i < handlers.length && !e.isImmediatePropagationStopped(); i++) {
+        returnValue = handlers[i].call(scope, e, args, returnValue);
       }
 
       return returnValue;
@@ -376,6 +391,14 @@
      * @type {Group}
      */
     this.group = null;
+
+    /***
+     * Whether the totals have been fully initialized / calculated.
+     * Will be set to false for lazy-calculated group totals.
+     * @param initialized
+     * @type {Boolean}
+     */
+    this.initialized = false;
   }
 
   GroupTotals.prototype = new NonDataItem();
@@ -399,6 +422,7 @@
      * @return {Boolean}
      */
     this.isActive = function (editController) {
+      assert(!editController || (assert(typeof editController.commitCurrentEdit === 'function') && assert(typeof editController.cancelCurrentEdit === 'function')));
       return (editController ? activeEditController === editController : activeEditController !== null);
     };
 
@@ -409,17 +433,18 @@
      * @param editController {EditController} edit controller acquiring the lock
      */
     this.activate = function (editController) {
+      assert(editController && assert(typeof editController.commitCurrentEdit === 'function') && assert(typeof editController.cancelCurrentEdit === 'function'));
       if (editController === activeEditController) { // already activated?
         return;
       }
       if (activeEditController !== null) {
-        throw "SlickGrid.EditorLock.activate: an editController is still active, can't activate another editController";
+        throw new Error("SlickGrid.EditorLock.activate: an editController is still active, can't activate another editController");
       }
       if (!editController.commitCurrentEdit) {
-        throw "SlickGrid.EditorLock.activate: editController must implement .commitCurrentEdit()";
+        throw new Error("SlickGrid.EditorLock.activate: editController must implement .commitCurrentEdit()");
       }
       if (!editController.cancelCurrentEdit) {
-        throw "SlickGrid.EditorLock.activate: editController must implement .cancelCurrentEdit()";
+        throw new Error("SlickGrid.EditorLock.activate: editController must implement .cancelCurrentEdit()");
       }
       activeEditController = editController;
     };
@@ -431,8 +456,9 @@
      * @param editController {EditController} edit controller releasing the lock
      */
     this.deactivate = function (editController) {
+      assert(editController && assert(typeof editController.commitCurrentEdit === 'function') && assert(typeof editController.cancelCurrentEdit === 'function'));
       if (activeEditController !== editController) {
-        throw "SlickGrid.EditorLock.deactivate: specified editController is not the currently active one";
+        throw new Error("SlickGrid.EditorLock.deactivate: specified editController is not the currently active one");
       }
       activeEditController = null;
     };

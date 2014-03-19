@@ -3,8 +3,9 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example 9: Row reordering</title>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-effort-driven {
@@ -93,9 +94,11 @@
 <script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
 <script src="../lib/threedubmedia/event.drop/jquery.event.drop.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
@@ -294,7 +297,7 @@ $(function () {
     $(dd.available).css("background", "beige");
   });
 
-  $.drop({mode: "mouse"});
+  $.drop({mode: "intersect"});
   $("#dropzone")
       .bind("dropstart", function (e, dd) {
         if (dd.mode != "recycle") {

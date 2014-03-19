@@ -3,9 +3,9 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example: Optimizing DataView + variable rowheight</title>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../controls/slick.pager.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-pager.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
@@ -76,8 +76,10 @@
 <script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
@@ -158,7 +160,7 @@
 
     dataView = new Slick.Data.DataView({
         inlineFilters: true,
-        globalItemMetadataProvider: { 
+        globalItemMetadataProvider: {
           getRowMetadata: function (rowData, row, cell /* may be FALSE */, dataRows) {
             return row_metadata[row];
           }

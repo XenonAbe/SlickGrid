@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "RowMoveManager": RowMoveManager
+    Slick: {
+      RowMoveManager: RowMoveManager
     }
   });
 
@@ -52,7 +52,7 @@
       }
 
       if (_grid.getEditorLock().isActive() || !/move|selectAndMove/.test(_grid.getColumns()[cell.cell].behavior)) {
-        return false;
+        return;
       }
 
       _dragging = true;
@@ -60,7 +60,7 @@
 
       var selectedRows = _grid.getSelectedRows();
 
-      if (selectedRows.length == 0 || $.inArray(cell.row, selectedRows) == -1) {
+      if (selectedRows.length === 0 || $.inArray(cell.row, selectedRows) === -1) {
         selectedRows = [cell.row];
         _grid.setSelectedRows(selectedRows);
       }
@@ -113,8 +113,8 @@
 
         dd.insertBefore = insertBefore;
 
-        // // TODO: Implement in a timer
-        // grid.scrollRowIntoView( insertBefore );
+        // TODO: Implement in a timer
+        _grid.scrollRowIntoView(insertBefore);
       }
 
       if (e.pageY > _viewportBottom) {
@@ -151,7 +151,7 @@
           "rows": dd.selectedRows,
           "insertBefore": dd.insertBefore
         };
-        // TODO:  _grid.remapCellCssClasses ?
+        // TODO: _grid.remapCellCssClasses ?
         _self.onMoveRows.notify(eventData);
       }
     }
@@ -182,7 +182,6 @@
 
       "init": init,
       "destroy": destroy
-
     });
   }
 })(jQuery);

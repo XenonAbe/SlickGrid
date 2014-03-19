@@ -17,10 +17,10 @@
       var lastPage = pagingInfo.totalPages - 1;
 
       return {
-        canGotoFirst: !cannotLeaveEditMode && pagingInfo.pageSize != 0 && pagingInfo.pageNum > 0,
-        canGotoLast: !cannotLeaveEditMode && pagingInfo.pageSize != 0 && pagingInfo.pageNum != lastPage,
-        canGotoPrev: !cannotLeaveEditMode && pagingInfo.pageSize != 0 && pagingInfo.pageNum > 0,
-        canGotoNext: !cannotLeaveEditMode && pagingInfo.pageSize != 0 && pagingInfo.pageNum < lastPage,
+        canGotoFirst: !cannotLeaveEditMode && pagingInfo.pageSize !== 0 && pagingInfo.pageNum > 0,
+        canGotoLast: !cannotLeaveEditMode && pagingInfo.pageSize !== 0 && pagingInfo.pageNum != lastPage,
+        canGotoPrev: !cannotLeaveEditMode && pagingInfo.pageSize !== 0 && pagingInfo.pageNum > 0,
+        canGotoNext: !cannotLeaveEditMode && pagingInfo.pageSize !== 0 && pagingInfo.pageNum < lastPage,
         pagingInfo: pagingInfo
       }
     }
@@ -71,13 +71,15 @@
 
       $settings.find("a[data]").click(function (e) {
         var pagesize = $(e.target).attr("data");
-        if (pagesize != undefined) {
+        if (pagesize != null) {
+          pagesize = parseInt(pagesize);
           if (pagesize == -1) {
-            // TODO: produce the number of completely visible rows instead (height of the slickgrid viewport may be partially clipping the last row)
             var vp = grid.getViewport();
-            setPageSize(vp.bottom - vp.top + 1);
+            // the viewport spans several rows, including possibly two partial rows, so the actual page height should account for those:
+            var height = Math.floor(vp.bottomVisible - vp.top + 1 - vp.topInvisibleFraction + vp.bottomVisibleFraction);
+            setPageSize(height);
           } else {
-            setPageSize(parseInt(pagesize));
+            setPageSize(pagesize);
           }
         }
       });
@@ -133,7 +135,7 @@
         $container.find(".ui-icon-seek-prev").addClass("ui-state-disabled");
       }
 
-      if (pagingInfo.pageSize == 0) {
+      if (pagingInfo.pageSize === 0) {
         var totalRowsCount = dataView.getItems().length;
         var visibleRowsCount = pagingInfo.totalRows;
         if (visibleRowsCount < totalRowsCount) {
@@ -150,5 +152,11 @@
   }
 
   // Slick.Controls.Pager
-  $.extend(true, window, { Slick:{ Controls:{ Pager:SlickGridPager }}});
+  $.extend(true, window, {
+    Slick: {
+      Controls: {
+        Pager: SlickGridPager
+      }
+    }
+  });
 })(jQuery);

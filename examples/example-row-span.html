@@ -4,15 +4,18 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
   <title>SlickGrid Row Spans: Basic Grid</title>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    .slick-row .slick-cell.cell-very-high {
+    .slickgrid-container .slick-row.even .slick-cell.cell-very-high {
         background: #F0FFE0;
     }
-    .slick-row .slick-cell.cell-var-span {
+    .slickgrid-container .slick-row.odd .slick-cell.cell-var-span {
         background: #87ceeb;
+    }
+    .slickgrid-container .slick-row.even.slick-row-6 .slick-cell {
+        background: #bea7ff;
     }
   </style>
 </head>
@@ -45,8 +48,10 @@
 <script src="../lib/firebugx.js"></script>
 
 <script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
 <script src="../lib/jquery-ui.js"></script>
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
+<script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
