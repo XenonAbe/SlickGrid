@@ -43,7 +43,7 @@
 <script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
-<script src="../plugins/slick.checkboxselectcolumn.js"></script>
+<script src="../plugins/slick.checkboxselectcolumn-new.js"></script>
 <script src="../plugins/slick.autotooltips.js"></script>
 <script src="../plugins/slick.cellrangedecorator.js"></script>
 <script src="../plugins/slick.cellrangeselector.js"></script>
@@ -76,7 +76,8 @@
     }
 
     var checkboxSelector = new Slick.CheckboxSelectColumn({
-      cssClass: "slick-cell-checkboxsel"
+      cssClass: "slick-cell-checkboxsel",
+      selectable: true // false to disable the checkbox
     });
 
     columns.push(checkboxSelector.getColumnDefinition());
@@ -94,7 +95,18 @@
     grid = new Slick.Grid("#myGrid", data, columns, options);
     grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
     grid.registerPlugin(checkboxSelector);
+    /*
+  	// for ajax loading supporting the disabled checkbox feature
 
+    grid.getItemMetadata = function (row) {
+       if (row >= view.getLength() - 2) {        // only on last two rows.
+          return { selectable: false };
+       } else {
+          return {};
+       }
+    }
+    */
+    grid.setSelectedRows([4, 6, 8, 2]);
     var columnpicker = new Slick.Controls.ColumnPicker(columns, grid, options);
   });
 </script>
