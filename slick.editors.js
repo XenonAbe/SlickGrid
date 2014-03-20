@@ -556,7 +556,7 @@ function isValidModifier(v) {
           .focus()
           .select();
       $input.datepicker(datePickerOptions);
-      $input.width($input.width() - 18);
+      $input.outerWidth($input.outerWidth() - 18);
     };
 
     this.destroy = function () {
@@ -865,7 +865,7 @@ function isValidModifier(v) {
           .focus()
           .select();
 
-      $input.width($(args.container).innerWidth() - 25);
+      $input.outerWidth($(args.container).innerWidth() - 25);
 
       $picker = $("<div class='editor-percentcomplete-picker' />").appendTo(args.container);
 

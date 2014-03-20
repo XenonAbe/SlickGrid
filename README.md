@@ -4,6 +4,9 @@
 ## Welcome to SlickGrid
 
 Find documentation and examples in [the wiki](https://github.com/mleibman/SlickGrid/wiki).
+This is a fork of SlickGrid maintained by Waterfield Energy. The new features that have been added:
+
+* A footer row that mimics the behavoir of the header row, with similar options and controls.
 
 ## SlickGrid is an advanced JavaScript grid/spreadsheet component
 

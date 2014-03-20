@@ -43,7 +43,7 @@
 
       var $li, $input;
       for (var i = 0; i < columns.length; i++) {
-        if (columns[i].id == "_checkbox_selector") continue;
+        if (columns[i].id === "_checkbox_selector") continue;
 
         $li = $("<li />").appendTo($menu);
         $input = $("<input type='checkbox' />").data("column-id", columns[i].id);
@@ -125,7 +125,7 @@
         return;
       }
 
-      if ($(e.target).data("option") == "syncresize") {
+      if ($(e.target).data("option") === "syncresize") {
         if (e.target.checked) {
           grid.setOptions({syncColumnCellResize:true});
         } else {

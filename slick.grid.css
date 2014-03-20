@@ -9,13 +9,15 @@
   outline: 0;
 }
 .slickgrid-container .slick-header.ui-state-default,
-.slickgrid-container .slick-headerrow.ui-state-default {
+.slickgrid-container .slick-headerrow.ui-state-default,
+.slickgrid-container .slick-footerrow.ui-state-default {
   width: 100%;
   overflow: hidden;
   border-left: 0;
 }
 .slickgrid-container .slick-header-columns,
-.slickgrid-container .slick-headerrow-columns {
+.slickgrid-container .slick-headerrow-columns,
+.slickgrid-container .slick-footerrow-columns {
   position: relative;
   top: 0;
   white-space: nowrap;
@@ -28,7 +30,7 @@
   overflow: hidden;
   -o-text-overflow: ellipsis;
   text-overflow: ellipsis;
-  height: 16px;
+  height: 24px;
   line-height: 16px;
   margin: 0;
   padding: 4px 4px 4px 4px;
@@ -38,7 +40,8 @@
   border-bottom: 0;
   float: left;
 }
-.slickgrid-container .slick-headerrow-column.ui-state-default {
+.slickgrid-container .slick-headerrow-column.ui-state-default,
+.slickgrid-container .slick-footerrow-column.ui-state-default {
   padding: 0;
   margin: 0;
 }
@@ -94,7 +97,8 @@
   width: 100%;
 }
 .slickgrid-container .slick-cell,
-.slickgrid-container .slick-headerrow-column {
+.slickgrid-container .slick-headerrow-column,
+.slickgrid-container .slick-footerrow-column {
   position: absolute;
   border: 1px solid transparent;
   border-right: 1px dotted silver;
