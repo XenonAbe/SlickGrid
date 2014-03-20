@@ -85,6 +85,17 @@
         editor: Slick.Editors.Text
       });
     }
+    
+  	/*
+  	// for ajax loding supporting disabled checkbox
+	  grid.getItemMetadata = function (row) {
+     if (row >= view.getLength() - 2){ //only on last two rows.
+        return { selectable: false };
+     } else {
+        return {};
+     }
+	  }
+	  */
 
     grid = new Slick.Grid("#myGrid", data, columns, options);
     grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
