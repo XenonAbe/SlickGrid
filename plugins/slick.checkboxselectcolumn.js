@@ -15,6 +15,7 @@
     var _defaults = {
       columnId: "_checkbox_selector",
       cssClass: null,
+      selectable: true,
       toolTip: "Select/Deselect All",
       field: "sel",
       width: 30,
@@ -166,6 +167,7 @@
         nofilter: true,
         hideable: false,
         cssClass: _options.cssClass,
+        selectable: _options.selectable,
         formatter: checkboxSelectionFormatter,
         headerFormatter: checkboxSelectionHeaderFormatter
       };
@@ -187,9 +189,15 @@
           return false;
         }
       } else {
-        return _selectedRowsLookup[row]
-          ? "<input type='checkbox' checked='checked'>"
-          : "<input type='checkbox'>";
+        if (columnDef.selectable) {
+          return _selectedRowsLookup[row]
+                 ? "<input type='checkbox' checked='checked'>"
+                 : "<input type='checkbox'>";
+        } else {
+          return _selectedRowsLookup[row]
+                 ? "<input type='checkbox' checked='checked' disabled>"
+                 : "<input type='checkbox' disabled>";
+        }
       }
     }
 
