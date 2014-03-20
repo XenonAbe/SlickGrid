@@ -732,6 +732,7 @@ if (typeof Slick === "undefined") {
       return +m[1];
     }
 
+    // This completely redraws the headers and re-binds events
     function createColumnHeaders() {
       function onMouseEnter() {
         $(this).addClass("ui-state-hover");
@@ -1392,6 +1393,8 @@ if (typeof Slick === "undefined") {
       absoluteColumnMinWidth = Math.max(headerColumnWidthDiff, cellWidthDiff);
     }
 
+    // These rules are responsible for heights and cell widths, but not column header widths.
+    //
     // See also github issue #223: stylesheet variable is undefined in Chrome
     //
     // This code is based on
@@ -2623,6 +2626,7 @@ if (typeof Slick === "undefined") {
       render();
     }
 
+    // This removes rows from cache. Would be needed if we were changing rows.
     function invalidateAllRows() {
       if (currentEditor) {
         makeActiveCellNormal();
