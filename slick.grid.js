@@ -168,6 +168,8 @@ if (typeof Slick === "undefined") {
       editorLock: Slick.GlobalEditorLock,
       showHeaderRow: false,
       headerRowHeight: 25,
+      showFooterRow: false,
+      footerRowHeight: 25,
       showTopPanel: false,
       topPanelHeight: 25,
       formatterFactory: null,
@@ -229,6 +231,7 @@ if (typeof Slick === "undefined") {
     var $headerScroller;
     var $headers;
     var $headerRow, $headerRowScroller, $headerRowSpacer;
+    var $footerRow, $footerRowScroller, $footerRowSpacer;
     var $topPanelScroller;
     var $topPanel;
     var $viewport;
@@ -390,6 +393,16 @@ if (typeof Slick === "undefined") {
 
       $canvas = $("<div class='grid-canvas' />").appendTo($viewport);
 
+      $footerRowScroller = $("<div class='slick-footerrow' style='overflow:hidden;position:relative;' />").appendTo($container);
+      $footerRow = $("<div class='slick-footerrow-columns' />").appendTo($footerRowScroller);
+      $footerRowSpacer = $("<div style='display:block;height:1px;position:absolute;top:0;left:0;'></div>")
+          .css("width", getCanvasWidth() + scrollbarDimensions.width + "px")
+          .appendTo($footerRowScroller);
+
+      if (!options.showFooterRow) {
+        $footerRowScroller.hide();
+      }
+
       $focusSink2 = $focusSink.clone().appendTo($container);
 
       if (!options.explicitInitialization) {
@@ -447,6 +460,8 @@ if (typeof Slick === "undefined") {
             .bind("dragend", handleHeaderDragEnd);
         $headerRowScroller
             .bind("scroll", handleHeaderRowScroll);
+        $footerRowScroller
+            .bind("scroll", handleFooterRowScroll);
         $focusSink.add($focusSink2)
             .bind("keydown", handleKeyDown);
         $canvas
@@ -562,6 +577,7 @@ if (typeof Slick === "undefined") {
       if (canvasWidth != oldCanvasWidth || forceCanvasResize) {
         $canvas.width(canvasWidth);
         $headerRow.width(canvasWidth);
+        $footerRow.width(canvasWidth);
         var headersWidth = getHeadersWidth();
         $headers.width(headersWidth);
         $headerParents.width(headersWidth);
@@ -569,6 +585,7 @@ if (typeof Slick === "undefined") {
       }
 
       $headerRowSpacer.width(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
+      $footerRowSpacer.width(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
 
       // when 'stylesheet' has not been set yet, it means that any previous call to applyColumnWidths() did not use up to date values yet as the run-time generated stylesheet wasn't parsed in time.
       if (canvasWidth != oldCanvasWidth || forceColumnWidthsUpdate || forceCanvasResize || !stylesheet) {
@@ -690,6 +707,16 @@ if (typeof Slick === "undefined") {
       return $header && $header[0];
     }
 
+    function getFooterRow() {
+      return $footerRow[0];
+    }
+
+    function getFooterRowColumn(columnId) {
+      var idx = getColumnIndex(columnId);
+      var $footer = $footerRow.children().eq(idx);
+      return $footer && $footer[0];
+    }
+
     function mkSaneId(columnDef, cell) {
       s = '' + uid + '_c' + cell + '_' + columnDef.id;
       s = s.replace(/[^a-zA-Z0-9]+/g, '_');
@@ -741,6 +768,18 @@ if (typeof Slick === "undefined") {
           }
         });
       $headerRow.empty();
+
+      $footerRow.find(".slick-footerrow-column")
+        .each(function() {
+          var columnDef = $(this).data("column");
+          if (columnDef) {
+            trigger(self.onBeforeFooterRowCellDestroy, {
+              node: this,
+              column: columnDef
+            });
+          }
+        });
+      $footerRow.empty();
 
       function createColumnHeader(m, appendTo, level, cell) {
         var colspan = getColumnColspan(m);
@@ -839,6 +878,41 @@ if (typeof Slick === "undefined") {
 
           trigger(self.onHeaderRowCellRendered, {
             node: headerRowCell[0],
+            column: m,
+            cell: cell,
+            level: level
+          });
+        }
+        if (options.showFooterRow) {
+          var cellCss = ["ui-state-default", "slick-footerrow-column", "l" + cell, "r" + cell];
+          if (m.footerCssClass) cellCss.push(m.footerCssClass);
+          var cellStyles = [];
+          var info = {
+            cellCss: cellCss,
+            cellStyles: cellStyles,
+            html: "",
+            toolTip: m.footerRowToolTip || null,
+            colspan: 1,
+            rowspan: 1,
+            //cellHeight: cellHeight,
+            //rowMetadata: rowMetadata,
+            //columnMetadata: columnMetadata,
+            columnHeader: {
+              column: m,
+              level: level,
+              cell: cell
+            }
+          };
+          info.html = getHeaderRowFormatter(-3000, cell)(-3000, cell, m.initialFooterRowValue, m, null /* rowDataItem */, info);
+          var footerRowCell = $("<div></div>")
+              .attr("title", info.toolTip)
+              .data("column", m)
+              .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
+              .attr("class", cellCss.join(" "))
+              .appendTo($footerRow);
+
+          trigger(self.onFooterRowCellRendered, {
+            node: footerRowCell[0],
             column: m,
             cell: cell,
             level: level
@@ -1340,6 +1414,7 @@ if (typeof Slick === "undefined") {
         [".slickgrid-container." + uid + " .slick-header-column", "left: 1000px"],
         [".slickgrid-container." + uid + " .slick-top-panel", "height: " + options.topPanelHeight + "px"],
         [".slickgrid-container." + uid + " .slick-headerrow-columns", "height: " + options.headerRowHeight + "px"],
+        [".slickgrid-container." + uid + " .slick-footerrow-columns", "height: " + options.footerRowHeight + "px"],
         [".slickgrid-container." + uid + " .slick-cell", "height:" + rowHeight + "px"],
         [".slickgrid-container." + uid + " .slick-row", "height:" + options.rowHeight + "px"]
       ];
@@ -1898,6 +1973,17 @@ if (typeof Slick === "undefined") {
           $topPanelScroller.slideDown("fast", resizeCanvas);
         } else {
           $topPanelScroller.slideUp("fast", resizeCanvas);
+        }
+      }
+    }
+
+    function setFooterRowVisibility(visible) {
+      if (options.showFooterRow != visible) {
+        options.showFooterRow = visible;
+        if (visible) {
+          $footerRowScroller.slideDown("fast", resizeCanvas);
+        } else {
+          $footerRowScroller.slideUp("fast", resizeCanvas);
         }
       }
     }
@@ -2747,6 +2833,7 @@ if (typeof Slick === "undefined") {
         parseFloat($.css($container[0], "paddingBottom", true)) -
         parseFloat($.css($headerScroller[0], "height")) - getVBoxDelta($headerScroller) -
         (options.showTopPanel ? options.topPanelHeight + getVBoxDelta($topPanelScroller) : 0) -
+        (options.showFooterRow ? options.footerRowHeight + getVBoxDelta($footerRowScroller) : 0) -
         (options.showHeaderRow ? options.headerRowHeight + getVBoxDelta($headerRowScroller) : 0);
     }
 
@@ -3206,6 +3293,13 @@ if (typeof Slick === "undefined") {
       }
     }
 
+    function handleFooterRowScroll() {
+      var scrollLeft = $footerRowScroller[0].scrollLeft;
+      if (scrollLeft != $viewport[0].scrollLeft) {
+        $viewport[0].scrollLeft = scrollLeft;
+      }
+    }
+
     function handleScroll() {
       scrollTop = $viewport[0].scrollTop;
       scrollLeft = $viewport[0].scrollLeft;
@@ -3217,6 +3311,7 @@ if (typeof Slick === "undefined") {
         $headerScroller[0].scrollLeft = scrollLeft;
         $topPanelScroller[0].scrollLeft = scrollLeft;
         $headerRowScroller[0].scrollLeft = scrollLeft;
+        $footerRowScroller[0].scrollLeft = scrollLeft;
       }
 
       if (vScrollDist) {
@@ -4957,6 +5052,8 @@ if (typeof Slick === "undefined") {
       "onBeforeHeaderCellDestroy": new Slick.Event(),
       "onHeaderRowCellRendered": new Slick.Event(),
       "onBeforeHeaderRowCellDestroy": new Slick.Event(),
+      "onFooterRowCellRendered": new Slick.Event(),
+      "onBeforeFooterRowCellDestroy": new Slick.Event(),
       "onMouseEnter": new Slick.Event(),
       "onMouseLeave": new Slick.Event(),
       "onClick": new Slick.Event(),
@@ -5070,6 +5167,9 @@ if (typeof Slick === "undefined") {
       "getHeaderRow": getHeaderRow,
       "getHeaderRowColumn": getHeaderRowColumn,
       "getHeadersColumn": getHeadersColumn,
+      "setFooterRowVisibility": setFooterRowVisibility,
+      "getFooterRow": getFooterRow,
+      "getFooterRowColumn": getFooterRowColumn,
       "getGridPosition": getGridPosition,
       "flashCell": flashCell,
       "addCellCssStyles": addCellCssStyles,
