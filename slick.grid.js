@@ -757,6 +757,7 @@ if (typeof Slick === "undefined") {
       $headerParents.empty();
       $headerParents.width(headersWidth);
 
+      // Get the data for each column in the DOM
       $headerRow.find(".slick-headerrow-column")
         .each(function() {
           var columnDef = $(this).data("column");
@@ -1785,9 +1786,8 @@ if (typeof Slick === "undefined") {
       columnPosLeft[i] = x;
     }
 
-    function setColumns(columnDefinitions) {
-      columns = columnDefinitions;
-
+    // Given a set of columns, make sure `minWidth <= width <= maxWidth`
+    function enforceWidthLimits(columns) {
       columnsById = {};
       for (var i = 0; i < columns.length; i++) {
         var m = columns[i] = $.extend({}, columnDefaults, columns[i]);
@@ -1799,9 +1799,12 @@ if (typeof Slick === "undefined") {
           m.width = m.maxWidth;
         }
       }
+    }
 
+    function setColumns(columnDefinitions) {
+      columns = columnDefinitions;
+      enforceWidthLimits(columns);
       updateColumnCaches();
-
       if (initialized) {
         invalidateAllRows();
         createColumnHeaders();
@@ -1810,6 +1813,24 @@ if (typeof Slick === "undefined") {
         resizeCanvas();
         applyColumnWidths();   // this one would break as the run-time created style in createCssRules() may not have been parsed by the browser yet! (At least in Chrome/MAC)
         handleScroll();
+      }
+    }
+
+    // Given a column definition object, do all the steps required to react to a change in the widths of any of the columns
+    function updateColumnWidths(columnDefinitions) {
+      columns = columnDefinitions;
+      enforceWidthLimits(columns);
+      updateColumnCaches();
+      if (initialized) {
+        $headers.width(getHeadersWidth()); // Set the full width of all the headers together
+        // Surgically update only the widths of the header cells
+        $headerCells = $headers.children()
+        for (var i = 0; i < columns.length; i++) {
+          var m = columns[i];
+          $el = $headerCells.eq( getColumnIndex(m.id) ); // Get the jQuery-wrapped instance of this column header
+          $el.width(m.width - headerColumnWidthDiff);
+        }
+        applyColumnWidths(); // Surgically update only cell widths (but not header cells, unfortunately)
       }
     }
 
@@ -5093,6 +5114,7 @@ if (typeof Slick === "undefined") {
       "unregisterPlugin": unregisterPlugin,
       "getColumns": getColumns,
       "setColumns": setColumns,
+      "updateColumnWidths": updateColumnWidths,
       "getColumnIndex": getColumnIndex,
       "updateColumnHeader": updateColumnHeader,
       "setSortColumn": setSortColumn,
