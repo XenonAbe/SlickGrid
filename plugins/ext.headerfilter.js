@@ -262,7 +262,7 @@
             e.stopPropagation();
         }
 
-        function sanitizeFilterValue(value, column) {
+        function sanitizeFilterValue(value, columnDef) {
             var title = value;
             if (typeof value === 'undefined' || value === null || value === '') {
                 title = options.messages.empty;
@@ -273,17 +273,29 @@
             else if (value === true) {
                 title = options.messages.trueDesc;
             }
-            else if (column.formatterName === 'sentenceToWords' || column.formatterName === 'date' ) {
-                title = column.formatter(null, null, value);
+            else if (columnDef.formatterName === 'sentenceToWords' || columnDef.formatterName === 'date' ) {
+                // formatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo)
+                title = columnDef.formatter(null, null, value, null, null, {
+                    cellCss: [], // ["slick-cell", "l" + cell, "r" + (cell + colspan - 1)],
+                    cellStyles: [],
+                    html: "",
+                    colspan: 1,
+                    rowspan: 1,
+                    cellHeight: _grid.getOptions().rowHeight,
+                    rowMetadata: rowMetadata,
+                    columnMetadata: columnMetadata,
+                    options: $.extend({}, _grid.getOptions().formatterOptions, m.formatterOptions),
+                    outputPlainText: true         // this signals the formatter that the plaintext value is required.
+                });
             }
 
             return { title: title, value: value };
         }
 
-        function getFilterValues(dataView, column) {
+        function getFilterValues(dataView, columnDef) {
             var seen = [], items = [];
             for (var i = 0; i < dataView.getLength() ; i++) {
-                var v = sanitizeFilterValue(dataView.getItem(i)[column.field], column);
+                var v = sanitizeFilterValue(dataView.getItem(i)[columnDef.field], columnDef);
 
                 if (!_.contains(seen, v.value)) {
                     seen.push(v.value);
@@ -296,10 +308,10 @@
             });
         }
 
-        function getAllFilterValues(data, column) {
+        function getAllFilterValues(data, columnDef) {
             var seen = [], items = [];
             for (var i = 0; i < data.length; i++) {
-                var v = sanitizeFilterValue(data[i][column.field], column);
+                var v = sanitizeFilterValue(data[i][columnDef.field], columnDef);
 
                 if (!_.contains(seen, v.value)) {
                     seen.push(v.value);

@@ -19,8 +19,8 @@
   var maxNestLevels = 2;
 
   function createColumns(count, nestLevels, formatter) {
-    (typeof nestLevels == "number" && nestLevels >= 0 && nestLevels <= maxNestLevels) || (nestLevels = 0);
-    (typeof count == "number") || (count = 5);
+    (typeof nestLevels === "number" && nestLevels >= 0 && nestLevels <= maxNestLevels) || (nestLevels = 0);
+    (typeof count === "number") || (count = 5);
     formatter || (formatter = rowCellValueFormatter);
 
     function fill(arr, cnt, lvl) {
@@ -30,9 +30,9 @@
           id: 'col_lvl_' + lvl + '_' + i,
           name: colName(lvl, i)
         };
-        if (lvl > 0)
+        if (lvl > 0) {
           fill(col.children = [], childCnt, lvl - 1);
-        else {
+        } else {
           col.width = 80;
           col.formatter = formatter;
           col.index = root.leafs.length;
@@ -49,8 +49,8 @@
     return root;
   }
 
-  function rowCellValueFormatter(row, cell, value, columnDef, dataContext) {
-    return '<div class="cellValue">' + dataContext[columnDef.index].toFixed(2) + '</div><div class="valueComment">' + row + '.' + cell + '</div>';
+  function rowCellValueFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
+    return '<div class="cellValue">' + rowDataItem[columnDef.index].toFixed(2) + '</div><div class="valueComment">' + row + '.' + cell + '</div>';
   }
 
   var metrics = [
