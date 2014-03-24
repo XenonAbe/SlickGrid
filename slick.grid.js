@@ -3212,7 +3212,7 @@ if (typeof Slick === "undefined") {
           };
 
           appendRowHtml(stringArray, i, range, dataLength);
-          assert(rowsCache[i].rowNode);
+          //assert(rowsCache[i].rowNode);
           if (activeCellNode && activeRow === i) {
             needToReselectCell = true;
           }
