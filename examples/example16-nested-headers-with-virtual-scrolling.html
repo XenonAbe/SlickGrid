@@ -50,7 +50,7 @@
 <script src="../slick.editors.js"></script>
 <script src="../slick.grid.js"></script>
 
-<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+
 <script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
@@ -72,17 +72,23 @@
         name: "",
         field: "num",
         width: 30
-
       }
     ];
 
 
-    var children = [];
+    var children = [[], []];
     for (var i = 0; i < 24; i++) {
-        children.push({
+        children[0].push({
             id: "cell" + i,
             name: i,
             field: i,
+            width: 160,
+            editor: Slick.Editors.Formula
+        });
+        children[1].push({
+            id: "cell" + i + 24,
+            name: i,
+            field: i + 24,
             width: 160,
             editor: Slick.Editors.Formula
         });
@@ -92,7 +98,13 @@
         id: "Today",
         name: "Today",
         field: "Today",
-        children: children
+        children: children[0]
+    });
+    columns.push({
+        id: "Tomorrow",
+        name: "Tomorrow",
+        field: "Tomorrow",
+        children: children[1]
     });
 
 

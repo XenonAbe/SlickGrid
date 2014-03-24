@@ -1,4 +1,7 @@
-# Welcome to SlickGrid
+# SlickGrid - A lightning fast JavaScript grid/spreadsheet
+
+
+## Welcome to SlickGrid
 
 Find documentation and examples in [the wiki](https://github.com/mleibman/SlickGrid/wiki).
 This is a fork of SlickGrid maintained by Waterfield Energy. The new features that have been added:
@@ -23,3 +26,11 @@ Some highlights:
 * Advanced detached & multi-field editors with undo/redo support.
 * “GlobalEditorLock” to manage concurrent edits in cases where multiple Views on a page can edit the same data.
 * Support for [millions of rows](http://stackoverflow.com/a/2569488/1269037)
+
+
+## This Fork's Features (based on https://github.com/GerHobbelt/SlickGrid)
+
+- Cells spanning multiple coumns and/or rows
+- Indirect data addressing via DataView
+- Formatters and Editors adapted for the above
+- Internal and external Copy/Cut/Paste
