@@ -10,6 +10,19 @@ body {
   background: beige;
   padding: 0;
   margin: 8px;
+
+  /* 
+    prevent the user from accidentally selecting a chunk of text in the grid:
+    we provide that functionality via select range + copy/paste 
+    while it makes usage of the grid on mouse+touch devices dissatisfactory
+    (Windows 8.1 + touchscreen laptop hardware, e.g. ASUS N550JV series)
+   */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 h2 {
   font-size: 10pt;
@@ -32,19 +45,6 @@ li {
   background-color: white;
   border: 1px solid #CCCCCC;
   padding: 1px;
-
-  /* 
-    prevent the user from accidentally selecting a chunk of text in the grid:
-    we provide that functionality via select range + copy/paste 
-    while it makes usage of the grid on mouse+touch devices dissatisfactory
-    (Windows 8.1 + touchscreen laptop hardware, e.g. ASUS N550JV series)
-   */
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
 }
 .grid-inner-wrapper {
   background: white;
