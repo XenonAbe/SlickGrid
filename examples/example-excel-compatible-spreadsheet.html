@@ -19,54 +19,54 @@
         weekcalendareditor
     */
     .wkclEdCont {
-        width:210px;
-        height:23px;
-        overflow:hidden;
-        margin-top:-1px;
-        border:1px solid #DDD;
+        width: 210px;
+        height: 23px;
+        overflow: hidden;
+        margin-top: -1px;
+        border: 1px solid #DDD;
     }
-    .wkclEdContNotEditing{
-        width:210px;
-        height:23px;
-        overflow:hidden;
-        margin-top:-1px;
-        border-right:1px solid #DDD;
-    }
-
-    .wkclEdHalfDay{
-        width:14px;
-        height:100%;
-        cursor:pointer;
-        float:left;
-    }
-    .wkclEdDay{
-        width:29px;
-        height:100%;
-        border-left:1px solid #DDD;
-        float:left;
+    .wkclEdContNotEditing {
+        width: 210px;
+        height: 23px;
+        overflow: hidden;
+        margin-top: -1px;
+        border-right: 1px solid #DDD;
     }
 
-    .wkclEdHeadCont{
-        width:210px;
-        height:23px;
-        overflow:hidden;
-        border:1px solid #FFF;
-        border-bottom:none;
-        margin-top:5px;
+    .wkclEdHalfDay {
+        width: 14px;
+        height: 100%;
+        cursor: pointer;
+        float: left;
+    }
+    .wkclEdDay {
+        width: 29px;
+        height: 100%;
+        border-left: 1px solid #DDD;
+        float: left;
     }
 
-    .wkclEdHeadDay{
-        width:29px;
-        height:100%;
-        border-left:1px solid #DDD;
-        float:left;
-        text-align:center;
-        margin-top:5px;
+    .wkclEdHeadCont {
+        width: 210px;
+        height: 23px;
+        overflow: hidden;
+        border: 1px solid #FFF;
+        border-bottom: none;
+        margin-top: 5px;
+    }
+
+    .wkclEdHeadDay {
+        width: 29px;
+        height: 100%;
+        border-left: 1px solid #DDD;
+        float: left;
+        text-align: center;
+        margin-top: 5px;
     }
   </style>
 </head>
 <body>
-<div style="position:relative">
+<div style="position: relative">
   <div class="grid-outer-wrapper">
     <div class="grid-header">
       <label>SlickGrid 1</label>
@@ -134,7 +134,7 @@
 <script src="../slick.formatters.js"></script>
 <script src="../slick.grid.js"></script>
 
-<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js" ></script>
+
 <script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
@@ -154,8 +154,8 @@
 
 
   var undoRedoBuffer = {
-      commandQueue : [],
-      commandCtr : 0,
+      commandQueue: [],
+      commandCtr: 0,
 
       queueAndExecuteCommand: function(editCommand) {
         this.commandQueue[this.commandCtr] = editCommand;
@@ -201,7 +201,7 @@
     clipboardCommandHandler: function(editCommand) {
       undoRedoBuffer.queueAndExecuteCommand.call(undoRedoBuffer, editCommand);
     },
-    includeHeaderWhenCopying : false
+    includeHeaderWhenCopying: false
   };
 
   var columns = [
