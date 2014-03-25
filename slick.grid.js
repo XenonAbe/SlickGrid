@@ -1,4 +1,4 @@
-/**
+3/**
  * @license
  * (c) 2009-2013 Michael Leibman
  * michael{dot}leibman{at}gmail{dot}com
@@ -90,6 +90,7 @@ if (typeof Slick === "undefined") {
    *      resizable:          {Boolean}   Whether this column can be resized
    *      selectable:         {Boolean}   Whether this column can be selected
    *      sortable:           {Boolean}   Whether the grid rows can be sorted by this column
+   *      children:           {Array}     An optional array of columns which are the children of this parent.
    *
    *  options: Object with additional customization options
    *      explicitInitialization:
@@ -276,6 +277,7 @@ if (typeof Slick === "undefined") {
     var cellCssClasses = {};
 
     var columnsById = {};
+    var columnsDefTree = columns;
     var sortColumns = [];
     var columnPosLeft = [];      // this cache array length is +1 longer than columns[] itself as we store the 'right edge + 1 pixel' as the 'left edge' of the first column beyond the grid width just as it would have been anyway. This simplifies the rest of the code.
     //var columnPosRight = [];
@@ -294,7 +296,7 @@ if (typeof Slick === "undefined") {
     var counter_rows_removed = 0;
 
     var hasNestedColumns = false;
-    var nestedColumns = null;
+    var nestedColumns = null;   // 2D array: [depth][h_index] -> column reference
 
     // These two variables work around a bug with inertial scrolling in Webkit/Blink on Mac.
     // See http://crbug.com/312427.
@@ -333,9 +335,9 @@ if (typeof Slick === "undefined") {
       validateAndEnforceOptions();
       columnDefaults.width = options.defaultColumnWidth;
 
-      columnsById = {};
-
-      columns = parseColumns(columns);
+      parseColumns(columns);
+      computeNestedColumnHeaderWidths();
+      updateColumnCaches();
 
       // validate loaded JavaScript modules against requested options
       if (options.enableColumnReorder && !$.fn.sortable) {
@@ -1050,7 +1052,7 @@ if (typeof Slick === "undefined") {
         helper: "clone",
         placeholder: "slick-sortable-placeholder ui-state-default slick-header-column",
         start: function (e, ui) {
-          ui.placeholder.outerWidth(ui.helper.outerWidth() - headerColumnWidthDiff);
+          ui.placeholder.outerWidth(ui.helper.outerWidth());
           trigger(self.onColumnsStartReorder, {e: e, ui: ui});
 
           $(ui.helper).addClass("slick-header-column-active");
@@ -1114,6 +1116,230 @@ if (typeof Slick === "undefined") {
       if (firstResizable === undefined) {
         return;
       }
+
+      function onColumnResizeDragInit(e, dd, aciveColumnIndex) {
+        var j, c;
+        if (!getEditorLock().commitCurrentEdit()) {
+          return false;
+        }
+        //e.preventDefault();
+        //e.stopPropagation();
+      }
+
+      function onColumnResizeDragStart(e, dd, aciveColumnIndex) {
+        var j, c;
+        if (!getEditorLock().commitCurrentEdit()) {
+          return false;
+        }
+        pageX = e.pageX;
+        $(this).parent().addClass("slick-header-column-active");
+        var shrinkLeewayOnRight = null, stretchLeewayOnRight = null;
+        // calculate & cache all invariants to speed up the process:
+        for (var i = 0, len = columns.length; i < len; i++) {
+          var c = columns[i];
+          c.__columnResizeInfo = {
+            // lock each column's width option to current width
+            previousWidth: c.width, // previousWidth should NOT be measured from the UI as this will b0rk the system depending on boxmodel. // $(e).outerWidth();
+            absMinWidth: Math.max(c.minWidth || 0, absoluteColumnMinWidth),
+          };
+        }
+
+        assert(columns.length === columnElements.length);
+        columnElements.each(function (i, e) {
+          assert(columns[i].__columnResizeInfo.previousWidth === columns[i].width); // previousWidth should NOT be measured from the UI as this will b0rk the system depending on boxmodel. // $(e).outerWidth();
+        });
+        if (options.forceFitColumns) {
+          shrinkLeewayOnRight = 0;
+          stretchLeewayOnRight = 0;
+          // columns on right affect maxPageX/minPageX
+          for (j = aciveColumnIndex + 1; j < columnElements.length; j++) {
+            c = columns[j];
+            assert(c);
+            if (c.resizable) {
+              if (stretchLeewayOnRight !== null) {
+                if (c.maxWidth) {
+                  stretchLeewayOnRight += c.maxWidth - c.__columnResizeInfo.previousWidth;
+                } else {
+                  stretchLeewayOnRight = null;
+                }
+              }
+              shrinkLeewayOnRight += c.__columnResizeInfo.previousWidth - c.__columnResizeInfo.absMinWidth;
+            }
+          }
+        }
+        var shrinkLeewayOnLeft = 0, stretchLeewayOnLeft = 0;
+        for (j = 0; j <= aciveColumnIndex; j++) {
+          // columns on left only affect minPageX
+          c = columns[j];
+          assert(c);
+          if (c.resizable) {
+            if (stretchLeewayOnLeft !== null) {
+              if (c.maxWidth) {
+                stretchLeewayOnLeft += c.maxWidth - c.__columnResizeInfo.previousWidth;
+              } else {
+                stretchLeewayOnLeft = null;
+              }
+            }
+            shrinkLeewayOnLeft += c.__columnResizeInfo.previousWidth - c.__columnResizeInfo.absMinWidth;
+          }
+        }
+        if (shrinkLeewayOnRight === null) {
+          shrinkLeewayOnRight = 100000;
+        }
+        if (shrinkLeewayOnLeft === null) {
+          shrinkLeewayOnLeft = 100000;
+        }
+        if (stretchLeewayOnRight === null) {
+          stretchLeewayOnRight = 100000;
+        }
+        if (stretchLeewayOnLeft === null) {
+          stretchLeewayOnLeft = 100000;
+        }
+        maxPageX = pageX + Math.min(shrinkLeewayOnRight, stretchLeewayOnLeft);
+        minPageX = pageX - Math.min(shrinkLeewayOnLeft, stretchLeewayOnRight);
+        trigger(self.onColumnsStartResize, {e: e}); // onColumnsResizeStart
+        computeNestedColumnHeaderWidths();
+        updateColumnCaches();
+        applyColumnHeaderWidths();
+        if (options.syncColumnCellResize) {
+          //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
+          updateCanvasWidth(true);
+        }
+        //e.preventDefault();
+        //e.stopPropagation();
+      }
+
+      function onColumnResizeDrag(e, dd, aciveColumnIndex) {
+        var actualMinWidth, 
+            d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX, 
+            x;
+        var j, c;
+        assert(columns.length === columnElements.length);
+        if (d < 0) { // shrink column
+          x = d;
+          for (j = aciveColumnIndex; j >= 0; j--) {
+            c = columns[j];
+            assert(c);
+            if (c.resizable) {
+              actualMinWidth = c.__columnResizeInfo.absMinWidth;
+              if (x && c.__columnResizeInfo.previousWidth + x < actualMinWidth) {
+                x += c.__columnResizeInfo.previousWidth - actualMinWidth;
+                c.width = actualMinWidth;
+              } else {
+                c.width = c.__columnResizeInfo.previousWidth + x;
+                x = 0;
+              }
+            }
+          }
+
+          if (options.forceFitColumns) {
+            x = -d;
+            for (j = aciveColumnIndex + 1; j < columnElements.length; j++) {
+              c = columns[j];
+              assert(c);
+              if (c.resizable) {
+                if (x && c.maxWidth && (c.maxWidth - c.__columnResizeInfo.previousWidth < x)) {
+                  x -= c.maxWidth - c.__columnResizeInfo.previousWidth;
+                  c.width = c.maxWidth;
+                } else {
+                  c.width = c.__columnResizeInfo.previousWidth + x;
+                  x = 0;
+                }
+              }
+            }
+          }
+        } else { // stretch column
+          x = d;
+          for (j = aciveColumnIndex; j >= 0; j--) {
+            c = columns[j];
+            assert(c);
+            if (c.resizable) {
+              if (x && c.maxWidth && (c.maxWidth - c.__columnResizeInfo.previousWidth < x)) {
+                x -= c.maxWidth - c.__columnResizeInfo.previousWidth;
+                c.width = c.maxWidth;
+              } else {
+                c.width = c.__columnResizeInfo.previousWidth + x;
+                x = 0;
+              }
+            }
+          }
+
+          if (options.forceFitColumns) {
+            x = -d;
+            for (j = aciveColumnIndex + 1; j < columnElements.length; j++) {
+              c = columns[j];
+              assert(c);
+              if (c.resizable) {
+                actualMinWidth = c.__columnResizeInfo.absMinWidth;
+                if (x && c.__columnResizeInfo.previousWidth + x < actualMinWidth) {
+                  x += c.__columnResizeInfo.previousWidth - actualMinWidth;
+                  c.width = actualMinWidth;
+                } else {
+                  c.width = c.__columnResizeInfo.previousWidth + x;
+                  x = 0;
+                }
+              }
+            }
+          }
+        }
+        computeNestedColumnHeaderWidths();
+        updateColumnCaches();
+        applyColumnHeaderWidths();
+        if (options.syncColumnCellResize) {
+          //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
+          updateCanvasWidth(true);
+        }
+        trigger(self.onColumnsResizing, {e: e});
+        //e.preventDefault();
+        //e.stopPropagation();
+      }
+      
+      function onColumnResizeDragEnd(e, dd) {
+        var newWidth, j, c;
+        $(this).parent().removeClass("slick-header-column-active");
+        assert(columns.length === columnElements.length);
+        for (j = 0; j < columnElements.length; j++) {
+          c = columns[j];
+          assert(c);
+          newWidth = c.width; // again, we should NEVER get the cell width from the UI as that will screw us seven ways to Hell thanks to the CSS boxmodels // $(columnElements[j]).outerWidth();
+
+          if (c.__columnResizeInfo.previousWidth !== newWidth && c.rerenderOnResize) {
+            invalidateAllRows();
+          }
+        }
+        updateCanvasWidth(true);
+        handleScroll();
+        render();
+        trigger(self.onColumnsResized, {e: e});
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      function onColumnResizeDblClick(e) {
+        var cell = extractCellFromDOMid($(this).parent().attr('id'));
+        var columnDef = columns[cell];
+        var aux_width = calculateWordDimensions(columnElements[cell].children[0].innerHTML).width;
+        assert(columnDef.values === undefined);
+        for (var row = 0, len = getDataLength(); row < len; row++) {
+          var rowDataItem = getDataItem(row);
+          var value = getDataItemValueForColumn(rowDataItem, columnDef);
+          aux_width = Math.max(aux_width, calculateWordDimensions(value.toString()).width);
+        }
+        columnDef.width = aux_width;
+
+        // TODO: make autosize faster by introducing a bit of heuristic: longer raw string implies wider cell
+        // TODO: apply the proper formatter so that we actually get what we will see when the cell is rendered for real
+
+        computeNestedColumnHeaderWidths();
+        updateColumnCaches();
+        applyColumnHeaderWidths();
+        updateCanvasWidth(true);
+        render();
+        trigger(self.onColumnsResized, {e: e, cell: cell, column: columnDef});
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
       columnElements.each(function (i, e) {
         if (i < firstResizable || (options.forceFitColumns && i >= lastResizable)) {
           return;
@@ -1130,187 +1356,20 @@ if (typeof Slick === "undefined") {
             // it isn't entirely overlapped/hidden by the divider view.
             .css({ width: 'ontouchstart' in window ? 16 : (i === lastResizable ? 8 : 4) })
             // [\KCPT]
+            .bind("draginit", function (e, dd) {
+              onColumnResizeDragInit(e, dd, i);
+            })
             .bind("dragstart touchstart", function (e, dd) {
-              var j, c;
-              if (!getEditorLock().commitCurrentEdit()) {
-                return false;
-              }
-              pageX = e.pageX;
-              $(this).parent().addClass("slick-header-column-active");
-              var shrinkLeewayOnRight = null, stretchLeewayOnRight = null;
-              assert(columns.length === columnElements.length);
-              // lock each column's width option to current width
-              columnElements.each(function (i, e) {
-                columns[i].previousWidth = $(e).outerWidth();
-              });
-              if (options.forceFitColumns) {
-                shrinkLeewayOnRight = 0;
-                stretchLeewayOnRight = 0;
-                // colums on right affect maxPageX/minPageX
-                for (j = i + 1; j < columnElements.length; j++) {
-                  c = columns[j];
-                  assert(c);
-                  if (c.resizable) {
-                    if (stretchLeewayOnRight !== null) {
-                      if (c.maxWidth) {
-                        stretchLeewayOnRight += c.maxWidth - c.previousWidth;
-                      } else {
-                        stretchLeewayOnRight = null;
-                      }
-                    }
-                    shrinkLeewayOnRight += c.previousWidth - Math.max(c.minWidth || 0, absoluteColumnMinWidth);
-                  }
-                }
-              }
-              var shrinkLeewayOnLeft = 0, stretchLeewayOnLeft = 0;
-              for (j = 0; j <= i; j++) {
-                // columns on left only affect minPageX
-                c = columns[j];
-                assert(c);
-                if (c.resizable) {
-                  if (stretchLeewayOnLeft !== null) {
-                    if (c.maxWidth) {
-                      stretchLeewayOnLeft += c.maxWidth - c.previousWidth;
-                    } else {
-                      stretchLeewayOnLeft = null;
-                    }
-                  }
-                  shrinkLeewayOnLeft += c.previousWidth - Math.max(c.minWidth || 0, absoluteColumnMinWidth);
-                }
-              }
-              if (shrinkLeewayOnRight === null) {
-                shrinkLeewayOnRight = 100000;
-              }
-              if (shrinkLeewayOnLeft === null) {
-                shrinkLeewayOnLeft = 100000;
-              }
-              if (stretchLeewayOnRight === null) {
-                stretchLeewayOnRight = 100000;
-              }
-              if (stretchLeewayOnLeft === null) {
-                stretchLeewayOnLeft = 100000;
-              }
-              maxPageX = pageX + Math.min(shrinkLeewayOnRight, stretchLeewayOnLeft);
-              minPageX = pageX - Math.min(shrinkLeewayOnLeft, stretchLeewayOnRight);
-              trigger(self.onColumnsStartResize, {e: e}); // onColumnsResizeStart
+              onColumnResizeDragStart(e, dd, i);
             })
             .bind("drag touchmove", function (e, dd) {
-              var actualMinWidth, d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX, x;
-              var j, c;
-              assert(columns.length === columnElements.length);
-              if (d < 0) { // shrink column
-                x = d;
-                for (j = i; j >= 0; j--) {
-                  c = columns[j];
-                  assert(c);
-                  if (c.resizable) {
-                    actualMinWidth = Math.max(c.minWidth || 0, absoluteColumnMinWidth);
-                    if (x && c.previousWidth + x < actualMinWidth) {
-                      x += c.previousWidth - actualMinWidth;
-                      c.width = actualMinWidth;
-                    } else {
-                      c.width = c.previousWidth + x;
-                      x = 0;
-                    }
-                  }
-                }
-
-                if (options.forceFitColumns) {
-                  x = -d;
-                  for (j = i + 1; j < columnElements.length; j++) {
-                    c = columns[j];
-                    assert(c);
-                    if (c.resizable) {
-                      if (x && c.maxWidth && (c.maxWidth - c.previousWidth < x)) {
-                        x -= c.maxWidth - c.previousWidth;
-                        c.width = c.maxWidth;
-                      } else {
-                        c.width = c.previousWidth + x;
-                        x = 0;
-                      }
-                    }
-                  }
-                }
-              } else { // stretch column
-                x = d;
-                for (j = i; j >= 0; j--) {
-                  c = columns[j];
-                  assert(c);
-                  if (c.resizable) {
-                    if (x && c.maxWidth && (c.maxWidth - c.previousWidth < x)) {
-                      x -= c.maxWidth - c.previousWidth;
-                      c.width = c.maxWidth;
-                    } else {
-                      c.width = c.previousWidth + x;
-                      x = 0;
-                    }
-                  }
-                }
-
-                if (options.forceFitColumns) {
-                  x = -d;
-                  for (j = i + 1; j < columnElements.length; j++) {
-                    c = columns[j];
-                    assert(c);
-                    if (c.resizable) {
-                      actualMinWidth = Math.max(c.minWidth || 0, absoluteColumnMinWidth);
-                      if (x && c.previousWidth + x < actualMinWidth) {
-                        x += c.previousWidth - actualMinWidth;
-                        c.width = actualMinWidth;
-                      } else {
-                        c.width = c.previousWidth + x;
-                        x = 0;
-                      }
-                    }
-                  }
-                }
-              }
-              applyColumnHeaderWidths();
-              updateColumnCaches();
-              if (options.syncColumnCellResize) {
-                //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
-                updateCanvasWidth(true);
-              }
-              trigger(self.onColumnsResizing, {e: e});
+              onColumnResizeDrag(e, dd, i);
             })
             .bind("dragend touchend", function (e, dd) {
-              var newWidth, j, c;
-              $(this).parent().removeClass("slick-header-column-active");
-              assert(columns.length === columnElements.length);
-              for (j = 0; j < columnElements.length; j++) {
-                c = columns[j];
-                assert(c);
-                newWidth = $(columnElements[j]).outerWidth();
-
-                if (c.previousWidth !== newWidth && c.rerenderOnResize) {
-                  invalidateAllRows();
-                }
-              }
-              updateCanvasWidth(true);
-              handleScroll();
-              render();
-              trigger(self.onColumnsResized, {e: e});
+              onColumnResizeDragEnd(e, dd, i);
             })
-            .bind("dblclick", function(e) {
-                var cell = extractCellFromDOMid($(this).parent().attr('id'));
-                var columnDef = columns[cell];
-                var aux_width = calculateWordDimensions(columnElements[cell].children[0].innerHTML).width;
-                assert(columnDef.values === undefined);
-                for (var row = 0, len = getDataLength(); row < len; row++) {
-                    var rowDataItem = getDataItem(row);
-                    var value = getDataItemValueForColumn(rowDataItem, columnDef);
-                    aux_width = Math.max(aux_width, calculateWordDimensions(value.toString()).width);
-                }
-                columnDef.width = aux_width;
-
-                // TODO: make autosize faster by introducing a bit of heuristic: longer raw string implies wider cell
-                // TODO: apply the proper formatter so that we actually get what we will see when the cell is rendered for real
-
-                applyColumnHeaderWidths();
-                updateColumnCaches();
-                updateCanvasWidth(true);
-                render();
-                trigger(self.onColumnsResized, {e: e, cell: cell, column: columnDef});
+            .bind("dblclick", function (e, dd) {
+              onColumnResizeDblClick(e, dd, i);
             });
       });
     }
@@ -1367,7 +1426,7 @@ if (typeof Slick === "undefined") {
 
       el = $("<div class='ui-state-default slick-header-column' style='visibility:hidden'>-</div>").appendTo($headers);
       headerColumnWidthDiff = headerColumnHeightDiff = 0;
-      if (el.css("box-sizing") != "border-box" && el.css("-moz-box-sizing") != "border-box" && el.css("-webkit-box-sizing") != "border-box") {
+      if (el.css("box-sizing") !== "border-box" && el.css("-moz-box-sizing") !== "border-box" && el.css("-webkit-box-sizing") !== "border-box") {
         $.each(h, function (n, val) {
           headerColumnWidthDiff += parseFloat(el.css(val)) || 0;
         });
@@ -1380,7 +1439,7 @@ if (typeof Slick === "undefined") {
       var r = $("<div class='slick-row' />").appendTo($canvas);
       el = $("<div class='slick-cell' id='' style='visibility:hidden'>-</div>").appendTo(r);
       cellWidthDiff = cellHeightDiff = 0;
-      if (el.css("box-sizing") != "border-box" && el.css("-moz-box-sizing") != "border-box" && el.css("-webkit-box-sizing") != "border-box") {
+      if (el.css("box-sizing") !== "border-box" && el.css("-moz-box-sizing") !== "border-box" && el.css("-webkit-box-sizing") !== "border-box") {
         $.each(h, function (n, val) {
           cellMetrics[val] = parseFloat(el.css(val)) || 0;
           cellWidthDiff += cellMetrics[val];
@@ -1566,7 +1625,7 @@ if (typeof Slick === "undefined") {
         widths.push(c.width);
         total += c.width;
         if (c.resizable) {
-          shrinkLeeway += c.width - Math.max(c.minWidth, absoluteColumnMinWidth);
+          shrinkLeeway += c.width - Math.max(c.minWidth || 0, absoluteColumnMinWidth);
         }
       }
 
@@ -1577,10 +1636,10 @@ if (typeof Slick === "undefined") {
         for (i = 0; i < columns.length && total > availWidth; i++) {
           c = columns[i];
           var width = widths[i];
-          if (!c.resizable || width <= c.minWidth || width <= absoluteColumnMinWidth) {
+          if (!c.resizable || width <= Math.max(c.minWidth || 0, absoluteColumnMinWidth)) {
             continue;
           }
-          var absMinWidth = Math.max(c.minWidth, absoluteColumnMinWidth);
+          var absMinWidth = Math.max(c.minWidth || 0, absoluteColumnMinWidth);
           var shrinkSize = Math.floor(shrinkProportion * (width - absMinWidth)) || 1;
           shrinkSize = Math.min(shrinkSize, width - absMinWidth);
           total -= shrinkSize;
@@ -1602,10 +1661,10 @@ if (typeof Slick === "undefined") {
           var currentWidth = widths[i];
           var growSize;
 
-          if (!c.resizable || c.maxWidth <= currentWidth) {
+          if (!c.resizable || (c.maxWidth && c.maxWidth <= currentWidth)) {
             growSize = 0;
           } else {
-            growSize = Math.min(Math.floor(growProportion * currentWidth) - currentWidth, (c.maxWidth - currentWidth) || 1000000) || 1;
+            growSize = Math.min(Math.floor(growProportion * currentWidth) - currentWidth, (c.maxWidth ? c.maxWidth - currentWidth : 0) || 1000000) || 1;
           }
           total += growSize;
           widths[i] += growSize;
@@ -1624,8 +1683,9 @@ if (typeof Slick === "undefined") {
         columns[i].width = widths[i];
       }
 
-      applyColumnHeaderWidths();
+      computeNestedColumnHeaderWidths();
       updateColumnCaches();
+      applyColumnHeaderWidths();
       updateCanvasWidth(true);
       if (reRender) {
         invalidateAllRows();
@@ -1659,14 +1719,31 @@ if (typeof Slick === "undefined") {
       }
       var nh;
 
+      for (var j = 0, nestedHeaderRows = $headerParents.children(), jj = nestedHeaderRows.length; j < jj; j++) {
+        for (var k = 0, nestedHeaders = $(nestedHeaderRows[j]).children(), kk = nestedHeaders.length; k < kk; k++) {
+          nh = $(nestedHeaders[k]);
+
+          if (nh.outerWidth() !== nestedColumns[j][k].width - headerColumnWidthDiff) {
+            nh.outerWidth(nestedColumns[j][k].width - headerColumnWidthDiff);
+          }
+        }
+      }
+    }
+
+    /* this function (re)computes header column widths based on the (possibly resized) leaf column widths */ 
+    function computeNestedColumnHeaderWidths() {
+      if (!hasNestedColumns) {
+        return;
+      }
+
       function computeWidths(columns, depth) {
         var totalWidth = 0;
         for (var i = 0; i < columns.length; i++) {
           var column = columns[i];
+          assert(column.children ? !column.spacers : true);
           if (column.children) {
-            column.width = computeWidths(column.children, depth);
-          }
-          if (column.spacers) {
+            column.width = computeWidths(column.children, depth + 1);
+          } else if (column.spacers) {
             var spacer;
             for (var j = 0; j < column.spacers.length; j++) {
               spacer = column.spacers[j];
@@ -1679,16 +1756,6 @@ if (typeof Slick === "undefined") {
       }
 
       computeWidths(nestedColumns[0], 0);
-
-      for (var j = 0, nestedHeaderRows = $headerParents.children(), jj = nestedHeaderRows.length; j < jj; j++) {
-        for (var k = 0, nestedHeaders = $(nestedHeaderRows[j]).children(), kk = nestedHeaders.length; k < kk; k++) {
-          nh = $(nestedHeaders[k]);
-
-          if (nh.outerWidth() !== nestedColumns[j][k].width - headerColumnWidthDiff) {
-            nh.outerWidth(nestedColumns[j][k].width - headerColumnWidthDiff);
-          }
-        }
-      }
     }
 
     /**
@@ -1791,24 +1858,8 @@ if (typeof Slick === "undefined") {
       columnPosLeft[i] = x;
     }
 
-    // Given a set of columns, make sure `minWidth <= width <= maxWidth`
-    function enforceWidthLimits(columns) {
-      columnsById = {};
-      for (var i = 0; i < columns.length; i++) {
-        var m = columns[i] = $.extend({}, columnDefaults, columns[i]);
-        columnsById[m.id] = i;
-        if (m.minWidth && m.width < m.minWidth) {
-          m.width = m.minWidth;
-        }
-        if (m.maxWidth && m.width > m.maxWidth) {
-          m.width = m.maxWidth;
-        }
-      }
-    }
-
     function setColumns(columnDefinitions) {
-      columns = columnDefinitions;
-      enforceWidthLimits(columns);
+      parseColumns(columnDefinitions);
       updateColumnCaches();
       if (initialized) {
         invalidateAllRows();
@@ -1823,18 +1874,11 @@ if (typeof Slick === "undefined") {
 
     // Given a column definition object, do all the steps required to react to a change in the widths of any of the columns
     function updateColumnWidths(columnDefinitions) {
-      columns = columnDefinitions;
-      enforceWidthLimits(columns);
+      parseColumns(columnDefinitions);
       updateColumnCaches();
       if (initialized) {
         $headers.outerWidth(getHeadersWidth()); // Set the full width of all the headers together
-        // Surgically update only the widths of the header cells
-        $headerCells = $headers.children()
-        for (var i = 0; i < columns.length; i++) {
-          var m = columns[i];
-          $el = $headerCells.eq( getColumnIndex(m.id) ); // Get the jQuery-wrapped instance of this column header
-          $el.outerWidth(m.width - headerColumnWidthDiff);
-        }
+        applyColumnHeaderWidths(); // Surgically update only the widths of the header cells
         applyColumnWidths(); // Surgically update only cell widths (but not header cells, unfortunately)
       }
     }
@@ -2027,7 +2071,10 @@ if (typeof Slick === "undefined") {
 
     function parseColumns(columnsInput) {
       var maxDepth = 0;
-      var resultColumns = [];
+
+      columnsDefTree = columns;
+      columns = [];
+      columnsById = {};
 
       function parse(input, depth, parent) {
         var totalWidth = 0;
@@ -2035,7 +2082,7 @@ if (typeof Slick === "undefined") {
           maxDepth = depth;
         }
         assert(input.length > 0);
-        parent.childrenFirstIndex = resultColumns.length;
+        parent.childrenFirstIndex = columns.length;
         for (var i = 0; i < input.length; i++) {
           var column = input[i];
           if (column.children) {
@@ -2043,18 +2090,19 @@ if (typeof Slick === "undefined") {
             column.width = parse(column.children, depth + 1, column);
           } else {
             column = input[i] = $.extend({}, columnDefaults, column);
-            columnsById[column.id] = resultColumns.length;
+            columnsById[column.id] = columns.length;
+            // make sure `minWidth <= width <= maxWidth`
             if (column.minWidth && column.width < column.minWidth) {
               column.width = column.minWidth;
             }
             if (column.maxWidth && column.width > column.maxWidth) {
               column.width = column.maxWidth;
             }
-            resultColumns.push(column);
+            columns.push(column);
           }
           totalWidth += column.width;
         }
-        parent.childrenLastIndex = resultColumns.length;
+        parent.childrenLastIndex = columns.length;
         return totalWidth;
       }
 
@@ -2079,11 +2127,22 @@ if (typeof Slick === "undefined") {
             var spacer;
             var spacers = [];
             for (var d = depth + 1; d <= maxDepth; d++) {
+              // while the spacers extend all the way down to leaf level, 
+              // the column itself ends up in both the columns[]
+              // leaf columns array so we produce the master column info, 
+              // such as custom formatters, etc. here slickgrid expects
+              // them (in a flat 1D columns[] array) while the same
+              // column object now also ends up in the nestedColumns[]
+              // array at a non-leaf depth.
+              //
+              // Meanwhile the spacers are used to render the header cells
+              // at each tree depth level.
               spacer = {
                 spacer: true,
                 width: column.width || columnDefaults.width,
                 name: "",
-                id: "spacer" + spacerIndex
+                id: "spacer" + spacerIndex,
+                masterColumn: column
               };
               addToNested(spacer, d);
               spacers.push(spacer);
@@ -2097,11 +2156,12 @@ if (typeof Slick === "undefined") {
       hasNestedColumns = false;
       parse(columnsInput, 0, {});
 
-      if (maxDepth > 0) {
+      assert(hasNestedColumns ? maxDepth > 0 : maxDepth === 0);
+      if (hasNestedColumns) {
         splitIntoLayers(columnsInput, 0);
       }
 
-      return resultColumns;
+      computeNestedColumnHeaderWidths();
     }
 
     function getContainerNode() {
