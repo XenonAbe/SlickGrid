@@ -1321,7 +1321,7 @@ if (typeof Slick === "undefined") {
       }
       
       function onColumnResizeDblClick(e) {
-        var cell = extractCellFromDOMid($(this).parent().attr('id'));
+        var cell = extractCellFromDOMid($(e.target).parent().attr('id'));
         var columnDef = columns[cell];
         var aux_width = calculateWordDimensions(columnElements[cell].children[0].innerHTML).width;
         assert(columnDef.values === undefined);
