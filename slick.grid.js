@@ -1,4 +1,4 @@
-3/**
+/**
  * @license
  * (c) 2009-2013 Michael Leibman
  * michael{dot}leibman{at}gmail{dot}com
@@ -148,7 +148,7 @@ if (typeof Slick === "undefined") {
    *      addNewRowCssClass:  {String}    specifies CSS class for the extra bottom row: 'add new row'
    * [/KCPT]
    **/
-  function SlickGrid(container, data, columns, options) {
+  function SlickGrid(container, data, columnDefinitions, options) {
     // settings
     var defaults = {
       explicitInitialization: false,
@@ -277,7 +277,8 @@ if (typeof Slick === "undefined") {
     var cellCssClasses = {};
 
     var columnsById = {};
-    var columnsDefTree = columns;
+    var columns = null;
+    var columnsDefTree = null;
     var sortColumns = [];
     var columnPosLeft = [];      // this cache array length is +1 longer than columns[] itself as we store the 'right edge + 1 pixel' as the 'left edge' of the first column beyond the grid width just as it would have been anyway. This simplifies the rest of the code.
     //var columnPosRight = [];
@@ -312,9 +313,12 @@ if (typeof Slick === "undefined") {
       if ($container.length < 1) {
         throw new Error("SlickGrid requires a valid container, " + container + " does not exist in the DOM.");
       }
+      if (columns) {
+        throw new Error("SlickGrid setColumns or updateColumnWidths have been called before the instance has been properly initialized.");
+      }
 
-      if (!columns || !columns.length) {
-        columns = [{}];
+      if (!columnDefinitions || !columnDefinitions.length) {
+        columnDefinitions = [{}];
       }
 
       if (typeof get_browser_info === 'undefined') {
@@ -335,7 +339,8 @@ if (typeof Slick === "undefined") {
       validateAndEnforceOptions();
       columnDefaults.width = options.defaultColumnWidth;
 
-      parseColumns(columns);
+      parseColumns(columnDefinitions);
+      assert(columns);
       computeNestedColumnHeaderWidths();
       updateColumnCaches();
 
@@ -1839,6 +1844,10 @@ if (typeof Slick === "undefined") {
     }
 
     function getColumns() {
+      return columnsDefTree;
+    }
+
+    function getLeafColumns() {
       return columns;
     }
 
@@ -2072,24 +2081,24 @@ if (typeof Slick === "undefined") {
     function parseColumns(columnsInput) {
       var maxDepth = 0;
 
-      columnsDefTree = columns;
       columns = [];
       columnsById = {};
 
       function parse(input, depth, parent) {
         var totalWidth = 0;
+        var colset = [];
         if (depth > maxDepth) {
           maxDepth = depth;
         }
         assert(input.length > 0);
         parent.childrenFirstIndex = columns.length;
         for (var i = 0; i < input.length; i++) {
-          var column = input[i];
+          var column = $.extend({}, columnDefaults, input[i]);
+          colset.push(column);
           if (column.children) {
             hasNestedColumns = true;
             column.width = parse(column.children, depth + 1, column);
           } else {
-            column = input[i] = $.extend({}, columnDefaults, column);
             columnsById[column.id] = columns.length;
             // make sure `minWidth <= width <= maxWidth`
             if (column.minWidth && column.width < column.minWidth) {
@@ -2102,6 +2111,7 @@ if (typeof Slick === "undefined") {
           }
           totalWidth += column.width;
         }
+        parent.children = colset;
         parent.childrenLastIndex = columns.length;
         return totalWidth;
       }
@@ -2154,11 +2164,14 @@ if (typeof Slick === "undefined") {
       }
 
       hasNestedColumns = false;
-      parse(columnsInput, 0, {});
+      var super_parent = {};
+      parse(columnsInput, 0, super_parent);
+      columnsDefTree = super_parent.children;
+      assert(columnsDefTree.length === columnsInput.length);
 
       assert(hasNestedColumns ? maxDepth > 0 : maxDepth === 0);
       if (hasNestedColumns) {
-        splitIntoLayers(columnsInput, 0);
+        splitIntoLayers(columnsDefTree, 0);
       }
 
       computeNestedColumnHeaderWidths();
@@ -5195,6 +5208,7 @@ if (typeof Slick === "undefined") {
       "getColumns": getColumns,
       "setColumns": setColumns,
       "updateColumnWidths": updateColumnWidths,
+      "getLeafColumns": getLeafColumns,
       "getColumnIndex": getColumnIndex,
       "updateColumnHeader": updateColumnHeader,
       "setSortColumn": setSortColumn,
