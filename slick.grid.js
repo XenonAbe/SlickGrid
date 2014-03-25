@@ -3935,7 +3935,7 @@ if (typeof Slick === "undefined") {
 
     function cellExists(row, cell) {
       // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
-      return (row < getDataLengthIncludingAddNew() && row >= 0 && cell < columns.length && cell >= 0);
+      return (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0);
     }
 
     // Return the `{row: ?, cell: ?}` row/column grid coordinate at the given grid pixel coordinate (X, Y).
@@ -4022,7 +4022,7 @@ if (typeof Slick === "undefined") {
       if (row == null || cell == null) {
         return null;
       } else {
-        assert(cellExists(row, cell));
+        assert(cellExists(row, cell) || (options.enableAddRow ? (row === getDataLength() && cell < columns.length && cell >= 0) : true));
         return {
           row: row,
           cell: cell
