@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  <title>SlickGrid example: Showing a grid without any row or column header cells</title>
+  <title>SlickGrid example: Showing a keymaster.js driven grid</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
@@ -43,8 +43,7 @@
   <div class="options-panel">
     <h2>Demonstrates</h2>
     <ul>
-      <li>a grid without any row or column header cells</li>
-	  <li>(the 'headers' are editable cells themselves)</li>
+      <li>a grid which has all its keyboard handling done by the external library keymaster.js</li>
     </ul>
 
     <h2>View Source:</h2>
@@ -63,6 +62,8 @@
 <script src="../lib/threedubmedia/event.drag/jquery.event.drag.js"></script>
 <script src="../lib/detect_browser.js"></script>
 <script src="../lib/assert.js"></script>
+
+<script src="../lib/keymaster.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../plugins/slick.formula.editor.js"></script>
