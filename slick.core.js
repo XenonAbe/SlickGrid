@@ -259,6 +259,17 @@
     };
 
     /***
+     * Returns whether the range matches the given range.
+     * @method equals
+     * @param range {Range}
+     * @return {Boolean}
+     */
+    this.matches = function (range) {
+      return range.fromRow === this.fromRow && range.toRow === this.toRow &&
+          range.fromCell === this.fromCell && range.toCell === this.toCell;
+    };
+    
+    /***
      * Returns a readable representation of a range.
      * @method toString
      * @return {String}

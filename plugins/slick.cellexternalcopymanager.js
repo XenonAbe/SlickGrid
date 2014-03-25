@@ -409,7 +409,7 @@
     function handleKeyDown(e, args) {
       var ranges;
       if (!_grid.getEditorLock().isActive()) {
-        if (e.which == keyCodes.ESC) {
+        if (e.which === keyCodes.ESC) {
           if (_copyFingerPrint) {
             assert(_copiedRanges);
             e.preventDefault();
@@ -425,7 +425,8 @@
 
         // Control+C / Control+X  -- these have the same effect on initial range
         if ((e.which === keyCodes.C || e.which === keyCodes.X) && (e.ctrlKey || e.metaKey)) {
-          ranges = _grid.getSelectionModel().getSelectedRanges();
+          // make sure to clone (shallow) the range set as any subsequent selection action will echo into _copiedRanges!
+          ranges = _grid.getSelectionModel().getSelectedRanges().slice(0);
 
           // also remember whether this was Ctrl-C (copy) or Ctrl-X (cut):
           ranges.copy = (e.which === keyCodes.C);
@@ -433,7 +434,10 @@
           if (ranges.length !== 0) {
             _copiedRanges = ranges;
             markCopySelection(ranges);
-            _self.onCopyCells.notify({ranges: ranges, rangeIsCopied: ranges.copy });
+            _self.onCopyCells.notify({
+              ranges: ranges, 
+              rangeIsCopied: ranges.copy 
+            });
 
             var columns = _grid.getColumns();
             var clipTextArr = [];
@@ -515,7 +519,7 @@
         }
 
         // Control+V
-        if (e.which == keyCodes.V && (e.ctrlKey || e.metaKey)) {
+        if (e.which === keyCodes.V && (e.ctrlKey || e.metaKey)) {
           // when we still have a copy/pasta action pending, we IGNORE this one
           // (this code might even have been invoked recursively as Ctrl+C/Ctrl+V
           // do NOT mark the keyboard event as 'handled' when they actually do,

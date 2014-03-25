@@ -112,9 +112,17 @@
   }
 
   $(function () {
+    function n2s(n) {
+      if (n < 10) return "0" + n;
+      return "" + n;
+    }
+
     for (var i = 0; i < 100; i++) {
       var d = (data[i] = {});
       d["num"] = i;
+      for (var j = 0; j < 100; j++) {
+        d[j] = n2s(j + 1) + "." + n2s(i + 1);
+      }
     }
 
     grid = new Slick.Grid("#myGrid", data, columns, options);
@@ -140,7 +148,7 @@
         for (var j = 0; j <= from.toCell - from.fromCell; j++) {
           if (i <= to.toRow - to.fromRow && j <= to.toCell - to.fromCell) {
             val = data[from.fromRow + i][columns[from.fromCell + j].field];
-            data[to.fromRow + i][columns[to.fromCell + j].field] = val;
+            data[to.fromRow + i][columns[to.fromCell + j].field] = "C:" + val;
             grid.invalidateRow(to.fromRow + i);
           }
         }

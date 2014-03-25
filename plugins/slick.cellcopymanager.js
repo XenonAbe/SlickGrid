@@ -20,7 +20,7 @@
       'V': 86,
       'X': 88,
       'ESC': 27
-    }
+    };
 
     function init(grid) {
       _grid = grid;
@@ -32,11 +32,11 @@
         throw new Error("Selection model is mandatory for this plugin. Please set a selection model on the grid before adding this plugin: grid.setSelectionModel(new Slick.CellSelectionModel())");
       }
       // we give focus on the grid when a selection is done on it.
-      // without this, if the user selects a range of cell without giving focus on a particular cell, the grid doesn't get the focus and key stroke handles (ctrl+c) don't work
+      // without this, if the user selects a range of cell without giving focus on a particular cell,
+      // the grid doesn't get the focus and key stroke handles (ctrl+C) don't work.
       cellSelectionModel.onSelectedRangesChanged.subscribe(function(e, args) {
         _grid.focus();
       });
-
     }
 
     function destroy() {
@@ -46,7 +46,7 @@
     function handleKeyDown(e, args) {
       var ranges;
       if (!_grid.getEditorLock().isActive()) {
-        if (e.which == keyCodes.ESC) {
+        if (e.which === keyCodes.ESC) {
           if (_copiedRanges) {
             e.preventDefault();
             clearCopySelection();
@@ -59,27 +59,49 @@
         }
 
         // Control+C / Control+X  -- these have the same effect on initial range
-        if ((e.which == keyCodes.C || e.which == keyCodes.X) && (e.ctrlKey || e.metaKey)) {
-          ranges = _grid.getSelectionModel().getSelectedRanges();
+        if ((e.which === keyCodes.C || e.which === keyCodes.X) && (e.ctrlKey || e.metaKey)) {
+          // make sure to clone (shallow) the range set as any subsequent selection action will echo into _copiedRanges!
+          ranges = _grid.getSelectionModel().getSelectedRanges().slice(0);
 
           // also remember whether this was Ctrl-C (copy) or Ctrl-X (cut):
-          ranges.copy = (e.which == keyCodes.C);
+          ranges.copy = (e.which === keyCodes.C);
 
           if (ranges.length !== 0) {
             e.preventDefault();
             _copiedRanges = ranges;
             markCopySelection(ranges);
-            _self.onCopyCells.notify({ranges: ranges, rangeIsCopied: ranges.copy });
+            _self.onCopyCells.notify({
+              ranges: ranges, 
+              rangeIsCopied: ranges.copy 
+            });
 
             return false;
           }
         }
 
         // Control+V
-        if (e.which == keyCodes.V && (e.ctrlKey || e.metaKey)) {
+        if (e.which === keyCodes.V && (e.ctrlKey || e.metaKey)) {
           if (_copiedRanges) {
             e.preventDefault();
             ranges = _grid.getSelectionModel().getSelectedRanges();
+            var selectedCell = _grid.getActiveCell();
+            if (!ranges || ranges.length === 0 || _copiedRanges[0].matches(ranges[0])) {
+              if (selectedCell) {
+                // only having the active cell implies we want the entire range pasted from this top/left corner...
+                var srcRange = _copiedRanges[0];
+                ranges = [new Slick.Range(selectedCell.row, selectedCell.cell, selectedCell.row + srcRange.toRow - srcRange.fromRow + 1, selectedCell.cell + srcRange.toCell - srcRange.fromCell + 1)];
+              } else {
+                // we don't know where to paste
+                _self.onCopyCancelled.notify({
+                  ranges: _copiedRanges,
+                  rangeIsCopied: _copiedRanges.copy,
+                  rangeDataFromExternalSource: false,
+                  status: "No destination cell or range has been provided"
+                });
+                return false;
+              }
+            }
+
             _self.onPasteCells.notify({
               from: _copiedRanges,
               to: ranges,
