@@ -4,3 +4,42 @@
 [submodule "documentation/wiki"]
 	path = documentation/wiki
 	url = git@github.com:GerHobbelt/SlickGrid.wiki.git
+[submodule "lib/slickgrid-checkbox-select-all-column-plugin"]
+	path = lib/slickgrid-checkbox-select-all-column-plugin
+	url = git@github.com:GerHobbelt/SlickGrid.CheckboxSelectAllColumn.git
+[submodule "lib/slickgrid-enhanced-pager-plugin"]
+	path = lib/slickgrid-enhanced-pager-plugin
+	url = git@github.com:GerHobbelt/SlickGridEnhancementPager.git
+[submodule "lib/slickgrid-surge-extensions"]
+	path = lib/slickgrid-surge-extensions
+	url = git@github.com:GerHobbelt/Surge-SlickGrid-Extensions.git
+[submodule "lib/slickgrid-guriddo-frozencolumns"]
+	path = lib/slickgrid-guriddo-frozencolumns
+	url = git@github.com:GerHobbelt/guriddo.git
+[submodule "lib/hammer"]
+	path = lib/hammer
+	url = git@github.com:GerHobbelt/hammer.js.git
+[submodule "lib/jquery-multiselect"]
+	path = lib/jquery-multiselect
+	url = git@github.com:GerHobbelt/jquery-multiselect.git
+[submodule "lib/jquery-simulate"]
+	path = lib/jquery-simulate
+	url = git@github.com:GerHobbelt/jquery-simulate.git
+[submodule "lib/jquery-sparkline"]
+	path = lib/jquery-sparkline
+	url = git@github.com:GerHobbelt/jquery.sparkline.git
+[submodule "lib/keymaster"]
+	path = lib/keymaster
+	url = git@github.com:GerHobbelt/keymaster.git
+[submodule "lib/slickgrid-spreadsheet-plugins"]
+	path = lib/slickgrid-spreadsheet-plugins
+	url = git@github.com:GerHobbelt/slickgrid-spreadsheet-plugins.git
+[submodule "lib/slickgrid-totals-plugin"]
+	path = lib/slickgrid-totals-plugin
+	url = git@github.com:GerHobbelt/slickgrid-totals-plugin.git
+[submodule "lib/spectrum"]
+	path = lib/spectrum
+	url = git@github.com:GerHobbelt/spectrum.git
+[submodule "lib/verge-screendimensions"]
+	path = lib/verge-screendimensions
+	url = git@github.com:GerHobbelt/verge.git

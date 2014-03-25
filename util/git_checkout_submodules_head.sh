@@ -109,6 +109,9 @@ R )
 }
 
 # checkout_branch css/lib/Font-Awesome                experimental origin/experimental                                        $@
+checkout_branch lib/moment                          develop origin/develop                                                  $@
+checkout_branch lib/jquery-sparkline                takacsv-work origin/takacsv-work                                        $@
+checkout_branch lib/spectrum                        no-color origin/no-color                                                $@
 
 
 popd                                                                                                    2> /dev/null  > /dev/null

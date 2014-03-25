@@ -73,8 +73,21 @@ esac
 
 
 
+git_submod_add   git@github.com:GerHobbelt/SlickGrid.CheckboxSelectAllColumn.git         lib/slickgrid-checkbox-select-all-column-plugin
 git_submod_add   git@github.com:GerHobbelt/SlickGrid.wiki.git                            documentation/wiki
+git_submod_add   git@github.com:GerHobbelt/SlickGridEnhancementPager.git                 lib/slickgrid-enhanced-pager-plugin
+git_submod_add   git@github.com:GerHobbelt/Surge-SlickGrid-Extensions.git                lib/slickgrid-surge-extensions
+git_submod_add   git@github.com:GerHobbelt/guriddo.git                                   lib/slickgrid-guriddo-frozencolumns
+git_submod_add   git@github.com:GerHobbelt/hammer.js.git                                 lib/hammer
+git_submod_add   git@github.com:GerHobbelt/jquery-multiselect.git                        lib/jquery-multiselect
+git_submod_add   git@github.com:GerHobbelt/jquery-simulate.git                           lib/jquery-simulate
+git_submod_add   git@github.com:GerHobbelt/jquery.sparkline.git                          lib/jquery-sparkline
 git_submod_add   git@github.com:GerHobbelt/jquery.threedubmedia.git                      lib/threedubmedia
+git_submod_add   git@github.com:GerHobbelt/keymaster.git                                 lib/keymaster
+git_submod_add   git@github.com:GerHobbelt/slickgrid-spreadsheet-plugins.git             lib/slickgrid-spreadsheet-plugins
+git_submod_add   git@github.com:GerHobbelt/slickgrid-totals-plugin.git                   lib/slickgrid-totals-plugin
+git_submod_add   git@github.com:GerHobbelt/spectrum.git                                  lib/spectrum
+git_submod_add   git@github.com:GerHobbelt/verge.git                                     lib/verge-screendimensions
 
 
 
