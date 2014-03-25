@@ -16,13 +16,13 @@
     outline: 0;
 
 
-    .slick-header.ui-state-default, .slick-headerrow.ui-state-default {
+    .slick-header.ui-state-default, .slick-headerrow.ui-state-default, .slick-footerrow.ui-state-default {
       width: 100%;
       overflow: hidden;
       border-left: 0;
     }
 
-    .slick-header-columns, .slick-headerrow-columns {
+    .slick-header-columns, .slick-headerrow-columns, .slick-footerrow-columns {
       position: relative;
       white-space: nowrap;
       cursor: default;
@@ -46,7 +46,7 @@
       float: left;
     }
 
-    .slick-headerrow-column.ui-state-default {
+    .slick-headerrow-column.ui-state-default, .slick-footerrow-column.ui-state-default {
       //padding: @cell-padding-top @cell-padding-right @cell-padding-bottom @cell-padding-left;
       padding: 0;
       margin: 0;
@@ -112,7 +112,7 @@
       }
     }
 
-    .slick-cell, .slick-headerrow-column {
+    .slick-cell, .slick-headerrow-column, .slick-footerrow-column {
       position: absolute;
       border: 1px solid transparent;
       border-right: 1px dotted silver;
