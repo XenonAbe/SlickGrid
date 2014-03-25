@@ -2249,7 +2249,7 @@ if (typeof Slick === "undefined") {
     // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>),
     // unless the Y coordinate points outside the grid.
     function getRowWithFractionFromPosition(maxPosition) {
-      assert(maxPosition >= 0);
+      //assert(maxPosition >= 0); -- maxPosition can be a negative number when this function is called from inside a drag from bottom-right to top-left where the user drags until outside the grid canvas area
       var rowsInPosCache = getDataLength();
 
       if (!rowsInPosCache) {
