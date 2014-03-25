@@ -373,10 +373,10 @@ if (typeof Slick === "undefined") {
       var headersWidth = getHeadersWidth();
 
       $headerParents = $("<div/>").appendTo($headerScroller);
-      $headerParents.outerWidth(headersWidth);
+      $headerParents.width(headersWidth);
 
       $headers = $("<div class='slick-header-columns' style='left:-1000px;top:0;' role='row' />").appendTo($headerScroller);
-      $headers.outerWidth(headersWidth);
+      $headers.width(headersWidth);
 
       $headerRowScroller = $("<div class='slick-headerrow ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
       $headerRow = $("<div class='slick-headerrow-columns' />").appendTo($headerRowScroller);
@@ -582,17 +582,17 @@ if (typeof Slick === "undefined") {
       viewportHasHScroll = (canvasWidth > viewportW - scrollbarDimensions.width);
 
       if (canvasWidth != oldCanvasWidth || forceCanvasResize) {
-        $canvas.outerWidth(canvasWidth);
-        $headerRow.outerWidth(canvasWidth);
-        $footerRow.outerWidth(canvasWidth);
+        $canvas.width(canvasWidth);
+        $headerRow.width(canvasWidth);
+        $footerRow.width(canvasWidth);
         var headersWidth = getHeadersWidth();
-        $headers.outerWidth(headersWidth);
-        $headerParents.outerWidth(headersWidth);
+        $headers.width(headersWidth);
+        $headerParents.width(headersWidth);
         trigger(self.onCanvasWidthChanged, { width: canvasWidth });
       }
 
-      $headerRowSpacer.outerWidth(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
-      $footerRowSpacer.outerWidth(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
+      $headerRowSpacer.width(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
+      $footerRowSpacer.width(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
 
       // when 'stylesheet' has not been set yet, it means that any previous call to applyColumnWidths() did not use up to date values yet as the run-time generated stylesheet wasn't parsed in time.
       if (canvasWidth != oldCanvasWidth || forceColumnWidthsUpdate || forceCanvasResize || !stylesheet) {
@@ -761,9 +761,9 @@ if (typeof Slick === "undefined") {
         });
       var headersWidth = getHeadersWidth();
       $headers.empty();
-      $headers.outerWidth(headersWidth);
+      $headers.width(headersWidth);
       $headerParents.empty();
-      $headerParents.outerWidth(headersWidth);
+      $headerParents.width(headersWidth);
 
       // Get the data for each column in the DOM
       $headerRow.find(".slick-headerrow-column")
@@ -820,7 +820,7 @@ if (typeof Slick === "undefined") {
             .data("column", m)
             .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
             .attr("class", cellCss.join(" "))
-            .outerWidth(info.cellWidth)
+            .width(info.cellWidth)
             .appendTo(appendTo);
         return header;
       }
@@ -1057,7 +1057,7 @@ if (typeof Slick === "undefined") {
         helper: "clone",
         placeholder: "slick-sortable-placeholder ui-state-default slick-header-column",
         start: function (e, ui) {
-          ui.placeholder.outerWidth(ui.helper.outerWidth());
+          ui.placeholder.width(ui.helper.width());
           trigger(self.onColumnsStartReorder, {e: e, ui: ui});
 
           $(ui.helper).addClass("slick-header-column-active");
@@ -1712,8 +1712,8 @@ if (typeof Slick === "undefined") {
       var h;
       for (var i = 0, headers = $headers.children(), ii = headers.length; i < ii; i++) {
         h = $(headers[i]);
-        if (h.outerWidth() !== columns[i].width - headerColumnWidthDiff) {
-          h.outerWidth(columns[i].width - headerColumnWidthDiff);
+        if (h.width() !== columns[i].width - headerColumnWidthDiff) {
+          h.width(columns[i].width - headerColumnWidthDiff);
         }
       }
     }
@@ -1728,8 +1728,8 @@ if (typeof Slick === "undefined") {
         for (var k = 0, nestedHeaders = $(nestedHeaderRows[j]).children(), kk = nestedHeaders.length; k < kk; k++) {
           nh = $(nestedHeaders[k]);
 
-          if (nh.outerWidth() !== nestedColumns[j][k].width - headerColumnWidthDiff) {
-            nh.outerWidth(nestedColumns[j][k].width - headerColumnWidthDiff);
+          if (nh.width() !== nestedColumns[j][k].width - headerColumnWidthDiff) {
+            nh.width(nestedColumns[j][k].width - headerColumnWidthDiff);
           }
         }
       }
@@ -1886,7 +1886,7 @@ if (typeof Slick === "undefined") {
       parseColumns(columnDefinitions);
       updateColumnCaches();
       if (initialized) {
-        $headers.outerWidth(getHeadersWidth()); // Set the full width of all the headers together
+        $headers.width(getHeadersWidth()); // Set the full width of all the headers together
         applyColumnHeaderWidths(); // Surgically update only the widths of the header cells
         applyColumnWidths(); // Surgically update only cell widths (but not header cells, unfortunately)
       }
@@ -2971,7 +2971,7 @@ if (typeof Slick === "undefined") {
       numVisibleRows = getRowWithFractionFromPosition(viewportH).position;
       viewportW = parseFloat($.css($container[0], "width", true));
       if (!options.autoHeight) {
-        $viewport.outerHeight(viewportH);
+        $viewport.height(viewportH);
       }
 
       if (options.forceFitColumns) {
