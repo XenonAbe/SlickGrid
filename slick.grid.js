@@ -4473,13 +4473,13 @@ if (typeof Slick === "undefined") {
       return activeCellNode;
     }
 
-    function scrollRowIntoView(row, doPaging, doCentering) {
+    function scrollRowIntoView(row, doPaging, doCenteringY) {
       var height = viewportH - (viewportHasHScroll ? scrollbarDimensions.height : 0);
       var rowAtTop = getRowTop(row);
       var rowAtBottom = getRowBottom(row) - height;
 
       // need to center row?
-      if (doCentering) {
+      if (doCenteringY) {
         var centerOffset = (height - options.rowHeight) / 2;
         scrollTo(rowAtTop - centerOffset);
         render();
@@ -4507,13 +4507,20 @@ if (typeof Slick === "undefined") {
       var deltaRows = dir * (bottomRow.position - topRow.position);
       // adjust the page positions according to the scroll direction and 'speed' (`dir` can be a number other than +1 or -1):
       topRow.position += deltaRows;
-      bottomRow.position += deltaRows;
-      scrollTo(getRowTop(topRow.position));
+      var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
+      if (topRow.position >= dataLengthIncludingAddNew) {
+        topRow.position = dataLengthIncludingAddNew - 1;
+      }
+      if (topRow.position < 0) {
+        topRow.position = 0;
+      }
+      assert(topRow.position >= 0);
+      var y = getRowTop(topRow.position);
+      scrollTo(y);
       render();
 
       if (options.enableCellNavigation && activeRow != null) {
         var row = activeRow + deltaRows;
-        var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
         if (row >= dataLengthIncludingAddNew) {
           row = dataLengthIncludingAddNew - 1;
         }
