@@ -2185,7 +2185,7 @@ if (typeof Slick === "undefined") {
     // Rendering / Scrolling
 
     function cacheRowPositions() {
-      var len = getDataLength();
+      var len = getDataLengthIncludingAddNew();
       getRowPosition(len - 1);
     }
 
@@ -2250,7 +2250,7 @@ if (typeof Slick === "undefined") {
     // unless the Y coordinate points outside the grid.
     function getRowWithFractionFromPosition(maxPosition) {
       //assert(maxPosition >= 0); -- maxPosition can be a negative number when this function is called from inside a drag from bottom-right to top-left where the user drags until outside the grid canvas area
-      var rowsInPosCache = getDataLength();
+      var rowsInPosCache = getDataLengthIncludingAddNew();
 
       if (!rowsInPosCache) {
         return {
@@ -3935,7 +3935,7 @@ if (typeof Slick === "undefined") {
 
     function cellExists(row, cell) {
       // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
-      return (row < getDataLength() && row >= 0 && cell < columns.length && cell >= 0);
+      return (row < getDataLengthIncludingAddNew() && row >= 0 && cell < columns.length && cell >= 0);
     }
 
     // Return the `{row: ?, cell: ?}` row/column grid coordinate at the given grid pixel coordinate (X, Y).
@@ -4128,7 +4128,7 @@ if (typeof Slick === "undefined") {
         activeRow = activePosY = getRowFromNode(activeCellNode.parentNode);
         activeCell = activePosX = getCellFromNode(activeCellNode);
         if (opt_editMode == null) {
-          opt_editMode = (activeRow == getDataLength()) || options.autoEdit;
+          opt_editMode = (activeRow === getDataLength()) || options.autoEdit;
         }
 
         $(activeCellNode).addClass("active");
@@ -4989,7 +4989,7 @@ if (typeof Slick === "undefined") {
       var newCell = getCellNode(row, cell);
 
       // if selecting the 'add new' row, start editing right away
-      setActiveCellInternal(newCell, forceEdit || (row === getDataLength()) || options.autoEdit);
+      setActiveCellInternal(newCell, forceEdit);
 
       // if no editor was created, set the focus back on the grid
       if (!currentEditor) {
