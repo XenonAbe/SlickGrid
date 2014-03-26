@@ -2265,10 +2265,22 @@ if (typeof Slick === "undefined") {
       // This first call to getRowTop(rowsInPosCache - 1) is here to help update the row cache
       // at the start of the search; at least for many scenarios where all (or the last) rows
       // have been invalidated:
-      if (maxPosition > getRowTop(rowsInPosCache - 1)) {
+      var bottomRowInfo = getRowPosition(rowsInPosCache - 1);
+      var fraction;
+      if (maxPosition >= bottomRowInfo.top) {
         // Return the last row in the grid
+        fraction = (maxPosition - bottomRowInfo.top) / bottomRowInfo.height;
         return {
           position: rowsInPosCache - 1,
+          fraction: Math.min(0.999999, fraction),
+          height: bottomRowInfo.height
+        };
+      }
+      var topRowInfo = getRowPosition(0);
+      if (maxPosition < topRowInfo.top) {
+        // Return the first row in the grid
+        return {
+          position: 0,
           fraction: 0,
           height: 1
         };
@@ -2276,7 +2288,7 @@ if (typeof Slick === "undefined") {
 
       var l = 0;
       var r = rowsInPosCache - 1;
-      var probe, top;
+      var probe, top, probeInfo;
       // before we enter the binary search, we attempt to improve the initial guess + search range
       // using the heuristic that the variable cell height will be close to rowHeight:
       // we perform two probes (at ≈1‰ interval) to save 10 probes (1000 ≈ 2^10) if we are lucky;
@@ -2293,40 +2305,53 @@ if (typeof Slick === "undefined") {
       // the number of getRowWithFractionFromPosition calls vs. cache invalidation.)
       probe = (maxPosition / options.rowHeight) | 0;
       probe = Math.min(rowsInPosCache - 1, Math.max(0, probe));
-      top = getRowTop(probe);
+      probeInfo = getRowPosition(probe);
+      top = probeInfo.top;
       if (top > maxPosition) {
         r = probe - 1;
         probe = r - 1 - (0.001 * rowsInPosCache) | 0;
         probe = Math.max(0, probe);
-        top = getRowTop(probe);
+        probeInfo = getRowPosition(probe);
+        top = probeInfo.top;
         if (top > maxPosition) {
           r = probe - 1;
-        } else if (getRowBottom(probe) > maxPosition) {
+        } else if (top + probeInfo.height > maxPosition) {
+          fraction = (maxPosition - top) / probeInfo.height;
+          assert(fraction >= 0);
+          assert(fraction < 1);
           return {
             position: probe,
-            fraction: 0
+            fraction: fraction,
+            height: probeInfo.height
           };
         } else {
           l = probe + 1;
         }
-      } else if (getRowBottom(probe) > maxPosition) {
+      } else if (top + probeInfo.height > maxPosition) {
+        fraction = (maxPosition - top) / probeInfo.height;
+        assert(fraction >= 0);
+        assert(fraction < 1);
         return {
           position: probe,
-          fraction: 0,
-          height: options.rowHeight
+          fraction: fraction,
+          height: probeInfo.height
         };
       } else {
         l = probe + 1;
         probe = l + 1 + (0.001 * rowsInPosCache) | 0;
         probe = Math.min(rowsInPosCache - 1, probe);
-        top = getRowTop(probe);
+        probeInfo = getRowPosition(probe);
+        top = probeInfo.top;
         if (top > maxPosition) {
           r = probe - 1;
-        } else if (getRowBottom(probe) > maxPosition) {
+        } else if (top + probeInfo.height > maxPosition) {
+          fraction = (maxPosition - top) / probeInfo.height;
+          assert(fraction >= 0);
+          assert(fraction < 1);
           return {
             position: probe,
-            fraction: 0,
-            height: options.rowHeight
+            fraction: fraction,
+            height: probeInfo.height
           };
         } else {
           l = probe + 1;
@@ -2336,20 +2361,31 @@ if (typeof Slick === "undefined") {
 
       while (l < r) {
         probe = ((l + r) / 2) | 0; // INT/FLOOR
-        top = getRowTop(probe);
+        probeInfo = getRowPosition(probe);
+        top = probeInfo.top;
         if (top > maxPosition) {
           r = probe - 1;
-        } else if (getRowBottom(probe) > maxPosition) {
-          l = probe;
-          break;
+        } else if (top + probeInfo.height > maxPosition) {
+          fraction = (maxPosition - top) / probeInfo.height;
+          assert(fraction >= 0);
+          assert(fraction < 1);
+          return {
+            position: probe,
+            fraction: fraction,
+            height: probeInfo.height
+          };
         } else {
           l = probe + 1;
         }
       }
+      probeInfo = getRowPosition(l);
+      fraction = (maxPosition - probeInfo.top) / probeInfo.height;
+      assert(fraction >= 0);
+      assert(fraction < 1);
       return {
         position: l,
-        fraction: 0,
-        height: options.rowHeight
+        fraction: fraction,
+        height: probeInfo.height
       };
     }
 
@@ -3059,6 +3095,15 @@ if (typeof Slick === "undefined") {
       updateCanvasWidth(false);
     }
 
+    /*
+    WARNING: the returned object .bottom attribute points at the first row which is guaranteed to be NOT visible.
+    This was done in the vanilla SlickGrid (the one which doesn't deliver fractional position info). 
+    It is in line with other range info objects which oul list the bottom as 'one beyond'
+    in order to simplify height calculations (bottom - top without the obligatory +1 correction) and looping
+    over the visible row range (for row = rv.top; row < rv.bottom; row++).
+
+    However, do note that the fractional info is about the (partially visible bottom) row '.bottomVisible'.
+    */ 
     function getVisibleRange(viewportTop, viewportLeft) {
       if (viewportTop == null) {
         viewportTop = scrollTop;
@@ -3075,6 +3120,8 @@ if (typeof Slick === "undefined") {
         bottomVisible: bottom.position,             // the last visible row
         bottomVisibleFraction: bottom.fraction,     // the vertical fraction of visibility for the last visible row
         topInvisibleFraction: top.fraction,         // the vertical fraction of *IN*visibility for the first visible row
+        bottomVisibleHeight: bottom.height,         // the row height for the last visible row
+        topInvisibleHeight: top.height,             // the row height for the first visible row
         topPx: viewportTop,
         bottomPx: viewportTop + viewportH,
         leftPx: viewportLeft,

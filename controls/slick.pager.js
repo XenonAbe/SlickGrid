@@ -73,10 +73,13 @@
         var pagesize = $(e.target).attr("data");
         if (pagesize != null) {
           pagesize = parseInt(pagesize);
-          if (pagesize == -1) {
+          if (pagesize === -1) {
             var vp = grid.getViewport();
             // the viewport spans several rows, including possibly two partial rows, so the actual page height should account for those:
-            var height = Math.floor(vp.bottomVisible - vp.top + 1 - vp.topInvisibleFraction + vp.bottomVisibleFraction);
+            // this is calculated as the height in rows minus the invisible fraction at top minus the INvisible fraction at bottom:
+            //    var height = Math.floor(vp.bottomVisible - vp.top + 1 - vp.topInvisibleFraction - (1 - vp.bottomVisibleFraction));
+            // which reduces to:
+            var height = Math.floor(vp.bottomVisible - vp.top - vp.topInvisibleFraction + vp.bottomVisibleFraction);
             setPageSize(height);
           } else {
             setPageSize(pagesize);
