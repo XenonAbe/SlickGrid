@@ -2625,8 +2625,14 @@ if (typeof Slick === "undefined") {
 
     function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem) {
       var m = columns[cell];
-      var colspan = getColspan(row, cell);
-      var rowspan = getRowspan(row, cell);
+      var spans = getSpans(row, cell);
+      assert(spans ? spans.length === 4 : true);
+      assert(spans ? spans[3] >= 1 : true);
+      var colspan = spans ? spans[3] - cell + spans[1] : 1;
+      assert(spans ? spans[2] >= 1 : true);
+      var rowspan = spans ? spans[2] - row + spans[0] : 1;
+      assert(spans ? spans[0] === row : true);
+      assert(spans ? spans[1] === cell : true);
       assert(Math.min(columns.length - 1, cell + colspan - 1) === cell + colspan - 1);
       var cellStyles = [];
       var cellCss = ["slick-cell", "l" + cell, "r" + (cell + colspan - 1)];
@@ -2834,7 +2840,11 @@ if (typeof Slick === "undefined") {
               span = rowspan > 1 || colspan > 1 ? [row, c, rowspan, colspan] : undefined;
               for (var rs = row, rsu = row + Math.max(rowspan, oldRowspan); rs < rsu; rs++) {
                 for (var cs = c, csu = c + Math.max(colspan, oldColspan) ; cs < csu; cs++) {
-                  !span || rs >= row + rowspan || cs >= c + colspan ? delete cellSpans[rs][cs] : cellSpans[rs][cs] = span;
+                  if (!span || rs >= row + rowspan || cs >= c + colspan) {
+                    delete cellSpans[rs][cs];
+                  } else {
+                    cellSpans[rs][cs] = span;
+                  }
                 }
               }
               // adjust invalidate range
