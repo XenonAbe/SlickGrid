@@ -208,7 +208,8 @@
   function LinkFormatter(options) {
     var urlTemplate = typeof options === 'string' ? options : options.urlTemplate;
     var matches = urlTemplate.match(/:(\w+)/g);
-    var splatParams = [], i, result, val;
+    var splatParams = [];
+    var i, result, val;
 
     for (i in matches) {
       splatParams.push(matches[i].substring(1));
@@ -219,12 +220,12 @@
     return function(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       result = urlTemplate;
       for (i = 0; i < len; i++) {
-        val = dataContext[splatParams[i]];
-        if (typeof val !== null) {
+        val = rowDataItem[splatParams[i]];
+        if (typeof val != null) {
           result = result.replace(':' + splatParams[i], val);
         }
       }
-      return (typeof value !== 'undefined' && value !== null) ? ('<a href="' + result + '">' + value + '</a>') : null;
+      return value != null ? '<a href="' + result + '">' + value + '</a>' : null;
     };
   }
 
