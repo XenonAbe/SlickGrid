@@ -1,8 +1,12 @@
 <!DOCTYPE HTML>
 <html>
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-    <title>SlickGrid Model Benchmark</title>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+        <title>SlickGrid Model Benchmark</title>
+        <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css" media="screen" charset="utf-8" />
+        <link rel="stylesheet" href="../slick.grid.css" type="text/css" media="screen" charset="utf-8" />
+        <link rel="stylesheet" href="../slick-editors.css" type="text/css" media="screen" charset="utf-8" />
+        <link rel="stylesheet" href="../examples/examples.css" type="text/css" media="screen" charset="utf-8" />
 </head>
 <body>
 <script src="../lib/jquery.js"></script>
@@ -16,7 +20,9 @@
 
 <h1>SlickGrid Model Benchmark</h1>
 
-<p>See console log for timing results</p>
+<div class="bench_results">
+<h1>Timing Results</h1>
+</div>
 
 <script>
     function filter(item, args) {
@@ -33,6 +39,24 @@
         return false;
     }
 
+	var Timing = {};
+	var $TimingReport = $('.bench_results');
+	
+	function startTime(id) {
+		var t = new Date();
+		Timing[id] = t;
+	}
+	
+	function endTime(id, notes) {
+		var delta = new Date() - Timing[id];
+		delta /= 1000;
+		var $p = $('<p/>');
+		$p.text(id + ": (" + delta.toFixed(3) + "s)" + (notes ? " " + notes : ""));
+		$TimingReport.append($p);
+	}
+
+	startTime('init');
+
     var data = [];
 
     for (var i = 0; i < 300000; i++) {
@@ -44,9 +68,12 @@
         d["duration"] =  Math.round(Math.random() * 14);
     }
 
+	endTime('init');
+
     var dv = new Slick.Data.DataView({inlineFilters: true});
     dv.beginUpdate();
     dv.setItems(data);
+	endTime('init', 'after inserting raw data into DataView');
     dv.setFilter(filter);
     dv.setFilterArgs(0);
     //dv.setPagingOptions({pageSize:25});
@@ -79,40 +106,40 @@
 
     dv.endUpdate();
 
+	endTime('init', 'after DataView endUpdate() invocation');
 
-    console.time("total");
-    console.time("narrow");
+	startTime('total');
+	startTime('narrow');
 
     for (var i = 0; i <= 100; i += 5) {
         dv.setFilterArgs(i);
         dv.setRefreshHints({
-            ignoreDiffsBefore:200,
-            ignoreDiffsAfter:300,
-            isFilterNarrowing:true
+            ignoreDiffsBefore: 200,
+            ignoreDiffsAfter: 300,
+            isFilterNarrowing: true
         });
         dv.refresh();
 
         //console.log(dv.getLength());
     }
 
-    console.timeEnd("narrow");
-
-    console.time("expand");
+	endTime('narrow');
+	startTime('expand');
 
     for (var i = 100; i > 0; i -= 5) {
         dv.setFilterArgs(i);
         dv.setRefreshHints({
-            ignoreDiffsBefore:200,
-            ignoreDiffsAfter:300,
-            isFilterExpanding:true
+            ignoreDiffsBefore: 200,
+            ignoreDiffsAfter: 300,
+            isFilterExpanding: true
         });
         dv.refresh();
 
         //console.log(dv.getLength());
     }
 
-    console.timeEnd("expand");
-    console.timeEnd("total");
+	endTime('expand');
+	endTime('total');
 </script>
 </body>
 </html>
