@@ -142,7 +142,7 @@
     if (options) {
       var match;
       for (var i in options) {
-        if (options[i].id == value || options[i].key == value) {
+        if (options[i].id === value || options[i].key === value) {
           match = options[i];
           break;
         }
@@ -189,7 +189,7 @@
   /*
    *  utility for chaining formatters
    */
-  function Chain() {
+  function Chain(/* ...formatters */) {
     var formatters = Array.prototype.slice.call(arguments);
 
     return function(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
@@ -236,13 +236,14 @@
     if (typeof fields === 'string') {
       fields = fields.split(',');
     }
-    var len = fields.length, data;
+    var len = fields.length;
 
     return function(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       var result = [];
+      var data;
       for (var i = 0; i < len; i++) {
-        data = dataContext[ fields[i] ];
-        if (data) {
+        data = rowDataItem[ fields[i] ];
+        if (data != null) {
           result.push(data);
         }
       }
