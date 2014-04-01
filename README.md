@@ -6,7 +6,7 @@
 Find documentation and examples in [the original wiki](https://github.com/mleibman/SlickGrid/wiki) and [this clone's wiki](https://github.com/GerHobbelt/SlickGrid/wiki).
 This is a fork of SlickGrid maintained by Ger Hobbelt / Visyond Inc. The new features that have been added / mixed in:
 
-## This Fork's Features (based on https://github.com/GerHobbelt/SlickGrid)
+## This Fork's Features
 
 * Cells spanning arbitrary numbers of rows and/or columns (colspan / rowspan)
 * A footer row that mimics the behavior of the header row, with similar options and controls.
