@@ -4067,8 +4067,8 @@ if (typeof Slick === "undefined") {
       return null;
     }
 
-    function getCellFromEvent(e) {
-      var $cell = $(e.target).closest(".slick-cell", $canvas);
+    function getCellFromElement(el) {
+      var $cell = $(el).closest(".slick-cell", $canvas);
       if (!$cell.length) {
         return null;
       }
@@ -4085,6 +4085,10 @@ if (typeof Slick === "undefined") {
           cell: cell
         };
       }
+    }
+
+    function getCellFromEvent(e) {
+      return getCellFromElement(e.target);
     }
 
     function getRowFromEvent(e) {
@@ -5315,6 +5319,7 @@ if (typeof Slick === "undefined") {
       "focus": setFocus,
 
       "getCellFromPoint": getCellFromPoint,
+      "getCellFromElement": getCellFromElement,
       "getCellFromEvent": getCellFromEvent,
       "getRowFromEvent": getRowFromEvent,
       "getActiveCell": getActiveCell,
