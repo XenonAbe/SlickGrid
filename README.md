@@ -17,6 +17,18 @@ This is a fork of SlickGrid maintained by Ger Hobbelt / Visyond Inc. The new fea
 * Internal and external Copy/Cut/Paste through the usual keyboard shortcuts
 * Mouse & Touch support
 
+This fork adds the following method:
+
+```
+grid.updateColumnWidths(columnDefinitions)
+```
+
+Using this method improves the performance of changing the width of one or more grid columns by a lot. The existing API only allows for a whole grid redraw, which can be very slow. Pull request with notes [here](https://github.com/mleibman/SlickGrid/pull/897). Use cases for fast column size adjustment may be: auto-sizing columns to fit content, responsive sizing cells to fill the screen, and similar. 
+
+Also exposes the existing method `grid.setupColumnResize`, which allows you to re-enable column resizing if you're manually screwing around with the headers.
+
+
+
 
 ## SlickGrid is an advanced JavaScript grid/spreadsheet component
 
