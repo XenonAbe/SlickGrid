@@ -1796,38 +1796,38 @@ if (typeof Slick === "undefined") {
     }
 
     function calculateWordDimensions(text, escape) {
-        if (escape === undefined) {
-          escape = true;
-        }
+      if (escape === undefined) {
+        escape = true;
+      }
 
-        var div = document.createElement("div");
-        $(div).css({
-            "position": "absolute",
-            "visibility": "hidden",
-            "height": "auto",
-            "width": "auto",
-            "white-space": "nowrap",
-            "font-family": "Verdana, Arial, sans-serif",
-            "font-size": "13px",
-            "border": "1px solid transparent",
-            "padding": "1px 4px 2px"
-        });
-        if (escape) {
-          $(div).text(text);
-        } else {
-          div.innerHTML = text;
-        }
+      var div = document.createElement("div");
+      $(div).css({
+          "position": "absolute",
+          "visibility": "hidden",
+          "height": "auto",
+          "width": "auto",
+          "white-space": "nowrap",
+          "font-family": "Verdana, Arial, sans-serif",
+          "font-size": "13px",
+          "border": "1px solid transparent",
+          "padding": "1px 4px 2px"
+      });
+      if (escape) {
+        $(div).text(text);
+      } else {
+        div.innerHTML = text;
+      }
 
-        document.body.appendChild(div);
+      document.body.appendChild(div);
 
-        var dimensions = {
-          width: jQuery(div).outerWidth() + 30,
-          height: jQuery(div).outerHeight()
-        };
+      var dimensions = {
+        width: jQuery(div).outerWidth() + 30,
+        height: jQuery(div).outerHeight()
+      };
 
-        div.parentNode.removeChild(div);
+      div.parentNode.removeChild(div);
 
-        return dimensions;
+      return dimensions;
     }
 
     function getVBoxDelta($el) {
