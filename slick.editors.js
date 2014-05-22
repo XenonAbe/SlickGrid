@@ -16,6 +16,12 @@
         "Checkbox": CheckboxEditor,
         "PercentComplete": PercentCompleteEditor,
         "LongText": LongTextEditor
+      },
+      "BackboneEditors": {
+        "Text": BackboneTextEditor,
+        "Integer": BackboneIntegerEditor,
+        "YesNoSelect": BackboneYesNoSelectEditor,
+        "Select"  : BackboneSelectEditor
       }
     }
   });
@@ -89,6 +95,91 @@
     this.init();
   }
 
+  function BackboneTextEditor(args) {
+    var $input;
+    var defaultValue;
+    var scope = this;
+
+    this.init = function () {
+      $input = $("<INPUT type=text class='editor-text' />")
+          .appendTo(args.container)
+          .bind("keydown.nav", function (e) {
+            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+              e.stopImmediatePropagation();
+            }
+          })
+          .focus()
+          .select();
+    };
+
+    this.destroy = function () {
+      $input.remove();
+    };
+
+    this.focus = function () {
+      $input.focus();
+    };
+
+    this.getValue = function () {
+      return $input.val();
+    };
+
+    this.setValue = function (val) {
+      $input.val(val);
+    };
+
+    this.loadValue = function (item) {
+      // Если задан getter - используем его
+      if (args.column.loadValue) {
+        defaultValue = args.column.loadValue(item, args.column.field);
+      } else {
+        defaultValue = item.get(args.column.field) || "";
+      }
+
+      if (args.column.locale && args.column.locale[defaultValue]) {
+        defaultValue = args.column.locale[defaultValue];
+      }
+      $input.val(defaultValue);
+      $input[0].defaultValue = defaultValue;
+      $input.select();
+    };
+
+    this.serializeValue = function () {
+      return $input.val();
+    };
+
+    this.applyValue = function (item, state) {
+      // Табличка не должна сама менять значения модели
+    };
+
+    this.isValueChanged = function () {
+      return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
+    };
+
+    this.getEl = function() {
+      return $input;
+    }
+
+    this.validate = function () {
+      if (args.item.preValidate) {
+        var validationResults = args.item.preValidate(args.column.field, $input.val());
+        if (validationResults) {
+          return {
+            valid: false,
+            msg: validationResults
+          }
+        }
+      }
+
+      return {
+        valid: true,
+        msg: null
+      };
+    };
+
+    this.init();
+  }
+
   function IntegerEditor(args) {
     var $input;
     var defaultValue;
@@ -140,6 +231,93 @@
           valid: false,
           msg: "Please enter a valid integer"
         };
+      }
+
+      return {
+        valid: true,
+        msg: null
+      };
+    };
+
+    this.init();
+  }
+
+  function BackboneIntegerEditor(args) {
+    var $input;
+    var defaultValue;
+    var scope = this;
+
+    this.init = function () {
+      $input = $("<INPUT type=text class='editor-text' />");
+
+      $input.bind("keydown.nav", function (e) {
+        if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT || e.keyCode === $.ui.keyCode.UP || e.keyCode === $.ui.keyCode.DOWN) {
+          e.stopImmediatePropagation();
+
+          if (e.keyCode === $.ui.keyCode.DOWN) {
+            $(this).spinner( "stepDown" );
+          }
+
+          if (e.keyCode === $.ui.keyCode.UP) {
+            $(this).spinner( "stepUp" );
+          }
+        }
+      });
+
+      $input.appendTo(args.container);
+      $input.spinner({
+        min: args.column.editorMinValue,
+        max: args.column.editorMaxValue
+      });
+      $input.focus().select();
+    };
+
+    this.destroy = function () {
+      $input.remove();
+    };
+
+    this.focus = function () {
+      $input.focus();
+    };
+
+    this.loadValue = function (item) {
+      // Если задан getter - используем его
+      if (args.column.loadValue) {
+        defaultValue = args.column.loadValue(item, args.column.field);
+      } else {
+        defaultValue = item.get(args.column.field);
+      }
+
+      $input.val(defaultValue);
+      $input[0].defaultValue = defaultValue;
+      $input.select();
+    };
+
+    this.getEl = function() {
+      return $input;
+    }
+
+    this.serializeValue = function () {
+      return parseInt($input.val(), 10) || 0;
+    };
+
+    this.applyValue = function (item, state) {
+      // Табличка не должна сама менять модель
+    };
+
+    this.isValueChanged = function () {
+      return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
+    };
+
+    this.validate = function () {
+      if (args.item.preValidate) {
+        var validationResults = args.item.preValidate(args.column.field, $input.val());
+        if (validationResults) {
+          return {
+            valid: false,
+            msg: validationResults
+          }
+        }
       }
 
       return {
@@ -242,7 +420,7 @@
     var scope = this;
 
     this.init = function () {
-      $select = $("<SELECT tabIndex='0' class='editor-yesno'><OPTION value='yes'>Yes</OPTION><OPTION value='no'>No</OPTION></SELECT>");
+      $select = $("<SELECT tabIndex='0' class='editor-yesno'><OPTION value='yes'>Да</OPTION><OPTION value='no'>Нет</OPTION></SELECT>");
       $select.appendTo(args.container);
       $select.focus();
     };
@@ -273,6 +451,161 @@
     };
 
     this.validate = function () {
+      return {
+        valid: true,
+        msg: null
+      };
+    };
+
+    this.init();
+  }
+
+  function BackboneYesNoSelectEditor(args) {
+    var $select;
+    var defaultValue;
+    var scope = this;
+
+    this.init = function () {
+      var yes = 'Yes';
+      var no = 'No';
+
+      if (args.column.locale) {
+        yes = args.column.locale.yes;
+        no = args.column.locale.no;
+      }
+
+      $select = $("<SELECT tabIndex='0' class='editor-yesno' width='100%'><OPTION value='1'>" + yes + "</OPTION><OPTION value='0'>" + no + "</OPTION></SELECT>");
+      $select.appendTo(args.container);
+      $select.select2({
+        width: "element",
+        minimumResultsForSearch: 100
+      });
+      $select.focus();
+    };
+
+    this.destroy = function () {
+      $select.remove();
+    };
+
+    this.focus = function () {
+      $select.focus();
+    };
+
+    this.getEl = function() {
+      return $select;
+    }
+
+    this.loadValue = function (item) {
+      // Если задан getter - используем его
+      if (args.column.loadValue) {
+          $select.select2("val", (defaultValue = parseInt(args.column.loadValue(item, args.column.field), 10)));
+      } else {
+          $select.select2("val", (defaultValue = parseInt(item.get(args.column.field), 10)));
+      }
+    };
+
+    this.serializeValue = function () {
+      return $select.select2("val");
+    };
+
+    this.applyValue = function (item, state) {
+      // Табличка не должна сама менять значения модели
+    };
+
+    this.isValueChanged = function () {
+      return ($select.val() != defaultValue);
+    };
+
+    this.validate = function () {
+      if (args.item.preValidate) {
+        var validationResults = args.item.preValidate(args.column.field, $select.select2("val"));
+        if (validationResults) {
+          return {
+            valid: false,
+            msg: validationResults
+          }
+        }
+      }
+
+      return {
+        valid: true,
+        msg: null
+      };
+    };
+
+    this.init();
+  }
+
+  function BackboneSelectEditor(args) {
+    var $select;
+    var defaultValue;
+    var scope = this;
+
+    this.init = function () {
+      function format(item) {
+        if (!item.id) return item.text; // optgroup
+        return "<img class='slickgrid_select_editor_img' src='img/" + args.column.editor_img_prefix + item.id.toLowerCase() + ".png'/>" + item.text;
+      }
+
+      $select = $("<SELECT tabIndex='0' width='100%'></SELECT>");
+      for(var val in args.column.editorValues){
+        $("<OPTION />", {value: args.column.editorValues[val].key, text: args.column.editorValues[val].title}).appendTo($select);
+      }
+      $select.appendTo(args.container);
+      $select.select2({
+        width: "element",
+        minimumResultsForSearch: 100,
+        formatResult: format,
+        formatSelection: format,
+        escapeMarkup: function(m) { return m; }
+      });
+      $select.focus();
+    };
+
+    this.destroy = function () {
+      $select.remove();
+    };
+
+    this.focus = function () {
+      $select.focus();
+    };
+
+    this.getEl = function() {
+      return $select;
+    }
+
+    this.loadValue = function (item) {
+      // Если задан getter - используем его
+      if (args.column.loadValue) {
+        $select.select2("val", (defaultValue = args.column.loadValue(item, args.column.field)));
+      } else {
+        $select.select2("val", (defaultValue = item.get(args.column.field)));
+      }
+    };
+
+    this.serializeValue = function () {
+      return $select.select2("val");
+    };
+
+    this.applyValue = function (item, state) {
+      // Табличка не должна сама менять значения модели
+    };
+
+    this.isValueChanged = function () {
+      return ($select.val() != defaultValue);
+    };
+
+    this.validate = function () {
+      if (args.item.preValidate) {
+        var validationResults = args.item.preValidate(args.column.field, $select.select2("val"));
+        if (validationResults) {
+          return {
+            valid: false,
+            msg: validationResults
+          }
+        }
+      }
+
       return {
         valid: true,
         msg: null
