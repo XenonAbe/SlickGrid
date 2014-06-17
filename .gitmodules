@@ -43,3 +43,6 @@
 [submodule "lib/verge-screendimensions"]
 	path = lib/verge-screendimensions
 	url = git@github.com:GerHobbelt/verge.git
+[submodule "lib/TinyColor"]
+	path = lib/TinyColor
+	url = git@github.com:GerHobbelt/TinyColor.git
