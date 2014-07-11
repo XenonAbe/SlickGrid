@@ -320,12 +320,15 @@ if (typeof Slick === "undefined") {
             .bind("click", handleClick)
             .bind("dblclick", handleDblClick)
             .bind("contextmenu", handleContextMenu)
+
+            // cb: Do not want drag and drop functionality per conflicts with draggable
             /*
             .bind("draginit", handleDragInit)
             .bind("dragstart", {distance: 3}, handleDragStart)
             .bind("drag", handleDrag)
             .bind("dragend", handleDragEnd)
             */
+
             .delegate(".slick-cell", "mouseenter", handleMouseEnter)
             .delegate(".slick-cell", "mouseleave", handleMouseLeave);
 
@@ -708,6 +711,20 @@ if (typeof Slick === "undefined") {
       });
     }
 
+    function calculateColWidth( column, maxWidth ){
+        var rowCells = $(".l" + column.index());
+        var width = column[0].scrollWidth;
+        var cellWidth = 0;
+        for ( var i = 0; i < rowCells.length; i++) {
+            cellWidth = $(".slick-col-sizer").html(rowCells[i].innerHTML).width();
+            if ( cellWidth > width){
+                width = cellWidth;
+            }
+        }
+        //width = Math.max(width, headerWidth);
+        return Math.min( width, maxWidth);
+    }
+
     function setupColumnResize() {
       var $col, j, c, pageX, columnElements, minPageX, maxPageX, firstResizable, lastResizable;
       columnElements = $headers.children();
@@ -728,8 +745,27 @@ if (typeof Slick === "undefined") {
           return;
         }
         $col = $(e);
-        $("<div class='slick-resizable-handle' />")
-            .appendTo(e)
+
+          $col.bind("dblclick", function(e, dd){
+                var column = $(e.target).parent();
+                var idx = column.index();
+
+                if (idx >= 0) {
+                    var width = calculateColWidth(column, 200);
+                    $(".l" + idx).width(width + 4);
+                    columns[idx].width = width + 10;
+
+                    applyColumnHeaderWidths();
+                    applyColumnWidths();
+                    updateCanvasWidth(true);
+                    render();
+                    trigger(self.onColumnsResized, {});
+                }
+
+            })
+              //$("<div class='slick-resizable-handle' />")
+              ///$(".slick-header-column")
+              //.appendTo(e)
             .bind("dragstart", function (e, dd) {
               if (!getEditorLock().commitCurrentEdit()) {
                 return false;
@@ -874,6 +910,7 @@ if (typeof Slick === "undefined") {
               render();
               trigger(self.onColumnsResized, {});
             });
+
       });
     }
 
@@ -1472,7 +1509,12 @@ if (typeof Slick === "undefined") {
       // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
       if (item) {
         var value = getDataItemValueForColumn(item, m);
+        // cb: modification to allow full cell text to be displayed on mouseover
+        var valueText = getFormatter(row, m)(row, cell, value, m, item);
+        var div = stringArray[stringArray.length - 1];
+        stringArray[stringArray.length - 1] = div.substr(0,div.length-1) + " title='" + valueText + "'>";
         stringArray.push(getFormatter(row, m)(row, cell, value, m, item));
+
       }
 
       stringArray.push("</div>");
