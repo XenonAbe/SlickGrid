@@ -1516,7 +1516,7 @@
     this.accumulate = function (item) {
       var val = item[this.field_];
       var found = false;
-      if (val != null && val !== "" && val !== NaN) {
+      if (val != null && val !== "" && !isNaN(val)) {
         for (var i = 0; i < this.pairs_.length; i++) {
           if (this.pairs_[i].value == val) {
             this.pairs_[i].count++;
@@ -1554,7 +1554,7 @@
     this.accumulate = function (item) {
       var val = item[this.field_];
       var spliced = false;
-      if (val != null && val !== "" && val !== NaN) {
+      if (val != null && val !== "" && !isNaN(val)) {
         for (var i = 0; i < this.sorted_.length; i++) {
           if (val < this.sorted_[i]) {
             this.sorted_.splice(i, 0, val);
@@ -1591,7 +1591,7 @@
 
     this.accumulate = function (item) {
       var val = item[this.field_];
-      if (val != null && val !== "" && val !== NaN) {
+      if (val != null && val !== "" && !isNaN(val)) {
         this.nonNullCount_++;
         if (this.Mk_ != null) {
           this.Qk_ = this.Qk_ + (this.nonNullCount_ - 1) * Math.pow((val - this.Mk_), 2) / this.nonNullCount_;
