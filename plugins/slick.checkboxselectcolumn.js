@@ -14,6 +14,7 @@
     var _selectedRowsLookup = {};
     var _defaults = {
       columnId: "_checkbox_selector",
+      columnName: "checkbox",
       cssClass: null,
       selectable: true,
       toolTip: "Select/Deselect All",
@@ -78,7 +79,7 @@
       _selectedRowsLookup = lookup;
       _grid.render();
 
-      if (selectedRows.length == selectableRowCount) {
+      if (selectedRows.length === selectableRowCount) {
         _grid.updateColumnHeader(_options.columnId, "<input type='checkbox' checked='checked'>", _options.toolTip);
       } else {
         _grid.updateColumnHeader(_options.columnId, "<input type='checkbox'>", _options.toolTip);
@@ -158,7 +159,7 @@
     function getColumnDefinition() {
       return {
         id: _options.columnId,
-        name: 'checkbox',
+        name: _options.columnName,
         toolTip: _options.toolTip,
         field: _options.field,
         width: _options.width,

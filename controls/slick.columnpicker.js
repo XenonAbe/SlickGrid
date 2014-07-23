@@ -151,7 +151,6 @@
 
         grid.setColumns(visibleColumns);
         onUpdateColumns.notify(visibleColumns, new Slick.EventData());
-        _self.onColumnChanged.notify();
       }
     }
 
@@ -164,7 +163,6 @@
     return {
       "getAllColumns": getAllColumns,
       "onUpdateColumns": onUpdateColumns,
-      "onColumnChanged": new Slick.Event(),
       "destroy": destroy
     };
   }
