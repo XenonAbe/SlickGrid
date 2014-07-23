@@ -253,6 +253,7 @@
           rangeIsCopied: true, // outside source coming in: always regarded as COPY rather than CUT
           rangeDataFromExternalSource: true,
           externalDataSet: clippedRange,
+          rawExternalData: clipText,
           status: "No destination cell or range has been provided"
         });
         return;
@@ -260,10 +261,10 @@
 
       var oneCellToMultiple = false;
       var destH = clippedRange.length;
-      var destW = clippedRange.length ? clippedRange[0].length : 0;
+      var destW = (clippedRange.length && clippedRange[0]) ? clippedRange[0].length : 0;
       assert(destH >= 1);
-      assert(destW >= 1);
-      if (destH == 1 && destW == 1 && selectedRange) {
+      assert(destW >= 0);
+      if (destH === 1 && destW === 1 && selectedRange) {
         oneCellToMultiple = !selectedRange.isSingleCell();
         destH = selectedRange.toRow - selectedRange.fromRow + 1;
         destW = selectedRange.toCell - selectedRange.fromCell + 1;
@@ -295,12 +296,14 @@
           assert(this.destH >= 1);
           assert(this.destX >= 1);
 
+          var v, y, x, destx, desty, nd, dt, d, crdy;
+
           // check whether we need to add additional rows at the bottom of the grid for the entire pasted range to fit into the grid:
           this.oldRowCount = _grid.getDataLength();
           var availableRows = this.oldRowCount - this.destY;
           var addRows = 0;
           if (availableRows < this.destH) {
-            var d = _grid.getData();
+            d = _grid.getData();
             for (addRows = 1; addRows <= this.destH - availableRows; addRows++)
                 d.push({});
             _grid.setData(d);
@@ -308,20 +311,25 @@
           }
           this.addedRows = addRows;
 
-          for (var y = 0; y < this.destH; y++) {
+          for (y = 0; y < this.destH; y++) {
             this.oldValues[y] = [];
-            for (var x = 0; x < this.destW; x++) {
-              var desty = this.destY + y;
-              var destx = this.destX + x;
+            for (x = 0; x < this.destW; x++) {
+              desty = this.destY + y;
+              destx = this.destX + x;
 
               if (desty < this.maxDestY && destx < this.maxDestX) {
-                var nd = _grid.getCellNode(desty, destx);
-                var dt = _grid.getDataItem(desty);
+                nd = _grid.getCellNode(desty, destx);
+                dt = _grid.getDataItem(desty);
                 this.oldValues[y][x] = dt[columns[destx]['id']]; // function getDataItemValueForColumn(item, columnDef)
                 if (this.oneCellToMultiple) {
                   this.setDataItemValueForColumn(dt, columns[destx], clippedRange[0][0], desty, destx, 0, 0);
                 } else {
-                  this.setDataItemValueForColumn(dt, columns[destx], clippedRange[y][x], desty, destx, y, x);
+                  v = _options.cellValueRepresentingUndefined;
+                  crdy = clippedRange[y];
+                  if (crdy && crdy[x] !== undefined) {
+                    v = crdy[x];
+                  }
+                  this.setDataItemValueForColumn(dt, columns[destx], v /* clippedRange[y][x] */, desty, destx, y, x);
                 }
                 _grid.updateCell(desty, destx);
               }
@@ -343,6 +351,7 @@
             rangeDataFromExternalSource: true,
             oneCellToMultiple: this.oneCellToMultiple,
             externalDataSet: this.clippedRange,
+            rawExternalData: clipText,
             clipCommand: this
           });
         },
@@ -384,6 +393,7 @@
             rangeDataFromExternalSource: true,
             oneCellToMultiple: this.oneCellToMultiple,
             externalDataSet: this.clippedRange,
+            rawExternalData: clipText,
             clipCommand: this
           });
 
