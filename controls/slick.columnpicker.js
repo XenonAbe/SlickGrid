@@ -6,25 +6,28 @@
 
     var columnsLookup = {};
 
-    for (var i = 0; i < columns.length; i++) {
-      columnsLookup[ columns[i].id ] = columns[i];
-    }
-
     var defaults = {
       fadeSpeed: 250,
       forceFitColumnsText: "Force fit columns",
       syncColumnCellResizeText: "Synchronous resize"
     };
 
+    function updateColumnLookupTable(list) {
+      for (var i = 0; i < list.length; i++) {
+        columnsLookup[ list[i].id ] = list[i];
+      }
+    }
+
     function init() {
       options = $.extend({}, defaults, options);
+      updateColumnLookupTable(columns);
       grid.onHeaderContextMenu.subscribe(handleHeaderContextMenu);
       grid.onColumnsReordered.subscribe(updateColumnOrder);
 
       $menu = $("<span class='slick-columnpicker' style='display:none;position:absolute;z-index:20;' />").appendTo(document.body);
 
       $menu.bind("mouseleave", function (e) {
-        $(this).fadeOut(options.fadeSpeed)
+        $(this).fadeOut(options.fadeSpeed);
       });
       $menu.bind("click", updateColumn);
     }
@@ -43,7 +46,13 @@
 
       var $li, $input;
       for (var i = 0; i < columns.length; i++) {
-        if (columns[i].id === "_checkbox_selector") continue;
+        // Do not show columns (a.k.a. 'protected columns') in the pick list which either:
+        // - have an empty 'name' field in their column definition (they would show up as a checkbox for 'nothing' anyway)
+        // - are marked as hidden by having an ID which starts with an underscore, e.g. "_checkbox_selector"
+        var colName = columns[i].name; 
+        if (typeof colName !== 'string' && !colName) continue;
+        if (colName === '') continue;
+        if (/^_./.test(columns[i].id)) continue;
 
         $li = $("<li />").appendTo($menu);
         $input = $("<input type='checkbox' />").data("column-id", columns[i].id);
@@ -105,7 +114,11 @@
           ordered[i] = current.shift();
         }
       }
-      columns = ordered;
+      // Now we MAY arrive at a situation where other (userland) code has added columns
+      // while we weren't looking: if there are any, then those will linger in the 
+      // `current` array right now and we can simply append them.
+      columns = ordered.concat(current);
+      updateColumnLookupTable(columns);
     }
 
     function updateColumn(e) {
@@ -121,36 +134,47 @@
 
       if ($(e.target).data("option") === "syncresize") {
         if (e.target.checked) {
-          grid.setOptions({syncColumnCellResize:true});
+          grid.setOptions({syncColumnCellResize: true});
         } else {
-          grid.setOptions({syncColumnCellResize:false});
+          grid.setOptions({syncColumnCellResize: false});
         }
         return;
       }
 
       if ($(e.target).is(":checkbox")) {
         var visibleColumns = [];
+        var invisibleColumns = [];
 
         $.each(columnCheckboxes, function (i, e) {
           var columnID = $(e).data('column-id');
-          if (columnID && columnsLookup[columnID]) {
+          if (columnID != null && columnsLookup[columnID]) {
             if ($(this).is(":checked")) {
               visibleColumns.push( columnsLookup[columnID] );
+            } else {
+              invisibleColumns.push( columnsLookup[columnID] );
             }
           }
         });
 
+        // Always keep at least one column visible:
         if (!visibleColumns.length) {
           $(e.target).attr("checked", "checked");
           return;
         }
 
-        if (columnsLookup._checkbox_selector) {
-          visibleColumns.push(columnsLookup._checkbox_selector);
-        }
+        // Now create the proper columns ordered list for SlickGrid by interleaving the 'protected' columns
+        // with the new visible set: hat we do is discard the *in*visible set, because that's the equivalent
+        // operation.
+        var ordered = columns.slice(0);
+        var newColumnSet = ordered.filter(function (col) {
+          return (invisibleColumns.indexOf(col) === -1);
+        });
 
-        grid.setColumns(visibleColumns);
-        onUpdateColumns.notify(visibleColumns, new Slick.EventData());
+        grid.setColumns(newColumnSet);
+        var evd = new Slick.EventData();
+        evd.hiddenColumns = invisibleColumns;
+        evd.visibleColumns = visibleColumns;
+        onUpdateColumns.notify(visibleColumns, evd);
       }
     }
 

@@ -20,6 +20,8 @@
       toolTip: "Select/Deselect All",
       field: "sel",
       width: 30,
+      minWidth: 26,
+      maxWidth: 40,
       resizable: true,
       sortable: false,
       rowselector: true   // is it a column for grid row selection
@@ -163,6 +165,8 @@
         toolTip: _options.toolTip,
         field: _options.field,
         width: _options.width,
+        minWidth: _options.minWidth,
+        maxWidth: _options.maxWidth,
         resizable: _options.resizable,
         sortable: _options.sortable,
         nofilter: true,
