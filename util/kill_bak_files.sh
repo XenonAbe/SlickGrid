@@ -9,6 +9,8 @@
 pushd $(dirname $0)                                                                                     2> /dev/null  > /dev/null
 cd ..
 
-rm -v -- $( find . -type f -iname '*.bak' -o -iname '*~' )
+echo > __tmp__bogus__
+
+rm -v -- $( find . -type f -iname '*.bak' -o -iname '*~' )  __tmp__bogus__
 
 popd                                                                                                    2> /dev/null  > /dev/null

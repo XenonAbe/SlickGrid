@@ -86,9 +86,9 @@ function checkout_branch {
     case "$mode" in
 F )
         echo "submodule: $1, branch: $2 (FORCED)"
-        git branch --track $2 $3                                                                            2> /dev/null
+        git branch --track $2 origin/$2                                                                            2> /dev/null
         git reset --hard
-        git checkout $2 $4 --force
+        git checkout $2 $3 --force
         git reset --hard
   ;;
 
@@ -101,17 +101,19 @@ F )
 
 R )
         echo "submodule: $1, branch: $2"
-        git branch --track $2 $3                                                                            2> /dev/null
-        git checkout $2 $4
+        git branch --track $2 origin/$2                                                                            2> /dev/null
+        git checkout $2 $3
         ;;
     esac
     popd                                                                                                    2> /dev/null  > /dev/null
 }
 
-# checkout_branch css/lib/Font-Awesome                experimental origin/experimental                                        $@
-checkout_branch lib/moment                          develop origin/develop                                                  $@
-checkout_branch lib/jquery-sparkline                takacsv-work origin/takacsv-work                                        $@
-checkout_branch lib/spectrum                        no-color origin/no-color                                                $@
+# checkout_branch css/lib/Font-Awesome                experimental                                         $@
+checkout_branch lib/moment                          develop                                                   $@
+checkout_branch lib/jquery-sparkline                                           takacsv-work                                $@
+checkout_branch lib/spectrum                                                   no-color                                    $@
+checkout_branch lib/spectrum/lib/TinyColor                                     gh-pages                                    $@
+checkout_branch lib/TinyColor                                                  gh-pages                                    $@
 
 
 popd                                                                                                    2> /dev/null  > /dev/null

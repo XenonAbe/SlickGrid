@@ -144,7 +144,7 @@ c )
     git fsck --full --unreachable --strict
     git reflog expire --expire=0 --all
     #git update-ref
-    git gc --aggressive --prune=2018-08-08
+    git gc --aggressive --prune=all
     git remote update --prune
     git remote prune origin
     popd                                                                  2> /dev/null  > /dev/null
@@ -155,7 +155,7 @@ c )
   git reflog expire --expire=0 --all
   #git update-ref
   git gc --aggressive
-  git remote update --prune
+  git remote update --prune=all
   git remote prune origin
   ;;
 
