@@ -33,8 +33,8 @@
     <h2>View Source:</h2>
       <ul>
           <li id="viewsource">View Source Code</li>
-          <div id="displaycode"></div>
       </ul>
+      <div id="displaycode"></div>
   </div>
 </div>
 
@@ -60,151 +60,157 @@
 <script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
-    var grid;
-    var options = {
-        editable: true,
-        enableAddRow: true,
-        enableCellNavigation: true,
-        asyncEditorLoading: false,
-        autoEdit: false,
-        enableColumnReorder: false
-    };
+var grid;
+var options = {
+    editable: true,
+    enableAddRow: true,
+    enableCellNavigation: true,
+    asyncEditorLoading: false,
+    autoEdit: false,
+    enableColumnReorder: false
+};
 
-    function renderCell(row, cell, value, columnDef, dataContext) {
-        return dataContext.cells[cell].meeting;
+function renderCell(row, cell, value, columnDef, dataContext) {
+    return dataContext.cells[cell].meeting;
+}
+
+
+$(function() {
+
+    var rawData = [];
+
+    for (var i = 0; i < 5; i++) {
+        var day = {
+            day: 'day' + (i+1),
+            companies: []
+        };
+
+        for (var i1 = 0; i1 < 5; i1++) {
+            var company = {
+                id: i1,
+                title:'company' + (i1 + 1),
+                name: 'c' + (i1 + 1),
+                time: i1,
+                meetings: []
+            };
+
+            for (var i2 = 0; i2 < 24; i2++) {
+                var meeting = {
+                    id: i2,
+                    name: 'm' + (i2 + 1)
+                };
+
+                company.meetings.push(meeting);
+            }
+
+            day.companies.push(company);
+        }
+
+        rawData.push(day);
     }
 
 
-    $(function() {
+    var columns = [];
 
-        var rawData = [];
+    for (var j = 0; j < rawData.length; j++) {
 
-        for (var i = 0; i < 5; i++) {
-            var day = {
-                day: 'day' + (i+1),
-                companies: []
+        var header = {
+            id: 'day',
+            name: rawData[j].day,
+            children:[]
+        };
+
+        for (var j1 = 0; j1 < rawData[j].companies.length; j1++) {
+
+            var subHeader = {
+                id: 'company',
+                name: rawData[j].companies[j1].title,
+                field: 'meeting',
+                formatter: renderCell
             };
 
-            for (var i1 = 0; i1 < 5; i1++) {
+            header.children.push(subHeader);
+        }
+
+
+        columns.push(header);
+    }
+
+
+
+    var data = [];
+
+    for (var i = 0; i < rawData[0].companies[0].meetings.length; i++) {
+
+        var row = {
+            time: i + ' : 00',
+            cells: [],
+        };
+
+        for (var i1 = 0; i1 < rawData.length; i1++) {
+
+            for (var i2 = 0; i2 < rawData[i1].companies.length; i2++) {
+
                 var company = {
-                    id: i1,
-                    title:'company' + (i1 + 1),
-                    name: 'c' + (i1 + 1),
-                    time: i1,
-                    meetings: []
+                    time: rawData[i1].companies[i2].time,
+                    meeting: rawData[i1].day + rawData[i1].companies[i2].name + rawData[i1].companies[i2].meetings[i].name,
                 };
 
-                for (var i2 = 0; i2 < 24; i2++) {
-                    var meeting = {
-                        id: i2,
-                        name: 'm' + (i2 + 1)
-                    };
-
-                    company.meetings.push(meeting);
-                }
-
-                day.companies.push(company);
+                row.cells.push(company);
             }
-
-            rawData.push(day);
         }
 
+        data.push(row);
+    }
 
-        var columns = [];
+    grid = new Slick.Grid("#myGrid", data, columns, options);
 
-        for (var j = 0; j < rawData.length; j++) {
-
-            var header = {
-                id: 'day',
-                name: rawData[j].day,
-                children:[]
-            };
-
-            for (var j1 = 0; j1 < rawData[j].companies.length; j1++) {
-
-                var subHeader = {
-                    id: 'company',
-                    name: rawData[j].companies[j1].title,
-                    field: 'meeting',
-                    formatter: renderCell
-                };
-
-                header.children.push(subHeader);
-            }
+    grid.setSelectionModel(new Slick.CellSelectionModel());
+    grid.registerPlugin(new Slick.AutoTooltips());
 
 
-            columns.push(header);
+
+    // set keyboard focus on the grid
+    grid.getCanvasNode().focus();
+
+    var copyManager = new Slick.CellCopyManager();
+    grid.registerPlugin(copyManager);
+
+    copyManager.onPasteCells.subscribe(function (e, args) {
+        if (args.from.length !== 1 || args.to.length !== 1) {
+            throw new Error("This implementation only supports single range copy and paste operations");
         }
 
-
-
-        var data = [];
-
-        for (var i = 0; i < rawData[0].companies[0].meetings.length; i++) {
-
-            var row = {
-                time: i + ' : 00',
-                cells: [],
-            };
-
-            for (var i1 = 0; i1 < rawData.length; i1++) {
-
-                for (var i2 = 0; i2 < rawData[i1].companies.length; i2++) {
-
-                    var company = {
-                        time: rawData[i1].companies[i2].time,
-                        meeting: rawData[i1].day + rawData[i1].companies[i2].name + rawData[i1].companies[i2].meetings[i].name,
-                    };
-
-                    row.cells.push(company);
+        // As columns can be moved around and Ranges specify row/column indexes which must be mapped
+        // to data *fields*, it is paramount to always obtain the latest columns definition list
+        // using the new API .getColumnsInfo():
+        var colsInfo = grid.getColumnsInfo();
+        var columnDefs = colsInfo.gridColumns;
+      
+        var from = args.from[0];
+        var to = args.to[0];
+        var val;
+        for (var i = 0; i <= from.toRow - from.fromRow; i++) {
+            for (var j = 0; j <= from.toCell - from.fromCell; j++) {
+                if (i <= to.toRow - to.fromRow && j <= to.toCell - to.fromCell) {
+                    val = data[from.fromRow + i][columnDefs[from.fromCell + j].field];
+                    data[to.fromRow + i][columnDefs[to.fromCell + j].field] = val;
+                    grid.invalidateRow(to.fromRow + i);
                 }
             }
-
-            data.push(row);
         }
-
-        grid = new Slick.Grid("#myGrid", data, columns, options);
-
-        grid.setSelectionModel(new Slick.CellSelectionModel());
-        grid.registerPlugin(new Slick.AutoTooltips());
-
-
-
-        // set keyboard focus on the grid
-        grid.getCanvasNode().focus();
-
-        var copyManager = new Slick.CellCopyManager();
-        grid.registerPlugin(copyManager);
-
-        copyManager.onPasteCells.subscribe(function (e, args) {
-            if (args.from.length !== 1 || args.to.length !== 1) {
-                throw new Error("This implementation only supports single range copy and paste operations");
-            }
-
-            var from = args.from[0];
-            var to = args.to[0];
-            var val;
-            for (var i = 0; i <= from.toRow - from.fromRow; i++) {
-                for (var j = 0; j <= from.toCell - from.fromCell; j++) {
-                    if (i <= to.toRow - to.fromRow && j <= to.toCell - to.fromCell) {
-                        val = data[from.fromRow + i][columns[from.fromCell + j].field];
-                        data[to.fromRow + i][columns[to.fromCell + j].field] = val;
-                        grid.invalidateRow(to.fromRow + i);
-                    }
-                }
-            }
-            grid.render();
-        });
-
-        grid.onAddNewRow.subscribe(function (e, args) {
-            var item = args.item;
-            var column = args.column;
-            grid.invalidateRow(data.length);
-            data.push(item);
-            grid.updateRowCount();
-            grid.render();
-        });
+        grid.render();
     });
+
+    grid.onAddNewRow.subscribe(function (e, args) {
+        var item = args.item;
+        var column = args.column;
+        grid.invalidateRow(data.length);
+        data.push(item);
+        grid.updateRowCount();
+        grid.render();
+    });
+});
 </script>
 </body>
 </html>

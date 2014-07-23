@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-  <title>SlickGrid example 16b: Nested headers with Virtual Scrolling</title>
+  <title>SlickGrid example 16: Nested headers with Virtual Scrolling</title>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
@@ -13,6 +13,7 @@
       -webkit-transition: 0.5s background;
     }
   </style>
+</head>
 <body>
 <div style="position:relative">
   <div class="grid-outer-wrapper">
@@ -54,106 +55,112 @@
 <script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
-    var grid;
-    var data = [];
-    var options = {
-        editable: true,
-        enableAddRow: true,
-        enableCellNavigation: true,
-        asyncEditorLoading: false,
-        autoEdit: false,
-        //forceFitColumns: true,
-        enableColumnReorder: false,
-    };
+var grid;
+var data = [];
+var options = {
+    editable: true,
+    enableAddRow: true,
+    enableCellNavigation: true,
+    asyncEditorLoading: false,
+    autoEdit: false,
+    //forceFitColumns: true,
+    enableColumnReorder: false,
+};
 
-    var columns = [
-      {
-        id: "selector",
-        name: "",
-        field: "num",
-        width: 30
-      }
-    ];
+var columns = [
+  {
+    id: "selector",
+    name: "",
+    field: "num",
+    width: 30
+  }
+];
 
 
-    var children = [[], []];
-    for (var i = 0; i < 24; i++) {
-        children[0].push({
-            id: "cell" + i,
-            name: i,
-            field: i,
-            width: 160,
-            editor: Slick.Editors.Formula
-        });
-        children[1].push({
-            id: "cell" + i + 24,
-            name: i,
-            field: i + 24,
-            width: 160,
-            editor: Slick.Editors.Formula
-        });
+var children = [[], []];
+for (var i = 0; i < 24; i++) {
+    children[0].push({
+        id: "cell" + i,
+        name: i,
+        field: i,
+        width: 160,
+        editor: Slick.Editors.Formula
+    });
+    children[1].push({
+        id: "cell" + i + 24,
+        name: i,
+        field: i + 24,
+        width: 160,
+        editor: Slick.Editors.Formula
+    });
+}
+
+columns.push({
+    id: "Today",
+    name: "Today",
+    field: "Today",
+    children: children[0]
+});
+columns.push({
+    id: "Tomorrow",
+    name: "Tomorrow",
+    field: "Tomorrow",
+    children: children[1]
+});
+
+
+$(function () {
+    for (var i = 0; i < 100; i++) {
+        var d = (data[i] = {});
+        d["num"] = i;
     }
 
-    columns.push({
-        id: "Today",
-        name: "Today",
-        field: "Today",
-        children: children[0]
-    });
-    columns.push({
-        id: "Tomorrow",
-        name: "Tomorrow",
-        field: "Tomorrow",
-        children: children[1]
-    });
+    grid = new Slick.Grid("#myGrid", data, columns, options);
 
+    grid.setSelectionModel(new Slick.CellSelectionModel());
+    grid.registerPlugin(new Slick.AutoTooltips());
 
-    $(function () {
-        for (var i = 0; i < 100; i++) {
-            var d = (data[i] = {});
-            d["num"] = i;
+    // set keyboard focus on the grid
+    grid.getCanvasNode().focus();
+
+    var copyManager = new Slick.CellCopyManager();
+    grid.registerPlugin(copyManager);
+
+    copyManager.onPasteCells.subscribe(function (e, args) {
+        if (args.from.length !== 1 || args.to.length !== 1) {
+            throw new Error("This implementation only supports single range copy and paste operations");
         }
 
-        grid = new Slick.Grid("#myGrid", data, columns, options);
-
-        grid.setSelectionModel(new Slick.CellSelectionModel());
-        grid.registerPlugin(new Slick.AutoTooltips());
-
-        // set keyboard focus on the grid
-        grid.getCanvasNode().focus();
-
-        var copyManager = new Slick.CellCopyManager();
-        grid.registerPlugin(copyManager);
-
-        copyManager.onPasteCells.subscribe(function (e, args) {
-            if (args.from.length !== 1 || args.to.length !== 1) {
-                throw new Error("This implementation only supports single range copy and paste operations");
-            }
-
-            var from = args.from[0];
-            var to = args.to[0];
-            var val;
-            for (var i = 0; i <= from.toRow - from.fromRow; i++) {
-                for (var j = 0; j <= from.toCell - from.fromCell; j++) {
-                    if (i <= to.toRow - to.fromRow && j <= to.toCell - to.fromCell) {
-                        val = data[from.fromRow + i][columns[from.fromCell + j].field];
-                        data[to.fromRow + i][columns[to.fromCell + j].field] = val;
-                        grid.invalidateRow(to.fromRow + i);
-                    }
+        // As columns can be moved around and Ranges specify row/column indexes which must be mapped
+        // to data *fields*, it is paramount to always obtain the latest columns definition list
+        // using the new API .getColumnsInfo():
+        var colsInfo = grid.getColumnsInfo();
+        var columnDefs = colsInfo.gridColumns;
+          
+        var from = args.from[0];
+        var to = args.to[0];
+        var val;
+        for (var i = 0; i <= from.toRow - from.fromRow; i++) {
+            for (var j = 0; j <= from.toCell - from.fromCell; j++) {
+                if (i <= to.toRow - to.fromRow && j <= to.toCell - to.fromCell) {
+                    val = data[from.fromRow + i][columnDefs[from.fromCell + j].field];
+                    data[to.fromRow + i][columnDefs[to.fromCell + j].field] = val;
+                    grid.invalidateRow(to.fromRow + i);
                 }
             }
-            grid.render();
-        });
-
-        grid.onAddNewRow.subscribe(function (e, args) {
-            var item = args.item;
-            var column = args.column;
-            grid.invalidateRow(data.length);
-            data.push(item);
-            grid.updateRowCount();
-            grid.render();
-        });
+        }
+        grid.render();
     });
+
+    grid.onAddNewRow.subscribe(function (e, args) {
+        var item = args.item;
+        var column = args.column;
+        grid.invalidateRow(data.length);
+        data.push(item);
+        grid.updateRowCount();
+        grid.render();
+    });
+});
 </script>
 </body>
 </html>

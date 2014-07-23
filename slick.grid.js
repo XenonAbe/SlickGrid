@@ -78,8 +78,10 @@ if (typeof Slick === "undefined") {
    *      name:               {String}    The name of the column, displayed in column header cell
    *      field:              {String}    The name of the data item property to be displayed in this column
    *      width:              {Number}    The width of the column in pixels
-   *      minWidth:           {Number}    The minimum width of the column
-   *      maxWidth:           {Number}    The maximum width of the column
+   *      minWidth:           {Number}    The minimum width of the column in pixels
+   *      maxWidth:           {Number}    The maximum width of the column in pixels
+   *      minHeight:          {Number}    The minimum height of the grid in pixels
+   *      maxHeight:          {Number}    The maximum height of the grid in pixels
    *      cssClass:           {String}    The name of the CSS class to use for cells in this column
    *      formatter:          {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, cellMetaInfo) for grid cells
    *      headerFormatter:    {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, cellMetaInfo) for header cells
@@ -269,6 +271,7 @@ if (typeof Slick === "undefined") {
     var lastRenderedScrollLeft = 0;
     var prevScrollLeft = 0;
     var scrollLeft = 0;
+    var clippedAutoSize = false;
 
     var selectionModel;
     var selectedRows = [];
@@ -368,7 +371,7 @@ if (typeof Slick === "undefined") {
 
       $headerScroller = $("<div class='slick-header ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
 
-      viewportW = parseFloat($.css($container[0], "width", true));
+      viewportW = getContainerWidth();
 
       var headersWidth = getHeadersWidth();
 
@@ -396,7 +399,7 @@ if (typeof Slick === "undefined") {
       }
 
       $viewport = $("<div class='slick-viewport' style='width:100%;overflow:auto;outline:0;position:relative;'>").appendTo($container);
-      $viewport.css("overflow-y", options.autoHeight ? "hidden" : "auto");
+      //$viewport.css("overflow-y", (options.autoHeight && !clippedAutoSize) ? "auto" : "auto");
 
       $canvas = $("<div class='grid-canvas' />").appendTo($viewport);
 
@@ -421,7 +424,7 @@ if (typeof Slick === "undefined") {
       if (!initialized) {
         initialized = true;
 
-        viewportW = parseFloat($.css($container[0], "width", true));
+        viewportW = getContainerWidth();
 
         // header columns and cells may have different padding/border skewing width calculations (box-sizing, hello?)
         // calculate the diff so we can set consistent sizes
@@ -1847,6 +1850,22 @@ if (typeof Slick === "undefined") {
       return columnsDefTree;
     }
 
+    // Produce the entire column tree as an object containing both the original
+    // column definition tree and the flattened lists.
+    //
+    // Note: technically, `ret.gridColumns` === `ret.lookupMatrix[ret.lookupMatrix.length - 1]` i.e.
+    // the flattened array of column definitions used for rendering the datagrid is the last
+    // (i.e. 'deepest') row of columns in the nestedColumns 2D lookup matrix.
+    // We decide to offer it separately however for ease of use: many applications of this API
+    // will look for this list in particular as getColumns() doesn't deliver it.
+    function getColumnsInfo() { 
+      return {
+        definitionTree: columnsDefTree,         // the input
+        lookupMatrix: nestedColumns,            // the 2D lookup array which carries all headers, plus fill spacers
+        gridColumns: columns                    // the 1D columns array representing the columns as shown in the *datagrid*
+      };
+    }
+
     function getLeafColumns() {
       return columns;
     }
@@ -1910,7 +1929,7 @@ if (typeof Slick === "undefined") {
       options = $.extend(options, args);
       validateAndEnforceOptions();
 
-      $viewport.css("overflow-y", options.autoHeight ? "hidden" : "auto");
+      //$viewport.css("overflow-y", (options.autoHeight && !clippedAutoSize) ? "auto" : "auto");
       render();
     }
 
@@ -2140,7 +2159,7 @@ if (typeof Slick === "undefined") {
               // while the spacers extend all the way down to leaf level, 
               // the column itself ends up in both the columns[]
               // leaf columns array so we produce the master column info, 
-              // such as custom formatters, etc. here slickgrid expects
+              // such as custom formatters, etc. where slickgrid expects
               // them (in a flat 1D columns[] array) while the same
               // column object now also ends up in the nestedColumns[]
               // array at a non-leaf depth.
@@ -2974,14 +2993,31 @@ if (typeof Slick === "undefined") {
       return cellHeight;
     }
 
+    function getContainerWidth() {
+      var rv = 0;
+      if ($container.is(':visible')) {
+        rv = parseFloat($.css($container[0], "width", true));
+      }
+      return rv;
+    }
+
+    function getContainerHeight() {
+      var rv = 0;
+      if ($container.is(':visible')) {
+        rv = parseFloat($.css($container[0], "height", true));
+      }
+      return rv;
+    }
+
     function getViewportHeight() {
-      return parseFloat($.css($container[0], "height", true)) -
+      var rv = getContainerHeight() -
         parseFloat($.css($container[0], "paddingTop", true)) -
         parseFloat($.css($container[0], "paddingBottom", true)) -
         parseFloat($.css($headerScroller[0], "height")) - getVBoxDelta($headerScroller) -
         (options.showTopPanel ? options.topPanelHeight + getVBoxDelta($topPanelScroller) : 0) -
         (options.showFooterRow ? options.footerRowHeight + getVBoxDelta($footerRowScroller) : 0) -
         (options.showHeaderRow ? options.headerRowHeight + getVBoxDelta($headerRowScroller) : 0);
+      return Math.max(0, rv);
     }
 
     // Returns the size of the content area
@@ -3008,17 +3044,38 @@ if (typeof Slick === "undefined") {
 
     function resizeCanvas() {
       if (!initialized) { return; }
+      var setHeight = true;      
+      var estimateH = Infinity;
       if (options.autoHeight) {
-        viewportH = getRowBottom(getDataLengthIncludingAddNew());
+        estimateH = getRowBottom(getDataLengthIncludingAddNew());
+        viewportH = Math.max(options.minHeight || 0, Math.min(options.maxHeight || Infinity, estimateH));
+        setHeight = (estimateH !== viewportH || options.minHeight === viewportH || options.maxHeight === viewportH);
+        clippedAutoSize = (estimateH > viewportH);
       } else {
         viewportH = getViewportHeight();
       }
 
       numVisibleRows = getRowWithFractionFromPosition(viewportH).position;
-      viewportW = parseFloat($.css($container[0], "width", true));
-      if (!options.autoHeight) {
+      viewportW = getContainerWidth();
+      if (setHeight) {
         $viewport.height(viewportH);
+        
+        // Trouble is now we need to detect if we've been limited by any user styles on the *container*:
+        var containerH = getContainerHeight();
+        var actualViewportH = getViewportHeight();
+        var viewportToContainerDeltaH = containerH - actualViewportH;
+
+        if (viewportH !== actualViewportH) {
+          // user CSS rules are apparently kicking in (min-height, max-height); compensate.
+          viewportH = actualViewportH;
+          clippedAutoSize = (estimateH > viewportH);
+    
+          numVisibleRows = getRowWithFractionFromPosition(viewportH).position;
+          $viewport.height(viewportH);
+        }
       }
+
+      //$viewport.css("overflow-y", (options.autoHeight && !clippedAutoSize) ? "auto" : "auto");
 
       if (options.forceFitColumns) {
         autosizeColumns();
@@ -3042,8 +3099,7 @@ if (typeof Slick === "undefined") {
           (options.leaveSpaceForNewRows ? numVisibleRows - 1 : 0);
 
       var oldViewportHasVScroll = viewportHasVScroll;
-      // with autoHeight, we do not need to accommodate the vertical scroll bar
-      viewportHasVScroll = !options.autoHeight && (getRowBottom(numberOfRows - 1) > viewportH);
+      viewportHasVScroll = (getRowBottom(numberOfRows - 1) > viewportH);
 
       makeActiveCellNormal();
 
@@ -3108,7 +3164,7 @@ if (typeof Slick === "undefined") {
     /*
     WARNING: the returned object .bottom attribute points at the first row which is guaranteed to be NOT visible.
     This was done in the vanilla SlickGrid (the one which doesn't deliver fractional position info). 
-    It is in line with other range info objects which oul list the bottom as 'one beyond'
+    It is in line with other range info objects which would list the bottom as 'one beyond'
     in order to simplify height calculations (bottom - top without the obligatory +1 correction) and looping
     over the visible row range (for row = rv.top; row < rv.bottom; row++).
 
@@ -3485,7 +3541,7 @@ if (typeof Slick === "undefined") {
           scrollTo(scrollTop + pageOffset);
         } else {
           var oldOffset = pageOffset;
-          if (scrollableHeight == viewportH) {
+          if (scrollableHeight === viewportH) {
             // see https://github.com/mleibman/SlickGrid/issues/309
             page = numberOfPages - 1;
           } else {
@@ -5273,6 +5329,7 @@ if (typeof Slick === "undefined") {
       // Methods
       "registerPlugin": registerPlugin,
       "unregisterPlugin": unregisterPlugin,
+      "getColumnsInfo": getColumnsInfo,
       "getColumns": getColumns,
       "setColumns": setColumns,
       "updateColumnWidths": updateColumnWidths,

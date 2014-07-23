@@ -8,6 +8,16 @@
   <link rel="stylesheet" href="../slick.grid.css" type="text/css">
   <link rel="stylesheet" href="examples.css" type="text/css">
   <style type="text/css">
+    .slickgrid-container .slick-row.even .slick-cell.cell-very-high {
+        background: #F0FFE0;
+    }
+    .slickgrid-container .slick-row.odd .slick-cell.cell-var-span {
+        background: #87ceeb;
+    }
+    .slickgrid-container .slick-row.even.slick-row-6 .slick-cell {
+        background: #bea7ff;
+    }
+
     .slick-row .slick-cell.rowspan {
       background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAQ0lEQVQYV2N8/fr1fwY84M6dOwyM+BSBFKioqOBWBFMAsgSrScgKsCpCV4ChCJsCFEW4FMAV4VMAVnT8+PH/IG/iAwDA1DlezHn8bwAAAABJRU5ErkJggg==);
     }
@@ -38,8 +48,13 @@
         <li><button id='scrollTo'>Scroll To Row</button><input id="nRow" type="text" value="100" style="width: 50px;" /></li>
         <li><button id='toggleHeight'>Toggle row #6 height</button></li>
         <li><button id='toggleSpans'>Toggle blue cell colspan &amp; rowspan</button></li>
-          <div id="displaycode"></div>
       </ul>
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+      </ul>
+      <div id="displaycode"></div>
   </div>
 </div>
 

@@ -1,7 +1,23 @@
+
+// Column layout looks like this:
+//
+// ```
+// <div role="columnheader" id="..." title="Select/Deselect All" class="ui-state-default slick-header-column level0 colspan1">
+//   <span class="slick-column-name">bla</span>
+//   <div class="slick-header-menubutton"></div>
+//   <div class="slick-resizable-handle" style="width: 16px;"></div>
+// </div>
+// ```
+//
+// and we are trying to ensure that the MENUBUTTON indeed overlaps the slick-resizable-handle DIV below it for mouse/touch.
+
 /* Menu button */
 .slick-header-menubutton {
   position: absolute;
-  right: 0;
+  // Ensure the MENUBUTTON in the column header sits *on top* of the column resize DIV (which is position:absolute)
+  z-index: 1;
+
+  right: 3px;         // keep some space for the column-resize button to 'see' the mouse 
   top: 0;
   bottom: 0;
   width: 14px;

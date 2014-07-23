@@ -139,8 +139,8 @@
     <h2>View Source:</h2>
       <ul>
           <li id="viewsource">View Source Code</li>
-          <div id="displaycode"></div>
       </ul>
+      <div id="displaycode"></div>
   </div>
 </div>
 
@@ -311,7 +311,7 @@ $(function() {
 
         var selectedRows = grid.getSelectedRows();
 
-        if (!selectedRows.length || $.inArray(dd.row,selectedRows) == -1) {
+        if (!selectedRows.length || $.inArray(dd.row, selectedRows) == -1) {
             selectedRows = [dd.row];
             grid.setSelectedRows(selectedRows);
         }
@@ -368,6 +368,10 @@ $(function() {
         .on("drop", function(e,dd) {
             $(this).toggleClass("dropped");
 
+            // When we drag the row mover onto the recycle bin area, `dd.rows` will be undefined.
+            // This is a quick-fix; the root cause is incorrect/incomplete setup of the recycle bin area.
+            if (!dd.rows) return;
+            
             var rowsToDelete = dd.rows.sort().reverse();
             for (var i = 0; i < rowsToDelete.length; i++) {
                 data.splice(rowsToDelete[i], 1);

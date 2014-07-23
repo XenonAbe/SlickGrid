@@ -31,33 +31,33 @@
   <div class="options-panel">
     <h2>Demonstrates</h2>
 
-  <p>
-    With SlickGrid, you can still have rich, complex cells rendered against the actual DOM nodes while still preserving
-    the speed and responsiveness.
-    This is achieved through async background post-rendering.
-    SlickGrid exposes a <u>asyncPostRender</u> property on a column which you can use to set your own function that will
-    manipulate the cell DOM node directly.
-    The event is fired one by one for all visible rows in the viewport on a timer so it doesn't impact the UI
-    responsiveness.
-    You should still make sure that post-processing one row doesn't take too long though.
-    SlickGrid will figure out what and when needs to be updated for you.
-  </p>
+    <p>
+      With SlickGrid, you can still have rich, complex cells rendered against the actual DOM nodes while still preserving
+      the speed and responsiveness.
+      This is achieved through async background post-rendering.
+      SlickGrid exposes a <u>asyncPostRender</u> property on a column which you can use to set your own function that will
+      manipulate the cell DOM node directly.
+      The event is fired one by one for all visible rows in the viewport on a timer so it doesn't impact the UI
+      responsiveness.
+      You should still make sure that post-processing one row doesn't take too long though.
+      SlickGrid will figure out what and when needs to be updated for you.
+    </p>
 
-  <p>
-    The example below is a list of 500 rows with a title and 5 integer cells followed by graphical representation of
-    these integers.
-    The graph is drawn using a CANVAS element in the background.
-    The grid is editable, so you can edit the numbers and see the changes reflected (almost) immediately in the graph.
-    The graph cell behaves just like an ordinary cell and can be resized/reordered.
-    The graphs themselves are created using the excellent <a href="http://www.omnipotent.net/jquery.sparkline/"
-                                                             target="_blank">jQuery Sparklines</a> library.
-  </p>
+    <p>
+      The example below is a list of 500 rows with a title and 5 integer cells followed by graphical representation of
+      these integers.
+      The graph is drawn using a CANVAS element in the background.
+      The grid is editable, so you can edit the numbers and see the changes reflected (almost) immediately in the graph.
+      The graph cell behaves just like an ordinary cell and can be resized/reordered.
+      The graphs themselves are created using the excellent <a href="http://www.omnipotent.net/jquery.sparkline/"
+                                                               target="_blank">jQuery Sparklines</a> library.
+    </p>
 
     <h2>View Source:</h2>
       <ul>
           <li id="viewsource">View Source Code</li>
-          <div id="displaycode"></div>
       </ul>
+      <div id="displaycode"></div>
   </div>
 </div>
 
