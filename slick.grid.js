@@ -1758,6 +1758,11 @@ if (typeof Slick === "undefined") {
     //////////////////////////////////////////////////////////////////////////////////////////////
     // General
 
+    // A simple way to expose the uid to consumers, who might care which slickgrid instance they're dealing with.
+    function getId() {
+      return uid;
+    }
+
     function trigger(evt, args, e) {
       // WARNING: keep in mind that we MAY pass either a Slick.EventData instance or a DOM event instance in `e`! 
       // Both types are accepted and depend on which event is triggered...
@@ -5812,6 +5817,7 @@ out:
       // Methods
       "registerPlugin": registerPlugin,
       "unregisterPlugin": unregisterPlugin,
+      "getId": getId,
       "getColumnsInfo": getColumnsInfo,
       "getColumns": getColumns,
       "setColumns": setColumns,
