@@ -127,7 +127,7 @@
 
     var columnScrollTimer = null;
     grid = new Slick.Grid("#myGrid", data, columns, options);
-    grid.onColumnsReordered.subscribe(function(e,args) {
+    grid.onColumnsReordered.subscribe(function(e, args) {
         clearInterval(columnScrollTimer);
         columnScrollTimer = null;
     });

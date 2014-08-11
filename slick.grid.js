@@ -843,6 +843,9 @@ if (typeof Slick === "undefined") {
       function createBaseColumnHeader(m, level, cell) {
         var header = createColumnHeader(m, $headers, level, cell);
         var i, j, column;
+        var cellCss, cellStyles, info;
+        var headerRowCell;
+        var footerRowCell;
 
         if (options.enableColumnReorder || m.sortable) {
           header
@@ -863,10 +866,10 @@ if (typeof Slick === "undefined") {
         });
 
         if (options.showHeaderRow) {
-          var cellCss = ["ui-state-default", "slick-headerrow-column", "l" + cell, "r" + cell];
+          cellCss = ["ui-state-default", "slick-headerrow-column", "l" + cell, "r" + cell];
           if (m.headerCssClass) cellCss.push(m.headerCssClass);
-          var cellStyles = [];
-          var info = {
+          cellStyles = [];
+          info = {
             cellCss: cellCss,
             cellStyles: cellStyles,
             html: "",
@@ -883,7 +886,7 @@ if (typeof Slick === "undefined") {
             }
           };
           info.html = getHeaderRowFormatter(-1000, cell)(-1000, cell, m.initialHeaderRowValue, m, null /* rowDataItem */, info);
-          var headerRowCell = $("<div></div>")
+          headerRowCell = $("<div></div>")
               .attr("title", info.toolTip)
               .data("column", m)
               .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
@@ -898,10 +901,10 @@ if (typeof Slick === "undefined") {
           });
         }
         if (options.showFooterRow) {
-          var cellCss = ["ui-state-default", "slick-footerrow-column", "l" + cell, "r" + cell];
+          cellCss = ["ui-state-default", "slick-footerrow-column", "l" + cell, "r" + cell];
           if (m.footerCssClass) cellCss.push(m.footerCssClass);
-          var cellStyles = [];
-          var info = {
+          cellStyles = [];
+          info = {
             cellCss: cellCss,
             cellStyles: cellStyles,
             html: "",
@@ -918,7 +921,7 @@ if (typeof Slick === "undefined") {
             }
           };
           info.html = getHeaderRowFormatter(-3000, cell)(-3000, cell, m.initialFooterRowValue, m, null /* rowDataItem */, info);
-          var footerRowCell = $("<div></div>")
+          footerRowCell = $("<div></div>")
               .attr("title", info.toolTip)
               .data("column", m)
               .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
@@ -1144,7 +1147,7 @@ if (typeof Slick === "undefined") {
         var shrinkLeewayOnRight = null, stretchLeewayOnRight = null;
         // calculate & cache all invariants to speed up the process:
         for (var i = 0, len = columns.length; i < len; i++) {
-          var c = columns[i];
+          c = columns[i];
           c.__columnResizeInfo = {
             // lock each column's width option to current width
             previousWidth: c.width, // previousWidth should NOT be measured from the UI as this will b0rk the system depending on boxmodel. // $(e).outerWidth();

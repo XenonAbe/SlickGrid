@@ -320,7 +320,7 @@
               if (desty < this.maxDestY && destx < this.maxDestX) {
                 nd = _grid.getCellNode(desty, destx);
                 dt = _grid.getDataItem(desty);
-                this.oldValues[y][x] = dt[columns[destx]['id']]; // function getDataItemValueForColumn(item, columnDef)
+                this.oldValues[y][x] = dt[columns[destx].id]; // function getDataItemValueForColumn(item, columnDef)
                 if (this.oneCellToMultiple) {
                   this.setDataItemValueForColumn(dt, columns[destx], clippedRange[0][0], desty, destx, 0, 0);
                 } else {
