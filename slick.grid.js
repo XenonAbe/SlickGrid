@@ -1510,9 +1510,10 @@ if (typeof Slick === "undefined") {
       if (item) {
         var value = getDataItemValueForColumn(item, m);
         // cb: modification to allow full cell text to be displayed on mouseover
-        var valueText = getFormatter(row, m)(row, cell, value, m, item);
+        //var valueText = getFormatter(row, m)(row, cell, value, m, item);
         var div = stringArray[stringArray.length - 1];
-        stringArray[stringArray.length - 1] = div.substr(0,div.length-1) + " title='" + valueText + "'>";
+        //stringArray[stringArray.length - 1] = div.substr(0,div.length-1) + " title='" + valueText + "'>";
+        stringArray[stringArray.length - 1] = div.substr(0,div.length-1) + "'>";
         stringArray.push(getFormatter(row, m)(row, cell, value, m, item));
 
       }
