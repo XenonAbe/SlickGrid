@@ -455,7 +455,41 @@ if (typeof Slick === "undefined") {
         bindAncestorScrollEvents();
 
         $container
-            .bind("resize.slickgrid", resizeCanvas);
+            .bind("resize.slickgrid", resizeCanvas)
+            .bind("focus.slickgrid", function (e) {
+              console.log("container focus: ", this, arguments);
+
+              var evt = new Slick.EventData(e);
+              trigger(self.onFocusIn, {}, evt);
+              var handled = evt.isHandled();
+              if (handled) {
+                return;
+              }
+
+              var lock = getEditorLock();
+              if (!lock.isActive(editController) && lock.commitCurrentEdit()) {
+                lock.activate(editController);
+              }
+              // else: jump back to previously focused element... but we don't know what it is so this is all we can do now...
+            })
+            .bind("focusout.slickgrid", function (e) {
+              console.log("container LOST FOCUS = autoCOMMIT: ", this, arguments);
+
+              var $target = $(e.target);
+
+              var evt = new Slick.EventData(e);
+              trigger(self.onFocusOut, {}, evt);
+              var handled = evt.isHandled();
+              if (handled) {
+                return;
+              }
+
+              var lock = getEditorLock();
+              if (!lock.commitCurrentEdit()) {
+                // commit failed, jump back to edited field so user can edit it and make sure it passes the next time through
+                $target.focus();
+              }
+            });
         $viewport
             //.bind("click", handleClick)
             .bind("scroll", handleScroll);
@@ -591,7 +625,9 @@ if (typeof Slick === "undefined") {
         var headersWidth = getHeadersWidth();
         $headers.width(headersWidth);
         $headerParents.width(headersWidth);
-        trigger(self.onCanvasWidthChanged, { width: canvasWidth });
+        trigger(self.onCanvasWidthChanged, { 
+          width: canvasWidth 
+        });
       }
 
       $headerRowSpacer.width(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
@@ -675,6 +711,8 @@ if (typeof Slick === "undefined") {
         if (toolTip !== undefined) {
           columnDef.toolTip = toolTip;
         }
+        title = columns[idx].name;
+        toolTip = columns[idx].toolTip;
 
         var e = new Slick.EventData();
         trigger(self.onBeforeHeaderCellDestroy, {
@@ -682,7 +720,7 @@ if (typeof Slick === "undefined") {
           column: columnDef,
           cell: idx
         }, e);
-        if (e.isImmediatePropagationStopped()) {
+        if (e.isHandled()) {
           return false;
         }
 
@@ -753,7 +791,7 @@ if (typeof Slick === "undefined") {
       }
 
       $headers.find(".slick-header-column")
-        .each(function() {
+        .each(function () {
           var columnDef = $(this).data("column");
           if (columnDef) {
             trigger(self.onBeforeHeaderCellDestroy, {
@@ -770,7 +808,7 @@ if (typeof Slick === "undefined") {
 
       // Get the data for each column in the DOM
       $headerRow.find(".slick-headerrow-column")
-        .each(function() {
+        .each(function () {
           var columnDef = $(this).data("column");
           if (columnDef) {
             trigger(self.onBeforeHeaderRowCellDestroy, {
@@ -782,7 +820,7 @@ if (typeof Slick === "undefined") {
       $headerRow.empty();
 
       $footerRow.find(".slick-footerrow-column")
-        .each(function() {
+        .each(function () {
           var columnDef = $(this).data("column");
           if (columnDef) {
             trigger(self.onBeforeFooterRowCellDestroy, {
@@ -983,6 +1021,7 @@ if (typeof Slick === "undefined") {
         }
 
         var column = $col.data("column");
+        assert(column);
         if (column.sortable) {
           if (!getEditorLock().commitCurrentEdit()) {
             return;
@@ -991,7 +1030,7 @@ if (typeof Slick === "undefined") {
           var sortOpts = null;
           var i;
           for (i = 0; i < sortColumns.length; i++) {
-            if (sortColumns[i].columnId == column.id) {
+            if (sortColumns[i].columnId === column.id) {
               sortOpts = sortColumns[i];
               sortOpts.sortAsc = !sortOpts.sortAsc;
               break;
@@ -1026,7 +1065,7 @@ if (typeof Slick === "undefined") {
           } else {
             trigger(self.onSort, {
               multiColumnSort: true,
-              sortCols: $.map(sortColumns, function(col) {
+              sortCols: $.map(sortColumns, function (col) {
                 return {
                   sortCol: columns[getColumnIndex(col.columnId)],
                   sortAsc: col.sortAsc
@@ -1064,7 +1103,9 @@ if (typeof Slick === "undefined") {
         placeholder: "slick-sortable-placeholder ui-state-default slick-header-column",
         start: function (e, ui) {
           ui.placeholder.width(ui.helper.width());
-          trigger(self.onColumnsStartReorder, {e: e, ui: ui});
+          trigger(self.onColumnsStartReorder, {
+            ui: ui
+          }, e);
 
           $(ui.helper).addClass("slick-header-column-active");
         },
@@ -1072,7 +1113,9 @@ if (typeof Slick === "undefined") {
           $(ui.helper).removeClass("slick-header-column-active");
         },
         sort: function (e, ui) {
-          trigger(self.onColumnsReordering, {e: e, ui: ui});
+          trigger(self.onColumnsReordering, {
+            ui: ui
+          }, e);
 
           if (e.originalEvent.pageX > $viewport[0].clientWidth) {
             if (!columnScrollTimer) {
@@ -1104,7 +1147,9 @@ if (typeof Slick === "undefined") {
           }
           setColumns(reorderedColumns);
 
-          trigger(self.onColumnsReordered, {e: e, ui: ui});
+          trigger(self.onColumnsReordered, {
+            ui: ui
+          }, e);
           e.stopPropagation();
           setupColumnResize();
         }
@@ -1208,7 +1253,7 @@ if (typeof Slick === "undefined") {
         }
         maxPageX = pageX + Math.min(shrinkLeewayOnRight, stretchLeewayOnLeft);
         minPageX = pageX - Math.min(shrinkLeewayOnLeft, stretchLeewayOnRight);
-        trigger(self.onColumnsStartResize, {e: e}); // onColumnsResizeStart
+        trigger(self.onColumnsStartResize, {}, e); // onColumnsResizeStart
         computeNestedColumnHeaderWidths();
         updateColumnCaches();
         applyColumnHeaderWidths();
@@ -1300,13 +1345,14 @@ if (typeof Slick === "undefined") {
           //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
           updateCanvasWidth(true);
         }
-        trigger(self.onColumnsResizing, {e: e});
+        trigger(self.onColumnsResizing, {}, e);
         //e.preventDefault();
         //e.stopPropagation();
       }
       
       function onColumnResizeDragEnd(e, dd) {
         var newWidth, j, c;
+        var adjustedColumns = [];
         $(this).parent().removeClass("slick-header-column-active");
         assert(columns.length === columnElements.length);
         for (j = 0; j < columnElements.length; j++) {
@@ -1314,21 +1360,34 @@ if (typeof Slick === "undefined") {
           assert(c);
           newWidth = c.width; // again, we should NEVER get the cell width from the UI as that will screw us seven ways to Hell thanks to the CSS boxmodels // $(columnElements[j]).outerWidth();
 
-          if (c.__columnResizeInfo.previousWidth !== newWidth && c.rerenderOnResize) {
-            invalidateAllRows();
+          if (c.__columnResizeInfo.previousWidth !== newWidth) {
+            adjustedColumns.push(c);
+            if (c.rerenderOnResize) {
+              invalidateAllRows();
+            }
           }
         }
         updateCanvasWidth(true);
         handleScroll();
         render();
-        trigger(self.onColumnsResized, {e: e});
+        trigger(self.onColumnsResized, { 
+          adjustedColumns: adjustedColumns, 
+          dd: dd 
+        }, e);
         e.preventDefault();
         e.stopPropagation();
       }
       
       function onColumnResizeDblClick(e) {
-        var cell = extractCellFromDOMid($(e.target).parent().attr('id'));
+        var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
+        var column = $header && $header.data("column");
+        assert($header.length === 1);
+        assert(column);
+        var cell = getCellFromNode($header[0]);
+        assert(cell >= 0);
+        assert(+cell === cell);
         var columnDef = columns[cell];
+        assert(columnDef === column);
         var aux_width = calculateWordDimensions(columnElements[cell].children[0].innerHTML).width;
         assert(columnDef.values === undefined);
         for (var row = 0, len = getDataLength(); row < len; row++) {
@@ -1346,7 +1405,11 @@ if (typeof Slick === "undefined") {
         applyColumnHeaderWidths();
         updateCanvasWidth(true);
         render();
-        trigger(self.onColumnsResized, {e: e, cell: cell, column: columnDef});
+        trigger(self.onColumnsResized, {
+          cell: cell, 
+          column: columnDef,
+          adjustedColumns: [columnDef] 
+        }, e);
         e.preventDefault();
         e.stopPropagation();
       }
@@ -1599,6 +1662,8 @@ if (typeof Slick === "undefined") {
     // General
 
     function trigger(evt, args, e) {
+      // WARNING: keep in mind that we MAY pass either a Slick.EventData instance or a DOM event instance in `e`! 
+      // Both types are accepted and depend on which event is triggered...
       e = e || new Slick.EventData();
       args = args || {};
       args.grid = self;
@@ -1612,8 +1677,8 @@ if (typeof Slick === "undefined") {
     /**
      * @return {EditController} return the SlickGrid internal EditController. The EditController is an object
      *         which provides two functions (methods) who are invoked by the EditorLock object when necessary:
-     *             commitCurrentEdit: function() {...}
-     *             cancelCurrentEdit: function() {...}
+     *             commitCurrentEdit: function () {...}
+     *             cancelCurrentEdit: function () {...}
      */
     function getEditController() {
       return editController;
@@ -1809,7 +1874,7 @@ if (typeof Slick === "undefined") {
         .find(".slick-sort-indicator")
         .removeClass("slick-sort-indicator-asc slick-sort-indicator-desc");
 
-      $.each(sortColumns, function(i, col) {
+      $.each(sortColumns, function (i, col) {
         if (col.sortAsc == null) {
           col.sortAsc = true;
         }
@@ -1846,7 +1911,10 @@ if (typeof Slick === "undefined") {
 
       setCellCssStyles(options.selectedCellCssClass, hash);
 
-      trigger(self.onSelectedRowsChanged, {rows: getSelectedRows(), e: e, ranges: ranges}, e);
+      trigger(self.onSelectedRowsChanged, {
+        rows: getSelectedRows(), 
+        ranges: ranges
+      }, e);
     }
 
     function getColumns() {
@@ -2802,7 +2870,7 @@ if (typeof Slick === "undefined") {
       if (!rows || !rows.length) {
         return;
       }
-      rows.sort(function(a, b) { return a - b; });
+      rows.sort(function (a, b) { return a - b; });
       vScrollDir = 0;
       var dataLength = getDataLength();
       var columnCount = columns.length;
@@ -3165,14 +3233,14 @@ if (typeof Slick === "undefined") {
     }
 
     /*
-    WARNING: the returned object .bottom attribute points at the first row which is guaranteed to be NOT visible.
-    This was done in the vanilla SlickGrid (the one which doesn't deliver fractional position info). 
-    It is in line with other range info objects which would list the bottom as 'one beyond'
-    in order to simplify height calculations (bottom - top without the obligatory +1 correction) and looping
-    over the visible row range (for row = rv.top; row < rv.bottom; row++).
-
-    However, do note that the fractional info is about the (partially visible bottom) row '.bottomVisible'.
-    */ 
+     * WARNING: the returned object .bottom attribute points at the first row which is guaranteed to be NOT visible.
+     * This was done in the vanilla SlickGrid (the one which doesn't deliver fractional position info). 
+     * It is in line with other range info objects which would list the bottom as 'one beyond'
+     * in order to simplify height calculations (bottom - top without the obligatory +1 correction) and looping
+     * over the visible row range (for row = rv.top; row < rv.bottom; row++).
+     * 
+     * However, do note that the fractional info is about the (partially visible bottom) row '.bottomVisible'.
+     */ 
     function getVisibleRange(viewportTop, viewportLeft) {
       if (viewportTop == null) {
         viewportTop = scrollTop;
@@ -3456,7 +3524,10 @@ if (typeof Slick === "undefined") {
           rowsCache[rows[i]].rowNode.offsetWidth;
         }
       }
-      trigger(self.onRowsRendered, { rows: rows, nodes: rowNodes });
+      trigger(self.onRowsRendered, { 
+        rows: rows, 
+        nodes: rowNodes 
+      });
 
       if (needToReselectCell) {
         activeCellNode = getCellNode(activeRow, activeCell);
@@ -3580,7 +3651,10 @@ if (typeof Slick === "undefined") {
         }
       }
 
-      trigger(self.onScroll, {scrollLeft: scrollLeft, scrollTop: scrollTop});
+      trigger(self.onScroll, {
+        scrollLeft: scrollLeft, 
+        scrollTop: scrollTop
+      });
     }
 
     function asyncPostProcessRows() {
@@ -3658,7 +3732,10 @@ if (typeof Slick === "undefined") {
       cellCssClasses[key] = hash;
       updateCellCssStylesOnRenderedRows(hash, null);
 
-      trigger(self.onCellCssStylesChanged, { "key": key, "hash": hash });
+      trigger(self.onCellCssStylesChanged, { 
+        key: key, 
+        hash: hash 
+      });
     }
 
     function removeCellCssStyles(key) {
@@ -3669,7 +3746,10 @@ if (typeof Slick === "undefined") {
       updateCellCssStylesOnRenderedRows(null, cellCssClasses[key]);
       delete cellCssClasses[key];
 
-      trigger(self.onCellCssStylesChanged, { "key": key, "hash": null });
+      trigger(self.onCellCssStylesChanged, { 
+        key: key, 
+        hash: null 
+      });
     }
 
     function setCellCssStyles(key, hash) {
@@ -3678,7 +3758,10 @@ if (typeof Slick === "undefined") {
       cellCssClasses[key] = hash;
       updateCellCssStylesOnRenderedRows(hash, prevHash);
 
-      trigger(self.onCellCssStylesChanged, { "key": key, "hash": hash });
+      trigger(self.onCellCssStylesChanged, { 
+        key: key, 
+        hash: hash 
+      });
     }
 
     // Note: when you wish to use the returned hash as (edited) input to setCellCssStyles(),
@@ -3793,7 +3876,8 @@ if (typeof Slick === "undefined") {
 
       dd.column = column;
       var retval = trigger(self.onHeaderDragInit, dd, e);
-      if (e.isImmediatePropagationStopped()) {
+      var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
+      if (handled) {
         return retval;
       }
 
@@ -3812,7 +3896,8 @@ if (typeof Slick === "undefined") {
 
       dd.column = column;
       var retval = trigger(self.onHeaderDragStart, dd, e);
-      if (e.isImmediatePropagationStopped()) {
+      var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
+      if (handled) {
         return retval;
       }
 
@@ -3841,12 +3926,13 @@ if (typeof Slick === "undefined") {
 
     function handleDragInit(e, dd) {
       var cell = getCellFromEvent(e);
-      if (!cell) {
+      if (!cell || !cellExists(cell.row, cell.cell)) {
         return false;
       }
 
       var retval = trigger(self.onDragInit, dd, e);
-      if (e.isImmediatePropagationStopped()) {
+      var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
+      if (handled) {
         return retval;
       }
 
@@ -3857,12 +3943,13 @@ if (typeof Slick === "undefined") {
 
     function handleDragStart(e, dd) {
       var cell = getCellFromEvent(e);
-      if (!cell) {
+      if (!cell || !cellExists(cell.row, cell.cell)) {
         return false;
       }
 
       var retval = trigger(self.onDragStart, dd, e);
-      if (e.isImmediatePropagationStopped()) {
+      var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
+      if (handled) {
         return retval;
       }
 
@@ -3877,76 +3964,114 @@ if (typeof Slick === "undefined") {
       return trigger(self.onDragEnd, dd, e);
     }
 
-    function handleKeyDown(e) {
-      trigger(self.onKeyDown, {row: activeRow, cell: activeCell}, e);
-      if (e.isImmediatePropagationStopped()) {
-        return;
+    function preventDefaultKeyboardActionHack(evt) {
+      try {
+        // prevent default behaviour for special keys in IE browsers (F3, F5, etc.)
+        evt.keyCode = 0; 
       }
+      // ignore exceptions - setting the original event's keycode throws access denied exception for "Ctrl"
+      // (hitting control key only, nothing else), "Shift" (maybe others)
+      catch (error) {
+      }
+      if (evt.originalEvent) {
+        preventDefaultKeyboardActionHack(evt.originalEvent);
+      }
+    }
 
-      var handled;
-      if (!e.shiftKey && !e.altKey && !e.ctrlKey) {
-        if (e.which == 27) {
-          if (!getEditorLock().isActive()) {
-            return; // no editing mode to cancel, allow bubbling and default processing (exit without cancelling the event)
-          }
-          cancelEditAndSetFocus();
-        } else if (e.which == 34) {
-          navigatePageDown();
-          handled = true;
-        } else if (e.which == 33) {
-          navigatePageUp();
-          handled = true;
-        } else if (e.which == 37) {
-          handled = navigateLeft();
-        } else if (e.which == 39) {
-          handled = navigateRight();
-        } else if (e.which == 38) {
-          handled = navigateUp();
-        } else if (e.which == 40) {
-          handled = navigateDown();
-        } else if (e.which == 9) {
-          handled = navigateNext();
-          } else if (e.which == 13 || e.which == 113 /* [F2] */) {
-          if (options.editable) {
-            if (currentEditor) {
-              // adding new row
-              if (activeRow === getDataLength()) {
-                navigateDown();
+    function handleKeyDown(e) {
+      assert(!(e instanceof Slick.EventData));
+      trigger(self.onKeyDown, {
+        row: activeRow, 
+        cell: activeCell
+      }, e);
+      var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
+
+      assert('which' in e);
+      var which = e.which;
+      var shiftKey = e.shiftKey;
+      var altKey = e.altKey;
+      var ctrlKey = e.ctrlKey;
+
+      if (!handled) {
+        if (!shiftKey && !altKey && !ctrlKey) {
+          switch (which) {
+          case 27:
+            if (!getEditorLock().isActive()) {
+              return; // no editing mode to cancel, allow bubbling and default processing (exit without cancelling the event)
+            }
+            cancelEditAndSetFocus();
+            break;
+
+          case 34:
+            navigatePageDown();
+            handled = true;
+            break;
+
+          case 33:
+            navigatePageUp();
+            handled = true;
+            break;
+
+          case 37:
+            handled = navigateLeft();
+            break;
+
+          case 39:
+            handled = navigateRight();
+            break;
+
+          case 38:
+            handled = navigateUp();
+            break;
+
+          case 40:
+            handled = navigateDown();
+            break;
+
+          case 9:
+            handled = navigateNext();
+            break;
+
+          case 13:
+          case 113: /* [F2] */
+            if (options.editable) {
+              if (currentEditor) {
+                // adding new row
+                if (activeRow === getDataLength()) {
+                  navigateDown();
+                } else {
+                  commitEditAndSetFocus();
+                }
               } else {
-                commitEditAndSetFocus();
-              }
-            } else {
-              if (getEditorLock().commitCurrentEdit()) {
-                makeActiveCellEditable();
+                if (getEditorLock().commitCurrentEdit()) {
+                  makeActiveCellEditable();
+                }
               }
             }
+            handled = true;
+            break;
           }
-          handled = true;
+        } else if (which === 9 && shiftKey && !ctrlKey && !altKey) {
+          handled = navigatePrev();
         }
-      } else if (e.which == 9 && e.shiftKey && !e.ctrlKey && !e.altKey) {
-        handled = navigatePrev();
       }
 
       if (handled) {
         // the event has been handled so don't let parent element (bubbling/propagation) or browser (default) handle it
         e.stopPropagation();
         e.preventDefault();
-        try {
-          e.originalEvent.keyCode = 0; // prevent default behaviour for special keys in IE browsers (F3, F5, etc.)
-        }
-        // ignore exceptions - setting the original event's keycode throws access denied exception for "Ctrl"
-        // (hitting control key only, nothing else), "Shift" (maybe others)
-        catch (error) {
-        }
+        preventDefaultKeyboardActionHack(e);
       }
     }
 
     function handleClick(e) {
+      assert(!(e instanceof Slick.EventData));
+
       if (!currentEditor) {
         // if this click resulted in some cell child node getting focus,
         // don't steal it back - keyboard events will still bubble up
         // IE9+ seems to default DIVs to tabIndex=0 instead of -1, so check for cell clicks directly.
-        if (e.target != document.activeElement || $(e.target).hasClass("slick-cell")) {
+        if (e.target !== document.activeElement || $(e.target).hasClass("slick-cell")) {
           var selection = getTextSelection(); // store text-selection and restore it after
           setFocus();
           setTextSelection(selection);
@@ -3958,15 +4083,19 @@ if (typeof Slick === "undefined") {
         return;
       }
 
-      trigger(self.onClick, {row: cell.row, cell: cell.cell}, e);
-      if (e.isImmediatePropagationStopped()) {
+      trigger(self.onClick, {
+        row: cell.row, 
+        cell: cell.cell
+      }, e);
+      var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
+      if (handled) {
         return;
       }
 
       if ((activeCell != cell.cell || activeRow != cell.row) && canCellBeActive(cell.row, cell.cell)) {
         if (!getEditorLock().isActive() || getEditorLock().commitCurrentEdit()) {
           scrollRowIntoView(cell.row, false);
-          setActiveCellInternal(getCellNode(cell.row, cell.cell), null);
+          setActiveCellInternal(getCellNode(cell.row, cell.cell), false);
         }
       }
     }
@@ -3986,13 +4115,19 @@ if (typeof Slick === "undefined") {
     }
 
     function handleDblClick(e) {
+      assert(!(e instanceof Slick.EventData));
+
       var cell = getCellFromEvent(e);
       if (!cell || (currentEditor !== null && activeRow == cell.row && activeCell == cell.cell)) {
         return;
       }
 
-      trigger(self.onDblClick, {row: cell.row, cell: cell.cell}, e);
-      if (e.isImmediatePropagationStopped()) {
+      trigger(self.onDblClick, {
+        row: cell.row, 
+        cell: cell.cell
+      }, e);
+      var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
+      if (handled) {
         return;
       }
 
@@ -4002,21 +4137,30 @@ if (typeof Slick === "undefined") {
     }
 
     function handleHeaderMouseEnter(e) {
+      var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
+      var column = $header && $header.data("column");
+      assert(column);
       return trigger(self.onHeaderMouseEnter, {
-        column: $(this).data("column")
+        column: column
       }, e);
     }
 
     function handleHeaderMouseLeave(e) {
+      var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
+      var column = $header && $header.data("column");
+      assert(column);
       return trigger(self.onHeaderMouseLeave, {
-        column: $(this).data("column")
+        column: column
       }, e);
     }
 
     function handleHeaderContextMenu(e) {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
-      trigger(self.onHeaderContextMenu, {column: column}, e);
+      assert(column);
+      trigger(self.onHeaderContextMenu, {
+        column: column
+      }, e);
       // when the right-click context menu event actually was received by any handlers, then we make sure no default browser right-click popup menu shows up as well:
       if (self.onHeaderContextMenu.handlers().length) {
         // http://stackoverflow.com/questions/10483937/need-to-disable-context-menu-on-right-click-and-call-a-function-on-right-click
@@ -4029,7 +4173,9 @@ if (typeof Slick === "undefined") {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
       if (column) {
-        return trigger(self.onHeaderClick, {column: column}, e);
+        return trigger(self.onHeaderClick, {
+          column: column
+        }, e);
       }
     }
 
@@ -4037,7 +4183,9 @@ if (typeof Slick === "undefined") {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
       if (column) {
-        return trigger(self.onHeaderDblClick, {column: column}, e);
+        return trigger(self.onHeaderDblClick, {
+          column: column
+        }, e);
       }
     }
 
@@ -4127,6 +4275,9 @@ if (typeof Slick === "undefined") {
     }
 
     function getCellFromElement(el) {
+      if (!el) {
+        return null;
+      }
       var $cell = $(el).closest(".slick-cell", $canvas);
       if (!$cell.length) {
         return null;
@@ -4147,10 +4298,28 @@ if (typeof Slick === "undefined") {
     }
 
     function getCellFromEvent(e) {
+      // dive up the original browser event from the depths of the (optional) Slick.EventData
+      while (e && !e.target) {
+        e = e.sourceEvent;
+      }
+      assert(e);
+      assert(e && e.target);
+      if (!e || !e.target) {
+        return null;
+      }
       return getCellFromElement(e.target);
     }
 
     function getRowFromEvent(e) {
+      // dive up the original browser event from the depths of the (optional) Slick.EventData
+      while (e && !e.target) {
+        e = e.sourceEvent;
+      }
+      assert(e);
+      assert(e && e.target);
+      if (!e || !e.target) {
+        return null;
+      }
       var $row = $(e.target).closest(".slick-row", $canvas);
       if (!$row.length) {
         return null;
@@ -4184,6 +4353,13 @@ if (typeof Slick === "undefined") {
     }
 
     function setFocus() {
+      var e = new Slick.EventData();
+      trigger(self.onFocusSet, {}, e);
+      var handled = e.isHandled();
+      if (handled) {
+        return;
+      }
+
       if (tabbingDirection == -1) {
         $focusSink[0].focus();
       } else {
@@ -4229,7 +4405,34 @@ if (typeof Slick === "undefined") {
     }
 
     function setActiveCellInternal(newCell, opt_editMode) {
-      if (activeCellNode !== null) {
+      var activeCellChanged = (activeCellNode !== newCell);
+      var newActiveRow;
+      if (newCell != null) {
+        newActiveRow = getRowFromNode(newCell.parentNode);
+        if (opt_editMode == null) {
+          opt_editMode = (options.enableAddRow && newActiveRow === getDataLength()) || options.autoEdit;
+        }
+      }
+
+      // onActiveCellChanging should fire before we *might* instantiate an editor!
+      // This order of events is important so that the editor-augmented cell instance doesn't get
+      // influenced by any initial onActiveCellChanging that concerns the cell itself.
+      //
+      // It also allows us to renege on the 'cell change' inside this event handler without
+      // too much trouble (or so we can hope)...
+      var e = new Slick.EventData();
+      if (activeCellChanged) {
+        trigger(self.onActiveCellChanging, {
+          activeCell:     newCell,
+          prevActiveCell: activeCellNode,
+          editMode:       opt_editMode,
+        }, e);
+        if (e.isHandled()) {
+          return false;
+        }
+      }
+
+      if (activeCellNode != null) {
         makeActiveCellNormal();
         $(activeCellNode).removeClass("active");
         $(activeCellNode).parent().removeClass("active-row");
@@ -4240,38 +4443,30 @@ if (typeof Slick === "undefined") {
         }
       }
 
-      var activeCellChanged = (activeCellNode !== newCell);
       var prevActiveCell = activeCellNode;
       activeCellNode = newCell;
 
-      if (activeCellNode != null) {
-        activeRow = activePosY = getRowFromNode(activeCellNode.parentNode);
-        activeCell = activePosX = getCellFromNode(activeCellNode);
+      if (newCell != null) {
+        activeRow = activePosY = getRowFromNode(newCell.parentNode);
+        activeCell = activePosX = getCellFromNode(newCell);
         if (opt_editMode == null) {
           opt_editMode = (activeRow === getDataLength()) || options.autoEdit;
         }
 
-        $(activeCellNode).addClass("active");
+        $(newCell).addClass("active");
         $(rowsCache[activeRow].rowNode).addClass("active");
-        $(activeCellNode).parent().addClass("active-row");
+        $(newCell).parent().addClass("active-row");
         $(rowsCache[activeRow].rowNode).parent().addClass("active-row");
 
-        // onActiveCellChanged should fire before we *might* instantiate an editor!
-        // This order of events is important so that the editor-augmented cell instance doesn't get
-        // influenced by any initial onActiveCellChanged that concerns the cell itself.
-        //
-        // It also allows us to renege on the 'cell change' inside this event handler without
-        // too much trouble (or so we can hope)...
         if (activeCellChanged) {
           //activeCellNode.focus();
-          var e = new Slick.EventData();
           trigger(self.onActiveCellChanged, {
-            activeCell: getActiveCell(),
+            activeCell:     newCell,
             prevActiveCell: prevActiveCell,
-            editMode:   opt_editMode,
+            editMode:       opt_editMode,
           }, e);
-          if (e.isImmediatePropagationStopped()) {
-            return;
+          if (e.isHandled()) {
+            return true;
           }
         }
 
@@ -4291,6 +4486,7 @@ if (typeof Slick === "undefined") {
       } else {
         activeRow = activeCell = null;
       }
+      return true;
     }
 
     function clearTextSelection() {
@@ -4331,14 +4527,16 @@ if (typeof Slick === "undefined") {
       if (!currentEditor) {
         return;
       }
-      // reset the global var as any node.destroy() can trigger additional focusout events which will trigger a commit:
+      // Reset the global var as any node.destroy() can trigger additional focusout events which will trigger a commit:
       // only by immediately resetting the global and keeping the 'old' value locally for further processing
       // can we prevent nested invocations of this code (and consequent crashes in jQuery).
       var editor = currentEditor;
       currentEditor = null;
       var e = new Slick.EventData();
-      trigger(self.onBeforeCellEditorDestroy, {editor: editor}, e);
-      if (e.isImmediatePropagationStopped()) {
+      trigger(self.onBeforeCellEditorDestroy, {
+        editor: editor
+      }, e);
+      if (e.isHandled()) {
         return;
       }
       editor.destroy();
@@ -4403,7 +4601,7 @@ if (typeof Slick === "undefined") {
         rowMetadata: rowMetadata,
         columnMetadata: columnMetadata,
       }, e);
-      if (e.isImmediatePropagationStopped()) {
+      if (e.isHandled()) {
         setFocus();
         return false;
       }
@@ -4483,13 +4681,14 @@ if (typeof Slick === "undefined") {
           visible: false // <-- that's the important bit!
         };
       }
+      var $elem = $(elem);
       var box = {
         top: elem.offsetTop,
         left: elem.offsetLeft,
         bottom: 0,
         right: 0,
-        width: $(elem).outerWidth(),
-        height: $(elem).outerHeight(),
+        width: $elem.outerWidth(),
+        height: $elem.outerHeight(),
         visible: true
       };
       box.bottom = box.top + box.height;
@@ -4497,7 +4696,7 @@ if (typeof Slick === "undefined") {
 
       // walk up the tree
       var offsetParent = elem.offsetParent;
-      while ((elem = elem.parentNode) != document.body) {
+      while ((elem = elem.parentNode) !== document.body) {
         if (!elem) {
           // when we end up at elem===null, then the elem has been detached
           // from the DOM and all our size calculations are useless:
@@ -4514,11 +4713,11 @@ if (typeof Slick === "undefined") {
           box.visible = false; // <-- that's the important bit!
           return box;
         }
-        if (box.visible && elem.scrollHeight != elem.offsetHeight && $(elem).css("overflowY") != "visible") {
+        if (box.visible && elem.scrollHeight !== elem.offsetHeight && $(elem).css("overflowY") !== "visible") {
           box.visible = box.bottom > elem.scrollTop && box.top < elem.scrollTop + elem.clientHeight;
         }
 
-        if (box.visible && elem.scrollWidth != elem.offsetWidth && $(elem).css("overflowX") != "visible") {
+        if (box.visible && elem.scrollWidth !== elem.offsetWidth && $(elem).css("overflowX") !== "visible") {
           box.visible = box.right > elem.scrollLeft && box.left < elem.scrollLeft + elem.clientWidth;
         }
 
@@ -4553,7 +4752,7 @@ if (typeof Slick === "undefined") {
 
       var e = new Slick.EventData();
       trigger(self.onActiveCellPositionChanged, {}, e);
-      if (e.isImmediatePropagationStopped()) {
+      if (e.isHandled()) {
         return;
       }
 
@@ -4658,7 +4857,7 @@ if (typeof Slick === "undefined") {
         }
 
         if (prevCell !== null) {
-          setActiveCellInternal(getCellNode(row, prevCell), null);
+          setActiveCellInternal(getCellNode(row, prevCell), false);
           activePosX = prevActivePosX;
         } else {
           resetActiveCell();
@@ -5015,12 +5214,12 @@ if (typeof Slick === "undefined") {
       if (pos) {
         var isAddNewRow = (pos.row === getDataLength());
         scrollCellIntoView(pos.row, pos.cell, !isAddNewRow);
-        setActiveCellInternal(getCellNode(pos.row, pos.cell), null);
+        setActiveCellInternal(getCellNode(pos.row, pos.cell), false);
         activePosY = pos.posY;
         activePosX = pos.posX;
         return true;
       } else {
-        setActiveCellInternal(getCellNode(activeRow, activeCell), null);
+        setActiveCellInternal(getCellNode(activeRow, activeCell), false);
         return false;
       }
     }
@@ -5138,6 +5337,7 @@ if (typeof Slick === "undefined") {
               evt = self.onAddNewRow;
             }
             var editCommand = {
+              grid: self,
               row: activeRow,
               cell: activeCell,
               item: item,
@@ -5157,7 +5357,7 @@ if (typeof Slick === "undefined") {
                 updateRow(this.row);
                 this.notify();
               },
-              notify: function() {
+              notify: function () {
                 trigger(self.onCellChange, this);
               }
             };
@@ -5189,7 +5389,7 @@ if (typeof Slick === "undefined") {
               cellNode: activeCellNode,
               validationResults: validationResults
             }, e);
-            if (e.isImmediatePropagationStopped()) {
+            if (e.isHandled()) {
               return retval;
             }
 
@@ -5295,6 +5495,9 @@ if (typeof Slick === "undefined") {
       "onBeforeHeaderRowCellDestroy": new Slick.Event(),
       "onFooterRowCellRendered": new Slick.Event(),
       "onBeforeFooterRowCellDestroy": new Slick.Event(),
+      "onFocusIn": new Slick.Event(),
+      "onFocusOut": new Slick.Event(),
+      "onFocusSet": new Slick.Event(),
       "onMouseEnter": new Slick.Event(),
       "onMouseLeave": new Slick.Event(),
       "onClick": new Slick.Event(),
@@ -5315,6 +5518,7 @@ if (typeof Slick === "undefined") {
       "onBeforeEditCell": new Slick.Event(),
       "onBeforeCellEditorDestroy": new Slick.Event(),
       "onBeforeDestroy": new Slick.Event(),
+      "onActiveCellChanging": new Slick.Event(),
       "onActiveCellChanged": new Slick.Event(),
       "onActiveCellPositionChanged": new Slick.Event(),
       "onHeaderDragInit": new Slick.Event(),
@@ -5431,8 +5635,9 @@ if (typeof Slick === "undefined") {
       // IEditor implementation
       "getEditorLock": getEditorLock,
       "getEditController": getEditController,
-      
-      
+
+      // export utility function(s)
+      "absBox": absBox,                    // similar to jQuery .offset() but provides more info and guaranteed to match its numbers with getGridPosition() and  getActiveCellPosition()      
       "scrollPort": scrollPort
     });
 

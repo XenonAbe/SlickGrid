@@ -281,6 +281,7 @@
         setDataItemValueForColumn: setDataItemValueForColumn,
         markCopySelection: markCopySelection,
         oneCellToMultiple: oneCellToMultiple,
+        grid: _grid,
         activeRow: activeRow,
         activeCell: activeCell,
         destH: destH,
