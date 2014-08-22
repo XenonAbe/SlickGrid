@@ -269,9 +269,9 @@ $(function () {
   // wire up the slider to apply the filter to the model
   var $sliders = $("#pcSlider,#pcSlider2");
   $sliders.slider({
-    "range": "min",
-    "slide": function (event, ui) {
-      Slick.GlobalEditorLock.cancelCurrentEdit();
+    range: "min",
+    slide: function (event, ui) {
+      grid.getEditorLock().cancelCurrentEdit();
 
       if (percentCompleteThreshold != ui.value) {
         window.clearTimeout(h_runfilters);
@@ -288,7 +288,7 @@ $(function () {
   // wire up the search textbox to apply the filter to the model
   var $textsearch = $("#txtSearch,#txtSearch2");
   $textsearch.keyup(function (e) {
-    Slick.GlobalEditorLock.cancelCurrentEdit();
+    grid.getEditorLock().cancelCurrentEdit();
 
     // clear on Esc
     if (e.which == 27) {
@@ -315,7 +315,7 @@ $(function () {
   }
 
   $("#btnSelectRows").click(function () {
-    if (!Slick.GlobalEditorLock.commitCurrentEdit()) {
+    if (!grid.getEditorLock().commitCurrentEdit()) {
       return;
     }
 

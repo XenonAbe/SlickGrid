@@ -303,7 +303,7 @@ $(function() {
         if (!data[dd.row])
             return;
 
-        if (Slick.GlobalEditorLock.isActive())
+        if (grid.getEditorLock().isActive())
             return;
 
         e.stopImmediatePropagation();

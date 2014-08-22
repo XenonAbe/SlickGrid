@@ -93,41 +93,46 @@
 
 
   var undoRedoBuffer = {
-      commandQueue: [],
-      commandCtr: 0,
+    commandQueue: [],
+    commandCtr: 0,
 
-      queueAndExecuteCommand: function(editCommand) {
-        this.commandQueue[this.commandCtr] = editCommand;
-        this.commandCtr++;
-        editCommand.execute();
-      },
+    queueAndExecuteCommand: function(editCommand) {
+      assert(editCommand.grid);
+      this.commandQueue[this.commandCtr] = editCommand;
+      this.commandCtr++;
+      editCommand.execute();
+    },
 
-      undo: function() {
-        if (this.commandCtr == 0)
-          return;
-
-        this.commandCtr--;
-        var command = this.commandQueue[this.commandCtr];
-
-        if (command && Slick.GlobalEditorLock.cancelCurrentEdit()) {
-          command.undo();
-        }
-      },
-      redo: function() {
-        if (this.commandCtr >= this.commandQueue.length)
-          return;
-        var command = this.commandQueue[this.commandCtr];
-        this.commandCtr++;
-        if (command && Slick.GlobalEditorLock.cancelCurrentEdit()) {
-          command.execute();
-        }
+    undo: function() {
+      if (this.commandCtr === 0) {
+        return;
       }
+      this.commandCtr--;
+      var command = this.commandQueue[this.commandCtr];
+      assert(command && command.grid);
+      var grid = command.grid;
+      if (grid.getEditorLock().cancelCurrentEdit()) {
+        command.undo();
+      }
+    },
+    redo: function() {
+      if (this.commandCtr >= this.commandQueue.length) {
+        return;
+      }
+      this.commandCtr++;
+      var command = this.commandQueue[this.commandCtr];
+      assert(command && command.grid);
+      var grid = command.grid;
+      if (grid.getEditorLock().cancelCurrentEdit()) {
+        command.execute();
+      }
+    }
   }
 
   // undo shortcut
   $(document).keydown(function(e)
   {
-    if (e.which == 90 && (e.ctrlKey || e.metaKey)) {    // CTRL + (shift) + Z
+    if (e.which === 90 && (e.ctrlKey || e.metaKey)) {    // CTRL + (shift) + Z
       if (e.shiftKey){
         undoRedoBuffer.redo();
       } else {
