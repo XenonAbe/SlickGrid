@@ -71,7 +71,7 @@
     }
 
     function save() {
-      if (_cid && _store){
+      if (_cid && _store) {
         var state = {
           sortcols: getSortColumns(),
           viewport: _grid.getViewport(),

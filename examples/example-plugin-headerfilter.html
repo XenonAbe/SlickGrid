@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
@@ -59,7 +59,7 @@
   </div>
 </div>
 
-<script src="../lib/jquery-1.7.min.js"></script>
+<script src="../lib/jquery.js"></script>
 <script src="../lib/jquery.event.drag-2.2.js"></script>
 
 <script src="../slick.core.js"></script>
@@ -69,19 +69,19 @@
 
 <script>
 
-  function textFilter(menu, col){
+  function textFilter(menu, col) {
     var
       $li = $("<div class='slick-header-menuitem'></div>"),
       el_id = "columnfilter-" + col.id;
 
-    $('<label for="' +el_id+ '">')
+    $('<label for="' + el_id + '">')
       .text('Filter:')
       .append($('<br/>'))
       .appendTo($li);
 
-    $('<input type="text" id="' +el_id+ '">')
+    $('<input type="text" id="' + el_id + '">')
       .val(menu.filtervalue)
-      .on('change', function(e){
+      .on('change', function (e) {
         var value = $(e.target).val();
         menu.filtervalue = value;
         col.filter(value);
@@ -91,11 +91,11 @@
     return $li;
   }
 
-  function numberFilter(manu, col){
+  function numberFilter(manu, col) {
 
   }
 
-  function textFilterFn(a,b){
+  function textFilterFn(a,b) {
     return a.indexOf(b) > -1;
   }
 
@@ -204,12 +204,12 @@
       };
     }
 
-    function onHeaderFilter(value){
+    function onHeaderFilter(value) {
       columnFilters[this.id] = value;
       dataView.refresh();
-    };
+    }
 
-    for(var i=0; i<columns.length; i++){
+    for (var i = 0; i < columns.length; i++) {
       columns[i].filter = $.proxy(onHeaderFilter, columns[i]);
     }
 
