@@ -36,6 +36,27 @@
   function EventData(sourceEvent) {
     var isPropagationStopped = false;
     var isImmediatePropagationStopped = false;
+    var isDefaultPrevented = false;
+
+    /***
+     * Stops event from executing its default behaviour.
+     * @method preventDefault
+     */
+    this.preventDefault = function () {
+      isDefaultPrevented = true;
+      if (this.sourceEvent && typeof this.sourceEvent.preventDefault === 'function') {
+        this.sourceEvent.preventDefault();
+      }
+    };
+
+    /***
+     * Returns whether preventDefault was called on this event object.
+     * @method isDefaultPrevented
+     * @return {Boolean}
+     */
+    this.isDefaultPrevented = function () {
+      return isDefaultPrevented;
+    };
 
     /***
      * Stops event from propagating up the DOM tree.
@@ -43,6 +64,9 @@
      */
     this.stopPropagation = function () {
       isPropagationStopped = true;
+      if (this.sourceEvent && typeof this.sourceEvent.stopPropagation === 'function') {
+        this.sourceEvent.stopPropagation();
+      }
     };
 
     /***
@@ -59,8 +83,10 @@
      * @method stopImmediatePropagation
      */
     this.stopImmediatePropagation = function () {
-      isPropagationStopped = true;
       isImmediatePropagationStopped = true;
+      if (this.sourceEvent && typeof this.sourceEvent.stopImmediatePropagation === 'function') {
+        this.sourceEvent.stopImmediatePropagation();
+      }
     };
 
     /***
@@ -71,6 +97,19 @@
     this.isImmediatePropagationStopped = function () {
       return isImmediatePropagationStopped;
     }
+
+    /**
+     * Returns TRUE when any of these methods of this event has been called:
+     * - isImmediatePropagationStopped()
+     * - isPropagationStopped()
+     * - isDefaultPrevented()
+     *
+     * This method serves as a shorthand for
+     * `e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented()`
+     */
+    this.isHandled = function () {
+      return this.isImmediatePropagationStopped() || this.isPropagationStopped() || this.isDefaultPrevented();
+    };
 
     if (sourceEvent) {
       this.sourceEvent = sourceEvent;
@@ -143,7 +182,7 @@
       scope = scope || this;
 
       var returnValue = true;
-      for (var i = 0; i < handlers.length && !e.isImmediatePropagationStopped(); i++) {
+      for (var i = 0; i < handlers.length && !(e.isPropagationStopped() || e.isImmediatePropagationStopped()); i++) {
         returnValue = handlers[i].call(scope, e, args, returnValue);
       }
 
