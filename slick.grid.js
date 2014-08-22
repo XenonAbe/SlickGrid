@@ -616,7 +616,7 @@ if (typeof Slick === "undefined") {
       canvasWidth = getCanvasWidth();
 
       // see https://github.com/mleibman/SlickGrid/issues/477
-      viewportHasHScroll = (canvasWidth > viewportW - scrollbarDimensions.width);
+      viewportHasHScroll = (canvasWidth >= viewportW - scrollbarDimensions.width);
 
       if (canvasWidth != oldCanvasWidth || forceCanvasResize) {
         $canvas.width(canvasWidth);
@@ -3606,7 +3606,7 @@ if (typeof Slick === "undefined") {
         $footerRowScroller[0].scrollLeft = scrollLeft;
       }
 
-      if (vScrollDist) {
+      if (vScrollDist && (vScrollDist > options.rowHeight)) {
         vScrollDir = prevScrollTop < scrollTop ? 1 : -1;
         prevScrollTop = scrollTop;
 
