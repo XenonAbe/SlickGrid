@@ -51,6 +51,7 @@
 
     function wrapHandler(handler) {
       return function () {
+        assert(!_inHandler);
         if (!_inHandler) {
           _inHandler = true;
           handler.apply(this, arguments);
