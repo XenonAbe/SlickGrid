@@ -48,7 +48,7 @@
       var evt = new Slick.EventData(e);
       var state = _self.onBeforeCellRangeSelected.notify(cell, evt);
       if (state === false ||
-          evt.isPropagationStopped() || evt.isImmediatePropagationStopped() ||
+          evt.isHandled() ||
           !_grid.canCellBeSelected(cell.row, cell.cell)) {
         return;
       }
@@ -84,7 +84,7 @@
       var evt = new Slick.EventData(e);
       var state = _self.onCellRangeSelectionOngoing.notify(eventData, evt);
       if (state === false ||
-          evt.isPropagationStopped() || evt.isImmediatePropagationStopped() ||
+          evt.isHandled() ||
           !eventData.currentCell ||
           !_grid.canCellBeSelected(eventData.currentCell.row, eventData.currentCell.cell)) {
         return;

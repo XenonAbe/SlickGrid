@@ -97,7 +97,7 @@
           var ev = new Slick.EventData();
           _self.onClick.notify(nodeInfo, ev, _self);
 
-          if (ev.isPropagationStopped() || ev.isImmediatePropagationStopped()) {
+          if (ev.isHandled()) {
             e.preventDefault();
           }
         });
