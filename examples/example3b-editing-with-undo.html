@@ -33,6 +33,7 @@
 
     <h2>Controls:</h2>
     <button onclick="undo()"><img src="../images/arrow_undo.png" align="absmiddle"> Undo</button>
+    <button onclick="redo()"><img src="../images/arrow_redo.png" align="absmiddle"> Redo</button>
 
     <h2>View Source:</h2>
       <ul>
@@ -89,17 +90,47 @@
   };
 
   var commandQueue = [];
+  var commandQueuePos = 0;
 
   function queueAndExecuteCommand(item, column, editCommand) {
+    assert(commandQueue.length >= commandQueuePos);
+    // Discard future edits when the user undoes previous edits, then executes new edits: keep the undo/redo stack clean & sane.
+    commandQueue.length = commandQueuePos++;
     commandQueue.push(editCommand);
     editCommand.execute();
   }
 
   function undo() {
-    var command = commandQueue.pop();
-    if (command && Slick.GlobalEditorLock.cancelCurrentEdit()) {
+    assert(commandQueue.length >= commandQueuePos - 1);
+    if (!commandQueuePos) {
+      return;
+    } 
+    var command = commandQueue[--commandQueuePos];
+    assert(command);
+    var grid = command.grid;
+    assert(grid);
+    assert(typeof grid.getEditorLock === 'function');
+    assert(typeof grid.slickGridVersion);
+    if (command && grid.getEditorLock().cancelCurrentEdit()) {
       command.undo();
       grid.gotoCell(command.row, command.cell, false);
+    }
+  }
+
+  function redo() {
+    assert(commandQueue.length >= commandQueuePos);
+    if (commandQueuePos === commandQueue.length) {
+      return;
+    } 
+    var command = commandQueue[commandQueuePos++];
+    assert(command);
+    var grid = command.grid;
+    assert(grid);
+    assert(typeof grid.getEditorLock === 'function');
+    assert(typeof grid.slickGridVersion);
+    if (command && grid.getEditorLock().cancelCurrentEdit()) {
+      grid.gotoCell(command.row, command.cell, false);
+      command.execute();
     }
   }
 
