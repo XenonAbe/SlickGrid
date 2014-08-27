@@ -1,4 +1,9 @@
+var Slick = require("./core");
+
 (function ($) {
+
+  module.exports = GroupItemMetadataProvider;
+
   $.extend(true, window, {
     Slick: {
       Data: {
