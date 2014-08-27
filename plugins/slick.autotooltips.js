@@ -1,4 +1,9 @@
+var Slick = require('../core');
+
 (function ($) {
+
+  module.exports = AutoTooltips;
+
   // Register namespace
   $.extend(true, window, {
     "Slick": {
@@ -21,7 +26,7 @@
       enableForHeaderCells: false,
       maxToolTipLength: null
     };
-    
+
     /**
      * Initialize plugin.
      */
@@ -31,7 +36,7 @@
       if (options.enableForCells) _grid.onMouseEnter.subscribe(handleMouseEnter);
       if (options.enableForHeaderCells) _grid.onHeaderMouseEnter.subscribe(handleHeaderMouseEnter);
     }
-    
+
     /**
      * Destroy plugin.
      */
@@ -39,7 +44,7 @@
       if (options.enableForCells) _grid.onMouseEnter.unsubscribe(handleMouseEnter);
       if (options.enableForHeaderCells) _grid.onHeaderMouseEnter.unsubscribe(handleHeaderMouseEnter);
     }
-    
+
     /**
      * Handle mouse entering grid cell to add/remove tooltip.
      * @param {jQuery.Event} e - The event
@@ -60,7 +65,7 @@
         $node.attr("title", text);
       }
     }
-    
+
     /**
      * Handle mouse entering header cell to add/remove tooltip.
      * @param {jQuery.Event} e     - The event
@@ -73,7 +78,7 @@
         $node.attr("title", ($node.innerWidth() < $node[0].scrollWidth) ? column.name : "");
       }
     }
-    
+
     // Public API
     $.extend(this, {
       "init": init,

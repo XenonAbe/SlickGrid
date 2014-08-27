@@ -1,4 +1,9 @@
+var Slick = require('../core');
+
 (function ($) {
+
+  module.exports = CellRangeDecorator;
+
   // register namespace
   $.extend(true, window, {
     "Slick": {

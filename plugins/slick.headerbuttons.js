@@ -1,4 +1,9 @@
+var Slick = require('../core');
+
 (function ($) {
+
+  module.exports = HeaderButtons;
+
   // register namespace
   $.extend(true, window, {
     "Slick": {
