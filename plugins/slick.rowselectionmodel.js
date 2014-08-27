@@ -1,4 +1,4 @@
-var Slick = require('./core');
+var Slick = require('../core');
 
 (function ($) {
 
