@@ -947,7 +947,7 @@ var Slick = require('./core');
         $style[0].appendChild(document.createTextNode(rules.join(" ")));
       }
 
-      stylesheet = $style[0].sheet;
+      stylesheet = $style[0].sheet || $style[0].styleSheet; // IE8 -> styleSheet
 
       // cache column CSS rules
       columnCssRulesL = [];
