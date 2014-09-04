@@ -1735,13 +1735,26 @@ if (typeof Slick === "undefined") {
         }
     }
 
+    // Fix for Google Chrome
+    function getAllStyleSheets() {
+      var result = [];
+      for (var style in document.styleSheets) {
+        result.push(document.styleSheets[style]);
+      }
+      var sheets = $("head").find('style');
+      for (var i = 0; i < sheets.length; i++) {
+        result.push(sheets[i].sheet);
+      }
+      return result;
+    }
+
     // Return FALSE when the relevant stylesheet has not been parsed yet
     // (previously slickgrid would throw an exception for this!)
     // otherwise return the style reference.
     function getColumnCssRules(idx) {
       var i;
       if (!stylesheet) {
-        var sheets = document.styleSheets;
+        var sheets = getAllStyleSheets();
         for (i = 0; i < sheets.length; i++) {
           if ((sheets[i].ownerNode || sheets[i].owningElement) == $style[0]) {
             stylesheet = sheets[i];
