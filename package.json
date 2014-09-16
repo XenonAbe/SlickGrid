@@ -1,13 +1,14 @@
 {
   "name": "SlickGrid",
   "version": "2.1.0",
-  "main": "./slick.core.js",
   "description": "shim repo for SlickGrid component",
   "repository": {
     "type": "git",
     "url": "git://github.com/GerHobbelt/SlickGrid.git"
   },
-  "dependencies": {},
+  "dependencies": {
+
+  },
   "devDependencies": {
     "grunt": ">=0.4.5",
     "grunt-cli": ">=0.1.13",

@@ -1,6 +1,6 @@
 {
-  "name": "slickgrid-fastColumnSizing",
-  "version": "2.2.4",
+  "name": "SlickGrid",
+  "version": "2.1.0",
   "homepage": "https://github.com/SimpleAsCouldBe/SlickGrid",
   "authors": [
     "Eric Miller <eric@simpleascouldbe.com>"
@@ -16,5 +16,28 @@
     "column",
     "size"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "main": [ "slick.core.js",
+            "slick-default-theme.less",
+            "slick-editors.less",
+            "slick.config.default-theme.less",
+            "slick.config.less",
+            "slick.dataview.js",
+            "slick.editors.js",
+            "slick.extensions.js",
+            "slick.formatters.js",
+            "slick.grid.js",
+            "slick.grid.less",
+            "slick.groupitemmetadataprovider.js",
+            "slick.less.macros.less"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "documentation",
+    "examples",
+    "test",
+    "tests"
+  ]
 }
