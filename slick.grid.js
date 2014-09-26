@@ -1653,15 +1653,29 @@ if (typeof Slick === "undefined") {
       $container.unbind(".slickgrid");
       removeCssRules();
 
-      $canvas.unbind("draginit dragstart dragend drag");
-      $container.empty().removeClass(uid);
+      $canvas.unbind();
+      $container
+          .empty()
+          .removeClass("slickgrid-container ui-widget " + uid)
+          .attr('role', null);
 
       $headerScroller.unbind();
       $headers.unbind();
+      $viewport.unbind();
+      $headerRowScroller.unbind();
+      $footerRowScroller.unbind();
+      $focusSink.unbind();
+      $focusSink2.unbind();
 
       $headerScroller = undefined;
       $headers = undefined;
+      $headerParents = undefined;
+      $headerRowScroller = undefined;
+      $headerRow = undefined;
       $headerRowSpacer = undefined;
+      $footerRowScroller = undefined;
+      $footerRow = undefined;
+      $footerRowSpacer = undefined;
       $canvas = undefined;
       $viewport = undefined;
       $topPanel = undefined;
@@ -1670,6 +1684,20 @@ if (typeof Slick === "undefined") {
       $focusSink = undefined;
       $focusSink2 = undefined;
       $container = undefined;
+      $style = undefined;
+
+      columnDefinitions = undefined;
+      options = undefined;
+      editController = undefined;
+      postProcessedRows = undefined;
+      cellCssClasses = undefined;
+      rowsCache = undefined;
+      rowPositionCache = undefined;
+      cellSpans = undefined;
+      selectedRows = undefined;
+      plugins = undefined;
+      columnsById = undefined;
+      stylesheet = undefined;
     }
 
 
@@ -1972,8 +2000,8 @@ if (typeof Slick === "undefined") {
       columnPosLeft[i] = x;
     }
 
-    function setColumns(columnDefinitions) {
-      parseColumns(columnDefinitions);
+    function setColumns(newColumnDefinitions) {
+      parseColumns(newColumnDefinitions);
       updateColumnCaches();
       if (initialized) {
         invalidateAllRows();
@@ -1987,8 +2015,8 @@ if (typeof Slick === "undefined") {
     }
 
     // Given a column definition object, do all the steps required to react to a change in the widths of any of the columns
-    function updateColumnWidths(columnDefinitions) {
-      parseColumns(columnDefinitions);
+    function updateColumnWidths(newColumnDefinitions) {
+      parseColumns(newColumnDefinitions);
       updateColumnCaches();
       if (initialized) {
         $headers.width(getHeadersWidth()); // Set the full width of all the headers together
