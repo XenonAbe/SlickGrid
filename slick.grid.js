@@ -711,8 +711,8 @@ if (typeof Slick === "undefined") {
         if (toolTip !== undefined) {
           columnDef.toolTip = toolTip;
         }
-        title = columns[idx].name;
-        toolTip = columns[idx].toolTip;
+        title = columnDef.name;
+        toolTip = columnDef.toolTip || null;
 
         var e = new Slick.EventData();
         trigger(self.onBeforeHeaderCellDestroy, {
@@ -726,7 +726,7 @@ if (typeof Slick === "undefined") {
 
         // TODO: RISK: when formatter produces more than ONE outer HTML element, we're toast with nuking the .eq(0) element down here:
         $header
-            .attr("title", columnDef.toolTip || null)
+            .attr("title", toolTip)
             .children().eq(0).html(title);
 
         trigger(self.onHeaderCellRendered, {
@@ -4630,6 +4630,23 @@ if (typeof Slick === "undefined") {
       currentEditor = new (editor || getEditor(activeRow, activeCell))(info);
       /* jshint +W056 */
 
+      // assert that the complete editor API is available:
+      assert(currentEditor);
+      assert(typeof currentEditor.init === 'function');
+      assert(typeof currentEditor.destroy === 'function');
+      assert(typeof currentEditor.focus === 'function');
+      assert(typeof currentEditor.setDirectValue === 'function');
+      assert(typeof currentEditor.loadValue === 'function');
+      assert(typeof currentEditor.serializeValue === 'function');
+      assert(typeof currentEditor.applyValue === 'function');
+      assert(typeof currentEditor.isValueChanged === 'function');
+      assert(typeof currentEditor.validate === 'function');
+      assert(typeof currentEditor.save === 'function');
+      assert(typeof currentEditor.cancel === 'function');
+      assert(typeof currentEditor.hide === 'function');
+      assert(typeof currentEditor.show === 'function');
+      assert(typeof currentEditor.position === 'function');
+
       if (item) {
         currentEditor.loadValue(item);
       }
@@ -4637,13 +4654,12 @@ if (typeof Slick === "undefined") {
       serializedEditorValue = currentEditor.serializeValue();
 
       var cellBox = getActiveCellPosition();
-      if (currentEditor.show && currentEditor.hide) {
-        if (!cellBox.visible) {
-          currentEditor.hide();
-        } else {
-          currentEditor.show();
-        }
+      if (!cellBox.visible) {
+        currentEditor.hide();
+      } else {
+        currentEditor.show();
       }
+      // old code for this chunk was:         handleActiveCellPositionChange();
 
       return currentEditor; // this is a truthy return value
     }
@@ -5432,9 +5448,9 @@ if (typeof Slick === "undefined") {
     }
     
     function scrollPort(px) {
-        scrollTo(px);
-        render();
-      }
+      scrollTo(px);
+      render();
+    }
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////

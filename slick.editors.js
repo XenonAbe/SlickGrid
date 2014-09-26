@@ -4,6 +4,25 @@
  * Contains basic SlickGrid editors.
  * @module Editors
  * @namespace Slick
+ *
+ * Editor API:
+ *
+ * init()
+ * destroy()
+ * focus()
+ * setDirectValue(val)
+ * loadValue(item)
+ * serializeValue()
+ * applyValue(item, state)
+ * isValueChanged()
+ * validate()
+ *
+ * save()
+ * cancel()
+ * 
+ * hide()
+ * show()
+ * position(position)
  */
 
 (function ($) {
@@ -102,6 +121,27 @@
       $input.remove();
     };
 
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $input.hide();
+    };
+
+    this.show = function () {
+      $input.show();
+    };
+
+    this.position = function (position) {
+      // nada 
+    };
+
     this.focus = function () {
       $input.focus();
     };
@@ -159,6 +199,26 @@
 
     this.destroy = function () {
       $input.remove();
+    };
+
+    this.save = function () {
+      // nada
+    };
+
+    this.cancel = function () {
+      // nada
+    };
+
+    this.hide = function () {
+      $input.hide();
+    };
+
+    this.show = function () {
+      $input.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function () { };
@@ -259,6 +319,27 @@ function isValidModifier(v) {
       $input.remove();
     };
 
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $input.hide();
+    };
+
+    this.show = function () {
+      $input.show();
+    };
+
+    this.position = function (position) {
+      // nada 
+    };
+
     this.focus = function () {
       $input.focus();
     };
@@ -329,6 +410,27 @@ function isValidModifier(v) {
 
     this.destroy = function () {
       $input.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $input.hide();
+    };
+
+    this.show = function () {
+      $input.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function () {
@@ -419,6 +521,27 @@ function isValidModifier(v) {
 
     this.destroy = function () {
       $input.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $input.hide();
+    };
+
+    this.show = function () {
+      $input.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function () {
@@ -566,6 +689,15 @@ function isValidModifier(v) {
       $input.remove();
     };
 
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
     this.show = function () {
       if (calendarOpen) {
         $.datepicker.dpDiv.stop(true, true).show();
@@ -700,6 +832,27 @@ function isValidModifier(v) {
         $select.remove();
     };
 
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $select.hide();
+    };
+
+    this.show = function () {
+      $select.show();
+    };
+
+    this.position = function (position) {
+      // nada 
+    };
+
     this.focus = function() {
         $select.focus();
     };
@@ -755,6 +908,27 @@ function isValidModifier(v) {
       $select.remove();
     };
 
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $select.hide();
+    };
+
+    this.show = function () {
+      $select.show();
+    };
+
+    this.position = function (position) {
+      // nada 
+    };
+
     this.focus = function () {
       $select.focus();
     };
@@ -807,6 +981,27 @@ function isValidModifier(v) {
 
     this.destroy = function () {
       $select.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $select.hide();
+    };
+
+    this.show = function () {
+      $select.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function () {
@@ -923,6 +1118,31 @@ function isValidModifier(v) {
       $input.remove();
       $picker.remove();
       $helper.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $input.hide();
+      $picker.hide();
+      $helper.hide();
+    };
+
+    this.show = function () {
+      $input.show();
+      $picker.show();
+      $helper.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function () {
@@ -1069,6 +1289,14 @@ function isValidModifier(v) {
       scope.position(args);
     }
 
+    this.hide = function () {
+      hidePanel();
+    };
+
+    this.show = function () {
+      showPanel();
+    };
+
     /*
      * info: {
      *         gridPosition: getGridPosition(),
@@ -1175,6 +1403,15 @@ function isValidModifier(v) {
       isOpen = false;
     };
 
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
     this.show = function () {
       if (!isOpen) {
         $input.spectrum({
@@ -1278,6 +1515,27 @@ function isValidModifier(v) {
 
     this.destroy = function() {
       $select.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $select.hide();
+    };
+
+    this.show = function () {
+      $select.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function() {
