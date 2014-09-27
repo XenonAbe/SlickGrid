@@ -210,7 +210,8 @@ if (typeof Slick === "undefined") {
       defaultHeaderFormatter: defaultHeaderFormatter,
       defaultHeaderRowFormatter: defaultHeaderRowFormatter,
       forceSyncScrolling: false,
-      asyncRenderDelay: 50000,
+      asyncRenderDelay: 85,         // this value is picked to 'catch' typematic key repeat rates as low as 12-per-second: 
+                                    // keep your navigator keys depressed to see the delayed render + mandatory mini-cell-renders kicking in. 
       addNewRowCssClass: "new-row",
       syncColumnCellResize: false,
       editCommandHandler: null,
