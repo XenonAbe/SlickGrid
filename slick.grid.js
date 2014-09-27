@@ -2994,7 +2994,7 @@ if (typeof Slick === "undefined") {
       var invalidateFrom = dataLength;
       var invalidateTo = -1;
       var intersectingCells = [];
-      intersectingCellsStartIndex = MAX_INT;
+      var intersectingCellsStartIndex = MAX_INT;
       for (i = 0, rl = rows.length; i < rl; i++) {
         row = rows[i];
         if (currentEditor && activeRow === row) {
