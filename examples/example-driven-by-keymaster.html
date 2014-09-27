@@ -157,11 +157,23 @@
     }
   ];
 
-  for (var i = 0; i < 100; i++) {
+  function nameColumn(i) {
+    var s = String.fromCharCode("A".charCodeAt(0) + (i % 26));
+    i = (i / 26) | 0;
+    s = String.fromCharCode("A".charCodeAt(0) + (i % 26)) + s;
+    i = (i / 26) | 0;
+    if (i) {
+      i--;
+      s = String.fromCharCode("A".charCodeAt(0) + (i % 26)) + s;
+      i = (i / 26) | 0;
+    }
+    return s;
+  }
+
+  for (var i = 0; i < 1000; i++) {
     columns.push({
       id: i,
-      name: String.fromCharCode("A".charCodeAt(0) + (i / 26) | 0) +
-            String.fromCharCode("A".charCodeAt(0) + (i % 26)),
+      name: nameColumn(i),
       field: i,
       width: 60,
       editor: Slick.Editors.Formula
@@ -174,10 +186,10 @@
       return "" + n;
     }
 
-    for (var i = 0; i < 100; i++) {
+    for (var i = 0; i < 420; i++) {
       var d = (data[i] = {});
       d["num"] = i;
-      for (var j = 0; j < 100; j++) {
+      for (var j = 0; j < 1000; j++) {
         d[j] = n2s(j + 1) + "." + n2s(i + 1);
       }
     }

@@ -7,15 +7,16 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "Event": Event,
-      "EventData": EventData,
-      "EventHandler": EventHandler,
-      "Range": Range,
-      "NonDataRow": NonDataItem,
-      "Group": Group,
-      "GroupTotals": GroupTotals,
-      "EditorLock": EditorLock,
+    Slick: {
+      Event: Event,
+      EventData: EventData,
+      EventHandler: EventHandler,
+      PerformanceTimer: PerformanceTimer,
+      Range: Range,
+      NonDataRow: NonDataItem,
+      Group: Group,
+      GroupTotals: GroupTotals,
+      EditorLock: EditorLock,
 
       /***
        * A global singleton editor lock.
@@ -23,7 +24,7 @@
        * @static
        * @constructor
        */
-      "GlobalEditorLock": new EditorLock()
+      GlobalEditorLock: new EditorLock()
     }
   });
 
@@ -536,6 +537,105 @@
       return (activeEditController ? activeEditController.cancelCurrentEdit() : true);
     };
   }
+
+
+
+
+  /***
+   * Provide a generic performance timer, which strives to produce highest possible accuracy time measurements.
+   * 
+   * methods:
+   * - start() (re)starts the timer. .start() also CLEARS ALL .mark_delta() timers!
+   * - mark() calculates the elapsed time for the current timer in MILLISECONDS (floating point).
+   * - mark_delta(ID) is identical to .mark() except that the time elapsed since the last call 
+   *   to .mark_delta() with the same ID is returned in MILLISECONDS (floating point).
+   * 
+   * Notes:
+   * 
+   * - when you invoke .mark() without having called .start() before, then the timer is started at the mark.
+   * - you are responsible to keep the IDs for .mark_delta() unique. The ID MUST NOT be "start" 
+   *   (as ID = "start" identifies the .start() timer)
+   * 
+   * References for the internal implementation:
+   *     http://updates.html5rocks.com/2012/08/When-milliseconds-are-not-enough-performance-now
+   *     http://ejohn.org/blog/accuracy-of-javascript-time/
+   */
+  function PerformanceTimer() {
+    /* private */ var start_time = false;
+    var obj = {
+    };
+    // feature detect:
+    if (window.performance && window.performance.timing.navigationStart && window.performance.now) {
+      obj.start = function () {
+        start_time = {
+          start: window.performance.now()
+        };
+      };
+      obj.mark = function () {
+        if (start_time === false) this.start();
+        var end_time = window.performance.now();
+        return end_time - start_time.start;
+      };
+      obj.mark_delta = function (id) {
+        id = id || "start";
+        if (start_time === false) this.start();
+        var end_time = window.performance.now();
+        var rv = end_time - start_time[id];
+        start_time[id] = end_time;
+        return rv;
+      };
+    } else if (window.performance && window.performance.webkitNow) {
+      obj.start = function () {
+        start_time = {
+          start: window.performance.webkitNow()
+        };
+      };
+      obj.mark = function () {
+        if (start_time === false) this.start();
+        var end_time = window.performance.webkitNow();
+        return end_time - start_time.start;
+      };
+      obj.mark_delta = function (id) {
+        id = id || "start";
+        if (start_time === false) this.start();
+        var end_time = window.performance.webkitNow();
+        var rv = end_time - start_time[id];
+        start_time[id] = end_time;
+        return rv;
+      };
+    } else {
+      var f = function () {
+        return Date.now();
+      };
+      try {
+        f();
+      } catch (ex) {
+        f = function () {
+          return +new Date();
+        };
+      }
+      obj.start = function () {
+        start_time = {
+          start: f()
+        };
+      };
+      obj.mark = function () {
+        if (start_time === false) this.start();
+        return f() - start_time.start;
+      };
+      obj.mark_delta = function (id) {
+        id = id || "start";
+        if (start_time === false) this.start();
+        var end_time = f();
+        var rv = end_time - start_time[id];
+        start_time[id] = end_time;
+        return rv;
+      };
+    }
+
+    return obj;
+  }
+
 })(jQuery);
 
 

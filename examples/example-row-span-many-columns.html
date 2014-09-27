@@ -70,9 +70,7 @@
 <script src="../slick.core.js"></script>
 <script src="../slick.grid.js"></script>
 
-<script src="datasource.js"></script>
-
-
+<script src="examples.datasource.js"></script>
 <script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
@@ -81,20 +79,10 @@
     console.clear();
     var grid;
 
-    var columns = slickGridTests.createColumns(5, 2);
-    var data = slickGridTests.getDataItems(600, columns.leafs);
-    var metadata = {
-        2: {
-            columns: {
-                1: {rowspan: 80}
-            }
-        },
-        3: {
-            columns: {
-                3: {rowspan: 3, colspan: 200}
-            }
-        }
-    };
+    var source = slickGridTests(DATA_EXAMPLE_NESTED_COLUMNS, 600);
+    var columns = source.createColumns(5, 2);
+    var data = source.getDataItems(columns.leafs);
+    var metadata = source.getMetaData(columns);
 
     var dataView = {
         getItem: function(row) {
@@ -117,6 +105,37 @@
 
     $(function() {
         grid = new Slick.Grid("#myGrid", dataView, columns, options);
+
+        $('#toggleSpans').click(function (e) {
+            var cell = metadata[3].columns[1];
+            if (cell.colspan === 1) {
+                cell.rowspan = 3;
+                cell.colspan = 2;
+            } else {
+                cell.rowspan = 5;
+                cell.colspan = 1;
+            }
+            grid.invalidateRow(3);
+            grid.render();
+        });
+
+        $('#toggleHeight').click(function (e) {
+            metadata[6].height = metadata[6].height === metadata.userSettings.rowHeights[0] ? 
+                metadata.userSettings.rowHeights[1] : 
+                metadata.userSettings.rowHeights[0];
+            grid.invalidateRow(6);
+            grid.render();
+        });
+
+        $('#scrollTo').click(function (e) {
+            grid.scrollRowToTop($('#nRow').val());
+        });
+
+        $('#nRow').keydown(function (e) {
+            if (e.keyCode == 13) {
+                $('#scrollTo').click();
+            }
+        });
     });
 
 })(window, $);

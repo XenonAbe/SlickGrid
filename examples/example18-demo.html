@@ -81,7 +81,7 @@ $(function() {
 
     for (var i = 0; i < 5; i++) {
         var day = {
-            day: 'day' + (i+1),
+            day: 'day' + (i + 1),
             companies: []
         };
 
@@ -94,7 +94,7 @@ $(function() {
                 meetings: []
             };
 
-            for (var i2 = 0; i2 < 24; i2++) {
+            for (var i2 = 0; i2 < 1000; i2++) {
                 var meeting = {
                     id: i2,
                     name: 'm' + (i2 + 1)
@@ -117,7 +117,7 @@ $(function() {
         var header = {
             id: 'day',
             name: rawData[j].day,
-            children:[]
+            children: []
         };
 
         for (var j1 = 0; j1 < rawData[j].companies.length; j1++) {
