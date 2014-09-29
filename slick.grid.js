@@ -614,9 +614,9 @@ if (typeof Slick === "undefined") {
                 assert(currentEditor);
                 currentEditor.focus();
               }
-            });
+            })
+            .bind("click", handleContainerClickEvent);
         $viewport
-            //.bind("click", handleClick)
             .bind("scroll", handleScrollEvent);
         $headerScroller
             .bind("contextmenu", handleHeaderContextMenu)
@@ -2301,7 +2301,7 @@ if (typeof Slick === "undefined") {
         info.uid = mkSaneId(m, cell);
       }
       if (config.node) {
-        info.cellNode = getCellNode(row, cell);
+        info.cellNode = getCellNode(row, cell, true);
       }
 
       if (rowDataItem && config.value) {
@@ -2682,8 +2682,9 @@ if (typeof Slick === "undefined") {
       }
 
       if (prevScrollTop !== newScrollTop) {
+        //console.log("scrollTo caused a change!: ", prevScrollTop, newScrollTop, pageOffset, oldOffset, page, y, range);
         vScrollDir = (prevScrollTop + oldOffset < newScrollTop + pageOffset) ? 1 : -1;
-        $viewport[0].scrollTop = scrollTop = newScrollTop;
+        $viewport[0].scrollTop = prevScrollTop = scrollTop = newScrollTop;
 
         trigger(self.onViewportChanged, {});
         return true;
@@ -3756,7 +3757,7 @@ if (typeof Slick === "undefined") {
       });
 
       if (needToReselectCell) {
-        activeCellNode = getCellNode(activeRow, activeCell);
+        activeCellNode = getCellNode(activeRow, activeCell, true);
         assert(activeCellNode);
       }
     }
@@ -3782,9 +3783,15 @@ if (typeof Slick === "undefined") {
       startPostProcessing();
     }
 
+var xxx;
     function render() {
       if (!initialized) { return; }
 
+xxx = xxx | 0;
+xxx++;
+if (xxx % 100 == 99) {
+  debugger;
+}
       if (h_render) {
         clearTimeout(h_render);
         h_render = null;
@@ -3849,6 +3856,8 @@ if (typeof Slick === "undefined") {
     function handleScrollEvent(e) {
       scrollTop = $viewport[0].scrollTop;
       scrollLeft = $viewport[0].scrollLeft;
+      console.log("handle SCROLL EVENT: ", this, arguments, document.activeElement);
+
       handleScroll();
     }
 
@@ -4274,6 +4283,8 @@ out:
 
     function handleKeyDown(e) {
       assert(!(e instanceof Slick.EventData));
+      console.log("keydown: ", this, arguments, document.activeElement);
+
       trigger(self.onKeyDown, {
         row: activeRow, 
         cell: activeCell
@@ -4368,6 +4379,11 @@ out:
       }
     }
 
+    function handleContainerClickEvent(e) {
+      assert(!(e instanceof Slick.EventData));
+      console.log("container CLICK: ", this, arguments, document.activeElement);
+    }
+
     function handleClick(e) {
       assert(!(e instanceof Slick.EventData));
 
@@ -4400,7 +4416,7 @@ out:
       }
 
       // are we editing this cell?
-      if (activeCellNode === $cell[0] && currentEditor != null) {
+      if (activeCellNode === cell.node && currentEditor != null) {
         return;
       }
 
@@ -5566,7 +5582,7 @@ out:
         activePosX = pos.posX;
         return true;
       } else {
-        node = getCellNode(activeRow, activeCell);
+        node = getCellNode(activeRow, activeCell, true);
         assert(node);
         setActiveCellInternal(node, false);
         return false;
@@ -5625,7 +5641,7 @@ out:
         }
 
         scrollCellIntoView(row, cell, false);
-        var node = getCellNode(row, cell);
+        var node = getCellNode(row, cell, true);
         assert(node);
         setActiveCellInternal(node, false);
       }
@@ -5691,7 +5707,7 @@ out:
 
       scrollCellIntoView(row, cell, false);
 
-      var newCellNode = getCellNode(row, cell);
+      var newCellNode = getCellNode(row, cell, true);
       assert(newCellNode);
 
       // if selecting the 'add new' row, start editing right away

@@ -100,18 +100,19 @@
 
   $(function () {
     for (var i = 0; i < 100; i++) {
-      var d = (data[i] = {});
-      d["title"] = "Task " + i;
-      d["priority"] = "Medium";
+      var d = data[i] = {
+        title: "Task " + i,
+        priority: "Medium"
+      };
     }
 
     grid = new Slick.Grid("#myGrid", data, columns, options);
 
-    grid.onContextMenu.subscribe(function (e) {
+    grid.onContextMenu.subscribe(function (e, cellInfo) {
       e.preventDefault();
-      var cell = grid.getCellFromEvent(e);
+      //var cellInfo = grid.getCellFromEvent(e);
       $("#contextMenu")
-          .data("row", cell.row)
+          .data("row", cellInfo.row)
           .css("top", e.pageY)
           .css("left", e.pageX)
           .show();
@@ -121,16 +122,17 @@
       });
     });
 
-    grid.onClick.subscribe(function (e) {
-      var cell = grid.getCellFromEvent(e);
-      if (grid.getColumns()[cell.cell].id == "priority") {
+    grid.onClick.subscribe(function (e, cellInfo) {
+      //var cellInfo = grid.getCellFromEvent(e);
+      if (grid.getColumns()[cellInfo.cell].id === "priority") {
         if (!grid.getEditorLock().commitCurrentEdit()) {
           return;
         }
 
         var states = { "Low": "Medium", "Medium": "High", "High": "Low" };
-        data[cell.row].priority = states[data[cell.row].priority];
-        grid.updateRow(cell.row);
+        data[cellInfo.row].priority = states[data[cellInfo.row].priority];
+        grid.updateRow(cellInfo.row);
+        
         e.stopPropagation();
       }
     });
