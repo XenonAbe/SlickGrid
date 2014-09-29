@@ -162,7 +162,7 @@ if (typeof Slick === "undefined") {
    *                                      The Slick.Formatters compatible cell formatter used to render the headerRow cell.
    *                                      The 'headerRow' is the header row shown by SlickGrid when the `option.showHeaderRow` is enabled.
    *      forceSyncScrolling: {Boolean}   If true, renders more frequently during scrolling, rather than
-   *                                      deferring rendering until default scroll thresholds are met.
+   *                                      deferring rendering until default scroll thresholds are met (asyncRenderDelay).
    *      asyncRenderDelay:   {Number}    Delay passed to setTimeout in milliseconds before view update is actually rendered.
    *      addNewRowCssClass:  {String}    specifies CSS class for the extra bottom row: 'add new row'
    * [/KCPT]
@@ -279,6 +279,14 @@ if (typeof Slick === "undefined") {
     var currentEditor = null;
     var serializedEditorValue;
     var editController = null;
+
+    // It turned out that focusin / focusout events fired by jQuery also occur when we call
+    // $el.focus() on any element inside slickgrid. To prevent very weird event sequences
+    // from thus occurring we *block* these events from firing any SlickGrid event (onFocusIn/onFocusOut)
+    // or any other slickgrid-internal activity while we are fully in control of the situation
+    // already while we are calling jQuery's $el.focus() on a cell of ours (movingFocusLock > 0)
+    var movingFocusLock = 0;
+    var movingFocusLockData = [];    
 
     var rowsCache = [];
     var rowPositionCache = [];
@@ -509,26 +517,90 @@ if (typeof Slick === "undefined") {
         $container
             .bind("resize.slickgrid", resizeCanvas)
             .bind("focus.slickgrid", function (e) {
-              console.log("container focus: ", this, arguments);
+              var $target = $(e.target);
+              var newFocusNode = document.activeElement;
+              var focusMovingFrom = $.contains($container[0], e.target);
+              var focusMovingInto = $.contains($container[0], newFocusNode);
+              var focusMovingInside = focusMovingFrom && focusMovingInto;
+              console.log("container EVT FOCUS: ", [this, arguments, $target, newFocusNode], 
+                          focusMovingFrom ? "FROM" : "-", focusMovingInto ? "INTO" : "-", focusMovingInside ? "INSIDE" : "-", movingFocusLock ? "@FOCUS" : "-real-");
+            })
+            .bind("blur.slickgrid", function (e) {
+              var $target = $(e.target);
+              var newFocusNode = document.activeElement;
+              var focusMovingFrom = $.contains($container[0], e.target);
+              var focusMovingInto = $.contains($container[0], newFocusNode);
+              var focusMovingInside = focusMovingFrom && focusMovingInto;
+              console.log("container EVT BLUR: ", [this, arguments, $target, newFocusNode], 
+                          focusMovingFrom ? "FROM" : "-", focusMovingInto ? "INTO" : "-", focusMovingInside ? "INSIDE" : "-", movingFocusLock ? "@FOCUS" : "-real-");
+            })
+            .bind("focusin.slickgrid", function (e) {
+              var fromNode = e.target;
+              if (movingFocusLock) {
+                // we MAY see a sequence of focusout+focusin, where in the latter we want to know who really was the previous focus
+                fromNode = movingFocusLockData[movingFocusLock - 1].oldNode;
+              }
+              var $target = $(fromNode);
+              var newFocusNode = document.activeElement;
+              var focusMovingFrom = $.contains($container[0], fromNode);
+              var focusMovingInto = $.contains($container[0], newFocusNode);
+              var focusMovingInside = focusMovingFrom && focusMovingInto;
+              console.log("container GOT FOCUS: ", [this, arguments, e.target, fromNode, newFocusNode], 
+                          focusMovingFrom ? "FROM" : "-", focusMovingInto ? "INTO" : "-", focusMovingInside ? "INSIDE" : "-", movingFocusLock ? "@FOCUS" : "-real-", movingFocusLockData);
 
+              var handled;
               var evt = new Slick.EventData(e);
-              trigger(self.onFocusIn, {}, evt);
-              var handled = evt.isHandled();
-              if (handled) {
-                return;
-              }
+              if (movingFocusLock) {
+                trigger(self.onFocusMoved, {
+                  from:     movingFocusLockData[movingFocusLock - 1].oldNodeInfo,
+                  to:       getCellFromElement(newFocusNode),
+                  fromNode: movingFocusLockData[movingFocusLock - 1].oldNode,
+                  toNode:   newFocusNode  
+                }, evt);
+                handled = evt.isHandled();
+                if (handled) {
+                  return;
+                }
+              } else {
+                trigger(self.onFocusIn, {}, evt);
+                handled = evt.isHandled();
+                if (handled) {
+                  return;
+                }
 
-              var lock = getEditorLock();
-              if (!lock.isActive(editController) && lock.commitCurrentEdit()) {
-                lock.activate(editController);
+                var lock = getEditorLock();
+                if (!lock.isActive(editController) && lock.commitCurrentEdit()) {
+                  lock.activate(editController);
+                }
+                // else: jump back to previously focused element... but we don't know what it is so this is all we can do now...
               }
-              // else: jump back to previously focused element... but we don't know what it is so this is all we can do now...
             })
             .bind("focusout.slickgrid", function (e) {
-              console.log("container LOST FOCUS = autoCOMMIT: ", this, arguments);
-
               var $target = $(e.target);
+              var newFocusNode = document.activeElement;
+              var focusMovingFrom = $.contains($container[0], e.target);
+              var focusMovingInto = $.contains($container[0], newFocusNode);
+              var focusMovingInside = focusMovingFrom && focusMovingInto;
+              console.log("container LOST FOCUS = autoCOMMIT: ", [this, arguments, e.target, newFocusNode], 
+                          focusMovingFrom ? "FROM" : "-", focusMovingInto ? "INTO" : "-", focusMovingInside ? "INSIDE" : "-", movingFocusLock ? "@FOCUS" : "-real-", {
+                            event: e,
+                            newNode: newFocusNode,
+                            oldNode: e.target,
+                            oldNodeInfo: getCellFromElement(e.target)
+                          });
 
+              if (movingFocusLock) {
+                // we MAY see a sequence of focusout+focusin, where by the time focusin fires, document.activeElement is BODY.
+                movingFocusLockData[movingFocusLock - 1] = {
+                  event: e,
+                  newNode: newFocusNode,
+                  oldNode: e.target,
+                  oldNodeInfo: getCellFromElement(e.target)
+                };
+                return;
+              } else {
+                movingFocusLockData = [];
+              }
               var evt = new Slick.EventData(e);
               trigger(self.onFocusOut, {}, evt);
               var handled = evt.isHandled();
@@ -537,14 +609,15 @@ if (typeof Slick === "undefined") {
               }
 
               var lock = getEditorLock();
-              if (!lock.commitCurrentEdit()) {
+              if (lock.isActive(editController) && !lock.commitCurrentEdit()) {
                 // commit failed, jump back to edited field so user can edit it and make sure it passes the next time through
-                $target.focus();
+                assert(currentEditor);
+                currentEditor.focus();
               }
             });
         $viewport
             //.bind("click", handleClick)
-            .bind("scroll", handleScroll);
+            .bind("scroll", handleScrollEvent);
         $headerScroller
             .bind("contextmenu", handleHeaderContextMenu)
             .fixClick(handleHeaderClick, handleHeaderDblClick)
@@ -843,7 +916,7 @@ if (typeof Slick === "undefined") {
       }
 
       $headers.find(".slick-header-column")
-        .each(function () {
+        .each(function h_before_headercell_destroy_f() {
           var columnDef = $(this).data("column");
           if (columnDef) {
             trigger(self.onBeforeHeaderCellDestroy, {
@@ -860,7 +933,7 @@ if (typeof Slick === "undefined") {
 
       // Get the data for each column in the DOM
       $headerRow.find(".slick-headerrow-column")
-        .each(function () {
+        .each(function h_before_headerrowcell_destroy_f() {
           var columnDef = $(this).data("column");
           if (columnDef) {
             trigger(self.onBeforeHeaderRowCellDestroy, {
@@ -872,7 +945,7 @@ if (typeof Slick === "undefined") {
       $headerRow.empty();
 
       $footerRow.find(".slick-footerrow-column")
-        .each(function () {
+        .each(function h_before_footerrowcell_destroy_f() {
           var columnDef = $(this).data("column");
           if (columnDef) {
             trigger(self.onBeforeFooterRowCellDestroy, {
@@ -1421,7 +1494,7 @@ if (typeof Slick === "undefined") {
         }
         updateCanvasWidth(true);
         handleScroll();
-        render();
+        //render();
         trigger(self.onColumnsResized, { 
           adjustedColumns: adjustedColumns, 
           dd: dd 
@@ -2591,6 +2664,8 @@ if (typeof Slick === "undefined") {
       };
     }
 
+    // Return TRUE when the viewport has been actually scrolled;
+    // return FALSE when there's been no movement.
     function scrollTo(y) {
       y = Math.max(y, 0);
       y = Math.min(y, virtualTotalHeight - viewportH + (viewportHasHScroll ? scrollbarDimensions.height : 0));
@@ -2608,10 +2683,12 @@ if (typeof Slick === "undefined") {
 
       if (prevScrollTop !== newScrollTop) {
         vScrollDir = (prevScrollTop + oldOffset < newScrollTop + pageOffset) ? 1 : -1;
-        $viewport[0].scrollTop = (lastRenderedScrollTop = scrollTop = prevScrollTop = newScrollTop);
+        $viewport[0].scrollTop = scrollTop = newScrollTop;
 
         trigger(self.onViewportChanged, {});
+        return true;
       }
+      return false;
     }
 
     function defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
@@ -3085,8 +3162,9 @@ if (typeof Slick === "undefined") {
       }
 
       for (row = intersectingCellsStartIndex, endrow = intersectingCells.length; row < endrow; row++) {
+        //@TO-OPT
         for (c in intersectingCells[row]) {
-          updateCell(+row, +c);
+          updateCell(row, +c);
         }
       }
     }
@@ -3103,7 +3181,7 @@ if (typeof Slick === "undefined") {
 
       var m = columns[cell],
           d = getDataItem(row);
-      if (currentEditor && activeRow == row && activeCell == cell) {
+      if (currentEditor && activeRow === row && activeCell === cell) {
         currentEditor.loadValue(d);
       } else {
         // if the cell has other coordinates because of row/cell span, update that cell (which will invalidate this cellNode)
@@ -3119,7 +3197,7 @@ if (typeof Slick === "undefined") {
         var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[cell]);
 
         var cellHeight = getCellHeight(row, getRowspan(row, cell));
-        if (cellHeight != options.rowHeight) {
+        if (cellHeight !== options.rowHeight) {
           cellNode.style.height = cellHeight + "px";
         } else if (cellNode.style.height) {
           cellNode.style.height = "";
@@ -3281,7 +3359,7 @@ if (typeof Slick === "undefined") {
 
       cleanUpAndRenderCells(getRenderedRange());
       updateRowCount();
-      handleScroll();
+      handleScroll(true);
       // Since the width has changed, force the render() to reevaluate virtually rendered cells.
       lastRenderedScrollLeft = -1;
       render();
@@ -3350,11 +3428,11 @@ if (typeof Slick === "undefined") {
         scrollTo(virtualTotalHeight - viewportH);
       }
 
-      if (scrollableHeight != oldH && options.autoHeight) {
+      if (scrollableHeight !== oldH && options.autoHeight) {
         resizeCanvas();
       }
 
-      if (options.forceFitColumns && oldViewportHasVScroll != viewportHasVScroll) {
+      if (options.forceFitColumns && oldViewportHasVScroll !== viewportHasVScroll) {
         autosizeColumns();
       }
       updateCanvasWidth(false);
@@ -3715,7 +3793,7 @@ if (typeof Slick === "undefined") {
       if (options.forceSyncScrolling) {
         forcedRender();
       } else {
-        h_render = setTimeout(function () {
+        h_render = setTimeout(function h_render_timer_f() {
             h_render = null;
             forcedRender();
         }, options.asyncRenderDelay);
@@ -3768,11 +3846,16 @@ if (typeof Slick === "undefined") {
       }
     }
 
-    function handleScroll() {
+    function handleScrollEvent(e) {
       scrollTop = $viewport[0].scrollTop;
       scrollLeft = $viewport[0].scrollLeft;
+      handleScroll();
+    }
+
+    function handleScroll(dontRenderYet) {
       var vScrollDist = Math.abs(scrollTop - prevScrollTop);
       var hScrollDist = Math.abs(scrollLeft - prevScrollLeft);
+      var reRender = false;
 
       if (hScrollDist) {
         prevScrollLeft = scrollLeft;
@@ -3780,6 +3863,7 @@ if (typeof Slick === "undefined") {
         $topPanelScroller[0].scrollLeft = scrollLeft;
         $headerRowScroller[0].scrollLeft = scrollLeft;
         $footerRowScroller[0].scrollLeft = scrollLeft;
+        reRender = true;
       }
 
       if (vScrollDist && (vScrollDist > options.rowHeight)) {
@@ -3788,7 +3872,7 @@ if (typeof Slick === "undefined") {
 
         // switch virtual pages if needed
         if (vScrollDist < viewportH) {
-          scrollTo(scrollTop + pageOffset);
+          reRender = scrollTo(scrollTop + pageOffset);
         } else {
           var oldOffset = pageOffset;
           if (scrollableHeight === viewportH) {
@@ -3798,8 +3882,9 @@ if (typeof Slick === "undefined") {
             page = Math.min(numberOfPages - 1, Math.floor(scrollTop * ((virtualTotalHeight - viewportH) / (scrollableHeight - viewportH)) * (1 / pageHeight)));
           }
           pageOffset = Math.round(page * jumpinessCoefficient);
-          if (oldOffset != pageOffset) {
+          if (oldOffset !== pageOffset) {
             invalidateAllRows();
+            reRender = true;
           }
         }
       }
@@ -3812,15 +3897,21 @@ if (typeof Slick === "undefined") {
 
         if (Math.abs(lastRenderedScrollTop - scrollTop) > 20 ||
             Math.abs(lastRenderedScrollLeft - scrollLeft) > 20) {
-          render();
+          reRender = true;
+          if (!dontRenderYet) {
+            render();
+          }
           trigger(self.onViewportChanged, {});
         }
+      } else {
+        assert(!reRender);
       }
 
       trigger(self.onScroll, {
         scrollLeft: scrollLeft, 
         scrollTop: scrollTop
       });
+      return reRender;
     }
 
     function asyncPostProcessRows() {
@@ -4011,7 +4102,7 @@ out:
           start_state = !$cell.hasClass(flash_options.cssClass);
 
           if (flash_options.delay) {
-            setTimeout(function () {
+            setTimeout(function h_flashcell_timer_f() {
               toggleCellClass(flash_options.times | 0);
             },
             flash_options.delay !== true ? flash_options.delay : flash_options.speed);
@@ -4027,7 +4118,7 @@ out:
           var $cell = $(node);
           assert($cell);
           assert($cell.length);
-          $cell.queue(function () {
+          $cell.queue(function h_flashcell_toggle_cell_class_f() {
             var hash = getCellCssStyles(key, { clone: true });
             var new_state = !$cell.hasClass(flash_options.cssClass);
             if (new_state) {
@@ -4057,7 +4148,7 @@ out:
         if (times <= 0) {
           return;
         }
-        setTimeout(function () {
+        setTimeout(function h_flashcell_next_phase_f() {
           toggleCellClass(times);
         },
         flash_options.speed);
@@ -4198,55 +4289,55 @@ out:
       if (!handled) {
         if (!shiftKey && !altKey && !ctrlKey) {
           switch (which) {
-          case $.ui.keyCode.ESCAPE:
+          case Slick.Keyboard.ESCAPE:
             if (!getEditorLock().isActive()) {
               return; // no editing mode to cancel, allow bubbling and default processing (exit without canceling the event)
             }
             cancelEditAndSetFocus();
             break;
 
-          case $.ui.keyCode.PAGE_DOWN:
+          case Slick.Keyboard.PAGE_DOWN:
             navigatePageDown();
             handled = true;
             break;
 
-          case $.ui.keyCode.PAGE_UP:
+          case Slick.Keyboard.PAGE_UP:
             navigatePageUp();
             handled = true;
             break;
 
-          case $.ui.keyCode.LEFT:
+          case Slick.Keyboard.LEFT:
             handled = navigateLeft();
             break;
 
-          case $.ui.keyCode.RIGHT:
+          case Slick.Keyboard.RIGHT:
             handled = navigateRight();
             break;
 
-          case $.ui.keyCode.UP:
+          case Slick.Keyboard.UP:
             handled = navigateUp();
             break;
 
-          case $.ui.keyCode.DOWN:
+          case Slick.Keyboard.DOWN:
             handled = navigateDown();
             break;
 
-          case $.ui.keyCode.HOME:
+          case Slick.Keyboard.HOME:
             navigateHome();
             handled = true;
             break;
 
-          case $.ui.keyCode.END:
+          case Slick.Keyboard.END:
             navigateEnd();
             handled = true;
             break;
 
-          case $.ui.keyCode.TAB:
+          case Slick.Keyboard.TAB:
             handled = navigateNext();
             break;
 
-          case $.ui.keyCode.ENTER:
-          case 113: /* [F2] */
+          case Slick.Keyboard.ENTER:
+          case Slick.Keyboard.F2:
             if (options.editable) {
               if (currentEditor) {
                 // adding new row
@@ -4264,7 +4355,7 @@ out:
             handled = true;
             break;
           }
-        } else if (which === $.ui.keyCode.TAB && shiftKey && !ctrlKey && !altKey) {
+        } else if (which === Slick.Keyboard.TAB && shiftKey && !ctrlKey && !altKey) {
           handled = navigatePrev();
         }
       }
@@ -4280,44 +4371,31 @@ out:
     function handleClick(e) {
       assert(!(e instanceof Slick.EventData));
 
-      if (!currentEditor) {
-        // if this click resulted in some cell child node getting focus,
-        // don't steal it back - keyboard events will still bubble up
-        // IE9+ seems to default DIVs to tabIndex=0 instead of -1, so check for cell clicks directly.
-        if (e.target !== document.activeElement || $(e.target).hasClass("slick-cell")) {
-          var selection = getTextSelection(); // store text-selection and restore it after
-          setFocus();
-          setTextSelection(selection);
-        }
-      }
-
       var cell = getCellFromEvent(e);
-      if (!cell || (currentEditor !== null && activeRow == cell.row && activeCell == cell.cell)) {
+      if (!cell || (currentEditor != null && activeRow === cell.row && activeCell === cell.cell)) {
         return;
       }
 
-      trigger(self.onClick, {
-        row: cell.row, 
-        cell: cell.cell
-      }, e);
+      trigger(self.onClick, cell, e);
       var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
       if (handled) {
         return;
       }
 
-      if ((activeCell != cell.cell || activeRow != cell.row) && canCellBeActive(cell.row, cell.cell)) {
+      // if this click resulted in some cell child node getting focus,
+      // don't steal it back - keyboard events will still bubble up.
+      if ((activeCell !== cell.cell || activeRow !== cell.row) && canCellBeActive(cell.row, cell.cell)) {
         if (!getEditorLock().isActive() || getEditorLock().commitCurrentEdit()) {
           scrollRowIntoView(cell.row, false);
-          var node = getCellNode(cell.row, cell.cell);
-          assert(node);
-          setActiveCellInternal(node, false);
+          assert(cell.node);
+          setActiveCellInternal(cell.node, false);
         }
       }
     }
 
     function handleContextMenu(e) {
-      var $cell = $(e.target).closest(".slick-cell", $canvas);
-      if ($cell.length === 0) {
+      var cell = getCellFromEvent(e);
+      if (!cell) {
         return;
       }
 
@@ -4326,21 +4404,18 @@ out:
         return;
       }
 
-      return trigger(self.onContextMenu, {}, e);
+      return trigger(self.onContextMenu, cell, e);
     }
 
     function handleDblClick(e) {
       assert(!(e instanceof Slick.EventData));
 
       var cell = getCellFromEvent(e);
-      if (!cell || (currentEditor !== null && activeRow == cell.row && activeCell == cell.cell)) {
+      if (!cell || (currentEditor !== null && activeRow === cell.row && activeCell === cell.cell)) {
         return;
       }
 
-      trigger(self.onDblClick, {
-        row: cell.row, 
-        cell: cell.cell
-      }, e);
+      trigger(self.onDblClick, cell, e);
       var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
       if (handled) {
         return;
@@ -4500,8 +4575,9 @@ out:
         return null;
       }
 
-      var row = getRowFromNode($cell[0].parentNode);
-      var cell = getCellFromNode($cell[0]);
+      var node = $cell[0];
+      var row = getRowFromNode(node.parentNode);
+      var cell = getCellFromNode(node);
 
       if (row == null || cell == null) {
         return null;
@@ -4509,7 +4585,8 @@ out:
         assert(cellExists(row, cell) || (options.enableAddRow ? (row === getDataLength() && cell < columns.length && cell >= 0) : true));
         return {
           row: row,
-          cell: cell
+          cell: cell,
+          node: node
         };
       }
     }
@@ -4577,11 +4654,13 @@ out:
         return;
       }
 
+      console.log("setFocus: SET FOCUS TO A SINK: START");
       if (tabbingDirection == -1) {
         $focusSink[0].focus();
       } else {
         $focusSink2[0].focus();
       }
+      console.log("setFocus: SET FOCUS TO A SINK: END");
     }
 
     // This get/set methods are used for keeping text-selection.
@@ -4613,19 +4692,19 @@ out:
       if (left < scrollLeft) {
         $viewport.scrollLeft(left);
         handleScroll();
-        render();
+        //render();
       } else if (right > scrollRight) {
         $viewport.scrollLeft(Math.min(left, right - $viewport[0].clientWidth));
         handleScroll();
-        render();
+        //render();
       }
     }
 
-    function setActiveCellInternal(newCell, opt_editMode) {
-      var activeCellChanged = (activeCellNode != newCell);
+    function setActiveCellInternal(newCellNode, opt_editMode) {
+      var activeCellChanged = (activeCellNode != newCellNode);
       var newActiveRow;
-      if (newCell != null) {
-        newActiveRow = getRowFromNode(newCell.parentNode);
+      if (newCellNode != null) {
+        newActiveRow = getRowFromNode(newCellNode.parentNode);
         if (opt_editMode == null) {
           opt_editMode = (options.enableAddRow && newActiveRow === getDataLength()) || options.autoEdit;
         }
@@ -4640,7 +4719,7 @@ out:
       var e = new Slick.EventData();
       if (activeCellChanged) {
         trigger(self.onActiveCellChanging, {
-          activeCell:     newCell,
+          activeCell:     newCellNode,
           prevActiveCell: activeCellNode,
           editMode:       opt_editMode,
         }, e);
@@ -4663,17 +4742,17 @@ out:
       }
 
       var prevActiveCell = activeCellNode;
-      activeCellNode = newCell;
+      activeCellNode = newCellNode;
 
-      if (newCell != null) {
+      if (newCellNode != null) {
         assert(activeCellNode);
-        activeRow = activePosY = getRowFromNode(newCell.parentNode);
-        activeCell = activePosX = getCellFromNode(newCell);
+        activeRow = activePosY = getRowFromNode(newCellNode.parentNode);
+        activeCell = activePosX = getCellFromNode(newCellNode);
         if (opt_editMode == null) {
           opt_editMode = (activeRow === getDataLength()) || options.autoEdit;
         }
 
-        $(newCell)
+        $(newCellNode)
           .addClass("active")
           .parent().addClass("active-row");
         $(rowsCache[activeRow].rowNode)
@@ -4683,7 +4762,7 @@ out:
         if (activeCellChanged) {
           //activeCellNode.focus();
           trigger(self.onActiveCellChanged, {
-            activeCell:     newCell,
+            activeCell:     newCellNode,
             prevActiveCell: prevActiveCell,
             editMode:       opt_editMode,
           }, e);
@@ -4692,13 +4771,34 @@ out:
           }
         }
 
+        // When the old active cell had focus, move focus to the new active cell.
+        // 
+        // Subtleties to mind here: 
+        // - the userland code for the event handler above MAY have changed the active cell node on us!
+        // - we only SET/MOVE the focus when the current focus is still on the old active cell node
+        // - any userland code in the event handlers which places focus elsewhere is therefore rendering
+        //   this code nil and void: we won't touch page focus here when this would be the case.
+        //    
+        var oldFocusNode = document.activeElement;
+        var oldFocusCellInfo = getCellFromElement(oldFocusNode);
+        var newActiveCellInfo = getCellFromElement(activeCellNode);
+        assert(newActiveCellInfo);
+        console.log("focus fixup: ", oldFocusNode, oldFocusCellInfo, activeCellNode, newActiveCellInfo);
+        if (oldFocusCellInfo && oldFocusCellInfo.node !== newActiveCellInfo.node) {
+          console.log("focus fixup exec START: ", document.activeElement);
+          movingFocusLock++;
+          $(activeCellNode).focus();
+          movingFocusLock--;
+          console.log("focus fixup exec END: ", document.activeElement);
+        }
+
         if (options.editable && opt_editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
           clearTimeout(h_editorLoader);
           h_editorLoader = null;
 
           // if opt_editMode > 1 then show the editor immediately (this happens for instance when the cell is double-clicked)
           if (options.asyncEditorLoading >= opt_editMode) {
-            h_editorLoader = setTimeout(function () {
+            h_editorLoader = setTimeout(function h_show_editor_f() {
               makeActiveCellEditable();
             }, options.asyncEditorLoadDelay);
           } else {
@@ -4715,7 +4815,7 @@ out:
     function clearTextSelection() {
       if (document.selection && document.selection.empty) {
         try {
-          //IE fails here if selected element is not in dom
+          // IE fails here if selected element is not in DOM
           document.selection.empty();
         } catch (e) { }
       } else if (window.getSelection) {
@@ -5023,7 +5123,10 @@ out:
       if (!activeCellNode) {
         return null;
       } else {
-        return {row: activeRow, cell: activeCell};
+        return {
+          row: activeRow, 
+          cell: activeCell
+        };
       }
     }
 
@@ -5039,24 +5142,28 @@ out:
       // need to center row?
       if (doCenteringY) {
         var centerOffset = (height - options.rowHeight) / 2;
-        scrollTo(rowAtTop - centerOffset);
-        render();
+        if (scrollTo(rowAtTop - centerOffset)) {
+          render();
+        }
       }
       // need to page down?
       if (getRowBottom(row) > scrollTop + viewportH + pageOffset) {
-        scrollTo(doPaging ? rowAtTop : rowAtBottom);
-        render();
+        if (scrollTo(doPaging ? rowAtTop : rowAtBottom)) {
+          render();
+        }
       }
       // or page up?
       else if (getRowTop(row) < scrollTop + pageOffset) {
-        scrollTo(doPaging ? rowAtBottom : rowAtTop);
-        render();
+        if (scrollTo(doPaging ? rowAtBottom : rowAtTop)) {
+          render();
+        }
       }
     }
 
     function scrollRowToTop(row) {
-      scrollTo(getRowTop(row));
-      render();
+      if (scrollTo(getRowTop(row))) {
+        render();
+      }
     }
 
     function scrollPage(dir) {
@@ -5074,8 +5181,9 @@ out:
       }
       assert(topRow.position >= 0);
       var y = getRowTop(topRow.position);
-      scrollTo(y);
-      render();
+      if (scrollTo(y)) {
+        render();
+      }
 
       if (options.enableCellNavigation && activeRow != null) {
         var row = activeRow + deltaRows;
@@ -5434,7 +5542,7 @@ out:
         return false;
       }
 
-      if (!activeCellNode && dir != NAVIGATE_PREV && dir != NAVIGATE_NEXT) {
+      if (!activeCellNode && dir !== NAVIGATE_PREV && dir !== NAVIGATE_NEXT) {
         return false;
       }
 
@@ -5583,11 +5691,11 @@ out:
 
       scrollCellIntoView(row, cell, false);
 
-      var newCell = getCellNode(row, cell);
-      assert(newCell);
+      var newCellNode = getCellNode(row, cell);
+      assert(newCellNode);
 
       // if selecting the 'add new' row, start editing right away
-      setActiveCellInternal(newCell, forceEdit);
+      setActiveCellInternal(newCellNode, forceEdit);
 
       // if no editor was created, set the focus back on the grid
       if (!currentEditor) {
@@ -5624,19 +5732,19 @@ out:
               editor: currentEditor,
               serializedValue: currentEditor.serializeValue(),
               prevSerializedValue: serializedEditorValue,
-              execute: function () {
+              execute: function h_exec_edit_cmd_f() {
                 this.appliedValue = this.serializedValue;
                 this.editor.applyValue(item, this.appliedValue);
                 updateRow(this.row);
                 this.notify();
               },
-              undo: function () {
+              undo: function h_undo_edit_cmd_f() {
                 this.appliedValue = this.prevSerializedValue;
                 this.editor.applyValue(item, this.appliedValue);
                 updateRow(this.row);
                 this.notify();
               },
-              notify: function () {
+              notify: function h_notify_edit_cmd_f() {
                 trigger(self.onCellChange, this);
               }
             };
@@ -5713,8 +5821,9 @@ out:
     }
     
     function scrollPort(px) {
-      scrollTo(px);
-      render();
+      if (scrollTo(px)) {
+        render();
+      }
     }
 
 
@@ -5778,6 +5887,7 @@ out:
       "onBeforeFooterRowCellDestroy": new Slick.Event(),
       "onFocusIn": new Slick.Event(),
       "onFocusOut": new Slick.Event(),
+      "onFocusMoved": new Slick.Event(),
       "onFocusSet": new Slick.Event(),
       "onMouseEnter": new Slick.Event(),
       "onMouseLeave": new Slick.Event(),
