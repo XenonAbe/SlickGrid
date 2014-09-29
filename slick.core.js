@@ -11,6 +11,7 @@
       Event: Event,
       EventData: EventData,
       EventHandler: EventHandler,
+      Keyboard: Keyboard(),
       PerformanceTimer: PerformanceTimer,
       Range: Range,
       NonDataRow: NonDataItem,
@@ -522,13 +523,13 @@
      * @method commitCurrentEdit
      * @return {Boolean}
      */
-    this.commitCurrentEdit = function () {
+    this.commitCurrentEdit = function commitCurrentEdit() {
       return (activeEditController ? activeEditController.commitCurrentEdit() : true);
     };
 
     /***
      * Attempts to cancel the current edit by calling "cancelCurrentEdit" method on the active edit
-     * controller and returns whether the edit was successfully cancelled.  If no edit controller is
+     * controller and returns whether the edit was successfully canceled.  If no edit controller is
      * active, returns true.
      * @method cancelCurrentEdit
      * @return {Boolean}
@@ -634,6 +635,36 @@
     }
 
     return obj;
+  }
+
+
+  /***
+   * Define a keyboard as a set of names for keypress codes, etc. for better code readability.
+   */
+  function Keyboard() {
+    // for now, base the keyboard code set off of jQueryUI, if it is present
+    var keycodes = $.extend({},  $.ui && $.ui.keyCode, {
+      BACKSPACE: 8,
+      COMMA: 188,
+      DELETE: 46,
+      DOWN: 40,
+      END: 35,
+      ENTER: 13,
+      ESCAPE: 27,
+      HOME: 36,
+      LEFT: 37,
+      PAGE_DOWN: 34,
+      PAGE_UP: 33,
+      PERIOD: 190,
+      RIGHT: 39,
+      SPACE: 32,
+      TAB: 9,
+      UP: 38,
+
+      F2: 113,
+    });
+
+    return keycodes;
   }
 
 })(jQuery);
