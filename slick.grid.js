@@ -3783,15 +3783,9 @@ if (typeof Slick === "undefined") {
       startPostProcessing();
     }
 
-var xxx;
     function render() {
       if (!initialized) { return; }
 
-xxx = xxx | 0;
-xxx++;
-if (xxx % 100 == 99) {
-  debugger;
-}
       if (h_render) {
         clearTimeout(h_render);
         h_render = null;
