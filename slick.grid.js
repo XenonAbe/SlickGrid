@@ -522,8 +522,8 @@ if (typeof Slick === "undefined") {
               var focusMovingFrom = $.contains($container[0], e.target);
               var focusMovingInto = $.contains($container[0], newFocusNode);
               var focusMovingInside = focusMovingFrom && focusMovingInto;
-              console.log("container EVT FOCUS: ", [this, arguments, $target, newFocusNode], 
-                          focusMovingFrom ? "FROM" : "-", focusMovingInto ? "INTO" : "-", focusMovingInside ? "INSIDE" : "-", movingFocusLock ? "@FOCUS" : "-real-");
+              // console.log("container EVT FOCUS: ", [this, arguments, $target, newFocusNode], 
+              //             focusMovingFrom ? "FROM" : "-", focusMovingInto ? "INTO" : "-", focusMovingInside ? "INSIDE" : "-", movingFocusLock ? "@FOCUS" : "-real-");
             })
             .bind("blur.slickgrid", function (e) {
               var $target = $(e.target);
@@ -531,8 +531,8 @@ if (typeof Slick === "undefined") {
               var focusMovingFrom = $.contains($container[0], e.target);
               var focusMovingInto = $.contains($container[0], newFocusNode);
               var focusMovingInside = focusMovingFrom && focusMovingInto;
-              console.log("container EVT BLUR: ", [this, arguments, $target, newFocusNode], 
-                          focusMovingFrom ? "FROM" : "-", focusMovingInto ? "INTO" : "-", focusMovingInside ? "INSIDE" : "-", movingFocusLock ? "@FOCUS" : "-real-");
+              // console.log("container EVT BLUR: ", [this, arguments, $target, newFocusNode], 
+              //             focusMovingFrom ? "FROM" : "-", focusMovingInto ? "INTO" : "-", focusMovingInside ? "INSIDE" : "-", movingFocusLock ? "@FOCUS" : "-real-");
             })
             .bind("focusin.slickgrid", function (e) {
               var fromNode = e.target;
@@ -545,8 +545,8 @@ if (typeof Slick === "undefined") {
               var focusMovingFrom = $.contains($container[0], fromNode);
               var focusMovingInto = $.contains($container[0], newFocusNode);
               var focusMovingInside = focusMovingFrom && focusMovingInto;
-              console.log("container GOT FOCUS: ", [this, arguments, e.target, fromNode, newFocusNode], 
-                          focusMovingFrom ? "FROM" : "-", focusMovingInto ? "INTO" : "-", focusMovingInside ? "INSIDE" : "-", movingFocusLock ? "@FOCUS" : "-real-", movingFocusLockData);
+              // console.log("container GOT FOCUS: ", [this, arguments, e.target, fromNode, newFocusNode], 
+              //             focusMovingFrom ? "FROM" : "-", focusMovingInto ? "INTO" : "-", focusMovingInside ? "INSIDE" : "-", movingFocusLock ? "@FOCUS" : "-real-", movingFocusLockData);
 
               var handled;
               var evt = new Slick.EventData(e);
@@ -581,13 +581,13 @@ if (typeof Slick === "undefined") {
               var focusMovingFrom = $.contains($container[0], e.target);
               var focusMovingInto = $.contains($container[0], newFocusNode);
               var focusMovingInside = focusMovingFrom && focusMovingInto;
-              console.log("container LOST FOCUS = autoCOMMIT: ", [this, arguments, e.target, newFocusNode], 
-                          focusMovingFrom ? "FROM" : "-", focusMovingInto ? "INTO" : "-", focusMovingInside ? "INSIDE" : "-", movingFocusLock ? "@FOCUS" : "-real-", {
-                            event: e,
-                            newNode: newFocusNode,
-                            oldNode: e.target,
-                            oldNodeInfo: getCellFromElement(e.target)
-                          });
+              // console.log("container LOST FOCUS = autoCOMMIT: ", [this, arguments, e.target, newFocusNode], 
+              //             focusMovingFrom ? "FROM" : "-", focusMovingInto ? "INTO" : "-", focusMovingInside ? "INSIDE" : "-", movingFocusLock ? "@FOCUS" : "-real-", {
+              //               event: e,
+              //               newNode: newFocusNode,
+              //               oldNode: e.target,
+              //               oldNodeInfo: getCellFromElement(e.target)
+              //             });
 
               if (movingFocusLock) {
                 // we MAY see a sequence of focusout+focusin, where by the time focusin fires, document.activeElement is BODY.
@@ -4654,13 +4654,13 @@ out:
         return;
       }
 
-      console.log("setFocus: SET FOCUS TO A SINK: START");
+      // console.log("setFocus: SET FOCUS TO A SINK: START");
       if (tabbingDirection == -1) {
         $focusSink[0].focus();
       } else {
         $focusSink2[0].focus();
       }
-      console.log("setFocus: SET FOCUS TO A SINK: END");
+      // console.log("setFocus: SET FOCUS TO A SINK: END");
     }
 
     // This get/set methods are used for keeping text-selection.
@@ -4783,13 +4783,13 @@ out:
         var oldFocusCellInfo = getCellFromElement(oldFocusNode);
         var newActiveCellInfo = getCellFromElement(activeCellNode);
         assert(newActiveCellInfo);
-        console.log("focus fixup: ", oldFocusNode, oldFocusCellInfo, activeCellNode, newActiveCellInfo);
+        // console.log("focus fixup: ", oldFocusNode, oldFocusCellInfo, activeCellNode, newActiveCellInfo);
         if (oldFocusCellInfo && oldFocusCellInfo.node !== newActiveCellInfo.node) {
-          console.log("focus fixup exec START: ", document.activeElement);
+          // console.log("focus fixup exec START: ", document.activeElement);
           movingFocusLock++;
           $(activeCellNode).focus();
           movingFocusLock--;
-          console.log("focus fixup exec END: ", document.activeElement);
+          // console.log("focus fixup exec END: ", document.activeElement);
         }
 
         if (options.editable && opt_editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
