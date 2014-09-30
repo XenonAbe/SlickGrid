@@ -882,6 +882,21 @@ if (typeof Slick === "undefined") {
       return $header && $header[0];
     }
 
+    function getHeaderColumnFromElement(el) {
+      var $header = $(el).closest(".slick-header-column", ".slick-header-columns");
+      if ($header.length) {
+        assert($header.length === 1);
+        var column = $header.data("column");
+        if (column) {
+          return {
+            columnDef: column,
+            $header: $header
+          };
+        }
+      }
+      return null;
+    }
+
     function getFooterRow() {
       return $footerRow[0];
     }
@@ -1145,12 +1160,11 @@ if (typeof Slick === "undefined") {
           return;
         }
 
-        var $col = $(e.target).closest(".slick-header-column");
-        if (!$col.length) {
+        var headerInfo = getHeaderColumnFromElement(e.target);
+        if (!headerInfo) {
           return;
         }
-
-        var column = $col.data("column");
+        var column = headerInfo.columnDef;
         assert(column);
         if (column.sortable) {
           if (!getEditorLock().commitCurrentEdit()) {
@@ -1287,7 +1301,7 @@ if (typeof Slick === "undefined") {
     }
 
     function setupColumnResize() {
-      var $col, j, c, pageX, columnElements, minPageX, maxPageX, firstResizable, lastResizable;
+      var j, c, pageX, columnElements, minPageX, maxPageX, firstResizable, lastResizable;
       columnElements = $headers.children();
       columnElements.find(".slick-resizable-handle").remove();
       columnElements.each(function (i, e) {
@@ -1509,10 +1523,11 @@ if (typeof Slick === "undefined") {
       }
       
       function onColumnResizeDblClick(e) {
-        var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-        assert($header);
-        assert($header.length === 1);
-        var column = $header.data("column");
+        var headerInfo = getHeaderColumnFromElement(e.target);
+        if (!headerInfo) {
+          return;
+        }
+        var column = headerInfo.columnDef;
         assert(column);
         assert(column.id);
         var cell = getColumnIndex(column.id);
@@ -1547,13 +1562,12 @@ if (typeof Slick === "undefined") {
         e.stopPropagation();
       }
 
-      columnElements.each(function (i, e) {
+      columnElements.each(function (i, el) {
         if (i < firstResizable || (options.forceFitColumns && i >= lastResizable)) {
           return;
         }
-        $col = $(e);
         $("<div class='slick-resizable-handle' />")
-            .appendTo(e)
+            .appendTo(el)
             // [KCPT]
             // all touch support here added by KCPT.
             // increase touchable area on touch devices
@@ -3190,7 +3204,7 @@ if (typeof Slick === "undefined") {
 
       var m = columns[cell],
           d = getDataItem(row);
-      if (currentEditor && activeRow === row && activeCell === cell) {
+      if (currentEditor && activeRow === row && activeCell === cell && d) {
         currentEditor.loadValue(d);
       } else {
         // if the cell has other coordinates because of row/cell span, update that cell (which will invalidate this cellNode)
@@ -3245,7 +3259,7 @@ if (typeof Slick === "undefined") {
           continue;
         }
 
-        if (row === activeRow && columnIdx === activeCell && currentEditor) {
+        if (row === activeRow && columnIdx === activeCell && currentEditor && d) {
           currentEditor.loadValue(d);
         } else if (d) {
           // look up by id, then index
@@ -4172,13 +4186,12 @@ out:
     // Handle header drags the way body drags are handled, so we set up a parallel
     // set of handlers to the ones used for body drags.
     function handleHeaderDragInit(e, dd) {
-      var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-      var column = $header && $header.data("column");
-
-      if (!column) {
+      var headerInfo = getHeaderColumnFromElement(e.target);
+      if (!headerInfo) {
         return false;
       }
-
+      var column = headerInfo.columnDef;
+      assert(column);
       dd.column = column;
       var retval = trigger(self.onHeaderDragInit, dd, e);
       var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
@@ -4192,13 +4205,12 @@ out:
     }
 
     function handleHeaderDragStart(e, dd) {
-      var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-      var column = $header && $header.data("column");
-      assert(column);
-      if (!column) {
+      var headerInfo = getHeaderColumnFromElement(e.target);
+      if (!headerInfo) {
         return false;
       }
-
+      var column = headerInfo.columnDef;
+      assert(column);
       // signal the start of a drag operation
       headerDragCommencingLock = column;
 
@@ -4451,42 +4463,48 @@ out:
     }
 
     function handleHeaderMouseEnter(e) {
-      var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-      assert($header);
-      assert($header.length === 1);
-      var column = $header.data("column");
-      assert(headerDragCommencingLock || column);
-      if (column && !headerDragCommencingLock) {
-        assert(column);
+      var headerInfo = getHeaderColumnFromElement(e.target);
+      if (!headerInfo) {
+        return;
+      }
+      var column = headerInfo.columnDef;
+      assert(column);
+      if (!headerDragCommencingLock) {
         return trigger(self.onHeaderMouseEnter, {
           column: column,
           cell: getColumnIndex(column.id),
-          node: $header[0]
+          node: headerInfo.$header[0]
         }, e);
       }
     }
 
     function handleHeaderMouseLeave(e) {
-      var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-      assert($header);
-      assert($header.length === 1);
-      var column = $header.data("column");
-      assert(headerDragCommencingLock || column);
-      if (column && !headerDragCommencingLock) {
+      var headerInfo = getHeaderColumnFromElement(e.target);
+      if (!headerInfo) {
+        return;
+      }
+      var column = headerInfo.columnDef;
+      assert(column);
+      if (!headerDragCommencingLock) {
         return trigger(self.onHeaderMouseLeave, {
           column: column,
           cell: getColumnIndex(column.id),
-          node: $header[0]
+          node: headerInfo.$header[0]
         }, e);
       }
     }
 
     function handleHeaderContextMenu(e) {
-      var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-      var column = $header && $header.data("column");
+      var headerInfo = getHeaderColumnFromElement(e.target);
+      if (!headerInfo) {
+        return;
+      }
+      var column = headerInfo.columnDef;
       assert(column);
       trigger(self.onHeaderContextMenu, {
-        column: column
+        column: column,
+        cell: getColumnIndex(column.id),
+        node: headerInfo.$header[0]
       }, e);
       // when the right-click context menu event actually was received by any handlers, then we make sure no default browser right-click popup menu shows up as well:
       if (self.onHeaderContextMenu.handlers().length) {
@@ -4497,25 +4515,31 @@ out:
     }
 
     function handleHeaderClick(e) {
-      var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-      var column = $header && $header.data("column");
-      assert(column);
-      if (column) {
-        return trigger(self.onHeaderClick, {
-          column: column
-        }, e);
+      var headerInfo = getHeaderColumnFromElement(e.target);
+      if (!headerInfo) {
+        return;
       }
+      var column = headerInfo.columnDef;
+      assert(column);
+      return trigger(self.onHeaderClick, {
+        column: column,
+        cell: getColumnIndex(column.id),
+        node: headerInfo.$header[0]
+      }, e);
     }
 
     function handleHeaderDblClick(e) {
-      var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-      var column = $header && $header.data("column");
-      assert(column);
-      if (column) {
-        return trigger(self.onHeaderDblClick, {
-          column: column
-        }, e);
+      var headerInfo = getHeaderColumnFromElement(e.target);
+      if (!headerInfo) {
+        return;
       }
+      var column = headerInfo.columnDef;
+      assert(column);
+      return trigger(self.onHeaderDblClick, {
+        column: column,
+        cell: getColumnIndex(column.id),
+        node: headerInfo.$header[0]
+      }, e);
     }
 
     function handleMouseEnter(e) {
