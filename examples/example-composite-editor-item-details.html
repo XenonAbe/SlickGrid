@@ -128,7 +128,7 @@
 
 <script id="script_tag_example" type="text/javascript">
   function requiredFieldValidator(value) {
-    if (value == null || value == undefined || !value.length) {
+    if (value == null || !value.length) {
       return {valid: false, msg: "This is a required field"};
     } else {
       return {valid: true, msg: null};

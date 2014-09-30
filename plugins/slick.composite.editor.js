@@ -6,6 +6,14 @@
   });
 
 
+// TODO:
+//
+// Do NOT open all field editors all at once, but manage them: show/open only the active one and close others.
+//
+// That should fix the current ugliness where all editor overlays all show up at once and are a mess, visually.
+//
+
+
   /***
    * A composite SlickGrid editor factory.
    * Generates an editor that is composed of multiple editors for given columns.
@@ -69,9 +77,8 @@
     function editor(args) {
       var editors = [];
 
-
-      function init() {
-        var newArgs;
+      this.init = function () {
+        var newArgs = {};
         var idx = columns.length;
         while (idx--) {
           if (columns[idx].editor) {
@@ -87,7 +94,6 @@
         }
       }
 
-
       this.destroy = function () {
         var idx = editors.length;
         while (idx--) {
@@ -97,12 +103,31 @@
         options.destroy && options.destroy();
       };
 
+      this.save = function () {
+        var idx = editors.length;
+        while (idx--) {
+          editors[idx].save();
+        }
+      };
+
+      this.cancel = function () {
+        var idx = editors.length;
+        while (idx--) {
+          editors[idx].cancel();
+        }
+      };
 
       this.focus = function () {
         // if validation has failed, set the focus to the first invalid editor
         (firstInvalidEditor || editors[0]).focus();
       };
 
+      this.setDirectValue = function (item) {
+        var idx = editors.length;
+        while (idx--) {
+          serializedValue[idx] = editors[idx].setDirectValue(item[idx]);
+        }
+      };
 
       this.isValueChanged = function () {
         var idx = editors.length;
@@ -114,7 +139,6 @@
         return false;
       };
 
-
       this.serializeValue = function () {
         var serializedValue = [];
         var idx = editors.length;
@@ -124,7 +148,6 @@
         return serializedValue;
       };
 
-
       this.applyValue = function (item, state) {
         var idx = editors.length;
         while (idx--) {
@@ -132,14 +155,12 @@
         }
       };
 
-
       this.loadValue = function (item) {
         var idx = editors.length;
         while (idx--) {
           editors[idx].loadValue(item);
         }
       };
-
 
       this.validate = function () {
         var validationResults;
@@ -175,7 +196,6 @@
         }
       };
 
-
       this.hide = function () {
         var idx = editors.length;
         while (idx--) {
@@ -183,7 +203,6 @@
         }
         options.hide && options.hide();
       };
-
 
       this.show = function () {
         var idx = editors.length;
@@ -193,13 +212,11 @@
         options.show && options.show();
       };
 
-
       this.position = function (box) {
         options.position && options.position(box);
       };
 
-
-      init();
+      this.init();
     }
 
     // so we can do "editor instanceof Slick.CompositeEditor
