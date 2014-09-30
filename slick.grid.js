@@ -65,13 +65,13 @@ if (typeof Slick === "undefined") {
    * [KCPT] SlickGrid 2.1
    *  data: Array of data items or an object which implements the data-access functions
    *    {Array} of data items, each item has the following:
-   *      id:         {String}    A unique ID for the item
+   *      id:                 {String}    A unique ID for the item
    *      Other properties as indicated by the 'field' entries of the columns array.
    *      For instance, if one of the columns specifies a field value of 'name',
    *      then each item of the data array should have a 'name' property.
    *    {Object} implementing the data-access functions:
    *      getLength()         Returns the number of data items (analogous to data.length)
-   *      getItem(i)          Returns the ith data item (analogous to data[i])
+   *      getItem(i)          Returns the i-th data item (analogous to data[i])
    *      getItemMetadata(row, cell)
    *                          Returns the metadata for the given row index.
    *                          `cell` may be FALSE or an index number of the cell currently
@@ -97,7 +97,7 @@ if (typeof Slick === "undefined") {
    *      headerRowFormatter: {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, cellMetaInfo) for headerRow cells (option.showHeaderRow)
    *      editor:             {Function}  The constructor function for the class to use for editing of grid cells
    *      validator:          {Function}  A function to be called when validating user-entered values
-   *      cannotTriggerInsert:{Boolean}
+   *      cannotTriggerInsert: {Boolean}
    *      resizable:          {Boolean}   Whether this column can be resized
    *      selectable:         {Boolean}   Whether this column can be selected
    *      sortable:           {Boolean}   Whether the grid rows can be sorted by this column
@@ -111,14 +111,14 @@ if (typeof Slick === "undefined") {
    *      rowHeight:          {Number}    Height of each row in pixels
    *      autoHeight:         {Boolean}   (?) Don't need vertical scroll bar
    *      defaultColumnWidth: {Number}    Default column width for columns that don't specify a width
-   *      enableColumnReorder:{Boolean}   Can columns be reordered?
+   *      enableColumnReorder: {Boolean}  Can columns be reordered?
    *      enableAddRow:       {Boolean}   Can rows be added?
-   *      leaveSpaceForNewRows:{Boolean}  Should space be left for a new/data entry row at bottom?
+   *      leaveSpaceForNewRows: {Boolean} Should space be left for a new/data entry row at bottom?
    *      showTopPanel:       {Boolean}   Should the top panel be shown?
    *      topPanelHeight:     {Number}    Height of the top panel in pixels
    *      showHeaderRow:      {Boolean}   Should the extra header row be shown?
    *      headerRowHeight:    {Number}    Height of the header row in pixels
-   *      enableCellNavigation:{Boolean}  Should arrow keys navigate between cells?
+   *      enableCellNavigation: {Boolean} Should arrow keys navigate between cells?
    *      enableTextSelectionOnCells:
    *                          {Boolean}   Should text selection be allowed in cells? (This is MSIE specific; other browsers always assume 'true')
    *      forceFitColumns:    {Boolean}   Should column widths be automatically resized to fit?
@@ -130,13 +130,13 @@ if (typeof Slick === "undefined") {
    *                                      Analogous to item[columnDef.field], where item is analogous to data[i].
    *      formatterFactory:   {Object}    If present, its getFormatter(column, row) method will be called
    *                                      to retrieve a formatter for the specified cell
-   *      selectedCellCssClass:{Object?}  (?)Object used to specify CSS class for selected cells
-   *      cellFlashingCssClass:{Object?}  (?)Object used to specify CSS class for flashing cells
-   *      enableAsyncPostRender:{Boolean}
-   *      asyncPostRenderDelay:{Number}   Delay passed to setTimeout in milliseconds before 
+   *      selectedCellCssClass: {Object?} (?)Object used to specify CSS class for selected cells
+   *      cellFlashingCssClass: {Object?} (?)Object used to specify CSS class for flashing cells
+   *      enableAsyncPostRender: {Boolean}
+   *      asyncPostRenderDelay: {Number}  Delay passed to setTimeout in milliseconds before 
    *                                      the PostRender queue is executed in slices of `asyncPostRenderSlice` 
    *                                      each with a gap of `asyncPostRenderDelay`. 
-   *      asyncPostRenderSlice:{Number}   Time slice available for each round of async rendering. 
+   *      asyncPostRenderSlice: {Number}  Time slice available for each round of async rendering. 
    *                                      Note that the probably-worst case is where the sync render process 
    *                                      takes about twice this amount of time -- that is assuming 
    *                                      each individual cell's async render action takes that amount 
@@ -148,7 +148,7 @@ if (typeof Slick === "undefined") {
    *                                      unless column.editor is specified, which will be used.
    *      editorLock:         {Object}    a Slick.EditorLock instance; the default NULL will make SlickGrid use the Slick.GlobalEditorLock singleton
    *      asyncEditorLoading: {Boolean}   Should editors be loaded asynchronously?
-   *      asyncEditorLoadDelay:{Number}   Delay passed to setTimeout in milliseconds
+   *      asyncEditorLoadDelay: {Number}  Delay passed to setTimeout in milliseconds
    *      editCommandHandler: {Function}  editCommandHandler(item, column, editCommand) is called from
    *                                      the commitCurrentEdit() function, where it can be used to
    *                                      implement undo/redo, for instance.
@@ -156,10 +156,10 @@ if (typeof Slick === "undefined") {
    *      multiColumnSort:    {Boolean}   If true, rows can be sorted by multiple columns.
    *      defaultFormatter:   {Function}  Default function for converting cell values to strings.
    *      defaultEditor:      {Function}  Default function for editing cell values.
-   *      defaultHeaderFormatter: {Function}
-   *                                      The Slick.Formatters compatible cell formatter used to render the header cell.
-   *      defaultHeaderRowFormatter: {Function}
-   *                                      The Slick.Formatters compatible cell formatter used to render the headerRow cell.
+   *      defaultHeaderFormatter: 
+   *                          {Function}  The Slick.Formatters compatible cell formatter used to render the header cell.
+   *      defaultHeaderRowFormatter: 
+   *                          {Function}  The Slick.Formatters compatible cell formatter used to render the headerRow cell.
    *                                      The 'headerRow' is the header row shown by SlickGrid when the `option.showHeaderRow` is enabled.
    *      forceSyncScrolling: {Boolean}   If true, renders more frequently during scrolling, rather than
    *                                      deferring rendering until default scroll thresholds are met (asyncRenderDelay).
