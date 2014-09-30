@@ -23,6 +23,7 @@
       maxToolTipLength: 0,
       getTooltip: function (info) {
         var text, headertext;
+        assert(info.$node && info.$node.length === 1);
         if (info.$node.innerWidth() < info.$node[0].scrollWidth) {
           text = $.trim(info.$node.text());
           if (info.options.maxToolTipLength && text.length > info.options.maxToolTipLength) {
@@ -32,9 +33,9 @@
           text = "";
         }
         if (info.inHeader) {
-          headertext = info.column.toolTip;
+          headertext = info.columnDef.toolTip;
           if (!headertext) {
-            headertext = info.column.longName ? info.column.longName : info.column.name;
+            headertext = info.columnDef.longName ? info.columnDef.longName : info.columnDef.name;
           }
           if (headertext) {
             text = headertext;
@@ -66,23 +67,22 @@
      * Handle mouse entering grid cell to add/remove tooltip.
      * @param {jQuery.Event} e - The event
      */
-    function handleMouseEnter(e) {
-      var cell = _grid.getCellFromEvent(e);
-      if (cell) {
-        var $node = $(_grid.getCellNode(cell.row, cell.cell));
-        var columnDef = _grid.getColumns()[cell.cell];
-        assert(columnDef);
-        assert($node.length === 1);
-        var text = options.getTooltip({
-            inHeader: false,
-            row: cell.row,
-            cell: cell.cell,
-            columnDef: columnDef,
-            $node: $node,
-            options: options
-        });
-        $node.attr("title", text);
-      }
+    function handleMouseEnter(e, cellInfo) {
+      assert(cellInfo);
+      assert(cellInfo.node);
+      var $node = $(cellInfo.node);
+      var columnDef = _grid.getColumns()[cellInfo.cell];
+      assert(columnDef);
+      assert($node.length === 1);
+      var text = options.getTooltip({
+          inHeader: false,
+          row: cellInfo.row,
+          cell: cellInfo.cell,
+          columnDef: columnDef,
+          $node: $node,
+          options: options
+      });
+      $node.attr("title", text);
     }
 
     /**
@@ -92,19 +92,18 @@
      */
     function handleHeaderMouseEnter(e, args) {
       var columnDef = args.column,
-          $node = $(e.target).closest(".slick-header-column");
+          $node = $(args.node);
       assert(columnDef);
-      if (!columnDef.toolTip) {
-        var columnDef = _grid.getColumns()[cell.cell];
-        assert($node.length === 1);
-        var text = options.getTooltip({
-            inHeader: true,
-            columnDef: columnDef,
-            $node: $node,
-            options: options
-        });
-        $node.attr("title", text);
-      }
+      assert($node.length === 1);
+      assert($(e.target).closest(".slick-header-column")[0] === $node[0]);
+      var text = options.getTooltip({
+          inHeader: true,
+          columnDef: columnDef,
+          cell: args.cell,
+          $node: $node,
+          options: options
+      });
+      $node.attr("title", text);
     }
 
     // Public API

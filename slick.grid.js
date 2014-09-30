@@ -4454,23 +4454,31 @@ out:
 
     function handleHeaderMouseEnter(e) {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-      var column = $header && $header.data("column");
+      assert($header);
+      assert($header.length === 1);
+      var column = $header.data("column");
       assert(headerDragCommencingLock || column);
       if (column && !headerDragCommencingLock) {
         assert(column);
         return trigger(self.onHeaderMouseEnter, {
-          column: column
+          column: column,
+          cell: getColumnIndex(column.id),
+          node: $header[0]
         }, e);
       }
     }
 
     function handleHeaderMouseLeave(e) {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-      var column = $header && $header.data("column");
+      assert($header);
+      assert($header.length === 1);
+      var column = $header.data("column");
       assert(headerDragCommencingLock || column);
       if (column && !headerDragCommencingLock) {
         return trigger(self.onHeaderMouseLeave, {
-          column: column
+          column: column,
+          cell: getColumnIndex(column.id),
+          node: $header[0]
         }, e);
       }
     }
@@ -4513,11 +4521,15 @@ out:
     }
 
     function handleMouseEnter(e) {
-      return trigger(self.onMouseEnter, {}, e);
+      var cellInfo = getCellFromEvent(e);
+      assert(cellInfo);
+      return trigger(self.onMouseEnter, cellInfo, e);
     }
 
     function handleMouseLeave(e) {
-      return trigger(self.onMouseLeave, {}, e);
+      var cellInfo = getCellFromEvent(e);
+      assert(cellInfo);
+      return trigger(self.onMouseLeave, cellInfo, e);
     }
 
     function cellExists(row, cell) {
@@ -4588,16 +4600,23 @@ out:
 
     function getRowFromNode(rowNode) {
       assert(rowNode);
-      for (var row = rowsCacheStartIndex, endrow = rowsCache.length; row < endrow; row++) {
-        if (rowsCache[row]) {
-          assert(rowsCache[row].rowNode);
-          if (rowsCache[row].rowNode === rowNode) {
-            return row | 0;
-          }
-        }
+      var rws = / slick-row-(\d+) /.exec(' ' + rowNode.className + ' ');
+      if (!rws) {
+        assert(0, "getRowFromNode: cannot get row - " + rowNode.className);
+        return null;
       }
+      return +rws[1];
 
-      return null;
+      // for (var row = rowsCacheStartIndex, endrow = rowsCache.length; row < endrow; row++) {
+      //   if (rowsCache[row]) {
+      //     assert(rowsCache[row].rowNode);
+      //     if (rowsCache[row].rowNode === rowNode) {
+      //       return row;
+      //     }
+      //   }
+      // }
+
+      // return null;
     }
 
     function getCellFromElement(el) {
@@ -4605,7 +4624,7 @@ out:
         return null;
       }
       var $cell = $(el).closest(".slick-cell", $canvas);
-      if (!$cell.length) {
+      if ($cell.length === 0) {
         return null;
       }
 
@@ -4695,6 +4714,16 @@ out:
         $focusSink2[0].focus();
       }
       // console.log("setFocus: SET FOCUS TO A SINK: END");
+    }
+
+    function setFocusOnActiveCell() {
+      if (activeCellNode) {
+        // console.log("focus fixup exec START: ", document.activeElement);
+        movingFocusLock++;
+        $(activeCellNode).focus();
+        movingFocusLock--;
+        // console.log("focus fixup exec END: ", document.activeElement);
+      }
     }
 
     // This get/set methods are used for keeping text-selection.
@@ -4813,18 +4842,24 @@ out:
         // - we only SET/MOVE the focus when the current focus is still on the old active cell node
         // - any userland code in the event handlers which places focus elsewhere is therefore rendering
         //   this code nil and void: we won't touch page focus here when this would be the case.
+        // - general FOCUS LOSS is recognized by observing that the active focus is on the document 
+        //   BODY element. Any userland code which moves the focus around is assumed not to 'loose focus'
+        //   like that, i.e. such focus-shifting userland code is assumed to set focus to 
+        //   *another* DOM element that is not inside slickgrid AND is not the BODY element itself.
         //    
         var oldFocusNode = document.activeElement;
         var oldFocusCellInfo = getCellFromElement(oldFocusNode);
+        if (oldFocusNode === document.body) {
+          // fake it to simplify the conditional check below:
+          oldFocusCellInfo = {
+            node: oldFocusNode
+          };
+        }
         var newActiveCellInfo = getCellFromElement(activeCellNode);
         assert(newActiveCellInfo);
         // console.log("focus fixup: ", oldFocusNode, oldFocusCellInfo, activeCellNode, newActiveCellInfo);
         if (oldFocusCellInfo && oldFocusCellInfo.node !== newActiveCellInfo.node) {
-          // console.log("focus fixup exec START: ", document.activeElement);
-          movingFocusLock++;
-          $(activeCellNode).focus();
-          movingFocusLock--;
-          // console.log("focus fixup exec END: ", document.activeElement);
+          setFocusOnActiveCell();
         }
 
         if (options.editable && opt_editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
