@@ -288,6 +288,10 @@ if (typeof Slick === "undefined") {
     var movingFocusLock = 0;
     var movingFocusLockData = [];    
 
+    // To prevent mouseenter/leave events from misfiring while a header/column drag is commencing
+    // we introduce yet another lock:
+    var headerDragCommencingLock = null;
+
     var rowsCache = [];
     var rowPositionCache = [];
     var rowsCacheStartIndex = MAX_INT;
@@ -899,7 +903,7 @@ if (typeof Slick === "undefined") {
     function extractCellFromDOMid(id) {
       // format of ID is: uid_c<cell>_<blah>
       var m = /_c(\d+)_/.exec(id);
-      if (m[1] == null || m[1] === '') {
+      if (!m) {
         return false;
       }
       return +m[1];
@@ -918,6 +922,7 @@ if (typeof Slick === "undefined") {
       $headers.find(".slick-header-column")
         .each(function h_before_headercell_destroy_f() {
           var columnDef = $(this).data("column");
+          assert(columnDef);
           if (columnDef) {
             trigger(self.onBeforeHeaderCellDestroy, {
               node: this,
@@ -988,6 +993,8 @@ if (typeof Slick === "undefined") {
             .attr("class", cellCss.join(" "))
             .width(info.cellWidth)
             .appendTo(appendTo);
+        assert(header.data("column"));
+        assert(header.data("column") === m);
         return header;
       }
 
@@ -1203,7 +1210,7 @@ if (typeof Slick === "undefined") {
     }
 
     function setupColumnReorder() {
-      if (!jQuery.isEmptyObject($.data( $headers, $headers.sortable.prototype.widgetFullName ))) {
+      if (!jQuery.isEmptyObject($.data($headers, $headers.sortable.prototype.widgetFullName))) {
         $headers.filter(":ui-sortable").sortable("destroy");
       }
 
@@ -1505,10 +1512,13 @@ if (typeof Slick === "undefined") {
       
       function onColumnResizeDblClick(e) {
         var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
-        var column = $header && $header.data("column");
+        assert($header);
         assert($header.length === 1);
+        var column = $header.data("column");
         assert(column);
-        var cell = getCellFromNode($header[0]);
+        assert(column.id);
+        var cell = getColumnIndex(column.id);
+        assert(cell != null);
         assert(cell >= 0);
         assert(+cell === cell);
         var columnDef = columns[cell];
@@ -4186,10 +4196,13 @@ out:
     function handleHeaderDragStart(e, dd) {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
-
+      assert(column);
       if (!column) {
         return false;
       }
+
+      // signal the start of a drag operation
+      headerDragCommencingLock = column;
 
       dd.column = column;
       var retval = trigger(self.onHeaderDragStart, dd, e);
@@ -4206,7 +4219,12 @@ out:
     }
 
     function handleHeaderDragEnd(e, dd) {
-      return trigger(self.onHeaderDragEnd, dd, e);
+      var rv = trigger(self.onHeaderDragEnd, dd, e);
+
+      // signal the end of a drag operation
+      headerDragCommencingLock = null;
+
+      return rv;
     }
 
     function handleMouseWheel(e) {
@@ -4439,19 +4457,24 @@ out:
     function handleHeaderMouseEnter(e) {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
-      assert(column);
-      return trigger(self.onHeaderMouseEnter, {
-        column: column
-      }, e);
+      assert(headerDragCommencingLock || column);
+      if (column && !headerDragCommencingLock) {
+        assert(column);
+        return trigger(self.onHeaderMouseEnter, {
+          column: column
+        }, e);
+      }
     }
 
     function handleHeaderMouseLeave(e) {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
-      assert(column);
-      return trigger(self.onHeaderMouseLeave, {
-        column: column
-      }, e);
+      assert(headerDragCommencingLock || column);
+      if (column && !headerDragCommencingLock) {
+        return trigger(self.onHeaderMouseLeave, {
+          column: column
+        }, e);
+      }
     }
 
     function handleHeaderContextMenu(e) {
@@ -4472,6 +4495,7 @@ out:
     function handleHeaderClick(e) {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
+      assert(column);
       if (column) {
         return trigger(self.onHeaderClick, {
           column: column
@@ -4482,6 +4506,7 @@ out:
     function handleHeaderDblClick(e) {
       var $header = $(e.target).closest(".slick-header-column", ".slick-header-columns");
       var column = $header && $header.data("column");
+      assert(column);
       if (column) {
         return trigger(self.onHeaderDblClick, {
           column: column
@@ -4555,11 +4580,12 @@ out:
 
     function getCellFromNode(cellNode) {
       // read column number from .l<columnNumber> CSS class
-      var cls = /l\d+/.exec(cellNode.className);
+      var cls = / l(\d+) /.exec(' ' + cellNode.className + ' ');
       if (!cls) {
-        throw new Error("getCellFromNode: cannot get cell - " + cellNode.className);
+        assert(0, "getCellFromNode: cannot get cell - " + cellNode.className);
+        return null;
       }
-      return parseInt(cls[0].substr(1, cls[0].length - 1), 10);
+      return +cls[1];
     }
 
     function getRowFromNode(rowNode) {
@@ -4758,6 +4784,7 @@ out:
         assert(activeCellNode);
         activeRow = activePosY = getRowFromNode(newCellNode.parentNode);
         activeCell = activePosX = getCellFromNode(newCellNode);
+        assert(activeCell != null);
         if (opt_editMode == null) {
           opt_editMode = (activeRow === getDataLength()) || options.autoEdit;
         }
