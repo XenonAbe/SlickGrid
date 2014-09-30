@@ -595,15 +595,13 @@ if (typeof Slick === "undefined") {
 
               if (movingFocusLock) {
                 // we MAY see a sequence of focusout+focusin, where by the time focusin fires, document.activeElement is BODY.
-                movingFocusLockData[movingFocusLock - 1] = {
-                  event: e,
-                  newNode: newFocusNode,
-                  oldNode: e.target,
-                  oldNodeInfo: getCellFromElement(e.target)
-                };
+                // movingFocusLockData[movingFocusLock - 1] = {
+                //   event: e,
+                //   newNode: newFocusNode,
+                //   oldNode: e.target,
+                //   oldNodeInfo: getCellFromElement(e.target)
+                // };
                 return;
-              } else {
-                movingFocusLockData = [];
               }
               var evt = new Slick.EventData(e);
               trigger(self.onFocusOut, {}, evt);
@@ -3805,8 +3803,8 @@ if (typeof Slick === "undefined") {
         forcedRender();
       } else {
         h_render = setTimeout(function h_render_timer_f() {
-            h_render = null;
-            forcedRender();
+          h_render = null;
+          forcedRender();
         }, options.asyncRenderDelay);
       }
     }
@@ -4718,11 +4716,6 @@ out:
 
     function setFocusOnActiveCell() {
       if (activeCellNode) {
-        // console.log("focus fixup exec START: ", document.activeElement);
-        movingFocusLock++;
-        $(activeCellNode).focus();
-        movingFocusLock--;
-        // console.log("focus fixup exec END: ", document.activeElement);
       }
     }
 
@@ -4859,7 +4852,21 @@ out:
         assert(newActiveCellInfo);
         // console.log("focus fixup: ", oldFocusNode, oldFocusCellInfo, activeCellNode, newActiveCellInfo);
         if (oldFocusCellInfo && oldFocusCellInfo.node !== newActiveCellInfo.node) {
-          setFocusOnActiveCell();
+          // console.log("focus fixup exec START: ", document.activeElement);
+          movingFocusLock++;
+          // We MAY see a sequence of focusout+focusin, where by the time focusin fires, document.activeElement is BODY.
+          // We MAY also see only a focusin, in which case we are to provide the original focused node.
+          movingFocusLockData[movingFocusLock - 1] = {
+            newNode: activeCellNode,
+            oldNode: oldFocusNode,
+            oldNodeInfo: oldFocusCellInfo
+          };
+          $(activeCellNode).focus();
+          movingFocusLock--;
+          if (!movingFocusLock) {
+            movingFocusLockData = [];
+          }
+          // console.log("focus fixup exec END: ", document.activeElement);
         }
 
         if (options.editable && opt_editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
@@ -5647,19 +5654,20 @@ out:
       if (rowsCache[row] || mandatory) {
         ensureCellNodesInRowsCache(row);
         var node = rowsCache[row] && rowsCache[row].cellNodesByColumnIdx[cell];
+        // var cnt = 0;
+        // while (!node && mandatory) {
+        //   cnt++;
+        //   assert(cnt === 1);
         if (!node && mandatory) {
           // force render the new active cell
           var cellBoxInfo = getCellNodeBox(row, cell);
+          assert(cellBoxInfo);
           var leftPx = scrollLeft;
           var rightPx = scrollLeft + viewportW;
           // when the sought-after cell is outside the visible part of the row, we don't render a series but only that single node:
-          if (cellBoxInfo && (cellBoxInfo.right < leftPx || cellBoxInfo.left > rightPx)) {
+          if (cellBoxInfo) {
             leftPx = cellBoxInfo.left;
             rightPx = cellBoxInfo.right - 1;
-          } else if (cellBoxInfo) {
-            // cell is located (at least partly) inside the visible range
-            leftPx = Math.max(scrollLeft, cellBoxInfo.left);
-            rightPx = Math.min(scrollLeft + viewportW, cellBoxInfo.right - 1);
           }
           // now construct the range object a la getRenderedRange() to be the minimal area that should get us, at least, the rendered cell DIV we seek here.
           var rendered = {
