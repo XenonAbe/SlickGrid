@@ -623,32 +623,33 @@ function isValidModifier(v) {
     var regionSettings = $.datepicker.regional["en"] || $.datepicker.regional;
     /* jshint +W069 */
     var datepickerParseSettings = {
-        shortYearCutoff: 20,
-        dayNamesShort: regionSettings.dayNamesShort,
-        dayNames: regionSettings.dayNames,
-        monthNamesShort: regionSettings.monthNamesShort,
-        monthNames: regionSettings.monthNames
-      };
-      var datePickerOptions = {};
-      var datePickerDefaultOptions = {
-        dateFormat: "yy-mm-dd",                 // this format is used for displaying the date while editing / picking it
-        defaultDate: 0,                         // default date: today
-        showOn: "button",
-        buttonImageOnly: true,
-        buttonImage: args.dateButtonImage || (imageDir + "/calendar.png"),
-      };
-      var datePickerFixedOptions = {
-        beforeShow: function () {
-          calendarOpen = true;
-        },
-        onClose: function () {
-          calendarOpen = false;
-        }
-      };
-      // Override DatePicker options from datePickerOptions on column definition.
-      // Make sure that beforeShow and onClose events are not clobbered.
-      datePickerOptions = $.extend(datePickerOptions, datePickerDefaultOptions,
-        args.column.datePickerOptions, datePickerFixedOptions);
+      shortYearCutoff: 20,
+      dayNamesShort: regionSettings.dayNamesShort,
+      dayNames: regionSettings.dayNames,
+      monthNamesShort: regionSettings.monthNamesShort,
+      monthNames: regionSettings.monthNames
+    };
+    var datePickerOptions = {};
+    var datePickerDefaultOptions = {
+      dateFormat: "yy-mm-dd",                 // this format is used for displaying the date while editing / picking it
+      defaultDate: 0,                         // default date: today
+      showOn: "button",
+      buttonImageOnly: true,
+      buttonImage: args.dateButtonImage || (imageDir + "/calendar.png"),
+      buttonText: "Select date"
+    };
+    var datePickerFixedOptions = {
+      beforeShow: function () {
+        calendarOpen = true;
+      },
+      onClose: function () {
+        calendarOpen = false;
+      }
+    };
+    // Override DatePicker options from datePickerOptions on column definition.
+    // Make sure that beforeShow and onClose events are not clobbered.
+    datePickerOptions = $.extend(datePickerOptions, datePickerDefaultOptions,
+      args.column.datePickerOptions, datePickerFixedOptions);
 
     function parseDateStringAndDetectFormat(s) {
       dateFormat = 0;
@@ -660,7 +661,7 @@ function isValidModifier(v) {
         try {
           d = $.datepicker.parseDate(fmt, s, datepickerParseSettings);
           break;
-        } catch (e) {
+        } catch (ex) {
           continue;
         }
       }

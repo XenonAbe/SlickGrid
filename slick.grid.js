@@ -568,11 +568,11 @@ if (typeof Slick === "undefined") {
                   return;
                 }
 
-                var lock = getEditorLock();
-                if (!lock.isActive(editController) && lock.commitCurrentEdit()) {
-                  lock.activate(editController);
-                }
-                // else: jump back to previously focused element... but we don't know what it is so this is all we can do now...
+                // var lock = getEditorLock();
+                // if (!lock.isActive(editController) && lock.commitCurrentEdit()) {
+                //   lock.activate(editController);
+                // }
+                // // else: jump back to previously focused element... but we don't know what it is so this is all we can do now...
               }
             })
             .bind("focusout.slickgrid", function (e) {
@@ -608,12 +608,12 @@ if (typeof Slick === "undefined") {
                 return;
               }
 
-              var lock = getEditorLock();
-              if (lock.isActive(editController) && !lock.commitCurrentEdit()) {
-                // commit failed, jump back to edited field so user can edit it and make sure it passes the next time through
-                assert(currentEditor);
-                currentEditor.focus();
-              }
+              // var lock = getEditorLock();
+              // if (lock.isActive(editController) && !lock.commitCurrentEdit()) {
+              //   // commit failed, jump back to edited field so user can edit it and make sure it passes the next time through
+              //   assert(currentEditor);
+              //   currentEditor.focus();
+              // }
             })
             .bind("click", handleContainerClickEvent);
         $viewport
