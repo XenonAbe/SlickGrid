@@ -124,17 +124,6 @@
   $(function () {
     grid = new Slick.Grid("#myGrid", loader.data, columns, options);
 
-    grid.onViewportChanged.subscribe(function (e, args) {
-      var vp = grid.getViewport();
-      loader.ensureData(vp.top, vp.bottom);
-    });
-
-    grid.onSort.subscribe(function (e, args) {
-      loader.setSort(args.sortCol.field, args.sortAsc ? 1 : -1);
-      var vp = grid.getViewport();
-      loader.ensureData(vp.top, vp.bottom);
-    });
-
     loader.onDataLoading.subscribe(function () {
       if (!loadingIndicator) {
         loadingIndicator = $("<span class='loading-indicator'><label>Buffering...</label></span>").appendTo(document.body);
@@ -162,15 +151,15 @@
 
     $("#txtSearch").keyup(function (e) {
       if (e.which == 13) {
-        loader.setSearch($(this).val());
+        loader.setQuery($(this).val());
         var vp = grid.getViewport();
         loader.ensureData(vp.top, vp.bottom);
       }
     });
 
-    loader.setSearch($("#txtSearch").val());
-    loader.setSort("create_ts", -1);
-    grid.setSortColumn("date", false);
+    loader.setQuery($("#txtSearch").val());
+    // loader.setSort("create_ts", -1);
+    // grid.setSortColumn("date", false);
 
     // load the first page
     grid.onViewportChanged.notify();
