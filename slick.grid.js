@@ -5654,10 +5654,6 @@ out:
       if (rowsCache[row] || mandatory) {
         ensureCellNodesInRowsCache(row);
         var node = rowsCache[row] && rowsCache[row].cellNodesByColumnIdx[cell];
-        // var cnt = 0;
-        // while (!node && mandatory) {
-        //   cnt++;
-        //   assert(cnt === 1);
         if (!node && mandatory) {
           // force render the new active cell
           var cellBoxInfo = getCellNodeBox(row, cell);
