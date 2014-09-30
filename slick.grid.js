@@ -4449,9 +4449,7 @@ out:
         return;
       }
 
-      if (options.editable) {
-        gotoCell(cell.row, cell.cell, 2 /* truthy value which 'wins' over options.asyncEditorLoading: open the editor immediately! */ );
-      }
+      gotoCell(cell.row, cell.cell, (options.editable ? 2 /* truthy value which 'wins' over options.asyncEditorLoading: open the editor immediately! */ : null));
     }
 
     function handleHeaderMouseEnter(e) {
