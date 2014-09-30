@@ -1541,7 +1541,7 @@ if (typeof Slick === "undefined") {
         for (var row = 0, len = getDataLength(); row < len; row++) {
           var rowDataItem = getDataItem(row);
           var value = getDataItemValueForColumn(rowDataItem, columnDef);
-          aux_width = Math.max(aux_width, calculateWordDimensions(value.toString()).width);
+          aux_width = Math.max(aux_width, calculateWordDimensions('' + value).width);
         }
         columnDef.width = aux_width;
 
