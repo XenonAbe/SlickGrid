@@ -86,19 +86,19 @@
         percentComplete: Math.round(Math.random() * 100),
         start: "01/01/2009",
         finish: "01/05/2009",
-        effortDriven: (i % 5 == 0)
+        effortDriven: (i % 5 === 0)
       };
       for (var j = 0; j < 19; j++) {
-        data[i]['col'+(j+1).toString()] = 'Col Example ' + (j+1).toString();
+        data[i]['col' + (j + 1).toString()] = 'Col Example ' + (j + 1).toString();
       }
     }
     var columnScrollTimer = null;
     grid = new Slick.Grid("#myGrid", data, columns, options);
-    grid.onColumnsReordered.subscribe(function(e, args) {
+    grid.onColumnsReordered.subscribe(function (e, args) {
         clearInterval(columnScrollTimer);
         columnScrollTimer = null;
     });
-    grid.onColumnsReordering.subscribe(function(e,args) {
+    grid.onColumnsReordering.subscribe(function (e, args) {
         function scrollColumnsRight() {
             $('#myGrid > .slick-viewport')[0].scrollLeft = $('#myGrid > .slick-viewport')[0].scrollLeft + 10;
         }
@@ -106,11 +106,13 @@
         function scrollColumnsLeft() {
             $('#myGrid > .slick-viewport')[0].scrollLeft = $('#myGrid > .slick-viewport')[0].scrollLeft - 10;
         }
-        if (args.e.originalEvent.pageX > $('#myGrid')[0].clientWidth) {
+
+        assert(e.originalEvent);
+        if (e.originalEvent.pageX > $('#myGrid')[0].clientWidth) {
             if (!(columnScrollTimer)) {
                 columnScrollTimer = setInterval(scrollColumnsRight, 100);
             }
-        } else if (args.e.originalEvent.pageX < $('#myGrid > .slick-viewport').offset().left) {
+        } else if (e.originalEvent.pageX < $('#myGrid > .slick-viewport').offset().left) {
             if (!(columnScrollTimer)) {
                 columnScrollTimer = setInterval(scrollColumnsLeft, 100);
             }

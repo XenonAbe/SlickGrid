@@ -92,15 +92,17 @@
 
 <script id="script_tag_example" type="text/javascript">
 var columns =
-[ { id: "number", name: "#",     field: "question_id", minWidth: 50, maxWidth: 50 }
-, { id: "title",  name: "Title", field: "title"}
-, { id: "link",   name: "Link",  field: "link"}
+[ 
+  { id: "number", name: "#",     field: "question_id", minWidth: 50, maxWidth: 50 }, 
+  { id: "title",  name: "Title", field: "title"}, 
+  { id: "link",   name: "Link",  field: "link"}
 ];
 
 var options =
-{ enableCellNavigation: false
-, enableColumnReorder: false
-, forceFitColumns: true
+{ 
+  enableCellNavigation: false, 
+  enableColumnReorder: false, 
+  forceFitColumns: true
 };
 
 //global closure
@@ -149,10 +151,10 @@ $(document).ready(function () {
   getData();
 });
 
-var URL = "http://api.stackexchange.com/2.1/search?order=desc&sort=activity&site=stackoverflow&tagged=";
+var myURL = "http://api.stackexchange.com/2.1/search?order=desc&sort=activity&site=stackoverflow&tagged=";
 
 function getData() {
-  $.get(URL + $("#txtSearch").val(), function(data) {
+  $.get(myURL + $("#txtSearch").val(), function(data) {
     dataView.beginUpdate();
     dataView.setItems(data.items);
     dataView.endUpdate();
