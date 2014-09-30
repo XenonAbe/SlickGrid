@@ -75,6 +75,7 @@
     var $from, $to;
     var scope = this;
     var $container = $(args.container);
+    var defaultValue = args.item;
 
     this.init = function () {
       $from = $("<INPUT type=text style='width:40px' />")
@@ -91,7 +92,7 @@
     };
 
     this.handleKeyDown = function (e) {
-      if (e.keyCode == $.ui.keyCode.LEFT || e.keyCode == $.ui.keyCode.RIGHT || e.keyCode == $.ui.keyCode.TAB) {
+      if (e.keyCode == Slick.Keyboard.LEFT || e.keyCode == Slick.Keyboard.RIGHT || e.keyCode == Slick.Keyboard.TAB) {
         e.stopImmediatePropagation();
       }
     };
@@ -100,8 +101,40 @@
       $container.empty();
     };
 
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      scope.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $container.hide();
+    };
+
+    this.show = function () {
+      $container.show();
+    };
+
+    this.position = function (position) {
+      // nada 
+    };
+
     this.focus = function () {
       $from.focus();
+    };
+
+    this.setDirectValue = function (val) {
+      defaultValue = (val || {
+        from: 0,
+        to: 0
+      });
+      $from.val(val.from);
+      $from[0].defaultValue = val.from;
+      $to.val(val.to);
+      $to[0].defaultValue = val.to;
     };
 
     this.serializeValue = function () {
@@ -117,12 +150,17 @@
     };
 
     this.loadValue = function (item) {
+      // clone item into defaultValue on the first invocation
+      if (!defaultValue) {
+        defaultValue = $.extend({}, item);
+      }
+
       $from.val(item.from);
       $to.val(item.to);
     };
 
     this.isValueChanged = function () {
-      return args.item.from != parseInt($from.val(), 10) || args.item.to != parseInt($from.val(), 10);
+      return defaultValue.from != parseInt($from.val(), 10) || defaultValue.to != parseInt($from.val(), 10);
     };
 
     this.validate = function () {

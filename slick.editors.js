@@ -66,6 +66,26 @@
         theEditor.destroy();
       };
 
+      this.save = function () {
+        theEditor.save();
+      };
+
+      this.cancel = function () {
+        theEditor.cancel();
+      };
+
+      this.hide = function () {
+        theEditor.hide();
+      };
+
+      this.show = function () {
+        theEditor.show();
+      };
+
+      this.position = function (position) {
+        theEditor.position(position);
+      };
+
       this.focus = function () {
         theEditor.focus();
       };
