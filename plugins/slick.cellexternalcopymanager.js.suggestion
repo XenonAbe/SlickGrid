@@ -111,7 +111,7 @@
       if (!_grid.getEditorLock().isActive()) {
 
         //ESC
-        if (e.which == $.ui.keyCode.ESCAPE) {
+        if (e.which == Slick.Keyboard.ESCAPE) {
           if (_copiedRanges) {
             e.preventDefault();
             clearCopySelection();

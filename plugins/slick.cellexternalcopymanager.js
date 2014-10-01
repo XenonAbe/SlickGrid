@@ -293,7 +293,7 @@
         addedRows: null,
         oldRowCount: null,
 
-        execute: function() {
+        execute: function () {
           assert(this.destH >= 1);
           assert(this.destX >= 1);
 
@@ -357,7 +357,7 @@
           });
         },
 
-        undo: function() {
+        undo: function () {
           assert(this.destH >= 1);
           assert(this.destX >= 1);
 
@@ -418,6 +418,7 @@
 
 
     function handleKeyDown(e, args) {
+      assert(!(e instanceof Slick.EventData));
       var ranges;
       if (!_grid.getEditorLock().isActive()) {
         if (e.which === keyCodes.ESC) {
@@ -511,7 +512,7 @@
               var activeCell = _grid.getActiveCell();
               _createTextBox(clipText);
 
-              _externalCopyPastaCatcherTI = setTimeout(function() {
+              _externalCopyPastaCatcherTI = setTimeout(function () {
                   _destroyTextBox();
                   assert(!_externalCopyPastaCatcherTI);
 
@@ -549,7 +550,7 @@
            */
           _createTextBox('');
 
-          _externalCopyPastaCatcherTI = setTimeout(function() {
+          _externalCopyPastaCatcherTI = setTimeout(function () {
             // check the 'copy fingerprint' to detect if we are copying/pasting cell data 'internally' i.e. within the same slickgrid grid:
             var fp = _externalCopyPastaCatcherEl.value;
             assert(typeof fp === 'string');
@@ -559,9 +560,11 @@
 
               ranges = _grid.getSelectionModel().getSelectedRanges();
               var selectedCell = _grid.getActiveCell();
-              if (!ranges || ranges.length === 0) {
+              if (!ranges || ranges.length === 0 || _copiedRanges[0].matches(ranges[0])) {
                 if (selectedCell) {
-                  ranges = [new Slick.Range(selectedCell.row, selectedCell.cell, selectedCell.row, selectedCell.cell)];
+                  // only having the active cell implies we want the entire range pasted from this top/left corner...
+                  var srcRange = _copiedRanges[0];
+                  ranges = [new Slick.Range(selectedCell.row, selectedCell.cell, selectedCell.row + srcRange.toRow - srcRange.fromRow + 1, selectedCell.cell + srcRange.toCell - srcRange.fromCell + 1)];
                 } else {
                   // we don't know where to paste
                   _self.onCopyCancelled.notify({
@@ -626,7 +629,7 @@
       _grid.setCellCssStyles(_copiedCellStyleLayerKey, hash);
       if (_clearCopyTI) clearTimeout(_clearCopyTI);
       if (_unmarkSelectionAfterTimeout > 0) {
-        _clearCopyTI = setTimeout(function() {
+        _clearCopyTI = setTimeout(function () {
           clearCopySelection();
           _clearCopyTI = 0;
         }, _unmarkSelectionAfterTimeout);

@@ -3600,7 +3600,7 @@ if (typeof Slick === "undefined") {
       cacheEntry.cellNodesByColumnStart = minCachedCellNodeIndex;
     }
 
-    function cleanUpAndRenderCells(range) {
+    function cleanUpAndRenderCells(range, mandatoryRange) {
       var cacheEntry;
       var minCachedCellNodeIndex;
       var stringArray = [];
@@ -3620,7 +3620,9 @@ if (typeof Slick === "undefined") {
         // cellRenderQueue populated in renderRows() needs to be cleared first
         ensureCellNodesInRowsCache(row);
 
-        cleanUpCells(range, row);
+        if (!mandatoryRange) {
+          cleanUpCells(range, row);
+        }
 
         // Render missing cells.
         cellsAdded = 0;
@@ -3685,7 +3687,7 @@ if (typeof Slick === "undefined") {
       }
     }
 
-    function renderRows(range) {
+    function renderRows(range, mandatoryRange) {
       var parentNode = $canvas[0],
           stringArray = [],
           rows = [],
@@ -3786,15 +3788,17 @@ if (typeof Slick === "undefined") {
           rowsCache[rows[i]].rowNode.offsetWidth;
         }
       }
+      
       trigger(self.onRowsRendered, { 
         rows: rows, 
         nodes: rowNodes 
       });
 
-      if (needToReselectCell) {
+      if (needToReselectCell && !mandatoryRange) {
         activeCellNode = getCellNode(activeRow, activeCell, true);
         assert(activeCellNode);
       }
+      return needToReselectCell;
     }
 
     function startPostProcessing() {
@@ -3846,12 +3850,12 @@ if (typeof Slick === "undefined") {
       }
 
       // add new rows & missing cells in existing rows
-      if (lastRenderedScrollLeft !== scrollLeft) {
-        cleanUpAndRenderCells(rendered);
+      if (lastRenderedScrollLeft !== scrollLeft || mandatoryRange) {
+        cleanUpAndRenderCells(rendered, mandatoryRange);
       }
 
       // render missing rows
-      renderRows(rendered);
+      var needToReselectCell = renderRows(rendered, mandatoryRange);
 
       if (!mandatoryRange) {
         postProcessFromRow = visible.top;
@@ -3863,9 +3867,10 @@ if (typeof Slick === "undefined") {
       } else {
         // add new rows & their cells when we execute in mandatory render mode
         if (rowsCache[mandatoryRange.top].cellRenderQueue.length) {
-          cleanUpAndRenderCells(rendered);
+          cleanUpAndRenderCells(rendered, mandatoryRange);
         }
       }
+      return needToReselectCell;
     }
 
     function handleHeaderRowScroll() {
@@ -5691,7 +5696,11 @@ out:
       if (rowsCache[row] || mandatory) {
         ensureCellNodesInRowsCache(row);
         var node = rowsCache[row] && rowsCache[row].cellNodesByColumnIdx[cell];
-        if (!node && mandatory) {
+        var needToReselectCell = false;
+        var cnt = 0;
+        while (!node && mandatory) {
+          cnt++;
+          assert(cnt === 1);
           // force render the new active cell
           var cellBoxInfo = getCellNodeBox(row, cell);
           assert(cellBoxInfo);
@@ -5711,15 +5720,21 @@ out:
             leftPx: leftPx,
             rightPx: rightPx
           };
-          // Also signal that we're messing about with the render area: force the render() to reevaluate virtually rendered cells.
-          lastRenderedScrollLeft = -1;
-          forcedRender(rendered);
+          needToReselectCell = forcedRender(rendered);
+          
           // and then attempt fetching the DOM node again:
           assert(rowsCache[row]);
-          assert(node = rowsCache[row].cellNodesByColumnIdx);
-          assert(node = rowsCache[row].cellNodesByColumnIdx.length);
+          assert(rowsCache[row].cellNodesByColumnIdx);
+          assert(rowsCache[row].cellNodesByColumnIdx.length > cell);
           node = rowsCache[row].cellNodesByColumnIdx[cell];
           assert(node);
+        }
+        if (needToReselectCell) {
+          assert(rowsCache[activeRow]);
+          assert(rowsCache[activeRow].cellNodesByColumnIdx);
+          assert(rowsCache[activeRow].cellNodesByColumnIdx.length > activeCell);
+          activeCellNode = rowsCache[activeRow].cellNodesByColumnIdx[activeCell];
+          assert(activeCellNode);
         }
         return node;
       }

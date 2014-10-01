@@ -14,7 +14,6 @@
       _rowSelectionModel,
       _handler = new Slick.EventHandler(),
       _selectionChanged = new Slick.Event(),
-      _inHandler,
       _selection = [],
       _identities = null,
       _defaults = {
@@ -30,28 +29,17 @@
       _loader = _options.loader;
 
       if (_rowSelectionModel && _rowSelectionModel.onSelectionChanged) {
-        _handler.subscribe(_rowSelectionModel.onSelectionChanged, wrapHandler(handleSelectionChanged));
+        _handler.subscribe(_rowSelectionModel.onSelectionChanged, handleSelectionChanged);
       }
 
       if (_loader) {
-        _handler.subscribe(_loader.onDataLoaded, wrapHandler(handleLoaderDataLoaded));
+        _handler.subscribe(_loader.onDataLoaded, handleLoaderDataLoaded);
         setSelection(_.pluck(_loader.data, _options.idMember));
       }
     }
 
     function destroy() {
       _handler.unsubscribeAll();
-    }
-
-    function wrapHandler(handler) {
-      return function () {
-        assert(!_inHandler);
-        if (!_inHandler) {
-          _inHandler = true;
-          handler.apply(this, arguments);
-          _inHandler = false;
-        }
-      };
     }
 
     function handleSelectionChanged(e, args) {

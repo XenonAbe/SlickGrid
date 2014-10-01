@@ -128,7 +128,7 @@
       $input = $("<INPUT type='text' class='editor-text' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -326,7 +326,7 @@ function isValidModifier(v) {
       $input = $("<INPUT type='number' class='editor-integer' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -419,7 +419,7 @@ function isValidModifier(v) {
       $input = $("<INPUT type='text' class='editor-float' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -530,7 +530,7 @@ function isValidModifier(v) {
       $input = $("<INPUT type='text' class='editor-percentage' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -693,7 +693,7 @@ function isValidModifier(v) {
       $input = $("<INPUT type='text' class='editor-date' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -960,7 +960,7 @@ function isValidModifier(v) {
       $input = $("<INPUT type='text' class='editor-percentcomplete' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -1113,7 +1113,7 @@ function isValidModifier(v) {
       $input = $("<TEXTAREA type='text' class='editor-longtext-basic-input' rows='1' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           });
@@ -1155,15 +1155,15 @@ function isValidModifier(v) {
     };
 
     this.handleKeyDown = function (e) {
-      if (e.which == $.ui.keyCode.ENTER && e.ctrlKey) {
+      if (e.which == Slick.Keyboard.ENTER && e.ctrlKey) {
         scope.save();
-      } else if (e.which == $.ui.keyCode.ESCAPE) {
+      } else if (e.which == Slick.Keyboard.ESCAPE) {
         e.preventDefault();
         scope.cancel();
-      } else if (e.which == $.ui.keyCode.TAB && e.shiftKey) {
+      } else if (e.which == Slick.Keyboard.TAB && e.shiftKey) {
         e.preventDefault();
         args.grid.navigatePrev();
-      } else if (e.which == $.ui.keyCode.TAB) {
+      } else if (e.which == Slick.Keyboard.TAB) {
         e.preventDefault();
         args.grid.navigateNext();
       }
@@ -1295,7 +1295,7 @@ function isValidModifier(v) {
       $input = $("<input type='color' />")
           .appendTo($container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })

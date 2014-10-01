@@ -12,7 +12,6 @@
     var _rowIndexes = [];
     var _self = this;
     var _handler = new Slick.EventHandler();
-    var _inHandler;
     var _dragging;
     var _canvas;
     var _options;
@@ -24,12 +23,9 @@
     function init(grid) {
       _options = $.extend(true, {}, _defaults, options);
       _grid = grid;
-      _handler.subscribe(_grid.onActiveCellChanged,
-          wrapHandler(handleActiveCellChange));
-      _handler.subscribe(_grid.onKeyDown,
-          wrapHandler(handleKeyDown));
-      _handler.subscribe(_grid.onClick,
-          wrapHandler(handleClick));
+      _handler.subscribe(_grid.onActiveCellChanged, handleActiveCellChange);
+      _handler.subscribe(_grid.onKeyDown, handleKeyDown);
+      _handler.subscribe(_grid.onClick, handleClick);
 
       if (_options.dragToMultiSelect) {
         if (_grid.getOptions().multiSelect) {
@@ -47,17 +43,6 @@
 
     function destroy() {
       _handler.unsubscribeAll();
-    }
-
-    function wrapHandler(handler) {
-      return function () {
-        assert(!_inHandler);
-        if (!_inHandler) {
-          _inHandler = true;
-          handler.apply(this, arguments);
-          _inHandler = false;
-        }
-      };
     }
 
     function rangesToRows(ranges) {
