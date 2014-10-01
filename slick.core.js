@@ -661,6 +661,12 @@
       TAB: 9,
       UP: 38,
 
+      SHIFT: 16,
+      ALT: 18,    // Windows/Unix
+      OPTION: 18, // OSX
+      CONTROL: 17,
+      COMMAND: 91,
+
       F2: 113,
     });
 

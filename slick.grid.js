@@ -292,6 +292,11 @@ if (typeof Slick === "undefined") {
     // we introduce yet another lock:
     var headerDragCommencingLock = null;
 
+    // Monitor focus; when it is in a cell (or a child thereof) and that cell is destroyed due to cache invalidation,
+    // then switch focus over to the focusSink so that keyboard events do not get lost during the interim
+    // while the cells are rerendered.
+    var focusMustBeReacquired = false;   
+
     var rowsCache = [];
     var rowPositionCache = [];
     var rowsCacheStartIndex = MAX_INT;
@@ -3044,7 +3049,9 @@ if (typeof Slick === "undefined") {
           } else if (row < rangeToKeep.bottom) {
             continue;
           }
-          removeRowFromCache(row);
+          if (rowsCache[row]) {
+            removeRowFromCache(row);
+          }
         }
       }
       // and clip off the tail end of the cache index array itself:
@@ -3069,7 +3076,9 @@ if (typeof Slick === "undefined") {
         assert(!currentEditor);
       }
       for (var row = rowsCacheStartIndex, endrow = rowsCache.length; row < endrow; row++) {
-        removeRowFromCache(row);
+        if (rowsCache[row]) {
+          removeRowFromCache(row);
+        }
       }
       rowsCache = [];
       rowPositionCache = [];
@@ -3078,16 +3087,42 @@ if (typeof Slick === "undefined") {
 
     function removeRowFromCache(row) {
       var cacheEntry = rowsCache[row];
-      if (!cacheEntry) {
-        return;
-      }
+      assert(cacheEntry);
       assert(cacheEntry.rowNode);
+
+      if (row === activeRow && elementHasFocus(cacheEntry.rowNode)) {
+        focusMustBeReacquired = {
+          row: activeRow,
+          cell: activeCell
+        };
+        // As the active cell is about to loose focus, we (temporarily) switch focus to one of the sinks
+        // so that the node removal from the DOM does not drop focus, which would consequently 
+        // loose us keyboard events, at least for the (very) short time period between DOM
+        // cell removal and re-render. That would cause symptoms of 'erratic keyboard behaviour'
+        // and we cannot have that!
+
+        console.log("focus fixup exec (cache remove row) START: ", document.activeElement);
+        movingFocusLock++;
+        // We MAY see a sequence of focusout+focusin, where by the time focusin fires, document.activeElement is BODY.
+        // We MAY also see only a focusin, in which case we are to provide the original focused node.
+        movingFocusLockData[movingFocusLock - 1] = {
+          newNode: $focusSink[0],
+          oldNode: activeCellNode
+        };
+        $focusSink[0].focus();
+        movingFocusLock--;
+        if (!movingFocusLock) {
+          movingFocusLockData = [];
+        }
+        console.log("focus fixup exec (cache remove row) END: ", document.activeElement);
+      }
 
       if (rowNodeFromLastMouseWheelEvent === cacheEntry.rowNode) {
         cacheEntry.rowNode.style.display = 'none';
         zombieRowNodeFromLastMouseWheelEvent = rowNodeFromLastMouseWheelEvent;
       } else {
-        $canvas[0].removeChild(cacheEntry.rowNode);
+        //$canvas[0].removeChild(cacheEntry.rowNode);
+        cacheEntry.rowNode.classList.add('destroyed');
       }
 
       rowsCache[row] = undefined;
@@ -3419,7 +3454,7 @@ if (typeof Slick === "undefined") {
       // this helps avoid redundant calls to .removeRow() when the size of the data decreased by thousands of rows
       var l = dataLengthIncludingAddNew - 1;
       for (var row = rowsCacheStartIndex, endrow = rowsCache.length; row < endrow; row++) {
-        if (row > l) {
+        if (row > l && rowsCache[row]) {
           removeRowFromCache(row);
         }
       }
@@ -3585,7 +3620,8 @@ if (typeof Slick === "undefined") {
 
       var cellToRemove;
       while ((cellToRemove = cellsToRemove.pop()) != null) {
-        cacheEntry.rowNode.removeChild(cacheEntry.cellNodesByColumnIdx[cellToRemove]);
+        //cacheEntry.rowNode.removeChild(cacheEntry.cellNodesByColumnIdx[cellToRemove]);
+        cacheEntry.cellNodesByColumnIdx[cellToRemove].classList.add('destroyed');
         delete cacheEntry.cellNodesByColumnIdx[cellToRemove];
         if (postProcessedRows[row]) {
           // array element delete vs. setting it to undefined: http://jsperf.com/delete-vs-undefined-vs-null/19 
@@ -3639,13 +3675,13 @@ if (typeof Slick === "undefined") {
             break;
           }
           colspan = getColspan(row, i);
-          var spanRow = getSpanRow(row, i);
-          if (spanRow != row) {
+          // Already rendered.
+          if (cacheEntry.cellNodesByColumnIdx[i] != null) {
             continue;
           }
 
-          // Already rendered.
-          if (cacheEntry.cellNodesByColumnIdx[i] != null) {
+          var spanRow = getSpanRow(row, i);
+          if (spanRow !== row) {
             continue;
           }
 
@@ -3771,7 +3807,10 @@ if (typeof Slick === "undefined") {
         counter_rows_rendered++;
       }
 
-      if (!rows.length) { return; }
+      if (rows.length === 0) {
+        assert(!needToReselectCell); 
+        return false; 
+      }
 
       var x = document.createElement("div");
       x.innerHTML = stringArray.join("");
@@ -3797,6 +3836,30 @@ if (typeof Slick === "undefined") {
       if (needToReselectCell && !mandatoryRange) {
         activeCellNode = getCellNode(activeRow, activeCell, true);
         assert(activeCellNode);
+        // When we need to reselect the active cell, it MAY also have lost focus previously,
+        // which should then also be re-acquired, unless someone else has been taking over the focus
+        // in the meantime:
+        if (focusMustBeReacquired && 
+            focusMustBeReacquired.row === activeRow && focusMustBeReacquired.cell === activeCell &&
+            elementHasFocus($focusSink[0])
+        ) {
+          console.log("focus fixup exec (render row) START: ", document.activeElement);
+          movingFocusLock++;
+          // We MAY see a sequence of focusout+focusin, where by the time focusin fires, document.activeElement is BODY.
+          // We MAY also see only a focusin, in which case we are to provide the original focused node.
+          movingFocusLockData[movingFocusLock - 1] = {
+            oldNode: $focusSink[0],
+            newNode: activeCellNode
+          };
+          activeCellNode.focus();
+          movingFocusLock--;
+          if (!movingFocusLock) {
+            movingFocusLockData = [];
+          }
+          console.log("focus fixup exec (render row) END: ", document.activeElement);
+        } 
+        // focusMustBeReacquired is done / outdated: destroy it
+        focusMustBeReacquired = false;
       }
       return needToReselectCell;
     }
@@ -3822,27 +3885,43 @@ if (typeof Slick === "undefined") {
       startPostProcessing();
     }
 
-    function render() {
-      if (!initialized) { return; }
+    // Return TRUE when the render is pending (but hasn't executed yet)
+    function render(renderImmediately) {
+      if (!initialized) { 
+        return false; 
+      }
 
       if (h_render) {
         clearTimeout(h_render);
         h_render = null;
       }
 
-      if (options.forceSyncScrolling) {
+      if (options.forceSyncScrolling || renderImmediately) {
         forcedRender();
+        return false;
       } else {
         h_render = setTimeout(function h_render_timer_f() {
           h_render = null;
           forcedRender();
         }, options.asyncRenderDelay);
+        return true;
       }
+    }
+
+    function isRenderPending() {
+      return h_render != null;
     }
 
     function forcedRender(mandatoryRange) {
       var visible = getVisibleRange();
-      var rendered = mandatoryRange || getRenderedRange();
+      var rendered;
+      if (mandatoryRange && typeof mandatoryRange === 'object') {
+        assert('top' in mandatoryRange);
+        assert('bottom' in mandatoryRange);
+        rendered = mandatoryRange;
+      } else {
+        rendered = getRenderedRange();
+      }
 
       if (!mandatoryRange) {
         // remove rows no longer in the viewport
@@ -3853,6 +3932,8 @@ if (typeof Slick === "undefined") {
       if (lastRenderedScrollLeft !== scrollLeft || mandatoryRange) {
         cleanUpAndRenderCells(rendered, mandatoryRange);
       }
+
+      $canvas.find('.destroyed').remove();
 
       // render missing rows
       var needToReselectCell = renderRows(rendered, mandatoryRange);
@@ -3866,7 +3947,9 @@ if (typeof Slick === "undefined") {
         lastRenderedScrollLeft = scrollLeft;
       } else {
         // add new rows & their cells when we execute in mandatory render mode
+        assert(rowsCache[mandatoryRange.top]);
         if (rowsCache[mandatoryRange.top].cellRenderQueue.length) {
+          assert(rowsCache[mandatoryRange.top].rowNode);
           cleanUpAndRenderCells(rendered, mandatoryRange);
         }
       }
@@ -4323,7 +4406,7 @@ out:
 
     function handleKeyDown(e) {
       assert(!(e instanceof Slick.EventData));
-      console.log("keydown: ", this, arguments, document.activeElement);
+      //console.log("keydown: ", this, arguments, document.activeElement);
 
       trigger(self.onKeyDown, {
         row: activeRow, 
@@ -4444,7 +4527,7 @@ out:
         if (!getEditorLock().isActive() || getEditorLock().commitCurrentEdit()) {
           scrollRowIntoView(cell.row, false);
           assert(cell.node);
-          setActiveCellInternal(cell.node, false);
+          setActiveCellInternal(cell.node, false, false);
         }
       }
     }
@@ -4736,7 +4819,7 @@ out:
     // Cell switching
 
     function resetActiveCell() {
-      setActiveCellInternal(null, false);
+      setActiveCellInternal(null, false, false);
     }
 
     function setFocus() {
@@ -4756,9 +4839,20 @@ out:
       // console.log("setFocus: SET FOCUS TO A SINK: END");
     }
 
-    function setFocusOnActiveCell() {
-      if (activeCellNode) {
+    // Return TRUE when the element itself or any of its child nodes has focus.
+    function elementHasFocus(el) {
+      var activeEl = document.activeElement;
+      if (!el || !activeEl || activeEl === document.body) {
+        return false;
       }
+      var outermost = $container[0].parentNode;
+      while (activeEl && activeEl !== outermost && activeEl !== document.body) {
+        if (activeEl === el) {
+          return true;
+        }
+        activeEl = activeEl.parentNode;
+      }
+      return false;
     }
 
     // This get/set methods are used for keeping text-selection.
@@ -4798,7 +4892,7 @@ out:
       }
     }
 
-    function setActiveCellInternal(newCellNode, opt_editMode) {
+    function setActiveCellInternal(newCellNode, opt_editMode, takeFocus) {
       var activeCellChanged = (activeCellNode != newCellNode);
       var newActiveRow;
       if (newCellNode != null) {
@@ -4884,7 +4978,7 @@ out:
         //    
         var oldFocusNode = document.activeElement;
         var oldFocusCellInfo = getCellFromElement(oldFocusNode);
-        if (oldFocusNode === document.body) {
+        if (!oldFocusCellInfo && (oldFocusNode === document.body || takeFocus)) {
           // fake it to simplify the conditional check below:
           oldFocusCellInfo = {
             node: oldFocusNode
@@ -4892,9 +4986,9 @@ out:
         }
         var newActiveCellInfo = getCellFromElement(activeCellNode);
         assert(newActiveCellInfo);
-        // console.log("focus fixup: ", oldFocusNode, oldFocusCellInfo, activeCellNode, newActiveCellInfo);
+        //console.log("focus fixup: ", oldFocusNode, oldFocusCellInfo, activeCellNode, newActiveCellInfo);
         if (oldFocusCellInfo && oldFocusCellInfo.node !== newActiveCellInfo.node) {
-          // console.log("focus fixup exec START: ", document.activeElement);
+          //console.log("focus fixup exec START: ", document.activeElement);
           movingFocusLock++;
           // We MAY see a sequence of focusout+focusin, where by the time focusin fires, document.activeElement is BODY.
           // We MAY also see only a focusin, in which case we are to provide the original focused node.
@@ -4903,12 +4997,12 @@ out:
             oldNode: oldFocusNode,
             oldNodeInfo: oldFocusCellInfo
           };
-          $(activeCellNode).focus();
+          activeCellNode.focus();
           movingFocusLock--;
           if (!movingFocusLock) {
             movingFocusLockData = [];
           }
-          // console.log("focus fixup exec END: ", document.activeElement);
+          //console.log("focus fixup exec END: ", document.activeElement);
         }
 
         if (options.editable && opt_editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
@@ -5325,7 +5419,7 @@ out:
         if (prevCell !== -1) {
           var node = getCellNode(row, prevCell, true);
           assert(node);
-          setActiveCellInternal(node, false);
+          setActiveCellInternal(node, false, false);
           activePosX = prevActivePosX;
         } else {
           resetActiveCell();
@@ -5680,14 +5774,14 @@ out:
         scrollCellIntoView(pos.row, pos.cell, !isAddNewRow);
         node = getCellNode(pos.row, pos.cell, true);
         assert(node);
-        setActiveCellInternal(node, false);
+        setActiveCellInternal(node, false, false);
         activePosY = pos.posY;
         activePosX = pos.posX;
         return true;
       } else {
         node = getCellNode(activeRow, activeCell, true);
         assert(node);
-        setActiveCellInternal(node, false);
+        setActiveCellInternal(node, false, false);
         return false;
       }
     }
@@ -5742,7 +5836,7 @@ out:
       return null;
     }
 
-    function setActiveCell(row, cell) {
+    function setActiveCell(row, cell, takeFocus) {
       if (!initialized) { return; }
       // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
       if (cellExists(row, cell)) {
@@ -5753,7 +5847,7 @@ out:
         scrollCellIntoView(row, cell, false);
         var node = getCellNode(row, cell, true);
         assert(node);
-        setActiveCellInternal(node, false);
+        setActiveCellInternal(node, false, takeFocus);
       }
     }
 
@@ -5805,7 +5899,7 @@ out:
       return false;
     }
 
-    function gotoCell(row, cell, forceEdit) {
+    function gotoCell(row, cell, forceEdit, takeFocus) {
       if (!initialized) { return; }
       if (!canCellBeActive(row, cell)) {
         return;
@@ -5821,7 +5915,7 @@ out:
       assert(newCellNode);
 
       // if selecting the 'add new' row, start editing right away
-      setActiveCellInternal(newCellNode, forceEdit);
+      setActiveCellInternal(newCellNode, forceEdit, takeFocus);
 
       // if no editor was created, set the focus back on the grid
       if (!currentEditor) {
@@ -6077,12 +6171,14 @@ out:
       "getSelectedRows": getSelectedRows,
       "setSelectedRows": setSelectedRows,
       "getContainerNode": getContainerNode,
-      "getDataItemValueForColumn" : getDataItemValueForColumn,
-      "setDataItemValueForColumn" : setDataItemValueForColumn,
+      "getDataItemValueForColumn": getDataItemValueForColumn,
+      "setDataItemValueForColumn": setDataItemValueForColumn,
+      "getCellValueAndInfo": getCellValueAndInfo,
       "isInitialized": isInitialized,
 
       "render": render,
       "forcedRender": forcedRender,
+      "isRenderPending": isRenderPending,
       "invalidate": invalidate,
       "invalidateRow": invalidateRow,
       "invalidateRows": invalidateRows,
