@@ -78,6 +78,7 @@ git_submod_add   git@github.com:GerHobbelt/SlickGrid.wiki.git                   
 git_submod_add   git@github.com:GerHobbelt/SlickGridEnhancementPager.git                 lib/slickgrid-enhanced-pager-plugin
 git_submod_add   git@github.com:GerHobbelt/Surge-SlickGrid-Extensions.git                lib/slickgrid-surge-extensions
 git_submod_add   git@github.com:GerHobbelt/TinyColor.git                                 lib/TinyColor
+git_submod_add   git@github.com:GerHobbelt/datepick.git                                  lib/jquery-datepicker
 git_submod_add   git@github.com:GerHobbelt/guriddo.git                                   lib/slickgrid-guriddo-frozencolumns
 git_submod_add   git@github.com:GerHobbelt/hammer.js.git                                 lib/hammer
 git_submod_add   git@github.com:GerHobbelt/jquery-multiselect.git                        lib/jquery-multiselect

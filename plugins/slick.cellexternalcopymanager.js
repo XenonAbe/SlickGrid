@@ -39,6 +39,7 @@
     var _bodyElement = _options.bodyElement || document.body;
     var _externalCopyPastaCatcherTI = 0;
     var _externalCopyPastaCatcherEl = null;
+    var _externalCopyPastaCatcherElBackup = null;
 
     var keyCodes = {
       'C': 67,
@@ -118,18 +119,18 @@
         return _options.dataItemColumnValueSetter(row_item, columnDef, value, dstY, dstX, srcY, srcX);
       }
 
-      var info = _grid.getCellValueAndInfo(srcY, srcX, {
-        value: true,
+      var info = _grid.getCellValueAndInfo(dstY, dstX, {
+        value: false,
         node: false,
         height: false,
         uid: false,
         css: false,
-        format: true,
+        format: false,
 
         outputPlainText: true         // this signals the formatter that the plaintext value is required.
       });
 
-      _grid.setDataItemValueForColumn(info.rowDataItem, info.colunn, value, info.rowMetadata, info.columnMetadata);
+      _grid.setDataItemValueForColumn(info.rowDataItem, info.column, value, info.rowMetadata, info.columnMetadata);
 
       // // if a custom setter is not defined, we call applyValue of the editor to unserialize
       // if (columnDef.editor) {
@@ -155,6 +156,8 @@
 
     function _createTextBox(innerText) {
       if (!_externalCopyPastaCatcherEl) {
+        _externalCopyPastaCatcherElBackup = document.activeElement;
+
         var ta = document.createElement('textarea');
         ta.style.position = 'absolute';
         ta.style.left = '-1000px';
@@ -176,6 +179,11 @@
 
     function _destroyTextBox() {
       if (_externalCopyPastaCatcherEl) {
+        if (_externalCopyPastaCatcherElBackup && typeof _externalCopyPastaCatcherElBackup.select === 'function') {
+          _externalCopyPastaCatcherElBackup.select();
+        }
+        _externalCopyPastaCatcherElBackup = null;
+        
         _bodyElement.removeChild(_externalCopyPastaCatcherEl);
         _externalCopyPastaCatcherEl = null;
 
@@ -186,21 +194,18 @@
       }
     }
 
-    function _decodeTabularData(_grid) {
+    function _decodeTabularData(_grid, externalSourceDataIO) {
       // stuff has been pasted into _externalCopyPastaCatcherEl textarea; now allow user to preprocess the pasted data.
       _self.onPasteCellsPrepare.notify({
-        helperDOMelement: _externalCopyPastaCatcherEl,
+        externalSourceDataIO: externalSourceDataIO,
         rangeIsCopied: true /* outside source coming in: always regarded as COPY rather than CUT */,
         rangeDataFromExternalSource: true
       });
 
       var columns = _grid.getColumns();
-      var clipText = _externalCopyPastaCatcherEl.value;
+      var clipText = '' + externalSourceDataIO.getData();
       var clipRows = clipText.split(/[\n\f\r]/);
       var clippedRange = [];
-
-      _destroyTextBox();
-      assert(!_externalCopyPastaCatcherTI);
 
       for (var i = 0; i < clipRows.length; i++) {
         if (clipRows[i] !== "") {
@@ -242,7 +247,7 @@
         activeCell = selectedCell.cell;
       } else {
         // we don't know where to paste
-        _self.onCopyCancelled.notify({
+        _self.onPasteCancelled.notify({
           rangeIsCopied: true, // outside source coming in: always regarded as COPY rather than CUT
           rangeDataFromExternalSource: true,
           externalDataSet: clippedRange,
@@ -334,7 +339,7 @@
             fromRow: this.destY,
             toCell: this.destX + this.destW - 1,
             toRow: this.destY + this.destH - 1
-          }
+          };
 
           this.markCopySelection([bRange]);
           _grid.getSelectionModel().setSelectedRanges([bRange]);
@@ -376,7 +381,7 @@
             fromRow: this.destY,
             toCell: this.destX + this.destW - 1,
             toRow: this.destY + this.destH - 1
-          }
+          };
 
           this.markCopySelection([bRange]);
           _grid.getSelectionModel().setSelectedRanges([bRange]);
@@ -452,16 +457,20 @@
      * @returns {Boolean}  TRUE when the data has been copied to the Clipboard too using the new HTML5 API; false otherwise.
      *                     (This return value is used to act correctly when performing a copy/paste action from the keyboard.)
      */
-    function cutOrCopyAction(ranges, cutMode, toClipboard) {
-      assert(Array.isArray(ranges));
+    function cutOrCopyAction(sourceRanges, cutMode, toClipboard) {
+      assert(Array.isArray(sourceRanges));
 
       // make sure to clone (shallow) the range set as any subsequent selection action will echo into _copiedRanges!
-      ranges.slice(0);
+      var ranges = sourceRanges.slice(0);
+      if (sourceRanges.copy) {
+        ranges.copy = sourceRanges.copy;
+      }
+      // override ranges' copy attribute?
+      if (cutMode != null) {
+        ranges.copy = !cutMode;
+      }
 
       if (ranges.length !== 0) {
-        if (cutMode != null) {
-          ranges.copy = !cutMode;
-        }
         _copiedRanges = ranges;
         markCopySelection(ranges);
         _self.onCopyCells.notify({
@@ -538,6 +547,8 @@
         return true;
       } else {
         var activeCell = _grid.getActiveCell();
+
+        _destroyTextBox();
         _createTextBox(clipText);
 
         _externalCopyPastaCatcherTI = setTimeout(function () {
@@ -569,19 +580,25 @@
      *                                        On failure, return FALSE.
      */
     function redimTargetRangeToCopiedRanges(targetRanges, singleTargetCornerCell, sourceRanges) {
-      if (!sourceRanges) {
-        return false;
-      }
+      // if (!sourceRanges) {
+      //   return false;
+      // }
       if (!targetRanges && !singleTargetCornerCell) {
         return false;
       }
 
-      if (!targetRanges || targetRanges.length === 0 || sourceRanges[0].matches(targetRanges[0])) {
+      if (!targetRanges || targetRanges.length === 0 || (sourceRanges && sourceRanges.length && sourceRanges[0].matches(targetRanges[0]))) {
         if (singleTargetCornerCell) {
           // only having the active cell implies we want the entire range pasted from this top/left corner...
-          var srcRange = sourceRanges[0];
+          var srcRange = (sourceRanges && sourceRanges.length) ? sourceRanges[0] : 
+                        (targetRanges && targetRanges.length) ? targetRanges[0] :
+                        {
+                          toRow: 1,
+                          fromRow: 1,
+                          toCell: 1,
+                          fromCell: 1
+                        };
           targetRanges = [new Slick.Range(singleTargetCornerCell.row, singleTargetCornerCell.cell, singleTargetCornerCell.row + srcRange.toRow - srcRange.fromRow + 1, singleTargetCornerCell.cell + srcRange.toCell - srcRange.fromCell + 1)];
-          return targetRanges;
         } else {
           // we don't know where to paste
           return false;
@@ -590,25 +607,24 @@
       return targetRanges;
     }
 
-    function __processPaste(isInternal, ranges) {
+    function __processPaste(isInternal, targetRanges, internalSourceRanges, externalSourceData) {
       if (isInternal) {
-        assert(_copiedRanges);
+        assert(internalSourceRanges);
 
         _self.onPasteCells.notify({
-          from: _copiedRanges,
-          to: ranges,
-          rangeIsCopied: _copiedRanges.copy,
+          from: internalSourceRanges,
+          to: targetRanges,
+          rangeIsCopied: internalSourceRanges.copy,
           rangeDataFromExternalSource: false
         });
         // allow for Ctrl-C, Ctrl-V, Ctrl-V, ... repeated paste sequences to be all 'internal' based on that single Ctrl-C copied range!
         //
         // the ctrl-X effect is to delete original range at the first ctrl-V, so no repeat performance for that one though!
-        if (!_copiedRanges.copy) {
+        if (!internalSourceRanges.copy) {
           clearCopySelection();
           _copiedRanges = null;
           _copyFingerPrint = null;
         }
-        assert(_externalCopyPastaCatcherTI);
         return true;
       } else {
         // pasting externally obtained data: nuke the internal Ctrl-C range buffer et al:
@@ -616,27 +632,54 @@
         _copiedRanges = null;
         _copyFingerPrint = null;
 
-        _decodeTabularData(_grid);
-        assert(!_externalCopyPastaCatcherTI);
+        _decodeTabularData(_grid, {
+          getData: function () {
+            return externalSourceData;
+          },
+          setData: function (str) {
+            externalSourceData = str;
+          }
+        });
         return false;
       }
     }
 
-    function pasteAction(targetRanges, isInternal, externalSourceData) {
-      if (!targetRange || !targetRange.length || !(isInternal && _copiedRanges)) {
-        // we don't know where to paste or what to paste
-        _self.onCopyCancelled.notify({
-          ranges: _copiedRanges,
-          rangeIsCopied: _copiedRanges.copy,
-          rangeDataFromExternalSource: false,
+    function pasteAction(targetRanges, isInternal, internalSourceRanges, externalSourceData) {
+      // Do keep in mind that there may be no source range what-so-ever when the user is
+      // performing an 'external' paste, i.e. is pasting content coming in from outside 
+      // the application.
+      if (!targetRanges || !targetRanges.length) {
+        // we don't know where to paste
+        _self.onPasteCancelled.notify({
+          targetRanges: targetRanges,
+          isInternal: isInternal,
+          internalSourceRanges: internalSourceRanges,
+          externalSourceData: externalSourceData,
           status: "No destination cell or range has been provided"
+        });
+        return false;
+      }
+      assert(isInternal == null ? !externalSourceData : true);
+      assert(isInternal == null ? !internalSourceRanges : true);
+      assert(isInternal == null ? _copiedRanges : true);
+      // When caller indicates to know whether this is an internal or external paste operation, 
+      // then caller is also supposed to know where the stuff is coming from, respectively
+      // what stuff is coming in exactly!
+      if (isInternal != null && !(isInternal ? internalSourceRanges && !externalSourceData : !internalSourceRanges && externalSourceData)) {
+        // we don't know what to paste
+        _self.onPasteCancelled.notify({
+          targetRanges: targetRanges,
+          isInternal: isInternal,
+          internalSourceRanges: internalSourceRanges,
+          externalSourceData: externalSourceData,
+          status: "No source range or data has been provided"
         });
         return false;
       }
 
       // When we're not sure it's a slickgrid internal-to-internal copy/paste operation
       // we take this branch:
-      if (!isInternal && externalSourceData == null) {
+      if (isInternal == null) {
         // When we still have a copy/pasta action pending, we IGNORE this one
         // (this code might even have been invoked recursively as Ctrl+C/Ctrl+V
         // do NOT mark the keyboard event as 'handled' when they actually do,
@@ -661,7 +704,10 @@
           assert(typeof fp === 'string');
           fp = fp.replace(/\r/g, "");
 
-          __processPaste(_copyFingerPrint === fp, targetRanges);
+          assert(!externalSourceData);
+          assert(!internalSourceRanges);
+          assert(_copyFingerPrint === fp ? _copiedRanges : true);
+          __processPaste(_copyFingerPrint === fp, targetRanges, _copiedRanges, fp);
 
           _destroyTextBox();
           assert(!_externalCopyPastaCatcherTI);
@@ -669,7 +715,7 @@
 
         return false;
       } else {
-        return __processPaste(isInternal, targetRanges);
+        return __processPaste(isInternal, targetRanges, internalSourceRanges, externalSourceData);
       }
     }
 
@@ -683,29 +729,26 @@
 
         // Control+C / Control+X  -- these have the same effect on initial range
         if ((e.which === keyCodes.C || e.which === keyCodes.X) && (e.ctrlKey || e.metaKey)) {
-          // make sure to clone (shallow) the range set as any subsequent selection action will echo into _copiedRanges!
-          ranges = _grid.getSelectionModel().getSelectedRanges().slice(0);
+          ranges = _grid.getSelectionModel().getSelectedRanges();
 
           // also remember whether this was Ctrl-C (copy) or Ctrl-X (cut):
           ranges.copy = (e.which === keyCodes.C);
 
           rv = cutOrCopyAction(ranges, !ranges.copy, true);
+
+          //e.preventDefault(); <-- DO exec the default behaviour as that will fill the textbox we just created!
+
           assert(rv === true || rv === false);
           return rv;
         }
 
         // Control+V
         if (e.which === keyCodes.V && (e.ctrlKey || e.metaKey)) {
-          assert(_copiedRanges);
-
           ranges = _grid.getSelectionModel().getSelectedRanges();
           var selectedCell = _grid.getActiveCell();
           var targetRanges = redimTargetRangeToCopiedRanges(ranges, selectedCell, _copiedRanges);
-          rv = pasteAction(targetRanges, null, null);
+          rv = pasteAction(targetRanges, null, null, null);
           assert(rv === false);
-
-          //e.preventDefault(); <-- DO exec the default behaviour as that will fill the textbox we just created!
-
           return false;
         }
       }
@@ -745,11 +788,18 @@
       "destroy": destroy,
       "clearCopySelection": clearCopySelection,
       "handleKeyDown": handleKeyDown,
+      "redimTargetRangeToCopiedRanges": redimTargetRangeToCopiedRanges,
+      "getCopiedRanges": getCopiedRanges,
+      "getCopyDataFingerprint": getCopyDataFingerprint,
+      "cutOrCopyAction": cutOrCopyAction,
+      "pasteAction": pasteAction,
+      "cancelCopyAction": cancelCopyAction,
 
       "onCopyCells": new Slick.Event(),
       "onCopyCancelled": new Slick.Event(),
       "onPasteCells": new Slick.Event(),
       "onPasteCellsPrepare": new Slick.Event(),       // only invoked when executing an external data PASTE operation
+      "onPasteCancelled": new Slick.Event(),
       "onUndoPasteCells": new Slick.Event()
     });
   }

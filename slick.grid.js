@@ -856,7 +856,7 @@ if (typeof Slick === "undefined") {
           return false;
         }
 
-        // TODO: RISK: when formatter produces more than ONE outer HTML element, we're toast with nuking the .eq(0) element down here:
+        // TODO: RISK: when formatter produces more than *ONE* HTML element, we're toast with nuking the .eq(0) element down here:
         $header
             .attr("title", toolTip)
             .children().eq(0).html(title);
@@ -928,6 +928,12 @@ if (typeof Slick === "undefined") {
     }
 
     // This completely redraws the headers and re-binds events
+    // 
+    // TODO: Visyond uses virtual rendering for the grid itself, but is very slow in rendering (and updating) the headers
+    //       as those are rendered in their entirety. We should apply the virtual rendering process to the slickgrid headers
+    //       too (i.e. only render a visible+buffer portion of the headers) but this has a significant impact on the event
+    //       handlers too: those would all then have to move to the headers container DIV!
+    //       (Think about the impact on contentmenu and similar plugins which add event handlers to the headers' DOM!)
     function createColumnHeaders() {
       function onMouseEnter() {
         $(this).addClass("ui-state-hover");
@@ -982,7 +988,9 @@ if (typeof Slick === "undefined") {
       function createColumnHeader(m, appendTo, level, cell) {
         var colspan = getColumnColspan(m);
         var cellCss = ["ui-state-default", "slick-header-column", "level" + (level || 0), "colspan" + colspan];
-        if (m.headerCssClass) cellCss.push(m.headerCssClass);
+        if (m.headerCssClass) {
+          cellCss.push(m.headerCssClass);
+        }
         var cellStyles = [];
         var info = {
           cellCss: cellCss,
@@ -1002,17 +1010,15 @@ if (typeof Slick === "undefined") {
           }
         };
         info.html = getHeaderFormatter(-2000, cell)(-2000, cell, m.name, m, null /* rowDataItem */, info);
-        var header = $("<div role='columnheader' />")
+        var header = $("<div role='columnheader' id='" + mkSaneId(m, i) + "' " + 
+                       (info.toolTip ? " title='" + info.toolTip + "'" : "") +
+                       (cellStyles.length ? " style='" + cellStyles.join(";") + ";'" : "") +
+                       (cellCss.length ? " class='" + cellCss.join(" ") + "'" : "") + 
+                       "/>")
             .html(info.html)
-            .attr("id", mkSaneId(m, i))
-            .attr("title", info.toolTip)
             .data("column", m)
-            .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
-            .attr("class", cellCss.join(" "))
             .width(info.cellWidth)
             .appendTo(appendTo);
-        assert(header.data("column"));
-        assert(header.data("column") === m);
         return header;
       }
 

@@ -52,3 +52,6 @@
 [submodule "lib/TinyColor"]
 	path = lib/TinyColor
 	url = git@github.com:GerHobbelt/TinyColor.git
+[submodule "lib/jquery-iCheck"]
+	path = lib/jquery-iCheck
+	url = git@github.com:GerHobbelt/iCheck.git

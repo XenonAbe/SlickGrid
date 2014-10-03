@@ -92,7 +92,7 @@
     }
 
     function handleKeyDown(e, args) {
-      if (e.which == 32) {
+      if (e.which === 32) {
         if (_grid.getColumns()[args.cell].id === _options.columnId) {
           // if editing, try to commit
           if (!_grid.getEditorLock().isActive() || _grid.getEditorLock().commitCurrentEdit()) {
@@ -132,7 +132,7 @@
     }
 
     function handleHeaderClick(e, args) {
-      if (args.column.id == _options.columnId && $(e.target).is(":checkbox")) {
+      if (args.column.id === _options.columnId && $(e.target).is(":checkbox")) {
         // if editing, try to commit
         if (_grid.getEditorLock().isActive() && !_grid.getEditorLock().commitCurrentEdit()) {
           e.preventDefault();

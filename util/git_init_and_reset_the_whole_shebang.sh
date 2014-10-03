@@ -1,7 +1,7 @@
 #! /bin/bash
 #
-# Run this script to init and RESET everything in the SlickGrid project.
-# THIS MEANS THAT YOU WILL LOOSE ALL CHANGES WHICH HAVEN'T BEEN COMMITTED INTO THE SlickGrid REPOSITORY OR ANY OF THE SUBMODULES!
+# Run this script to init and RESET everything in the project.
+# THIS MEANS THAT YOU WILL LOOSE ALL CHANGES WHICH HAVEN'T BEEN COMMITTED INTO THE PROJECT REPOSITORY OR ANY OF THE SUBMODULES!
 #
 
 pushd $(dirname $0)                                                                                     2> /dev/null
@@ -11,7 +11,7 @@ getopts ":ifxlsh" opt
 #echo opt+arg = "$opt$OPTARG"
 case "$opt$OPTARG" in
 i )
-    echo "*** First, we RESET the SlickGrid project..."
+    echo "*** First, we RESET the project..."
     git reset --hard
 
     echo "*** Then, we make sure that all submodules are RESET as well..."
@@ -25,7 +25,7 @@ i )
     ;;
 
 f )
-    echo "*** First, we RESET the SlickGrid project..."
+    echo "*** First, we RESET the project..."
     git reset --hard
 
     echo "*** Then, we make sure that all submodules have been properly registered..."
@@ -70,7 +70,7 @@ x )
     git submodule foreach --recursive git fsck --full --unreachable --strict
 
 
-    echo "*** Then, we RESET the SlickGrid project..."
+    echo "*** Then, we RESET the project..."
     git reset --hard
 
     echo "*** Then, we make sure that all submodules have been properly registered..."
@@ -117,10 +117,10 @@ s )
     cat <<EOT
 $0 [-i | -f | -x | -l | -s]
 
-GIT INIT and GIT RESET everything in the SlickGrid project.
+GIT INIT and GIT RESET everything in the project.
 
 THIS MEANS THAT YOU WILL LOOSE ALL CHANGES WHICH HAVEN'T BEEN COMMITTED
-      INTO THE SlickGrid REPOSITORY OR ANY OF THE SUBMODULES!
+      INTO THE PROJECT REPOSITORY OR ANY OF THE SUBMODULES!
 
 -i       : 'the basics, size S': run a complete 'git reset' on everything.
            Run this one when the panic hits: "Am I really where I'm
