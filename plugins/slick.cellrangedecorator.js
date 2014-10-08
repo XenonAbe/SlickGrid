@@ -27,10 +27,11 @@
     var _self = this;
     var _defaults = {
       borderThickness: 2,
-      selectionCssClass: 'slick-range-decorator',
+      selectionCssClass: "slick-range-decorator",
       selectionCss: {
         zIndex: "9999",
-        border: "2px dashed red"
+        border: "dashed red",
+        boxSizing: "border-box"
       }
     };
 
@@ -49,8 +50,8 @@
         return {
           top: from.top,
           left: from.left,
-          height: to.bottom - from.top - 2 * options.borderThickness,
-          width: to.right - from.left - 2 * options.borderThickness - 1
+          height: to.bottom - from.top,           // box-sizing: border-box CSS means we don't have to subtract (2 * options.borderThickness)!
+          width: to.right - from.left - 1
         };
       } else {
         // TBD
@@ -84,12 +85,16 @@
 
       if (!_elem) {
         $canvas = $(grid.getCanvasNode());
-        _elem = $("<div></div>", {css: options.selectionCss})
+        _elem = $("<div></div>", {
+                css: $.extend({}, options.selectionCss, {
+                  borderSize: options.borderThickness
+                })
+            })
             .addClass(options.selectionCssClass)
             .css("position", "absolute")
             .appendTo($canvas);
 
-        _elem.on('click', function(e) {
+        _elem.on("click", function(e) {
           console.log("range decorator slickgrid ", e);
 
           var nodeInfo = getClickedCellInfo(e);
