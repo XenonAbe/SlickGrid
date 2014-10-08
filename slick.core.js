@@ -13,6 +13,7 @@
       EventHandler: EventHandler,
       Keyboard: Keyboard(),
       PerformanceTimer: PerformanceTimer,
+      HtmlEntities: HtmlEntities,
       Range: Range,
       NonDataRow: NonDataItem,
       Group: Group,
@@ -35,7 +36,7 @@
    * @class EventData
    * @constructor
    */
-  function EventData(sourceEvent) {
+  function EventData(sourceEvent, propagateSignals) {
     var isPropagationStopped = false;
     var isImmediatePropagationStopped = false;
     var isDefaultPrevented = false;
@@ -44,9 +45,10 @@
      * Stops event from executing its default behaviour.
      * @method preventDefault
      */
-    this.preventDefault = function () {
+    this.preventDefault = function (propagateSignalsOverride) {
       isDefaultPrevented = true;
-      if (this.sourceEvent && typeof this.sourceEvent.preventDefault === 'function') {
+      if ((propagateSignalsOverride == null ? propagateSignals : propagateSignalsOverride) && 
+          this.sourceEvent && typeof this.sourceEvent.preventDefault === 'function') {
         this.sourceEvent.preventDefault();
       }
     };
@@ -64,9 +66,10 @@
      * Stops event from propagating up the DOM tree.
      * @method stopPropagation
      */
-    this.stopPropagation = function () {
+    this.stopPropagation = function (propagateSignalsOverride) {
       isPropagationStopped = true;
-      if (this.sourceEvent && typeof this.sourceEvent.stopPropagation === 'function') {
+      if ((propagateSignalsOverride == null ? propagateSignals : propagateSignalsOverride) && 
+          this.sourceEvent && typeof this.sourceEvent.stopPropagation === 'function') {
         this.sourceEvent.stopPropagation();
       }
     };
@@ -84,9 +87,10 @@
      * Prevents the rest of the handlers from being executed.
      * @method stopImmediatePropagation
      */
-    this.stopImmediatePropagation = function () {
+    this.stopImmediatePropagation = function (propagateSignalsOverride) {
       isImmediatePropagationStopped = true;
-      if (this.sourceEvent && typeof this.sourceEvent.stopImmediatePropagation === 'function') {
+      if ((propagateSignalsOverride == null ? propagateSignals : propagateSignalsOverride) && 
+          this.sourceEvent && typeof this.sourceEvent.stopImmediatePropagation === 'function') {
         this.sourceEvent.stopImmediatePropagation();
       }
     };
@@ -635,6 +639,47 @@
     }
 
     return obj;
+  }
+
+
+  // This is inspired by
+  // http://stackoverflow.com/questions/7753448/how-do-i-escape-quotes-in-html-attribute-values
+  function HtmlEntities(options) {
+    var entityMap = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': '&quot;',
+        "'": "&#39;", // "&apos;"
+        "/": "&#x2F;",
+        "\n": "&#13;",  // LF
+        "\r": "&#13;"   // treat classic Apple CR-only as LF
+        /*
+        You may add other replacements here for HTML only
+        (but it's not necessary).
+        Or for XML, only if the named entities are defined in its DTD.
+        */
+    };
+    options = options || {};
+    if (!options.suitableForUriPrinting) {
+        delete entityMap["/"];
+    }
+    if (!options.preserveCR) {
+        delete entityMap["\n"];
+        delete entityMap["\r"];
+    }
+
+    this.encode = function (s) {
+      if (s == null) {
+        return "";
+      } else {
+        return ("" + s) /* Forces the conversion to string. */
+            .replace(/\r\n/g, "\n") /* Must be before the next replacement. */
+            .replace(/[&<>"'\/\r\n]/g, function (s) {
+                return entityMap[s] || s;
+            });
+      }
+    };
   }
 
 
