@@ -298,10 +298,13 @@ if (typeof Slick === "undefined") {
     var focusMustBeReacquired = false;   
 
     var rowsCache = [];
+    var deletedRowsCache = [];
     var rowPositionCache = [];
     var rowsCacheStartIndex = MAX_INT;
+    var deletedRowsCacheStartIndex = MAX_INT;
     var cellSpans = [];
     var renderedRows = 0;
+    var previousRenderWasIncomplete = false;
     var numVisibleRows;
     var prevScrollTop = 0;
     var scrollTop = 0;
@@ -453,7 +456,7 @@ if (typeof Slick === "undefined") {
       $headerRowScroller = $("<div class='slick-headerrow ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
       $headerRow = $("<div class='slick-headerrow-columns' />").appendTo($headerRowScroller);
       $headerRowSpacer = $("<div style='display:block;height:1px;position:absolute;top:0;left:0;'></div>")
-        .css("width", getCanvasWidth() + scrollbarDimensions.width + "px")
+        .width(getCanvasWidth() + scrollbarDimensions.width)
         .appendTo($headerRowScroller);
 
       $topPanelScroller = $("<div class='slick-top-panel-scroller ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
@@ -475,7 +478,7 @@ if (typeof Slick === "undefined") {
       $footerRowScroller = $("<div class='slick-footerrow' style='overflow:hidden;position:relative;' />").appendTo($container);
       $footerRow = $("<div class='slick-footerrow-columns' />").appendTo($footerRowScroller);
       $footerRowSpacer = $("<div style='display:block;height:1px;position:absolute;top:0;left:0;'></div>")
-          .css("width", getCanvasWidth() + scrollbarDimensions.width + "px")
+          .width(getCanvasWidth() + scrollbarDimensions.width)
           .appendTo($footerRowScroller);
 
       if (!options.showFooterRow) {
@@ -524,7 +527,9 @@ if (typeof Slick === "undefined") {
         bindAncestorScrollEvents();
 
         $container
-            .bind("resize.slickgrid", resizeCanvas)
+            .bind("resize.slickgrid", function (e) {
+              resizeCanvas();
+            })
             .bind("focus.slickgrid", function (e) {
               var $target = $(e.target);
               var newFocusNode = document.activeElement;
@@ -631,7 +636,7 @@ if (typeof Slick === "undefined") {
             .delegate(".slick-header-column", "mouseenter", handleHeaderMouseEnter)
             .delegate(".slick-header-column", "mouseleave", handleHeaderMouseLeave)
             .bind("draginit", handleHeaderDragInit)
-            .bind("dragstart", handleHeaderDragStart)
+            .bind("dragstart", {distance: 3}, handleHeaderDragStart)
             .bind("drag", handleHeaderDrag)
             .bind("dragend", handleHeaderDragEnd);
         $headerRowScroller
@@ -750,7 +755,7 @@ if (typeof Slick === "undefined") {
       // see https://github.com/mleibman/SlickGrid/issues/477
       viewportHasHScroll = (canvasWidth >= viewportW - scrollbarDimensions.width);
 
-      if (canvasWidth != oldCanvasWidth || forceCanvasResize) {
+      if (canvasWidth !== oldCanvasWidth || forceCanvasResize) {
         $canvas.width(canvasWidth);
         $headerRow.width(canvasWidth);
         $footerRow.width(canvasWidth);
@@ -766,7 +771,7 @@ if (typeof Slick === "undefined") {
       $footerRowSpacer.width(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
 
       // when 'stylesheet' has not been set yet, it means that any previous call to applyColumnWidths() did not use up to date values yet as the run-time generated stylesheet wasn't parsed in time.
-      if (canvasWidth != oldCanvasWidth || forceColumnWidthsUpdate || forceCanvasResize || !stylesheet) {
+      if (canvasWidth !== oldCanvasWidth || forceColumnWidthsUpdate || forceCanvasResize || !stylesheet) {
         applyColumnWidths();
       }
     }
@@ -805,9 +810,9 @@ if (typeof Slick === "undefined") {
     // TODO:  this is static.  need to handle page mutation.
     function bindAncestorScrollEvents() {
       var elem = $canvas[0];
-      while ((elem = elem.parentNode) != document.body && elem != null) {
+      while ((elem = elem.parentNode) !== document.body && elem != null) {
         // bind to scroll containers only
-        if (elem == $viewport[0] || elem.scrollWidth != elem.clientWidth || elem.scrollHeight != elem.clientHeight) {
+        if (elem == $viewport[0] || elem.scrollWidth !== elem.clientWidth || elem.scrollHeight !== elem.clientHeight) {
           var $elem = $(elem);
           if (!$boundAncestors) {
             $boundAncestors = $elem;
@@ -859,6 +864,7 @@ if (typeof Slick === "undefined") {
         // TODO: RISK: when formatter produces more than *ONE* HTML element, we're toast with nuking the .eq(0) element down here:
         $header
             .attr("title", toolTip)
+            .attr("data-title", toolTip)
             .children().eq(0).html(title);
 
         trigger(self.onHeaderCellRendered, {
@@ -997,6 +1003,7 @@ if (typeof Slick === "undefined") {
           cellStyles: cellStyles,
           cellWidth: m.width - headerColumnWidthDiff,
           html: "",
+          attributes: {},
           toolTip: m.toolTip || null,
           colspan: colspan,
           rowspan: 1,
@@ -1009,13 +1016,24 @@ if (typeof Slick === "undefined") {
             cell: cell
           }
         };
+        // I/F: function formatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo)
         info.html = getHeaderFormatter(-2000, cell)(-2000, cell, m.name, m, null /* rowDataItem */, info);
-        var header = $("<div role='columnheader' id='" + mkSaneId(m, i) + "' " + 
-                       (info.toolTip ? " title='" + info.toolTip + "'" : "") +
-                       (cellStyles.length ? " style='" + cellStyles.join(";") + ";'" : "") +
-                       (cellCss.length ? " class='" + cellCss.join(" ") + "'" : "") + 
-                       "/>")
-            .html(info.html)
+        var metaData = getAllCustomMetadata(null, null, info) || {};
+        patchupCellAttributes(metaData, info, "columnheader");
+        metaData.id = mkSaneId(m, i);
+        var stringArray = [
+          "<div"
+        ];
+        // I/F: function appendMetadataAttributes(stringArray, row, cell, data, columnDef, rowDataItem, cellMetaInfo)
+        appendMetadataAttributes(stringArray, -2000, cell, metaData, m, null, info);
+  
+        stringArray.push(">");
+
+        stringArray.push(info.html);
+
+        stringArray.push("</div>");
+
+        var header = $(stringArray.join(""))
             .data("column", m)
             .width(info.cellWidth)
             .appendTo(appendTo);
@@ -1067,6 +1085,7 @@ if (typeof Slick === "undefined") {
             cellCss: cellCss,
             cellStyles: cellStyles,
             html: "",
+            attributes: {},
             toolTip: m.headerRowToolTip || null,
             colspan: 1,
             rowspan: 1,
@@ -1080,12 +1099,22 @@ if (typeof Slick === "undefined") {
             }
           };
           info.html = getHeaderRowFormatter(-1000, cell)(-1000, cell, m.initialHeaderRowValue, m, null /* rowDataItem */, info);
-          headerRowCell = $("<div></div>")
-              .attr("title", info.toolTip)
-              .data("column", m)
-              .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
-              .attr("class", cellCss.join(" "))
-              .appendTo($headerRow);
+          var stringArray = [];
+          stringArray.push("<div");
+
+          var metaData = getAllCustomMetadata(null, null, info) || {};
+          patchupCellAttributes(metaData, info, "columnbaseheader");
+          appendMetadataAttributes(stringArray, -1000, cell, metaData, m, null, info);
+
+          stringArray.push(">");
+
+          stringArray.push(info.html);
+
+          stringArray.push("</div>");
+
+          headerRowCell = $(stringArray.join(""))
+            .data("column", m)
+            .appendTo($headerRow);
 
           trigger(self.onHeaderRowCellRendered, {
             node: headerRowCell[0],
@@ -1096,12 +1125,15 @@ if (typeof Slick === "undefined") {
         }
         if (options.showFooterRow) {
           cellCss = ["ui-state-default", "slick-footerrow-column", "l" + cell, "r" + cell];
-          if (m.footerCssClass) cellCss.push(m.footerCssClass);
+          if (m.footerCssClass) {
+            cellCss.push(m.footerCssClass);
+          }
           cellStyles = [];
           info = {
             cellCss: cellCss,
             cellStyles: cellStyles,
             html: "",
+            attributes: {},
             toolTip: m.footerRowToolTip || null,
             colspan: 1,
             rowspan: 1,
@@ -1115,11 +1147,21 @@ if (typeof Slick === "undefined") {
             }
           };
           info.html = getHeaderRowFormatter(-3000, cell)(-3000, cell, m.initialFooterRowValue, m, null /* rowDataItem */, info);
-          footerRowCell = $("<div></div>")
-              .attr("title", info.toolTip)
+          var stringArray = [];
+          stringArray.push("<div");
+
+          var metaData = getAllCustomMetadata(null, null, info) || {};
+          patchupCellAttributes(metaData, info, "columnfooter");
+          appendMetadataAttributes(stringArray, -3000, cell, metaData, m, null, info);
+
+          stringArray.push(">");
+
+          stringArray.push(info.html);
+
+          stringArray.push("</div>");
+
+          footerRowCell = $(stringArray.join(""))
               .data("column", m)
-              .attr("style", cellStyles.length ? cellStyles.join(";") + ";" : null)
-              .attr("class", cellCss.join(" "))
               .appendTo($footerRow);
 
           trigger(self.onFooterRowCellRendered, {
@@ -1591,7 +1633,7 @@ if (typeof Slick === "undefined") {
             .bind("draginit", function (e, dd) {
               onColumnResizeDragInit(e, dd, i);
             })
-            .bind("dragstart touchstart", function (e, dd) {
+            .bind("dragstart touchstart", {distance: 3}, function (e, dd) {
               onColumnResizeDragStart(e, dd, i);
             })
             .bind("drag touchmove", function (e, dd) {
@@ -1865,6 +1907,7 @@ if (typeof Slick === "undefined") {
       postProcessedRows = undefined;
       cellCssClasses = undefined;
       rowsCache = undefined;
+      deletedRowsCache = undefined;
       rowPositionCache = undefined;
       cellSpans = undefined;
       selectedRows = undefined;
@@ -1974,7 +2017,7 @@ if (typeof Slick === "undefined") {
 
       var reRender = false;
       for (i = 0; i < columns.length; i++) {
-        if (columns[i].rerenderOnResize && columns[i].width != widths[i]) {
+        if (columns[i].rerenderOnResize && columns[i].width !== widths[i]) {
           reRender = true;
         }
         columns[i].width = widths[i];
@@ -2237,7 +2280,9 @@ if (typeof Slick === "undefined") {
     // ( http://commondatastorage.googleapis.com/io-2013/presentations/223.pdf / https://github.com/paperjs/paper.js/issues/466 )
     function appendCellCssStylesToArray(dst, cellCssClasses, row, m) {
       for (var key in cellCssClasses) {
-        var classes = (cellCssClasses[key] && cellCssClasses[key][row]);
+        assert(cellCssClasses.hasOwnProperty(key));
+        var clsdef = cellCssClasses[key];
+        var classes = (clsdef && clsdef[row]);
         if (classes && classes[m.id]) {
           dst.push(classes[m.id]);
         }
@@ -2322,6 +2367,7 @@ if (typeof Slick === "undefined") {
           cellCss: cellCss,
           cellStyles: [],
           html: "",
+          attributes: {},
           row: row,
           cell: cell,
           colspan: colspan,
@@ -2339,7 +2385,7 @@ if (typeof Slick === "undefined") {
 
       if (config.height) {
         var altCellHeight = getCellHeight(row, rowspan);
-        info.isNonStandardCellHeight = (cellHeight != altCellHeight);
+        info.isNonStandardCellHeight = (cellHeight !== altCellHeight);
         info.cellHeight = cellHeight;
       }
 
@@ -2563,7 +2609,7 @@ if (typeof Slick === "undefined") {
     // if the Y coordinate points at a spot 25% from the top of the row, then
     // `returnValue.fraction` will be 0.25
     //
-    // `returnValue.fraction == 0.0` would identify the top pixel within the row.
+    // `returnValue.fraction === 0.0` would identify the top pixel within the row.
     //
     // When the Y coordinate points outside the grid, out-of-range numbers will be produced.
     //
@@ -2738,18 +2784,18 @@ if (typeof Slick === "undefined") {
       return false;
     }
 
+    var processHtmlEntities = new Slick.HtmlEntities();
+
     function defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       assert(cellMetaInfo);
-      if (value == null) {
-        return "";
-      } else {
-        // Safari 6 fix: (value + "") instead of .toString()
-        value = "" + value;
-        if (cellMetaInfo.outputPlainText) {
-          return value;
+      if (cellMetaInfo.outputPlainText) {
+        if (value == null) {
+          return "";
         } else {
-          return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+          return "" + value;
         }
+      } else {
+        return processHtmlEntities.encode(value);
       }
     }
 
@@ -2758,6 +2804,7 @@ if (typeof Slick === "undefined") {
       // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
       var output = defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo);
       if (!cellMetaInfo.outputPlainText) {
+        // Do create an outer SPAN so that we can style the entire header cell *excluding* the (optional) column resizer component:
         output = "<span class='slick-column-name'>" + output + "</span>";
       }
       return output;
@@ -2768,6 +2815,7 @@ if (typeof Slick === "undefined") {
       // make sure column names with & ampersands and/or < / > less-than/greater-then characters are properly rendered in HTML:
       var output = defaultFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo);
       if (!cellMetaInfo.outputPlainText) {
+        // Do create an outer SPAN so that we can style the entire header cell *excluding* the (optional) column resizer component:
         output = "<span class='slick-extra-headerrow-column'>" + output + "</span>";
       }
       return output;
@@ -2893,29 +2941,93 @@ if (typeof Slick === "undefined") {
       return item[columnDef.field] = value;
     }
 
+    // Combines the various obj.attributes collections into one; returns NULL when no custom metadata was obtained at all.
+    // 
+    // Notes: 
+    // - Attributes which are set to UNDEFINED are not included in the output. 
+    // - Attributes which are set to NULL, do get included in the returned set.
+    // - Attributes specified in a later function argument override the same ones in a previous argument: 
+    //   mkCellHtmlOutput has precedence over columnMetadata, which has precedence over rowMetadata.
+    function getAllCustomMetadata(rowMetadata, columnMetadata, mkCellHtmlOutput) {
+      var obj = {};
+      var attr, val, meta;
+      var count = 0;
+
+      if (rowMetadata && rowMetadata.attributes) {
+        meta = rowMetadata.attributes;
+
+        for (attr in meta) {
+          assert(meta.hasOwnProperty(attr));
+          val = meta[attr];
+          if (val !== undefined) {
+            obj[attr] = val;
+            count++;
+          }
+        }
+      }
+
+      if (columnMetadata && columnMetadata.attributes) {
+        meta = columnMetadata.attributes;
+
+        for (attr in meta) {
+          assert(meta.hasOwnProperty(attr));
+          val = meta[attr];
+          if (val !== undefined) {
+            obj[attr] = val;
+            count++;
+          }
+        }
+      }
+
+      if (mkCellHtmlOutput && mkCellHtmlOutput.attributes) {
+        meta = mkCellHtmlOutput.attributes;
+  
+        for (attr in meta) {
+          assert(meta.hasOwnProperty(attr));
+          val = meta[attr];
+          if (val !== undefined) {
+            obj[attr] = val;
+            count++;
+          }
+        }
+      }
+
+      if (count) {
+        return obj;
+      }
+      return null;
+    }
+
     function appendRowHtml(stringArray, row, range, dataLength) {
       var d = getDataItem(row);
       var dataLoading = row < dataLength && !d;
-      var rowCss = "slick-row" +
+      var rowCss = "ui-widget-content slick-row" +
           (dataLoading ? " loading" : "") +
           (row === activeRow ? " active" : "") +
-          (row % 2 == 1 ? " odd" : " even") +
+          (row % 2 === 1 ? " odd" : " even") +
           " slick-row-" + row;
 
       if (!d) {
         rowCss += " " + options.addNewRowCssClass;
       }
 
-      var metadata = data.getItemMetadata && data.getItemMetadata(row, false);
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, false);
 
-      if (metadata && metadata.cssClasses) {
-        rowCss += " " + (typeof metadata.cssClasses === 'function' ? metadata.cssClasses(row) : metadata.cssClasses);
+      if (rowMetadata && rowMetadata.cssClasses) {
+        rowCss += " " + (typeof rowMetadata.cssClasses === 'function' ? rowMetadata.cssClasses(row) : rowMetadata.cssClasses);
       }
 
-      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px" +
-        (getRowHeight(row) !== options.rowHeight ? "; height:" + getRowHeight(row) + "px" : "") + "' role='row'");
+      stringArray.push("<div");
 
-      appendMetadataAttributes(stringArray, row, null, metadata, null, null, {});
+      var metaData = getAllCustomMetadata(rowMetadata) || {};
+      metaData.role = "row";
+      assert(!metaData.class);
+      metaData.class = rowCss;
+      var rowStyle = " top: " + getRowTop(row) + "px;" +
+            (getRowHeight(row) !== options.rowHeight ? " height: " + getRowHeight(row) + "px;" : "");
+      assert(!metaData.style);
+      metaData.style = rowStyle;
+      appendMetadataAttributes(stringArray, row, null, metaData, null, null, {});
 
       stringArray.push(">");
 
@@ -2937,13 +3049,14 @@ if (typeof Slick === "undefined") {
           }
 
           // look up by id, then index
-          columnData = metadata && metadata.columns && (metadata.columns[m.id] || metadata.columns[i]);
-          appendCellHtml(stringArray, row, i, metadata, columnData, d);
+          columnData = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[i]);
+          // I/F: function appendCellHtml(stringArray, row, cell, rowMetadata, columnMetadata, rowDataItem)
+          appendCellHtml(stringArray, row, i, rowMetadata, columnData, d);
         }
       }
 
-      if (metadata && metadata.appendHtml) {
-        stringArray.push(metadata.appendHtml);
+      if (rowMetadata && rowMetadata.appendHtml) {
+        stringArray.push(rowMetadata.appendHtml);
       }
 
       stringArray.push("</div>");
@@ -2986,7 +3099,7 @@ if (typeof Slick === "undefined") {
       appendCellCssStylesToArray(cellCss, cellCssClasses, row, m);
 
       var cellHeight = getCellHeight(row, rowspan);
-      if (cellHeight != options.rowHeight - cellHeightDiff) {
+      if (cellHeight !== options.rowHeight - cellHeightDiff) {
         cellStyles.push("height:" + cellHeight + "px");
       }
 
@@ -2995,6 +3108,7 @@ if (typeof Slick === "undefined") {
         cellCss: cellCss,
         cellStyles: cellStyles,
         html: "",
+        attributes: {},
         colspan: colspan,
         rowspan: rowspan,
         cellHeight: cellHeight,
@@ -3003,45 +3117,102 @@ if (typeof Slick === "undefined") {
       });
       if (rowDataItem) {
         var value = getDataItemValueForColumn(rowDataItem, m, rowMetadata, columnMetadata);
-        // allow the formatter to edit the outer cell's DIV CSS as well:
+        // allow the formatter to edit the outer cell's DIV CSS as well.
+        // 
+        // I/F: function formatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo)
         info.html = getFormatter(row, cell)(row, cell, value, m, rowDataItem, info);
       }
       return info;
+    }
+
+    function patchupCellAttributes(metaData, info, role, ariaRefID) {
+      assert(metaData);
+      assert(info);
+      assert(role);
+      metaData.role = role;
+      // backwards compatible: use .toolTip when the corresponding DOM attribute isn't set yet
+      if (info.toolTip && metaData.title === undefined) {
+        metaData.title = metaData["data-title"] = info.toolTip;
+      }
+      if (info.cellStyles.length) {
+        metaData.style = info.cellStyles.join("; ") + ";";
+      }
+      if (info.cellCss.length) {
+        metaData.class = info.cellCss.join(" ");
+      }
+      var tabindex = -1;
+      if (info.attributes.tabindex != null) {
+        tabindex = info.attributes.tabindex; 
+      }
+      metaData.tabindex = tabindex;
+      if (ariaRefID) {
+        metaData["aria-describedby"] = ariaRefID;
+      }
     }
 
     function appendCellHtml(stringArray, row, cell, rowMetadata, columnMetadata, rowDataItem) {
       assert(row >= 0);
       assert(cell >= 0);
       var m = columns[cell];
-      var fmt = mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem);
-      var styles;
-      if (fmt.cellStyles.length > 0) {
-        styles = "style='" + fmt.cellStyles.join(";") + ";' ";
-      } else {
-        styles = "";
-      }
-      stringArray.push("<div class='" + fmt.cellCss.join(" ") + "' " +
-                       styles + "aria-describedby='" + mkSaneId(m, cell) +
-                       "' tabindex='-1' role='gridcell'");
+      // I/F: function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem)
+      var info = mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem);
+      
+      stringArray.push("<div");
 
-      appendMetadataAttributes(stringArray, row, cell, columnMetadata, m, rowDataItem, {});
+      var metaData = getAllCustomMetadata(null, columnMetadata, info) || {};
+      patchupCellAttributes(metaData, info, "gridcell", mkSaneId(m, cell));
+      appendMetadataAttributes(stringArray, row, cell, metaData, m, rowDataItem, info);
 
       stringArray.push(">");
 
-      stringArray.push(fmt.html);
+      stringArray.push(info.html);
 
       stringArray.push("</div>");
 
       rowsCache[row].cellRenderQueue.push(cell);
     }
 
-    function appendMetadataAttributes(stringArray, row, cell, metadata, columnDef, rowDataItem, cellMetaInfo) {
-      if (metadata) {
-        for (var attr in metadata.attributes) {
-          // formatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo)
-          stringArray.push(" " + attr + "='" + defaultFormatter(row, cell, metadata.attributes[attr], columnDef, rowDataItem, cellMetaInfo) + "'");
+    function appendMetadataAttributes(stringArray, row, cell, data, columnDef, rowDataItem, cellMetaInfo) {
+      if (data) {
+        for (var attr in data) {
+          assert(data.hasOwnProperty(attr));
+          // I/F: function formatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo)
+          stringArray.push(" " + attr + "='" + processHtmlEntities.encode(data[attr]) + "'");
         }
       }
+    }
+
+    function updateElementHtml($el, info) {
+      assert(info);
+      var metaData = info.attributes;
+      assert(metaData);
+      if (info.toolTip && metaData.title === undefined) {
+        metaData.title = metaData["data-title"] = info.toolTip;
+      }
+      if (info.cellStyles.length) {
+        metaData.style = info.cellStyles.join("; ") + ";";
+      } else {
+        metaData.style = null;
+      }
+      if (info.cellCss.length) {
+        metaData.class = info.cellCss.join(" ");
+      } else {
+        assert(0);
+        metaData.class = "";
+      }
+      var tabindex = -1;
+      if (info.attributes.tabindex != null) {
+        tabindex = info.attributes.tabindex; 
+      }
+      metaData.tabindex = tabindex;
+
+      // apply the new attributes:
+      for (var attr in metaData) {
+        assert(metaData.hasOwnProperty(attr));
+        var val = metaData[attr];
+        $el.attr(attr, val);
+      }
+      $el.html(info.html);
     }
 
     function cleanupRows(rangeToKeep) {
@@ -3129,6 +3300,10 @@ if (typeof Slick === "undefined") {
       } else {
         //$canvas[0].removeChild(cacheEntry.rowNode);
         cacheEntry.rowNode.classList.add('destroyed');
+        deletedRowsCache[row] = rowsCache[row];
+        if (deletedRowsCacheStartIndex > row) {
+          deletedRowsCacheStartIndex = row;
+        }
       }
 
       rowsCache[row] = undefined;
@@ -3163,8 +3338,8 @@ if (typeof Slick === "undefined") {
         if (rowsCache[row]) {
           removeRowFromCache(row);
         }
-        var metadata = data.getItemMetadata && data.getItemMetadata(row, false);
-        if (!metadata) {
+        var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, false);
+        if (!rowMetadata) {
           continue;
         }
         var spanRow = cellSpans[row];
@@ -3172,7 +3347,7 @@ if (typeof Slick === "undefined") {
           continue;
         }
         // if the row height changes, all its successors should invalidate their style.top positions
-        if (metadata.height && metadata.height != getRowHeight(row)) {
+        if (rowMetadata.height && rowMetadata.height !== getRowHeight(row)) {
           rowPositionCache[row] = undefined;
           if (row < invalidateTopFrom) {
             invalidateTopFrom = row + 1;
@@ -3195,7 +3370,7 @@ if (typeof Slick === "undefined") {
 
         // check changes in row/colspans
         for (c = 0; c < columnCount; c += colspan) {
-          var columnMetadata = metadata.columns && (metadata.columns[columns[c].id] || metadata.columns[c]);
+          var columnMetadata = rowMetadata.columns && (rowMetadata.columns[columns[c].id] || rowMetadata.columns[c]);
           colspan = 1;
           if (columnMetadata) {
             rowspan = columnMetadata.rowspan || 1;
@@ -3265,7 +3440,7 @@ if (typeof Slick === "undefined") {
         var spans = getSpans(row, cell);
         assert(spans ? spans.length === 4 : true);
         assert(spans ? spans[3] >= 1 : true);
-        if (spans && (spans[0] != row || spans[1] != cell)) {
+        if (spans && (spans[0] !== row || spans[1] !== cell)) {
           updateCell(spans[0], spans[1]);
           return;
         }
@@ -3281,13 +3456,13 @@ if (typeof Slick === "undefined") {
         }
 
         if (d) {
-          var fmt = mkCellHtml(row, cell, rowMetadata, columnMetadata, d);
+          // I/F: function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem)
+          var info = mkCellHtml(row, cell, rowMetadata, columnMetadata, d);
           var el = $(cellNode);
-          el.attr("style", fmt.cellStyles.length ? fmt.cellStyles.join(";") + ";" : null);
-          el.attr("class", fmt.cellCss.join(" "));
-          el.html(fmt.html);
+          updateElementHtml(el, info);
         } else {
           cellNode.innerHTML = "";
+          // TODO: clear all attributes?
         }
         invalidatePostProcessingResults(row);
       }
@@ -3318,11 +3493,10 @@ if (typeof Slick === "undefined") {
         } else if (d) {
           // look up by id, then index
           var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[columnIdx]);
-          var fmt = mkCellHtml(row, columnIdx, rowMetadata, columnMetadata, d);
+          // I/F: function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem)
+          var info = mkCellHtml(row, columnIdx, rowMetadata, columnMetadata, d);
           var el = $(node);
-          el.attr("style", fmt.cellStyles.length ? fmt.cellStyles.join(";") + ";" : null);
-          el.attr("class", fmt.cellCss.join(" "));
-          el.html(fmt.html);
+          updateElementHtml(el, info);
         } else {
           node.innerHTML = "";
         }
@@ -3338,7 +3512,7 @@ if (typeof Slick === "undefined") {
         cellHeight = getRowBottom(rowSpanBottomIdx) - getRowTop(row);
       } else {
         var rowHeight = getRowHeight(row);
-        if (rowHeight != options.rowHeight) {
+        if (rowHeight !== options.rowHeight) {
           cellHeight = rowHeight;
         }
       }
@@ -3557,10 +3731,10 @@ if (typeof Slick === "undefined") {
       delete range.topPx;
       delete range.bottomPx;
 
-      if (vScrollDir == -1) {
+      if (vScrollDir === -1) {
         range.top -= buffer;
         range.bottom += minBuffer;
-      } else if (vScrollDir == 1) {
+      } else if (vScrollDir === 1) {
         range.top -= minBuffer;
         range.bottom += buffer;
       } else {
@@ -3588,6 +3762,7 @@ if (typeof Slick === "undefined") {
         if (cacheEntry.cellRenderQueue.length) {
           var lastChild = cacheEntry.rowNode.lastChild;
           while (cacheEntry.cellRenderQueue.length) {
+            assert(lastChild.className.indexOf('slick-cell') >= 0);
             if (lastChild.className.indexOf('slick-cell') >= 0) {
               var columnIdx = cacheEntry.cellRenderQueue.pop();
               cacheEntry.cellNodesByColumnIdx[columnIdx] = lastChild;
@@ -3606,6 +3781,7 @@ if (typeof Slick === "undefined") {
 
       // Remove cells outside the range.
       var cellsToRemove = [];
+      var minCachedDeletedCellNodeIndex = cacheEntry.deletedCellNodesByColumnStart;
       var minCachedCellNodeIndex = cacheEntry.cellNodesByColumnStart;
       var cachedCellNodesByColumnIdxs = cacheEntry.cellNodesByColumnIdx;
       for (var columnIdx = minCachedCellNodeIndex, end = cachedCellNodesByColumnIdxs.length; columnIdx < end; columnIdx++) {
@@ -3628,6 +3804,7 @@ if (typeof Slick === "undefined") {
       while ((cellToRemove = cellsToRemove.pop()) != null) {
         //cacheEntry.rowNode.removeChild(cacheEntry.cellNodesByColumnIdx[cellToRemove]);
         cacheEntry.cellNodesByColumnIdx[cellToRemove].classList.add('destroyed');
+        cacheEntry.deletedCellNodesByColumnIdx[cellToRemove] = cacheEntry.cellNodesByColumnIdx[cellToRemove];
         delete cacheEntry.cellNodesByColumnIdx[cellToRemove];
         if (postProcessedRows[row]) {
           // array element delete vs. setting it to undefined: http://jsperf.com/delete-vs-undefined-vs-null/19 
@@ -3636,10 +3813,14 @@ if (typeof Slick === "undefined") {
         if (minCachedCellNodeIndex === cellToRemove) {
           minCachedCellNodeIndex++;
         }
+        if (minCachedDeletedCellNodeIndex > cellToRemove) {
+          minCachedDeletedCellNodeIndex = cellToRemove;
+        }
         totalCellsRemoved++;
       }
 
       cacheEntry.cellNodesByColumnStart = minCachedCellNodeIndex;
+      cacheEntry.deletedCellNodesByColumnStart = minCachedDeletedCellNodeIndex;
     }
 
     function cleanUpAndRenderCells(range, mandatoryRange) {
@@ -3652,6 +3833,9 @@ if (typeof Slick === "undefined") {
       var colspan;
       var columnData;
       var i, ii;
+      var rowMetadata;
+      var columnMetadata;
+      var d;
 
       for (var row = range.top, btm = range.bottom; row <= btm; row++) {
         cacheEntry = rowsCache[row];
@@ -3669,10 +3853,9 @@ if (typeof Slick === "undefined") {
         // Render missing cells.
         cellsAdded = 0;
 
-        var metadata = data.getItemMetadata && data.getItemMetadata(row, false);
-        metadata = metadata && metadata.columns;
+        rowMetadata = data.getItemMetadata && data.getItemMetadata(row, false);
 
-        var d = getDataItem(row);
+        d = getDataItem(row);
 
         // TODO:  shorten this loop (index? heuristics? binary search?)
         for (i = 0, ii = columns.length; i < ii; i += colspan) {
@@ -3694,8 +3877,9 @@ if (typeof Slick === "undefined") {
           assert(Math.min(ii, i + colspan) === i + colspan);
           if (columnPosLeft[i + colspan] > range.leftPx) {
             // look up by id, then index
-            columnData = metadata && (metadata[columns[i].id] || metadata[i]);
-            appendCellHtml(stringArray, row, i, metadata, columnData, d);
+            columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[columns[i].id] || rowMetadata.columns[i]);
+            // I/F: function appendCellHtml(stringArray, row, cell, rowMetadata, columnMetadata, rowDataItem)
+            appendCellHtml(stringArray, row, i, rowMetadata, columnMetadata, d);
             cellsAdded++;
           }
         }
@@ -3763,6 +3947,11 @@ if (typeof Slick === "undefined") {
             // The lowest = starting index for the cellNodesByColumnIdx[] array above.
             cellNodesByColumnStart: MAX_INT,
 
+            deletedCellNodesByColumnIdx: [],
+
+            // The lowest = starting index for the deletedCellNodesByColumnIdx[] array above.
+            deletedCellNodesByColumnStart: MAX_INT,
+
             // Column indices of cell nodes that have been rendered, but not yet indexed in
             // cellNodesByColumnIdx.  These are in the same order as cell nodes added at the
             // end of the row.
@@ -3797,6 +3986,11 @@ if (typeof Slick === "undefined") {
 
           // The lowest = starting index for the cellNodesByColumnIdx[] array above.
           cellNodesByColumnStart: MAX_INT,
+
+          deletedCellNodesByColumnIdx: [],
+
+          // The lowest = starting index for the deletedCellNodesByColumnIdx[] array above.
+          deletedCellNodesByColumnStart: MAX_INT,
 
           // Column indices of cell nodes that have been rendered, but not yet indexed in
           // cellNodesByColumnIdx.  These are in the same order as cell nodes added at the
@@ -3874,7 +4068,9 @@ if (typeof Slick === "undefined") {
       if (!options.enableAsyncPostRender) {
         return;
       }
-      if (h_postrender) clearTimeout(h_postrender);
+      if (h_postrender) {
+        clearTimeout(h_postrender);
+      }
       h_postrender = setTimeout(asyncPostProcessRows, options.asyncPostRenderDelay);
     }
 
@@ -3924,6 +4120,8 @@ if (typeof Slick === "undefined") {
       if (mandatoryRange && typeof mandatoryRange === 'object') {
         assert('top' in mandatoryRange);
         assert('bottom' in mandatoryRange);
+        assert('left' in mandatoryRange);
+        assert('right' in mandatoryRange);
         rendered = mandatoryRange;
       } else {
         rendered = getRenderedRange();
@@ -3934,12 +4132,29 @@ if (typeof Slick === "undefined") {
         cleanupRows(rendered);
       }
 
-      // add new rows & missing cells in existing rows
-      if (lastRenderedScrollLeft !== scrollLeft || mandatoryRange) {
+      // Add new rows & missing cells in existing rows.
+      // 
+      // When a 'mandatory' render is executed (which usually spans a tiny area)
+      // then we must remember if a full render was pending in the meantime as 
+      // otherwise the cell cache gets corrupted: the result being rows in the
+      // viewport with lots of 'missing cells'. Then on the next non-mandatory
+      // render() round, we should call cleanUpAndRenderCells() again to ensure 
+      // those 'missing cells' get rendered after all. 
+      if (lastRenderedScrollLeft !== scrollLeft || mandatoryRange || previousRenderWasIncomplete) {
+        if (isRenderPending() && mandatoryRange) {
+          previousRenderWasIncomplete = true;
+        } else {
+          previousRenderWasIncomplete = false;
+        }
         cleanUpAndRenderCells(rendered, mandatoryRange);
       }
 
-      $canvas.find('.destroyed').remove();
+      // only destroy the nodes which are not going to be replaced by new ones yet:
+      if (!mandatoryRange || 1) {
+        $canvas.find('.destroyed').remove();
+      } else {
+        deletedRowsCache[rendered.top].deletedCellNodesByColumnIdx[rendered.left].remove();
+      }
 
       // render missing rows
       var needToReselectCell = renderRows(rendered, mandatoryRange);
@@ -3953,9 +4168,9 @@ if (typeof Slick === "undefined") {
         lastRenderedScrollLeft = scrollLeft;
       } else {
         // add new rows & their cells when we execute in mandatory render mode
-        assert(rowsCache[mandatoryRange.top]);
-        if (rowsCache[mandatoryRange.top].cellRenderQueue.length) {
-          assert(rowsCache[mandatoryRange.top].rowNode);
+        assert(rowsCache[rendered.top]);
+        if (rowsCache[rendered.top].cellRenderQueue.length) {
+          assert(rowsCache[rendered.top].rowNode);
           cleanUpAndRenderCells(rendered, mandatoryRange);
         }
       }
@@ -3964,14 +4179,14 @@ if (typeof Slick === "undefined") {
 
     function handleHeaderRowScroll() {
       var scrollLeft = $headerRowScroller[0].scrollLeft;
-      if (scrollLeft != $viewport[0].scrollLeft) {
+      if (scrollLeft !== $viewport[0].scrollLeft) {
         $viewport[0].scrollLeft = scrollLeft;
       }
     }
 
     function handleFooterRowScroll() {
       var scrollLeft = $footerRowScroller[0].scrollLeft;
-      if (scrollLeft != $viewport[0].scrollLeft) {
+      if (scrollLeft !== $viewport[0].scrollLeft) {
         $viewport[0].scrollLeft = scrollLeft;
       }
     }
@@ -4075,7 +4290,7 @@ out:
               node = cachedCellNodesByColumnIdxs[columnIdx];
           assert(m);
           if (node && m.asyncPostRender && !postProcessedRows[row][columnIdx]) {
-            m.asyncPostRender(node, row, getDataItem(row), m);
+            m.asyncPostRender(node, row, columnIdx, getDataItem(row), m);
             postProcessedRows[row][columnIdx] = true;
             // When there was one async task, there may be more to follow...
             requeue = true;
@@ -4110,7 +4325,7 @@ out:
         if (removedRowHash) {
           //@TO-OPT
           for (columnId in removedRowHash) {
-            if (!addedRowHash || removedRowHash[columnId] != addedRowHash[columnId]) {
+            if (!addedRowHash || removedRowHash[columnId] !== addedRowHash[columnId]) {
               node = getCellNode(row, getColumnIndex(columnId));
               if (node) {
                 $(node).removeClass(removedRowHash[columnId]);
@@ -4122,7 +4337,7 @@ out:
         if (addedRowHash) {
           //@TO-OPT
           for (columnId in addedRowHash) {
-            if (!removedRowHash || removedRowHash[columnId] != addedRowHash[columnId]) {
+            if (!removedRowHash || removedRowHash[columnId] !== addedRowHash[columnId]) {
               node = getCellNode(row, getColumnIndex(columnId));
               if (node) {
                 $(node).addClass(addedRowHash[columnId]);
@@ -4393,7 +4608,8 @@ out:
     }
 
     function handleDragEnd(e, dd) {
-      return trigger(self.onDragEnd, dd, e);
+      var rv = trigger(self.onDragEnd, dd, e);
+      return rv;
     }
 
     function preventDefaultKeyboardActionHack(evt) {
@@ -4545,11 +4761,13 @@ out:
       }
 
       // are we editing this cell?
+      assert(cell.node);
       if (activeCellNode === cell.node && currentEditor != null) {
         return;
       }
 
-      return trigger(self.onContextMenu, cell, e);
+      var rv = trigger(self.onContextMenu, cell, e);
+      return rv;
     }
 
     function handleDblClick(e) {
@@ -4577,11 +4795,12 @@ out:
       var column = headerInfo.columnDef;
       assert(column);
       if (!headerDragCommencingLock) {
-        return trigger(self.onHeaderMouseEnter, {
+        var rv = trigger(self.onHeaderMouseEnter, {
           column: column,
           cell: getColumnIndex(column.id),
           node: headerInfo.$header[0]
         }, e);
+        return rv;
       }
     }
 
@@ -4593,11 +4812,12 @@ out:
       var column = headerInfo.columnDef;
       assert(column);
       if (!headerDragCommencingLock) {
-        return trigger(self.onHeaderMouseLeave, {
+        var rv = trigger(self.onHeaderMouseLeave, {
           column: column,
           cell: getColumnIndex(column.id),
           node: headerInfo.$header[0]
         }, e);
+        return rv;
       }
     }
 
@@ -4628,11 +4848,12 @@ out:
       }
       var column = headerInfo.columnDef;
       assert(column);
-      return trigger(self.onHeaderClick, {
+      var rv = trigger(self.onHeaderClick, {
         column: column,
         cell: getColumnIndex(column.id),
         node: headerInfo.$header[0]
       }, e);
+      return rv;
     }
 
     function handleHeaderDblClick(e) {
@@ -4642,23 +4863,26 @@ out:
       }
       var column = headerInfo.columnDef;
       assert(column);
-      return trigger(self.onHeaderDblClick, {
+      var rv = trigger(self.onHeaderDblClick, {
         column: column,
         cell: getColumnIndex(column.id),
         node: headerInfo.$header[0]
       }, e);
+      return rv;
     }
 
     function handleMouseEnter(e) {
       var cellInfo = getCellFromEvent(e);
       assert(cellInfo);
-      return trigger(self.onMouseEnter, cellInfo, e);
+      var rv = trigger(self.onMouseEnter, cellInfo, e);
+      return rv;
     }
 
     function handleMouseLeave(e) {
       var cellInfo = getCellFromEvent(e);
       assert(cellInfo);
-      return trigger(self.onMouseLeave, cellInfo, e);
+      var rv = trigger(self.onMouseLeave, cellInfo, e);
+      return rv;
     }
 
     function cellExists(row, cell) {
@@ -4672,8 +4896,8 @@ out:
     // if the Y coordinate points at a spot 25% from the top of the row, then
     // `returnValue.rowFraction` will be 0.25
     //
-    // `returnValue.rowFraction == 0.0` would identify the top pixel within the row.
-    // `returnValue.cellFraction == 0.0` would identify the left-most pixel within the cell.
+    // `returnValue.rowFraction === 0.0` would identify the top pixel within the row.
+    // `returnValue.cellFraction === 0.0` would identify the left-most pixel within the cell.
     //
     // When the coordinate points outside the grid, out-of-range row/cell coordinates will be produced.
     function getCellFromPoint(x, y) {
@@ -4694,14 +4918,14 @@ out:
       if (x < 0) {
         cell--;
         if (!cellWidth) {
-          assert(cell == -1);
+          assert(cell === -1);
           cellWidth = 1;
         }
         x += cellWidth;
         cellFraction = x / cellWidth;
       } else if (x > 0) {
         if (!cellWidth) {
-          assert(cell == columns.length);
+          assert(cell === columns.length);
           cellWidth = 1;
         }
         cellFraction = x / cellWidth;
@@ -4837,7 +5061,7 @@ out:
       }
 
       // console.log("setFocus: SET FOCUS TO A SINK: START");
-      if (tabbingDirection == -1) {
+      if (tabbingDirection === -1) {
         $focusSink[0].focus();
       } else {
         $focusSink2[0].focus();
@@ -4992,6 +5216,7 @@ out:
         }
         var newActiveCellInfo = getCellFromElement(activeCellNode);
         assert(newActiveCellInfo);
+        assert(newActiveCellInfo.node);
         //console.log("focus fixup: ", oldFocusNode, oldFocusCellInfo, activeCellNode, newActiveCellInfo);
         if (oldFocusCellInfo && oldFocusCellInfo.node !== newActiveCellInfo.node) {
           //console.log("focus fixup exec START: ", document.activeElement);
@@ -5092,10 +5317,9 @@ out:
           var rowMetadata = data.getItemMetadata && data.getItemMetadata(activeRow, activeCell);
           // look up by id, then index
           var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
-          var fmt = mkCellHtml(activeRow, activeCell, rowMetadata, columnMetadata, d);
-          $activeCellNode.attr("style", fmt.cellStyles.length ? fmt.cellStyles.join(";") + ";" : null);
-          $activeCellNode.attr("class", fmt.cellCss.join(" "));
-          $activeCellNode.html(fmt.html);
+          // I/F: function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem)
+          var info = mkCellHtml(activeRow, activeCell, rowMetadata, columnMetadata, d);
+          updateElementHtml($activeCellNode, info);
           invalidatePostProcessingResults(activeRow);
         }
       }
@@ -5228,7 +5452,7 @@ out:
         // produce a box which is positioned way outside the visible area.
         // Note: use values > 1e15 to abuse the floating point artifact
         // where adding small values to such numbers is neglected due
-        // to mantissa limitations (e.g. 1e30 + 1 == 1e30)
+        // to mantissa limitations (e.g. 1e30 + 1 === 1e30)
         return {
           top: 1e38,
           left: 1e38,
@@ -5303,12 +5527,12 @@ out:
       return absBox($container[0]);
     }
 
-    function handleActiveCellPositionChange() {
+    function handleActiveCellPositionChange(evt) {
       if (!activeCellNode) {
         return;
       }
 
-      var e = new Slick.EventData();
+      var e = new Slick.EventData(evt);
       trigger(self.onActiveCellPositionChanged, {}, e);
       if (e.isHandled()) {
         return;
@@ -5833,7 +6057,7 @@ out:
           assert(rowsCache[activeRow]);
           assert(rowsCache[activeRow].cellNodesByColumnIdx);
           assert(rowsCache[activeRow].cellNodesByColumnIdx.length > activeCell);
-          activeCellNode = rowsCache[activeRow].cellNodesByColumnIdx[activeCell];
+          activeCellNode = getCellNode(activeRow, activeCell, true);
           assert(activeCellNode);
         }
         return node;
