@@ -12,7 +12,9 @@
    * @param {boolean}  [options.enableForCells=true]        - Enable tooltip for grid cells
    * @param {boolean}  [options.enableForHeaderCells=false] - Enable tooltip for header cells
    * @param {number}   [options.maxToolTipLength=0]         - The maximum length for a tooltip
-   * @param {function} [options.getTooltip]                 - Produces the tooltip text; empty if no tooltip should be shown
+   * @param {function} [options.getTooltip]                 - Produces the tooltip text; 
+   *                                                          return empty string if no tooltip should be shown; 
+   *                                                          return NULL when the existing tooltip should not be modified
    */
   function AutoTooltips(options) {
     var _grid;
@@ -82,7 +84,9 @@
           $node: $node,
           options: options
       });
-      $node.attr("title", text);
+      if (text != null) {
+        $node.attr("title", text);
+      }
     }
 
     /**
@@ -103,7 +107,9 @@
           $node: $node,
           options: options
       });
-      $node.attr("title", text);
+      if (text != null) {
+        $node.attr("title", text);
+      }
     }
 
     // Public API
