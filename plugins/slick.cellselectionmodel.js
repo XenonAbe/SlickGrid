@@ -45,10 +45,12 @@
     function removeInvalidRanges(ranges) {
       var result = [];
 
-      for (var i = 0; i < ranges.length; i++) {
-        var r = ranges[i];
-        if (_grid.canCellBeSelected(r.fromRow, r.fromCell) && _grid.canCellBeSelected(r.toRow, r.toCell)) {
-          result.push(r);
+      if (ranges) {
+        for (var i = 0; i < ranges.length; i++) {
+          var r = ranges[i];
+          if (_grid.canCellBeSelected(r.fromRow, r.fromCell) && _grid.canCellBeSelected(r.toRow, r.toCell)) {
+            result.push(r);
+          }
         }
       }
 
