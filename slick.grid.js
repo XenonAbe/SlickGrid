@@ -3045,6 +3045,7 @@ if (typeof Slick === "undefined") {
           calculateAdjustedRowTop();
       }
       sumSizesInitialized = true;
+      updateRowCount();
     }
 
     function scrollRowToTop(row) {
