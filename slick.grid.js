@@ -1418,10 +1418,12 @@ if (typeof Slick === "undefined") {
 
     function setRowHeight(rowNum, height){
       var oldHeight = rowHeights[rowNum];
-      if (oldHeight == undefined){
+      /*
+        if (oldHeight == undefined){
           rowHeights[rowNum] = height;
           updateRowTops(rowNum, 0, height)
       }
+      */
       if (height > oldHeight) {
           rowHeights[rowNum] = height;
           updateRowTops(rowNum, oldHeight, height)
@@ -1441,26 +1443,27 @@ if (typeof Slick === "undefined") {
     }
 
     function updateRowTops(row, oldHeight, newHeight){
-        if (oldHeight != newHeight) {
-            var adjustment = 0;
-            adjustment = Number(newHeight - oldHeight);
+        //if (oldHeight != newHeight) {
+        var adjustment = 0;
+        adjustment = Number(newHeight - oldHeight);
 
-            for (var i = row+1; i < rowTops.length; i++) {
-                if (i==1){
-                    rowTops[i] = 0;
-                }
-                rowTops[i] = Number(rowTops[i]) + adjustment;
+        for (var i = row+1; i < rowTops.length; i++) {
+            if (i==1){
+                rowTops[i] = 0;
             }
+            rowTops[i] = Number(rowTops[i]) + adjustment;
         }
+       // }
     }
 
     function calculateAdjustedRowTop(){
-
         // loop through each rowHeight
         var currTop = 0;
         for (var i = 0; i < rowHeights.length; i++ ){
              if (i == 0){
-                 rowTops[i] = Number(rowHeights[i]);
+                 //rowTops[i] = Number(rowHeights[i]);
+                 rowTops[i] = 0;
+
              }else {
                  rowTops[i] = Number(rowTops[i - 1]) + Number(rowHeights[i]);
              }
@@ -1569,22 +1572,27 @@ if (typeof Slick === "undefined") {
 
     var cellCache = {};
     function appendCellHtml(stringArray, row, cell, colspan, item) {
-
-      if ( !cellCache["row"] ){
-          cellCache = {
-              "row": row,
-              "cell": cell,
-              "height": options.rowHeight
-          }
-      }
-      else if ( cellCache["row"] < row ) {
-          var h = cellCache["row"];
-          cellCache = {
-              "row": row,
-              "cell": cell,
-              "height": h.height
-          };
-      }
+        if(options.enableWrap ) {
+            // first row
+            if (!cellCache["row"]) {
+                cellCache = {
+                    "row": row,
+                    "cell": cell,
+                    "height": options.rowHeight
+                }
+            }
+            else if (cellCache["row"] != row) {
+                var h = cellCache["row"];
+                cellCache = {
+                    "row": row,
+                    "cell": cell,
+                    "height": h.height
+                };
+            }
+        } else
+        {
+            cellCache = {};
+        }
 
       var d = getDataItem(row);
       var isOdd = row % 2;
@@ -3036,8 +3044,8 @@ if (typeof Slick === "undefined") {
     function initializeRowHeights(){
       rowHeights = [];
       dataRows = data.getItems();
-
-      for ( var i =0; i < dataRows.length; i++){
+      //rowHeights[0] = 0;
+      for ( var i = 0; i < dataRows.length; i++){
           rowHeights[i] = Number(options.rowHeight);
       }
 
@@ -3046,6 +3054,14 @@ if (typeof Slick === "undefined") {
       }
       sumSizesInitialized = true;
       updateRowCount();
+    }
+
+    function clearCache(){
+        rowHeights = [];
+        rowTops = [];
+        sumSizesInitialized = false;
+        cellCache = {};
+        rowsCache = [];
     }
 
     function scrollRowToTop(row) {
@@ -3732,6 +3748,7 @@ if (typeof Slick === "undefined") {
 
       "init": finishInitialization,
       "destroy": destroy,
+      "clearCache": clearCache,
 
       // IEditor implementation
       "getEditorLock": getEditorLock,
