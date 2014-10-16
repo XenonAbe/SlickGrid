@@ -53,6 +53,22 @@ if (typeof Slick === "undefined") {
    * @param {Object}            options     Grid options.
    **/
   function SlickGrid(container, data, columns, options) {
+      var groupId = -1;
+    var rowHeights = [];
+    var rowTops = [];
+      var sumSizesInitialized = false;
+      if(options.enableWrap){
+          mapids=new Array();
+          sumSizes = new Array(data.getLength());
+          sumSize = 0;
+          sumSizesInitialized = false;
+          numRows = 0;
+
+          //will be assigned to viewportH of slickgrid
+          viewportHeight = 0;
+
+      }
+
     // settings
     var defaults = {
       explicitInitialization: false,
@@ -300,7 +316,6 @@ if (typeof Slick === "undefined") {
         createCssRules();
         resizeCanvas();
         bindAncestorScrollEvents();
-
         $container
             .bind("resize.slickgrid", resizeCanvas);
         $viewport
@@ -959,12 +974,13 @@ if (typeof Slick === "undefined") {
     function createCssRules() {
       $style = $("<style type='text/css' rel='stylesheet' />").appendTo($("head"));
       var rowHeight = (options.rowHeight - cellHeightDiff);
+
       var rules = [
         "." + uid + " .slick-header-column { left: 1000px; }",
         "." + uid + " .slick-top-panel { height:" + options.topPanelHeight + "px; }",
-        "." + uid + " .slick-headerrow-columns { height:" + options.headerRowHeight + "px; }",
-        "." + uid + " .slick-cell { height:" + rowHeight + "px; }",
-        "." + uid + " .slick-row { height:" + options.rowHeight + "px; }"
+        "." + uid + " .slick-headerrow-columns { height:" + options.headerRowHeight + "px; }"//,
+       // "." + uid + " .slick-cell { height:" + rowHeight + "px; }",
+       // "." + uid + " .slick-row { height:" + options.rowHeight + "px; }"
       ];
 
       for (var i = 0; i < columns.length; i++) {
@@ -1363,11 +1379,15 @@ if (typeof Slick === "undefined") {
     // Rendering / Scrolling
 
     function getRowTop(row) {
-      return options.rowHeight * row - offset;
+      return rowTops[row];
     }
 
     function getRowFromPosition(y) {
-      return Math.floor((y + offset) / options.rowHeight);
+        for (var i = 0; i < rowTops.length; i++) {
+            if (rowTops[i] <= (y + offset)) {
+                return i;
+            }
+        }
     }
 
     function scrollTo(y) {
@@ -1378,6 +1398,7 @@ if (typeof Slick === "undefined") {
 
       page = Math.min(n - 1, Math.floor(y / ph));
       offset = Math.round(page * cj);
+
       var newScrollTop = y - offset;
 
       if (offset != oldOffset) {
@@ -1392,6 +1413,58 @@ if (typeof Slick === "undefined") {
 
         trigger(self.onViewportChanged, {});
       }
+    }
+
+
+    function setRowHeight(rowNum, height){
+      var oldHeight = rowHeights[rowNum];
+      if (oldHeight == undefined){
+          rowHeights[rowNum] = height;
+          updateRowTops(rowNum, 0, height)
+      }
+      if (height > oldHeight) {
+          rowHeights[rowNum] = height;
+          updateRowTops(rowNum, oldHeight, height)
+      }
+    }
+
+    function getRowHeight(rowNum){
+        return rowHeights[rowNum];
+    }
+
+    function getAdjustedRowTop(rowNum){
+        return rowTops[rowNum];
+    }
+
+    function setRowTop(rowNum, top){
+        rowTops[rowNum] = top;
+    }
+
+    function updateRowTops(row, oldHeight, newHeight){
+        if (oldHeight != newHeight) {
+            var adjustment = 0;
+            adjustment = Number(newHeight - oldHeight);
+
+            for (var i = row+1; i < rowTops.length; i++) {
+                if (i==1){
+                    rowTops[i] = 0;
+                }
+                rowTops[i] = Number(rowTops[i]) + adjustment;
+            }
+        }
+    }
+
+    function calculateAdjustedRowTop(){
+
+        // loop through each rowHeight
+        var currTop = 0;
+        for (var i = 0; i < rowHeights.length; i++ ){
+             if (i == 0){
+                 rowTops[i] = Number(rowHeights[i]);
+             }else {
+                 rowTops[i] = Number(rowTops[i - 1]) + Number(rowHeights[i]);
+             }
+        }
     }
 
     function defaultFormatter(row, cell, value, columnDef, dataContext) {
@@ -1457,7 +1530,13 @@ if (typeof Slick === "undefined") {
         rowCss += " " + metadata.cssClasses;
       }
 
-      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + getRowTop(row) + "px'>");
+
+        if(options.enableWrap){
+            stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (getRowTop(row) - offset) +  "px'>");
+        }
+        else{
+            stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px'>");
+        }
 
       var colspan, m;
       for (var i = 0, ii = columns.length; i < ii; i++) {
@@ -1477,7 +1556,6 @@ if (typeof Slick === "undefined") {
             // All columns to the right are outside the range.
             break;
           }
-
           appendCellHtml(stringArray, row, i, colspan, d);
         }
 
@@ -1489,7 +1567,33 @@ if (typeof Slick === "undefined") {
       stringArray.push("</div>");
     }
 
+    var cellCache = {};
     function appendCellHtml(stringArray, row, cell, colspan, item) {
+
+      if ( !cellCache["row"] ){
+          cellCache = {
+              "row": row,
+              "cell": cell,
+              "height": options.rowHeight
+          }
+      }
+      else if ( cellCache["row"] < row ) {
+          var h = cellCache["row"];
+          cellCache = {
+              "row": row,
+              "cell": cell,
+              "height": h.height
+          };
+      }
+
+      var d = getDataItem(row);
+      var isOdd = row % 2;
+
+        if(options.enableWrap)
+            if(!sumSizesInitialized){
+                initializeRowHeights();
+            }
+
       var m = columns[cell];
       var cellCss = "slick-cell l" + cell + " r" + Math.min(columns.length - 1, cell + colspan - 1) +
           (m.cssClass ? " " + m.cssClass : "");
@@ -1504,9 +1608,51 @@ if (typeof Slick === "undefined") {
         }
       }
 
-      stringArray.push("<div class='" + cellCss + "'>");
+        if(options.enableWrap ){
+           var colWidth  = $($(".slick-header-column")[cell]).css("width")
 
-      // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
+            var rowHeight = options.rowHeight;
+            // determine the height
+            $("#width_tester").css({"width": colWidth, "white-space": "normal", "font-size:": "inherit", "word-wrap": "break-word"});
+
+            // is this a visible field, or a group column
+            if (/\S/.test(columns[cell].name) && !(d.group)){
+                $("#width_tester").text(d[columns[cell].ColumnHeader]);
+            } else if (d.group && !(d.group.sum || d.group.avg)){
+                $("#width_tester").text("Totals for " + d.group.value);
+            }
+            else if (d.group && (d.group.sum || d.group.avg)) {
+                $("#width_tester").text(d[columns[cell].group.title]);
+            }
+            else if (d.groups || d.__group == true){
+                $("#width_tester").text(d.title);
+            }
+            else {
+                $("#width_tester").text(d[columns[cell].ColumnHeader]);
+            }
+
+            rowHeight = $("#width_tester").height() + 5;
+
+            if (rowHeight < options.rowHeight){
+                rowHeight = options.rowHeight;
+            }
+
+            if (cellCache["height"] == undefined){
+                cellCache["height"] = rowHeight;
+                setRowHeight(row, rowHeight);
+            }
+            else if (rowHeight > cellCache["height"]) {
+                setRowHeight(row, rowHeight);
+                cellCache["height"] = rowHeight;
+            }
+            stringArray.push("<div class='" + cellCss + "' style='white-space:normal;word-wrap:break-word;height:" + rowHeight + "px;'>");
+        }
+        else{
+            stringArray.push("<div class='" + cellCss + "'>");
+        }
+
+
+        // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
       if (item) {
         var value = getDataItemValueForColumn(item, m);
         // cb: modification to allow full cell text to be displayed on mouseover
@@ -1644,13 +1790,18 @@ if (typeof Slick === "undefined") {
 
     function resizeCanvas() {
       if (!initialized) { return; }
+
       if (options.autoHeight) {
         viewportH = options.rowHeight * getDataLengthIncludingAddNew();
       } else {
         viewportH = getViewportHeight();
       }
 
-      numVisibleRows = Math.ceil(viewportH / options.rowHeight);
+      //numVisibleRows = Math.ceil(viewportH / options.rowHeight);
+      var visibleRange = getVisibleRange();
+      numVisibleRows = visibleRange.bottom-visibleRange.top; //+1;//Math.ceil(viewportH / options.rowHeight);
+
+      //numVisibleRows = Math.ceil(viewportH / options.rowHeight);
       viewportW = parseFloat($.css($container[0], "width", true));
       if (!options.autoHeight) {
         $viewport.height(viewportH);
@@ -1665,6 +1816,10 @@ if (typeof Slick === "undefined") {
       // Since the width has changed, force the render() to reevaluate virtually rendered cells.
       lastRenderedScrollLeft = -1;
       render();
+    }
+
+    function getGridHeight(){
+       return rowTops[rowTops.length-1]
     }
 
     function updateRowCount() {
@@ -1694,7 +1849,14 @@ if (typeof Slick === "undefined") {
       }
 
       var oldH = h;
-      th = Math.max(options.rowHeight * numberOfRows, viewportH - scrollbarDimensions.height);
+        if(options.enableWrap) {
+            th = maxSupportedCssHeight;
+            //th = Math.max(getGridHeight(), viewportH - scrollbarDimensions.height);
+            th = Math.max(rowTops[rowTops.length-1], viewportH - scrollbarDimensions.height);
+        }
+        else {
+            th = Math.max(options.rowHeight * numberOfRows, viewportH - scrollbarDimensions.height);
+        }
       if (th < maxSupportedCssHeight) {
         // just one page
         h = ph = th;
@@ -1743,12 +1905,67 @@ if (typeof Slick === "undefined") {
         viewportLeft = scrollLeft;
       }
 
-      return {
-        top: getRowFromPosition(viewportTop),
-        bottom: getRowFromPosition(viewportTop + viewportH) + 1,
-        leftPx: viewportLeft,
-        rightPx: viewportLeft + viewportW
-      };
+        if(options.enableWrap){
+            var top = 0;var bottom = 0;
+            var i=0;
+            var height = 0;
+            if(!rowHeights.length){
+                top = 0;bottom = 20;
+                return {
+                    top: top,
+                    bottom: bottom,
+                    leftPx: viewportLeft,
+                    rightPx: viewportLeft + viewportW
+                };
+            }
+
+            var topSet = false;
+            var i=0;
+            var allItems = data.getItems();
+            if (isNaN(offset)){
+                offset = 0;
+            }
+
+            for (var i=0; i < allItems.length; i++){
+
+
+                var item = allItems[i];
+                var row = data.getRowById(item.id);
+
+                if (item && item.id) {
+                    height += rowHeights[row];
+                } else {
+                    height += options.rowHeight;
+                }
+
+                if(!topSet&&height>=(viewportTop+offset)){
+                    topSet = true;
+                    top = i;
+                }
+                if(item && (rowTops[i])>(viewportTop+offset+viewportH)){
+                    bottom = i+1;
+                    break;
+                }
+                if(i == data.getLength()-1){
+                    bottom = i;
+                    break;
+                }
+            }
+            return {
+                top: top,
+                bottom: bottom,
+                leftPx: viewportLeft,
+                rightPx: viewportLeft + viewportW
+            };
+        }
+        else{
+            return {
+                top: Math.floor((viewportTop + offset) / options.rowHeight),
+                bottom: Math.ceil((viewportTop + offset + viewportH) / options.rowHeight),
+                leftPx: viewportLeft,
+                rightPx: viewportLeft + viewportW
+            };
+        }
     }
 
     function getRenderedRange(viewportTop, viewportLeft) {
@@ -2009,6 +2226,21 @@ if (typeof Slick === "undefined") {
       lastRenderedScrollTop = scrollTop;
       lastRenderedScrollLeft = scrollLeft;
       h_render = null;
+
+      if(options.enableWrap){
+            var h = 0;
+            var rowIds = Object.keys(rowHeights);
+
+            for(var i=0; i < rowHeights.length;i++){
+                if (!(isNaN(rowHeights[i] ))) {
+                    h += rowHeights[i];
+                }
+            }
+            $canvas.css('height', h);
+        }
+        else{
+            $canvas.css('height', maxSupportedCssHeight);
+        }
     }
 
     function handleHeaderRowScroll() {
@@ -2463,12 +2695,17 @@ if (typeof Slick === "undefined") {
       }
     }
 
+
     function getCellNodeBox(row, cell) {
       if (!cellExists(row, cell)) {
         return null;
       }
-
-      var y1 = getRowTop(row);
+      var y1;
+      if (options.enableWrap) {
+          y1 = getRowTop(row) - offset;
+      } else {
+          var y1 = row * options.rowHeight - offset;
+      }
       var y2 = y1 + options.rowHeight - 1;
       var x1 = 0;
       for (var i = 0; i < cell; i++) {
@@ -2795,8 +3032,46 @@ if (typeof Slick === "undefined") {
       }
     }
 
+     //cb: maintaining for dynamic row sizes
+    function initializeRowHeights(){
+      rowHeights = [];
+      dataRows = data.getItems();
+
+      for ( var i =0; i < dataRows.length; i++){
+          rowHeights[i] = Number(options.rowHeight);
+      }
+
+      if (rowHeights.length > 0){
+          calculateAdjustedRowTop();
+      }
+      sumSizesInitialized = true;
+    }
+
     function scrollRowToTop(row) {
-      scrollTo(row * options.rowHeight);
+        if(options.enableWrap){
+            //One needs to know how much he has to scroll to drag a row in to view and hence has to compute rowsizes for all rows
+            //we only tried to avoid this so far
+            if(!sumSizesInitialized){
+                console.warn("Please sit tight! it may a take a while");
+                initializeRowHeights();
+                console.warn("Done");
+            }
+            desired_id = "id_"+row;
+            var i = 0;
+            for(i=0;i<data.getLength();i++){
+                id = data.getItem(i).id;
+                if(id === desired_id)
+                    break;
+                toScroll += rowHeights[data.getItem(i).id];
+            }
+            if(i == data.getLength())
+                console.warn("Log line not in View?");
+
+            scrollTo(toScroll);
+        }
+        else{
+            scrollTo(row * options.rowHeight);
+        }
       render();
     }
 
