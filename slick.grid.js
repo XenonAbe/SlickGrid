@@ -2235,6 +2235,11 @@ if (typeof Slick === "undefined") {
       parseColumns(newColumnDefinitions);
       updateColumnCaches();
       if (initialized) {
+        // Kill the active cell when it sits in the column range which doesn't exist any more in the new column definitions / data set.
+        if (activeCellNode && activeCell >= columns.length) {
+          resetActiveCell();
+        }
+
         invalidateAllRows();
         createColumnHeaders();
         removeCssRules();
@@ -2304,6 +2309,7 @@ if (typeof Slick === "undefined") {
       if (scrollToTop) {
         scrollTo(0);
       }
+      render();
     }
 
     function getData() {
@@ -2346,13 +2352,12 @@ if (typeof Slick === "undefined") {
       var colspan = 1; // getColspan(row, cell);
       var rowspan = 1; // getRowspan(row, cell);
       var spans = getSpans(row, cell);
-      assert(spans ? spans.length === 4 : true);
-      assert(spans ? spans[3] >= 1 : true);
+      assert(spans ? spans.colspan >= 1 : true);
       if (spans) {
-        row = spans[0];
-        cell = spans[1];
-        rowspan = span[2];
-        colspan = span[3];
+        row = spans.row;
+        cell = spans.cell;
+        rowspan = spans.rowspan;
+        colspan = spans.cellspan;
       }
 
       assert(Math.min(columns.length - 1, cell + colspan - 1) === cell + colspan - 1);
@@ -2673,7 +2678,7 @@ if (typeof Slick === "undefined") {
       // we "loose" 1 probe (the second) to inefficiency if we are unlucky (though one may argue
       // that the possibly extremely skewed split point for the first probe is also a loss -- which
       // would be true if the number of rows with non-standard rowHeight is large and/or deviating
-      // from that norm options.rowHeight a lot for some rows, thus moving the targets outside the
+      // from that norm `options.rowHeight` a lot for some rows, thus moving the targets outside the
       // "is probably within 1‰ of the norm" for most row positions.
       // 
       // Alas, for my tested (large!) grids this heuristic gets us very near O(2) vs O(log2(N)).
@@ -2780,10 +2785,10 @@ if (typeof Slick === "undefined") {
       pageOffset = Math.round(page * jumpinessCoefficient);
       var newScrollTop = y - pageOffset;
 
-      if (pageOffset !== oldOffset) {
-        var range = getVisibleRange(newScrollTop);
-        cleanupRows(range);
-      }
+      // if (pageOffset !== oldOffset) {
+      //   var range = getVisibleRange(newScrollTop);
+      //   cleanupRows(range);
+      // }
 
       if (prevScrollTop !== newScrollTop) {
         //console.log("scrollTo caused a change!: ", prevScrollTop, newScrollTop, pageOffset, oldOffset, page, y, range);
@@ -3036,7 +3041,7 @@ if (typeof Slick === "undefined") {
       assert(!metaData.class);
       metaData.class = rowCss;
       var rowStyle = " top: " + getRowTop(row) + "px;" +
-            (getRowHeight(row) !== options.rowHeight ? " height: " + getRowHeight(row) + "px;" : "");
+            (getRowHeight(row) !== options.rowHeight - cellHeightDiff ? " height: " + getRowHeight(row) + "px;" : "");
       assert(!metaData.style);
       metaData.style = rowStyle;
       appendMetadataAttributes(stringArray, row, null, metaData, null, null, {});
@@ -3077,13 +3082,12 @@ if (typeof Slick === "undefined") {
     function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem) {
       var m = columns[cell];
       var spans = getSpans(row, cell);
-      assert(spans ? spans.length === 4 : true);
-      assert(spans ? spans[3] >= 1 : true);
-      var colspan = spans ? spans[3] - cell + spans[1] : 1;
-      assert(spans ? spans[2] >= 1 : true);
-      var rowspan = spans ? spans[2] - row + spans[0] : 1;
-      assert(spans ? spans[0] === row : true);
-      assert(spans ? spans[1] === cell : true);
+      assert(spans ? spans.colspan >= 1 : true);
+      var colspan = spans ? spans.colspan - cell + spans.cell : 1;
+      assert(spans ? spans.rowspan >= 1 : true);
+      var rowspan = spans ? spans.rowspan - row + spans.row : 1;
+      assert(spans ? spans.row === row : true);
+      assert(spans ? spans.cell === cell : true);
       assert(Math.min(columns.length - 1, cell + colspan - 1) === cell + colspan - 1);
       var cellStyles = [];
       var cellCss = ["slick-cell", "l" + cell, "r" + (cell + colspan - 1)];
@@ -3210,7 +3214,7 @@ if (typeof Slick === "undefined") {
         metaData.class = info.cellCss.join(" ");
       } else {
         assert(0);
-        metaData.class = "";
+        metaData.class = null;
       }
       var tabindex = -1;
       if (info.attributes.tabindex != null) {
@@ -3239,6 +3243,7 @@ if (typeof Slick === "undefined") {
             continue;
           }
           if (rowsCache[row]) {
+            assert(row !== activeRow);
             removeRowFromCache(row);
           }
         }
@@ -3252,6 +3257,33 @@ if (typeof Slick === "undefined") {
       rowsCache.length = endrow;
     }
 
+    function updateAllDirtyCells(rangeToUpdate) {
+      // do not update rows outside the specified range; when there's cells which are 
+      // col/rowspanning and overlapping the specified range, than updateCell itself
+      // will pick them up; after all, all the grid coordinates (cells) these 
+      // row/colspanning nodes overlap are each flagged as "dirty" to ensure that we catch
+      // them during this update process. 
+      for (var row = Math.max(rowsCacheStartIndex, rangeToUpdate.top), endrow = Math.min(rowsCache.length - 1, rangeToUpdate.bottom); row <= endrow; row++) {
+        var cacheEntry = rowsCache[row];
+        if (cacheEntry) {
+          var cellCache = cacheEntry.cellNodesByColumnIdx;
+          var dirtyFlags = cacheEntry.dirtyCellNodes;
+          for (var cell = cacheEntry.cellNodesByColumnStart, len = cellCache.length; cell < len; cell++) {
+            if (cellCache[cell] && dirtyFlags[cell]) {
+              updateCell(row, cell);
+              assert(!dirtyFlags[cell]);
+            }
+          }
+
+          // flag the row as updated completely:
+          assert(cacheEntry.isDirty === 0);
+          cacheEntry.dirtyCellNodes = [];
+          cacheEntry.isDirty = 0;
+        }
+      }
+    }
+
+
     function invalidate() {
       invalidateAllRows();
       updateRowCount();
@@ -3264,14 +3296,32 @@ if (typeof Slick === "undefined") {
         makeActiveCellNormal();
         assert(!currentEditor);
       }
-      for (var row = rowsCacheStartIndex, endrow = rowsCache.length; row < endrow; row++) {
-        if (rowsCache[row]) {
-          removeRowFromCache(row);
+      // for (var row = rowsCacheStartIndex, endrow = rowsCache.length; row < endrow; row++) {
+      //   if (rowsCache[row]) {
+      //     removeRowFromCache(row);
+      //   }
+      // }
+      // rowsCache = [];
+      
+      // flag all cached cells as dirty:
+      for (var row = rowsCacheStartIndex, len = rowsCache.length; row < len; row++) {
+        var cacheEntry = rowsCache[row];
+        if (!cacheEntry) {
+          continue;
+        }
+        var cellNodes = cacheEntry.cellNodesByColumnIdx;
+        var dirtyFlaggingArray = cacheEntry.dirtyCellNodes;
+        for (var cell = cacheEntry.cellNodesByColumnStart, colCount = cellNodes.length; cell < colCount; cell++) {
+          if (cellNodes[cell] && !dirtyFlaggingArray[cell]) {
+            dirtyFlaggingArray[cell] = true;
+            assert(cacheEntry.isDirty >= 0);
+            cacheEntry.isDirty++;
+          }
         }
       }
-      rowsCache = [];
+
       rowPositionCache = [];
-      rowsCacheStartIndex = MAX_INT;
+      // rowsCacheStartIndex = MAX_INT;
     }
 
     function removeRowFromCache(row) {
@@ -3341,17 +3391,33 @@ if (typeof Slick === "undefined") {
       var invalidateTopFrom = dataLength;
       var invalidateFrom = dataLength;
       var invalidateTo = -1;
-      var intersectingCells = [];
-      var intersectingCellsStartIndex = MAX_INT;
+      // var intersectingCells = [];
+      // var intersectingCellsRowStartIndex = MAX_INT;
+      // var intersectingCellsColStartIndex = MAX_INT;
       for (i = 0, rl = rows.length; i < rl; i++) {
         row = rows[i];
         if (currentEditor && activeRow === row) {
           makeActiveCellNormal();
           assert(!currentEditor);
         }
-        if (rowsCache[row]) {
-          removeRowFromCache(row);
+        // if (rowsCache[row]) {
+        //   removeRowFromCache(row);
+        // }
+        
+        // flag all cached cells as dirty:
+        var cacheEntry = rowsCache[row];
+        if (cacheEntry) {
+          var cellNodes = cacheEntry.cellNodesByColumnIdx;
+          var dirtyFlaggingArray = cacheEntry.dirtyCellNodes;
+          for (var cell = cacheEntry.cellNodesByColumnStart, colCount = cellNodes.length; cell < colCount; cell++) {
+            if (cellNodes[cell] && !dirtyFlaggingArray[cell]) {
+              dirtyFlaggingArray[cell] = true;
+              assert(cacheEntry.isDirty >= 0);
+              cacheEntry.isDirty++;
+            }
+          }
         }
+        
         var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, false);
         if (!rowMetadata) {
           continue;
@@ -3361,7 +3427,7 @@ if (typeof Slick === "undefined") {
           continue;
         }
         // if the row height changes, all its successors should invalidate their style.top positions
-        if (rowMetadata.height && rowMetadata.height !== getRowHeight(row)) {
+        if (rowMetadata.height && rowMetadata.height - cellHeightDiff !== getRowHeight(row)) {
           rowPositionCache[row] = undefined;
           if (row < invalidateTopFrom) {
             invalidateTopFrom = row + 1;
@@ -3372,11 +3438,13 @@ if (typeof Slick === "undefined") {
             colspan = 1;
             span = spanRow[c];
             if (span) {
-              colspan = span[3];
-              r = span[0];
+              colspan = span.colspan;
+              r = span.row;
               if (r !== row) {
-                (intersectingCells[r] || (intersectingCells[r] = []))[span[1]] = true;
-                intersectingCellsStartIndex = Math.min(intersectingCellsStartIndex, r);
+                // (intersectingCells[r] || (intersectingCells[r] = []))[span.cell] = true;
+                // intersectingCellsRowStartIndex = Math.min(intersectingCellsRowStartIndex, r);
+                // intersectingCellsColStartIndex = Math.min(intersectingCellsColStartIndex, span.cell);
+                invalidateCell(r, span.cell);
               }
             }
           }
@@ -3390,11 +3458,16 @@ if (typeof Slick === "undefined") {
             rowspan = columnMetadata.rowspan || 1;
             colspan = columnMetadata.colspan || 1;
             span = spanRow[c];
-            var oldRowspan = span && span[2] || 1;
-            var oldColspan = span && span[3] || 1;
+            var oldRowspan = (span && span.rowspan) || 1;
+            var oldColspan = (span && span.colspan) || 1;
             if (oldRowspan !== rowspan || oldColspan !== colspan) {
               // if spans change, fix pointers to span head cell
-              span = rowspan > 1 || colspan > 1 ? [row, c, rowspan, colspan] : undefined;
+              span = (rowspan > 1 || colspan > 1) ? {
+                row: row, 
+                cell: c, 
+                rowspan: rowspan, 
+                colspan: colspan
+              } : undefined;
               for (var rs = row, rsu = row + Math.max(rowspan, oldRowspan); rs < rsu; rs++) {
                 var cellSpanRow = (cellSpans[rs] || (cellSpans[rs] = {
                   maxRowSpan: rowspan + row - rs
@@ -3421,22 +3494,54 @@ if (typeof Slick === "undefined") {
         }
         if (currentEditor && activeRow === row) {
           makeActiveCellNormal();
+          assert(!currentEditor);
         }
-        if (rowsCache[row]) {
-          removeRowFromCache(row);
+        // if (rowsCache[row]) {
+        //   removeRowFromCache(row);
+        // }
+        
+        // flag all cached cells as dirty:
+        var cacheEntry = rowsCache[row];
+        if (cacheEntry) {
+          var cellNodes = cacheEntry.cellNodesByColumnIdx;
+          var dirtyFlaggingArray = cacheEntry.dirtyCellNodes;
+          for (var cell = cacheEntry.cellNodesByColumnStart, colCount = cellNodes.length; cell < colCount; cell++) {
+            if (cellNodes[cell] && !dirtyFlaggingArray[cell]) {
+              dirtyFlaggingArray[cell] = true;
+              assert(cacheEntry.isDirty >= 0);
+              cacheEntry.isDirty++;
+            }
+          }
         }
       }
 
-      for (row = intersectingCellsStartIndex, endrow = intersectingCells.length; row < endrow; row++) {
-        //@TO-OPT
-        for (c in intersectingCells[row]) {
-          updateCell(row, +c);
-        }
-      }
+      // for (row = intersectingCellsRowStartIndex, endrow = intersectingCells.length; row < endrow; row++) {
+      //   var rowSpec = intersectingCells[row];
+      //   for (c = intersectingCellsColStartIndex, endcol = rowSpec.length; c < endcol; c++) {
+      //     updateCell(row, c);
+      //   }
+      // }
     }
 
     function invalidateRow(row) {
       invalidateRows([row]);
+    }
+
+    function invalidateCell(row, cell) {
+      var cacheEntry = rowsCache[row];
+      if (cacheEntry) {
+        var cellNodes = cacheEntry.cellNodesByColumnIdx;
+        var dirtyFlaggingArray = cacheEntry.dirtyCellNodes;
+        if (cellNodes[cell] && !dirtyFlaggingArray[cell]) {
+          if (currentEditor && activeRow === row && activeCell === cell) {
+            makeActiveCellNormal();
+            assert(!currentEditor);
+          }
+          dirtyFlaggingArray[cell] = true;
+          assert(cacheEntry.isDirty >= 0);
+          cacheEntry.isDirty++;
+        }
+      }
     }
 
     function updateCell(row, cell) {
@@ -3446,24 +3551,45 @@ if (typeof Slick === "undefined") {
       }
 
       var m = columns[cell],
-          d = getDataItem(row);
+          d = getDataItem(row),
+          cacheEntry = rowsCache[row];
+      assert(cacheEntry);
+      assert(cacheEntry.cellNodesByColumnIdx[cell]);
+
+      // if the cell has other coordinates because of row/cell span, update that cell (which will invalidate this cellNode)
+      var spans = getSpans(row, cell);
+      assert(spans ? spans.colspan >= 1 : true);
+      if (spans && (spans.row !== row || spans.cell !== cell)) {
+        //updateCell(spans.row, spans.cell);
+        row = spans.row;
+        cell = spans.cell;
+        cellNode = getCellNode(row, cell);
+        if (!cellNode) {
+          return;
+        }
+
+        m = columns[cell];
+        d = getDataItem(row);
+        cacheEntry = rowsCache[row];
+        assert(cacheEntry);
+        assert(cacheEntry.cellNodesByColumnIdx[cell]);
+      }
+
+      if (cacheEntry.dirtyCellNodes[cell]) {
+        cacheEntry.dirtyCellNodes[cell] = false;
+        cacheEntry.isDirty--;
+        assert(cacheEntry.isDirty >= 0);
+      }
+
       if (currentEditor && activeRow === row && activeCell === cell && d) {
         currentEditor.loadValue(d);
       } else {
-        // if the cell has other coordinates because of row/cell span, update that cell (which will invalidate this cellNode)
-        var spans = getSpans(row, cell);
-        assert(spans ? spans.length === 4 : true);
-        assert(spans ? spans[3] >= 1 : true);
-        if (spans && (spans[0] !== row || spans[1] !== cell)) {
-          updateCell(spans[0], spans[1]);
-          return;
-        }
         var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
         // look up by id, then index
         var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[cell]);
 
         var cellHeight = getCellHeight(row, getRowspan(row, cell));
-        if (cellHeight !== options.rowHeight) {
+        if (cellHeight !== options.rowHeight - cellHeightDiff) {
           cellNode.style.height = cellHeight + "px";
         } else if (cellNode.style.height) {
           cellNode.style.height = "";
@@ -3478,7 +3604,7 @@ if (typeof Slick === "undefined") {
           cellNode.innerHTML = "";
           // TODO: clear all attributes?
         }
-        invalidatePostProcessingResults(row);
+        invalidatePostProcessingResults(row, cell);
       }
     }
 
@@ -3490,33 +3616,22 @@ if (typeof Slick === "undefined") {
 
       ensureCellNodesInRowsCache(row);
 
-      var d = getDataItem(row);
-      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, false);
-
       var cachedCellNodesByColumnIdxs = cacheEntry.cellNodesByColumnIdx;
       for (var columnIdx = cacheEntry.cellNodesByColumnStart, end = cachedCellNodesByColumnIdxs.length; columnIdx < end; columnIdx++) {
-        var m = columns[columnIdx],
-            node = cachedCellNodesByColumnIdxs[columnIdx];
-        assert(m);
+        var node = cachedCellNodesByColumnIdxs[columnIdx];
         if (!node) {
           continue;
         }
 
-        if (row === activeRow && columnIdx === activeCell && currentEditor && d) {
-          currentEditor.loadValue(d);
-        } else if (d) {
-          // look up by id, then index
-          var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[columnIdx]);
-          // I/F: function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem)
-          var info = mkCellHtml(row, columnIdx, rowMetadata, columnMetadata, d);
-          var el = $(node);
-          updateElementHtml(el, info);
-        } else {
-          node.innerHTML = "";
-        }
+        updateCell(row, columnIdx);
       }
 
-      invalidatePostProcessingResults(row);
+      // flag the row as updated completely:
+      assert(cacheEntry.isDirty === 0);
+      cacheEntry.dirtyCellNodes = [];
+      cacheEntry.isDirty = 0;
+
+      invalidatePostProcessingResults(row, null);
     }
 
     function getCellHeight(row, rowspan) {
@@ -3625,7 +3740,7 @@ if (typeof Slick === "undefined") {
       cleanUpAndRenderCells(getRenderedRange());
       updateRowCount();
       handleScroll(true);
-      // Since the width has changed, force the render() to reevaluate virtually rendered cells.
+      // Since the width has changed, force the render() to re-evaluate virtually rendered cells.
       lastRenderedScrollLeft = -1;
       render();
     }
@@ -3643,19 +3758,23 @@ if (typeof Slick === "undefined") {
       viewportHasVScroll = (getRowBottom(numberOfRows - 1) > viewportH);
 
       makeActiveCellNormal();
+      assert(!currentEditor);
+
+      // Kill the active cell when it sits in the row range which doesn't exist any more in the new data set.
+      if (activeCellNode && activeRow >= dataLengthIncludingAddNew) {
+        resetActiveCell();
+      }
 
       // remove the rows that are now outside of the data range
       // this helps avoid redundant calls to .removeRow() when the size of the data decreased by thousands of rows
-      var l = dataLengthIncludingAddNew - 1;
       for (var row = rowsCacheStartIndex, endrow = rowsCache.length; row < endrow; row++) {
-        if (row > l && rowsCache[row]) {
+        if (row >= dataLengthIncludingAddNew && rowsCache[row]) {
           removeRowFromCache(row);
         }
       }
-      rowsCache.length = dataLengthIncludingAddNew;
-
-      if (activeCellNode && activeRow > l) {
-        resetActiveCell();
+      
+      if (rowsCache.length > dataLengthIncludingAddNew) {
+        rowsCache.length = dataLengthIncludingAddNew;
       }
 
       var rowMax = (options.enableAddRow
@@ -3739,7 +3858,8 @@ if (typeof Slick === "undefined") {
 
     function getRenderedRange(viewportTop, viewportLeft) {
       var range = getVisibleRange(viewportTop, viewportLeft);
-      var buffer = getRowWithFractionFromPosition(viewportH).position;
+      assert(numVisibleRows === getRowWithFractionFromPosition(viewportH).position);
+      var buffer = numVisibleRows;
       var minBuffer = 3;
 
       delete range.topPx;
@@ -3821,8 +3941,8 @@ if (typeof Slick === "undefined") {
         // cacheEntry.deletedCellNodesByColumnIdx[cellToRemove] = cacheEntry.cellNodesByColumnIdx[cellToRemove];
         delete cacheEntry.cellNodesByColumnIdx[cellToRemove];
         if (postProcessedRows[row]) {
-          // array element delete vs. setting it to undefined: http://jsperf.com/delete-vs-undefined-vs-null/19 
-          postProcessedRows[row][cellToRemove] = undefined;
+          // array element delete vs. setting it to undefined (here: FALSE): http://jsperf.com/delete-vs-undefined-vs-null/19 
+          postProcessedRows[row][cellToRemove] = false;
         }
         if (minCachedCellNodeIndex === cellToRemove) {
           minCachedCellNodeIndex++;
@@ -3961,6 +4081,12 @@ if (typeof Slick === "undefined") {
             // The lowest = starting index for the cellNodesByColumnIdx[] array above.
             cellNodesByColumnStart: MAX_INT,
 
+            // Flags cell nodes as invalidated ("dirty") (indexed by column idx).
+            dirtyCellNodes: [],
+
+            // counter to signal if any cells in the row are "dirty" and thus require re-rendering/updating:
+            isDirty: 0,
+
             // deletedCellNodesByColumnIdx: [],
 
             // // The lowest = starting index for the deletedCellNodesByColumnIdx[] array above.
@@ -4000,6 +4126,12 @@ if (typeof Slick === "undefined") {
 
           // The lowest = starting index for the cellNodesByColumnIdx[] array above.
           cellNodesByColumnStart: MAX_INT,
+
+          // Flags cell nodes as invalidated ("dirty") (indexed by column idx).
+          dirtyCellNodes: [],
+
+          // counter to signal if any cells in the row are "dirty" and thus require re-rendering/updating:
+          isDirty: 0,
 
           // deletedCellNodesByColumnIdx: [],
 
@@ -4088,9 +4220,15 @@ if (typeof Slick === "undefined") {
       h_postrender = setTimeout(asyncPostProcessRows, options.asyncPostRenderDelay);
     }
 
-    function invalidatePostProcessingResults(row) {
+    function invalidatePostProcessingResults(row, cell) {
       //assert(postProcessedRows[row]);
-      postProcessedRows[row] = undefined;
+      if (cell == null) {
+        postProcessedRows[row] = undefined;
+      } else {
+        if (postProcessedRows[row]) {
+          postProcessedRows[row][cell] = false;
+        }
+      }
       postProcessFromRow = Math.min(postProcessFromRow, row);
       postProcessToRow = Math.max(postProcessToRow, row);
       startPostProcessing();
@@ -4098,6 +4236,8 @@ if (typeof Slick === "undefined") {
 
     function invalidateAllPostProcessingResults() {
       postProcessedRows = [];
+      postProcessToRow = 0;
+      postProcessFromRow = MAX_INT;
       startPostProcessing();
     }
 
@@ -4173,11 +4313,15 @@ if (typeof Slick === "undefined") {
       // render missing rows
       var needToReselectCell = renderRows(rendered, mandatoryRange);
 
-      if (!mandatoryRange) {
-        postProcessFromRow = visible.top;
-        postProcessToRow = Math.min(getDataLengthIncludingAddNew() - 1, visible.bottom);
-        startPostProcessing();
+      // update all cells which have been flagged as "dirty":
+      updateAllDirtyCells(visible);
 
+      // Make sure we inspect & post process the entire visible range where necessary:
+      postProcessFromRow = Math.min(postProcessFromRow, visible.top);
+      postProcessToRow = Math.max(postProcessToRow, Math.min(getDataLengthIncludingAddNew() - 1, visible.bottom));
+      startPostProcessing();
+
+      if (!mandatoryRange) {
         lastRenderedScrollTop = scrollTop;
         lastRenderedScrollLeft = scrollLeft;
       } else {
@@ -4285,9 +4429,28 @@ if (typeof Slick === "undefined") {
       var requeue = false;
 
       var dataLength = getDataLength();
+      // Only process the rows in the "rendered" range, hence we clip the range accordingly.
+      // 
+      // We check this on every async round as the visual/rendered range may have changed between
+      // individual async rounds!
+      // 
+      // Also note that we do *not* update the `postProcessFromRow` and `postProcessToRow`
+      // globals until we have assured in the final async round (invocation of this function)
+      // that all rows/cells have been properly updated. If we would update these globals earlier,
+      // while we "clip" our activity to the "rendered" range (i.e. the row/cell DOM cache),
+      // then we will run into race conditions which occur, for instance, when the grid is 
+      // scrolled in various directions while the async postprocessing is still underway.
+      var startRow = Math.max(rowsCacheStartIndex, postProcessFromRow);
+      var endRow = Math.min(rowsCache.length - 1, postProcessToRow);
+      var rowStep = 1;
+      var row = startRow;
+      if (vScrollDir < 0) {
+        // flip the order in which the rows are updated:
+        row = endRow;
+        rowStep = -1;
+      }
 out:      
-      while (postProcessFromRow <= postProcessToRow) {
-        var row = (vScrollDir >= 0) ? postProcessFromRow++ : postProcessToRow--;
+      for ( ; row >= startRow && row <= endRow; row += rowStep) {
         var cacheEntry = rowsCache[row];
         if (!cacheEntry || row >= dataLength) {
           continue;
@@ -4311,13 +4474,9 @@ out:
             // Should we stop and postpone the execution of the pending tasks?
             var delta_t = perftimer.mark();
             if (delta_t >= options.asyncPostRenderSlice) {
-              // Then make sure this row is revisited as we may abort here midway through 
+              // This approach (see the comment above the startRow/ndRow loop) makes sure 
+              // this row is revisited as we abort here midway through 
               // (i.e. when not all of the async render cells in the current row have been processed yet)!
-              if (vScrollDir >= 0) {
-                postProcessFromRow--;
-              } else {
-                postProcessToRow++;
-              }
               break out;
             }
           }
@@ -4327,6 +4486,11 @@ out:
       // When there's anything left to do, queue it for the next time slice:
       if (requeue) {
         h_postrender = setTimeout(asyncPostProcessRows, options.asyncPostRenderDelay);
+      } else {
+        // There's nothing to update: we can safely declare the async post processing
+        // to have completed.
+        postProcessToRow = 0;
+        postProcessFromRow = MAX_INT;
       }
     }
 
@@ -5155,6 +5319,13 @@ out:
     }
 
     function setActiveCellInternal(newCellNode, opt_editMode, takeFocus) {
+      // Also check which node currently has focus *before* we send events and thus give userland
+      // code to move the focus.
+      // 
+      // Note that the focus doesn't have to be on the activeCellNode right now!
+      var oldFocusNode = document.activeElement;
+      var oldFocusCellInfo = getCellFromElement(oldFocusNode);
+
       var activeCellChanged = (activeCellNode != newCellNode);
       var newActiveRow;
       if (newCellNode != null) {
@@ -5238,8 +5409,9 @@ out:
         //   like that, i.e. such focus-shifting userland code is assumed to set focus to 
         //   *another* DOM element that is not inside slickgrid AND is not the BODY element itself.
         //    
-        var oldFocusNode = document.activeElement;
-        var oldFocusCellInfo = getCellFromElement(oldFocusNode);
+        var oldFocusNode2 = document.activeElement;
+        // TODO: detect focus moving in userland code.
+        
         if (!oldFocusCellInfo && (oldFocusNode === document.body || takeFocus)) {
           // fake it to simplify the conditional check below:
           oldFocusCellInfo = {
@@ -5284,6 +5456,39 @@ out:
       } else {
         assert(activeCellNode == null);
         activeRow = activeCell = null;
+
+        // when the activeCellNode is reset, we *still* want to retain focus inside slickgrid
+        // if it we had it previously: that way we ensure the keyboard events etc. will continue
+        // arrive at the appropriate handlers.
+        if (!oldFocusCellInfo && (oldFocusNode === document.body || takeFocus)) {
+          // fake it to simplify the conditional check below:
+          oldFocusCellInfo = {
+            node: oldFocusNode
+          };
+        }
+        if (oldFocusCellInfo) {
+          // As the active cell is about to loose focus, we (temporarily) switch focus to one of the sinks
+          // so that the node removal from the DOM does not drop focus, which would consequently 
+          // loose us keyboard events, at least for the (very) short time period between DOM
+          // cell removal and re-render. That would cause symptoms of "erratic keyboard behaviour"
+          // and we cannot have that!
+
+          console.log("focus fixup exec (reset active cell) START: ", oldFocusCellInfo);
+          movingFocusLock++;
+          // We MAY see a sequence of focusout+focusin, where by the time focusin fires, document.activeElement is BODY.
+          // We MAY also see only a focusin, in which case we are to provide the original focused node.
+          movingFocusLockData[movingFocusLock - 1] = {
+            newNode: $focusSink[0],
+            oldNode: oldFocusNode,
+            oldNodeInfo: oldFocusCellInfo
+          };
+          $focusSink[0].focus();
+          movingFocusLock--;
+          if (!movingFocusLock) {
+            movingFocusLockData = [];
+          }
+          console.log("focus fixup exec (reset active cell) END: ", oldFocusCellInfo);
+        }
       }
       return true;
     }
@@ -5335,6 +5540,7 @@ out:
       trigger(self.onBeforeCellEditorDestroy, {
         editor: editor
       }, e);
+      assert(!currentEditor);
       if (e.isHandled()) {
         return;
       }
@@ -5352,7 +5558,7 @@ out:
           // I/F: function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem)
           var info = mkCellHtml(activeRow, activeCell, rowMetadata, columnMetadata, d);
           updateElementHtml($activeCellNode, info);
-          invalidatePostProcessingResults(activeRow);
+          invalidatePostProcessingResults(activeRow, activeCell);
         }
       }
 
@@ -5741,7 +5947,7 @@ out:
 
           // the ci-th cell is occupied by a prev cell with row and/or cell span > 1
           if (iCellSpans) {
-            colspan = ci - iCellSpans[1] + iCellSpans[3];
+            colspan = ci - iCellSpans.cell + iCellSpans.colspan;
             continue;
           }
 
@@ -5765,7 +5971,12 @@ out:
           }
 
           if (rowspan > 1 || colspan > 1) {
-            iCellSpans = [rowI, ci, rowspan, colspan];
+            iCellSpans = {
+              row: rowI, 
+              cell: ci, 
+              rowspan: rowspan, 
+              colspan: colspan
+            };
             // save pointers to span head cell and
             var rowSpanU = rowI + rowspan - 1;
             for (var rs = rowI; rs <= rowSpanU; rs++) {
@@ -5788,30 +5999,26 @@ out:
 
     function getColspan(row, cell) {
       var spans = getSpans(row, cell);
-      assert(spans ? spans.length === 4 : true);
-      assert(spans ? spans[3] >= 1 : true);
-      return spans ? spans[3] - cell + spans[1] : 1;
+      assert(spans ? spans.colspan >= 1 : true);
+      return spans ? spans.colspan - cell + spans.cell : 1;
     }
 
     function getRowspan(row, cell) {
       var spans = getSpans(row, cell);
-      assert(spans ? spans.length === 4 : true);
-      assert(spans ? spans[2] >= 1 : true);
-      return spans ? spans[2] - row + spans[0] : 1;
+      assert(spans ? spans.rowspan >= 1 : true);
+      return spans ? spans.rowspan - row + spans.row : 1;
     }
 
     /** Returns the row index of the cell that spans to the cell specified by `row` and `cell`. */
     function getSpanRow(row, cell) {
       var spans = getSpans(row, cell);
-      assert(spans ? spans.length === 4 : true);
-      return spans ? spans[0] : row;
+      return spans ? spans.row : row;
     }
 
     /** Returns the column index of the cell that spans to the cell specified by `row` and `cell`. */
     function getSpanCell(row, cell) {
       var spans = getSpans(row, cell);
-      assert(spans ? spans.length === 4 : true);
-      return spans ? spans[1] : cell;
+      return spans ? spans.cell : cell;
     }
 
     function findFirstFocusableCell(row) {
@@ -6217,13 +6424,13 @@ out:
               execute: function h_exec_edit_cmd_f() {
                 this.appliedValue = this.serializedValue;
                 this.editor.applyValue(item, this.appliedValue);
-                updateRow(this.row);
+                updateCell(this.row, this.cell);
                 this.notify();
               },
               undo: function h_undo_edit_cmd_f() {
                 this.appliedValue = this.prevSerializedValue;
                 this.editor.applyValue(item, this.appliedValue);
-                updateRow(this.row);
+                updateCell(this.row, this.cell);
                 this.notify();
               },
               notify: function h_notify_edit_cmd_f() {
@@ -6442,6 +6649,7 @@ out:
       "forcedRender": forcedRender,
       "isRenderPending": isRenderPending,
       "invalidate": invalidate,
+      "invalidateCell": invalidateCell,
       "invalidateRow": invalidateRow,
       "invalidateRows": invalidateRows,
       "invalidateAllRows": invalidateAllRows,
