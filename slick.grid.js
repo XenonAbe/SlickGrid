@@ -210,7 +210,7 @@ if (typeof Slick === "undefined") {
       defaultHeaderFormatter: defaultHeaderFormatter,
       defaultHeaderRowFormatter: defaultHeaderRowFormatter,
       forceSyncScrolling: false,
-      asyncRenderDelay: 85,         // this value is picked to 'catch' typematic key repeat rates as low as 12-per-second: 
+      asyncRenderDelay: 5000,         // this value is picked to 'catch' typematic key repeat rates as low as 12-per-second: 
                                     // keep your navigator keys depressed to see the delayed render + mandatory mini-cell-renders kicking in. 
       addNewRowCssClass: "new-row",
       syncColumnCellResize: false,
@@ -4176,7 +4176,8 @@ if (typeof Slick === "undefined") {
       
       trigger(self.onRowsRendered, { 
         rows: rows, 
-        nodes: rowNodes 
+        nodes: rowNodes,
+        mandatory: mandatoryRange 
       });
 
       if (needToReselectCell && !mandatoryRange) {
@@ -4189,7 +4190,7 @@ if (typeof Slick === "undefined") {
             focusMustBeReacquired.row === activeRow && focusMustBeReacquired.cell === activeCell &&
             elementHasFocus($focusSink[0])
         ) {
-          console.log("focus fixup exec (render row) START: ", document.activeElement);
+          //console.log("focus fixup exec (render row) START: ", document.activeElement);
           movingFocusLock++;
           // We MAY see a sequence of focusout+focusin, where by the time focusin fires, document.activeElement is BODY.
           // We MAY also see only a focusin, in which case we are to provide the original focused node.
@@ -4202,7 +4203,7 @@ if (typeof Slick === "undefined") {
           if (!movingFocusLock) {
             movingFocusLockData = [];
           }
-          console.log("focus fixup exec (render row) END: ", document.activeElement);
+          //console.log("focus fixup exec (render row) END: ", document.activeElement);
         } 
         // focusMustBeReacquired is done / outdated: destroy it
         focusMustBeReacquired = false;
@@ -4281,6 +4282,12 @@ if (typeof Slick === "undefined") {
         rendered = getRenderedRange();
       }
 
+      trigger(self.onRenderStart, {
+        renderedArea: rendered, 
+        visibleArea: visible,
+        forced: mandatoryRange
+      });
+
       if (!mandatoryRange) {
         // remove rows no longer in the viewport
         cleanupRows(rendered);
@@ -4332,6 +4339,14 @@ if (typeof Slick === "undefined") {
           cleanUpAndRenderCells(rendered, mandatoryRange);
         }
       }
+
+      trigger(self.onRenderEnd, {
+        renderedArea: rendered, 
+        visibleArea: visible,
+        forced: mandatoryRange,
+        needToReselectCell: needToReselectCell
+      });
+
       return needToReselectCell;
     }
 
@@ -6612,6 +6627,8 @@ out:
       "onSelectedRowsChanged": new Slick.Event(),
       "onCellCssStylesChanged": new Slick.Event(),
       "onRowsRendered": new Slick.Event(),
+      "onRenderStart": new Slick.Event(),
+      "onRenderEnd": new Slick.Event(),
 
       // Methods
       "registerPlugin": registerPlugin,
