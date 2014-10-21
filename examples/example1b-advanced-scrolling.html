@@ -58,7 +58,9 @@
   var options = {
     enableCellNavigation: true,
     enableColumnReorder: false,
-    smoothScrolling: true
+    scrollHoldoff: function h_scrollHoldoff_f(row, cell) {
+      return 2;
+    },
   };
 
   $(function () {

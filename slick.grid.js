@@ -161,6 +161,13 @@ if (typeof Slick === "undefined") {
    *      defaultHeaderRowFormatter: 
    *                          {Function}  The Slick.Formatters compatible cell formatter used to render the headerRow cell.
    *                                      The "headerRow" is the header row shown by SlickGrid when the `option.showHeaderRow` is enabled.
+   *      scrollHoldoff:      {Number | Function}
+   *                                      Specify the number of rows/columns away from the edge where keyboard navigation
+   *                                      should scroll the view; when specified as a single number, than all four edges
+   *                                      (top/bottom/left/right) will "hold off" this amount; otherwise you may specify 
+   *                                      a function which should return the number of rows/cells to hold off, depending on
+   *                                      the input arguments.
+   *      smoothScrolling:    {Boolean}   When set, slickgrid will scroll the view 1 line/cell at a time, rather than an entire page.
    *      forceSyncScrolling: {Boolean}   If true, renders more frequently during scrolling, rather than
    *                                      deferring rendering until default scroll thresholds are met (asyncRenderDelay).
    *      asyncRenderDelay:   {Number}    Delay passed to setTimeout in milliseconds before view update is actually rendered.
@@ -209,6 +216,7 @@ if (typeof Slick === "undefined") {
       defaultEditor: null,
       defaultHeaderFormatter: defaultHeaderFormatter,
       defaultHeaderRowFormatter: defaultHeaderRowFormatter,
+      scrollBands: 0,
       forceSyncScrolling: false,
       asyncRenderDelay: 5000,         // this value is picked to 'catch' typematic key repeat rates as low as 12-per-second: 
                                     // keep your navigator keys depressed to see the delayed render + mandatory mini-cell-renders kicking in. 
