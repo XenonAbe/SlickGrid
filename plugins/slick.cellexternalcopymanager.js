@@ -214,18 +214,18 @@
       }
 
       /*
-      HACKY FIX for this exec scenario in User App:
-
-          copy item as text from someplace in UI,
-          select other cell in slickgrid,
-          hit Paste (Ctrl-V)
-
-      which will exec this code as slickgrid will assume the import is tabular data ('external excel import' feature)
-
-      The end result is that w==0 and h==0 and you get at least very odd bRange numbers in the resulting event notification.
-
-      Cause: clipText is NOT tabular data but simply a single formula/value expression
-      */
+       * HACKY FIX for this exec scenario in User App:
+       * 
+       *     copy item as text from someplace in UI,
+       *     select other cell in slickgrid,
+       *     hit Paste (Ctrl-V)
+       * 
+       * which will exec this code as slickgrid will assume the import is tabular data ('external excel import' feature)
+       * 
+       * The end result is that w==0 and h==0 and you get at least very odd bRange numbers in the resulting event notification.
+       * 
+       * Cause: clipText is NOT tabular data but simply a single formula/value expression
+       */
       if (clippedRange.length === 0) {
         assert(0); // should never get here!
 
@@ -488,7 +488,7 @@
             range = ranges[0];
 
             for (j = range.fromCell; j < range.toCell + 1; j++) {
-                clipTextHeaders.push(columns[j].name || '');
+                clipTextHeaders.push(columns[j].name || "");
             }
             clipTextArr.push(clipTextHeaders.join("\t") + "\r\n");
         }
@@ -507,7 +507,7 @@
             }
             clipTextArr.push(clipTextRows.join("\r\n"));
         }
-        var clipText = clipTextArr.join('');
+        var clipText = clipTextArr.join("");
         _copyFingerPrint = clipText.replace(/\r/g, "");
 
         if (toClipboard) {
