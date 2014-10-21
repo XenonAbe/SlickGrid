@@ -105,7 +105,7 @@
       var current = grid.getColumns().slice(0);
       var ordered = new Array(columns.length);
       for (var i = 0; i < ordered.length; i++) {
-        if (grid.getColumnIndex(columns[i].id) === undefined) {
+        if (grid.getColumnIndex(columns[i].id) != null) {
           // If the column doesn't return a value from getColumnIndex,
           // it is hidden. Leave it in this position.
           ordered[i] = columns[i];
