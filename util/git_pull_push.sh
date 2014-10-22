@@ -124,6 +124,12 @@ l )
   # report which submodules need attention (they will be done automatically, but it doesn't hurt to report them, in case things go pearshaped)
   git push --all --recurse-submodules=check                               2>&1
   git push --all --recurse-submodules=on-demand                           2>&1
+
+  # even when the above commands b0rk, pull/push this repo anyway
+  git fetch --tags                                                        2>&1
+  git pull --all                                                          2>&1
+  git push --all                                                          2>&1
+  git push --tags                                                         2>&1
   ;;
 
 c )

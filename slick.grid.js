@@ -3348,7 +3348,7 @@ if (typeof Slick === "undefined") {
         // cell removal and re-render. That would cause symptoms of "erratic keyboard behaviour"
         // and we cannot have that!
 
-        console.log("focus fixup exec (cache remove row) START: ", document.activeElement);
+        //console.log("focus fixup exec (cache remove row) START: ", document.activeElement);
         movingFocusLock++;
         // We MAY see a sequence of focusout+focusin, where by the time focusin fires, document.activeElement is BODY.
         // We MAY also see only a focusin, in which case we are to provide the original focused node.
@@ -3361,7 +3361,7 @@ if (typeof Slick === "undefined") {
         if (!movingFocusLock) {
           movingFocusLockData = [];
         }
-        console.log("focus fixup exec (cache remove row) END: ", document.activeElement);
+        //console.log("focus fixup exec (cache remove row) END: ", document.activeElement);
       }
 
       if (rowNodeFromLastMouseWheelEvent === cacheEntry.rowNode) {
@@ -4375,7 +4375,7 @@ if (typeof Slick === "undefined") {
     function handleScrollEvent(e) {
       scrollTop = $viewport[0].scrollTop;
       scrollLeft = $viewport[0].scrollLeft;
-      console.log("handle SCROLL EVENT: ", this, arguments, document.activeElement);
+      //console.log("handle SCROLL EVENT: ", this, arguments, document.activeElement);
 
       handleScroll();
     }
@@ -4829,7 +4829,7 @@ out:
 
     function handleContainerKeyDown(e) {
       assert(!(e instanceof Slick.EventData));
-      console.log("keydown @ CONTAINER: ", this, arguments, document.activeElement);
+      //console.log("keydown @ CONTAINER: ", this, arguments, document.activeElement);
 
       // move focus back into slickgrid when it's not already there?
       //
@@ -4852,11 +4852,11 @@ out:
       var altKey = e.altKey;
       var ctrlKey = e.ctrlKey;
 
-      console.warn("key @ start: ", which, handled, e, editCell, activeCellInfo, getActiveCell(), document.activeElement);
+      //console.warn("key @ start: ", which, handled, e, editCell, activeCellInfo, getActiveCell(), document.activeElement);
       trigger(self.onKeyDown, activeCellInfo, e);
       var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
 
-      console.warn("key @ after: ", which, handled, e, editCell, activeCellInfo, getActiveCell(), document.activeElement);
+      //console.warn("key @ after: ", which, handled, e, editCell, activeCellInfo, getActiveCell(), document.activeElement);
       if (!handled) {
         if (!shiftKey && !altKey && !ctrlKey) {
           switch (which) {
@@ -4938,12 +4938,12 @@ out:
         e.preventDefault();
         preventDefaultKeyboardActionHack(e);
       }
-      console.warn("key @ end: ", which, handled, e, editCell, activeCellInfo, getActiveCell(), document.activeElement);
+      //console.warn("key @ end: ", which, handled, e, editCell, activeCellInfo, getActiveCell(), document.activeElement);
     }
 
     function handleContainerClickEvent(e) {
       assert(!(e instanceof Slick.EventData));
-      console.log("container CLICK: ", this, arguments, document.activeElement);
+      //console.log("container CLICK: ", this, arguments, document.activeElement);
     }
 
     function handleClick(e) {
@@ -5496,7 +5496,7 @@ out:
           // cell removal and re-render. That would cause symptoms of "erratic keyboard behaviour"
           // and we cannot have that!
 
-          console.log("focus fixup exec (reset active cell) START: ", oldFocusCellInfo);
+          //console.log("focus fixup exec (reset active cell) START: ", oldFocusCellInfo);
           movingFocusLock++;
           // We MAY see a sequence of focusout+focusin, where by the time focusin fires, document.activeElement is BODY.
           // We MAY also see only a focusin, in which case we are to provide the original focused node.
@@ -5510,7 +5510,7 @@ out:
           if (!movingFocusLock) {
             movingFocusLockData = [];
           }
-          console.log("focus fixup exec (reset active cell) END: ", oldFocusCellInfo);
+          //console.log("focus fixup exec (reset active cell) END: ", oldFocusCellInfo);
         }
       }
       return true;
