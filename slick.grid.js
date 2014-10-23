@@ -2331,7 +2331,7 @@ if (typeof Slick === "undefined") {
       invalidateAllRows();
       updateRowCount();
       if (scrollToTop) {
-        scrollTo(0);
+        scrollTo(0, 0);
       }
       render();
     }
@@ -2799,7 +2799,15 @@ if (typeof Slick === "undefined") {
 
     // Return TRUE when the viewport has been actually scrolled;
     // return FALSE when there's been no movement.
-    function scrollTo(y) {
+    function scrollTo(y, x) {
+      if (x == null) {
+        x = prevScrollLeft;
+      }
+      if (y == null) {
+        y = prevScrollTop;
+      }
+
+      x = Math.max(x, 0);
       y = Math.max(y, 0);
       y = Math.min(y, virtualTotalHeight - viewportH + (viewportHasHScroll ? scrollbarDimensions.height : 0));
 
@@ -2814,11 +2822,22 @@ if (typeof Slick === "undefined") {
       //   cleanupRows(range);
       // }
 
+      var viewportChanged = false;
+
       if (prevScrollTop !== newScrollTop) {
         //console.log("scrollTo caused a change!: ", prevScrollTop, newScrollTop, pageOffset, oldOffset, page, y, range);
         vScrollDir = (prevScrollTop + oldOffset < newScrollTop + pageOffset) ? 1 : -1;
         $viewport[0].scrollTop = prevScrollTop = scrollTop = newScrollTop;
+        viewportChanged = true;
+      }
 
+      var newScrollLeft = x;
+      if (prevScrollLeft !== newScrollLeft) {
+        $viewport[0].scrollLeft = prevScrollLeft = scrollLeft = newScrollLeft;
+        viewportChanged = true;
+      }
+
+      if (viewportChanged) {
         trigger(self.onViewportChanged, {});
         return true;
       }
@@ -3866,10 +3885,10 @@ if (typeof Slick === "undefined") {
         page = pageOffset = 0;
       } else if (oldScrollTopInRange) {
         // maintain virtual position
-        scrollTo(scrollTop + pageOffset);
+        scrollTo(scrollTop + pageOffset, null);
       } else {
         // scroll to bottom
-        scrollTo(virtualTotalHeight - viewportH);
+        scrollTo(virtualTotalHeight - viewportH, null);
       }
 
       if (scrollableHeight !== oldH && options.autoHeight) {
@@ -4452,7 +4471,7 @@ if (typeof Slick === "undefined") {
 
         // switch virtual pages if needed
         if (vScrollDist < viewportH) {
-          reRender = scrollTo(scrollTop + pageOffset);
+          reRender = scrollTo(scrollTop + pageOffset, null);
         } else {
           var oldOffset = pageOffset;
           if (scrollableHeight === viewportH) {
@@ -5896,26 +5915,26 @@ out:
       // need to center row?
       if (doCenteringY) {
         var centerOffset = (height - options.rowHeight) / 2;
-        if (scrollTo(rowAtTop - centerOffset)) {
+        if (scrollTo(rowAtTop - centerOffset, null)) {
           render();
         }
       }
       // need to page down?
       if (getRowBottom(row) > scrollTop + viewportH + pageOffset) {
-        if (scrollTo(doPaging ? rowAtTop : rowAtBottom)) {
+        if (scrollTo((doPaging ? rowAtTop : rowAtBottom), null)) {
           render();
         }
       }
       // or page up?
       else if (getRowTop(row) < scrollTop + pageOffset) {
-        if (scrollTo(doPaging ? rowAtBottom : rowAtTop)) {
+        if (scrollTo((doPaging ? rowAtBottom : rowAtTop), null)) {
           render();
         }
       }
     }
 
     function scrollRowToTop(row) {
-      if (scrollTo(getRowTop(row))) {
+      if (scrollTo(getRowTop(row), null)) {
         render();
       }
     }
@@ -5924,7 +5943,7 @@ out:
       // TODO: account for the variable row height: actually measure to determine the offset towards the center
       var height = viewportH - (viewportHasHScroll ? scrollbarDimensions.height : 0);
       var offset = (height - options.rowHeight) / 2;
-      if (scrollTo(row * options.rowHeight - offset)) {
+      if (scrollTo(row * options.rowHeight - offset, null)) {
         render();
       }
     }
@@ -5944,7 +5963,7 @@ out:
       }
       assert(topRow.position >= 0);
       var y = getRowTop(topRow.position);
-      if (scrollTo(y)) {
+      if (scrollTo(y, null)) {
         render();
       }
 
@@ -6667,8 +6686,8 @@ out:
       selectionModel.setSelectedRanges(rowsToRanges(rows));
     }
     
-    function scrollPort(px) {
-      if (scrollTo(px)) {
+    function scrollPort(pxVertical, pxHorizontal) {
+      if (scrollTo(pxVertical, pxHorizontal)) {
         render();
       }
     }
@@ -6826,6 +6845,7 @@ out:
       "scrollRowToTop": scrollRowToTop,
       "scrollRowToCenter": scrollRowToCenter,
       "scrollCellIntoView": scrollCellIntoView,
+      "scrollTo": scrollTo,
       "getCanvasNode": getCanvasNode,
       "focus": setFocus,
 
