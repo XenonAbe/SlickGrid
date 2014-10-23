@@ -5913,6 +5913,15 @@ out:
       }
     }
 
+    function scrollRowToCenter(row) {
+      // TODO: account for the variable row height: actually measure to determine the offset towards the center
+      var height = viewportH - (viewportHasHScroll ? scrollbarDimensions.height : 0);
+      var offset = (height - options.rowHeight) / 2;
+      if (scrollTo(row * options.rowHeight - offset)) {
+        render();
+      }
+    }
+
     function scrollPage(dir) {
       var topRow = getRowWithFractionFromPosition(scrollTop + pageOffset);
       var bottomRow = getRowWithFractionFromPosition(scrollTop + pageOffset + viewportH);
@@ -6808,6 +6817,7 @@ out:
       "updateRowCount": updateRowCount,
       "scrollRowIntoView": scrollRowIntoView,
       "scrollRowToTop": scrollRowToTop,
+      "scrollRowToCenter": scrollRowToCenter,
       "scrollCellIntoView": scrollCellIntoView,
       "getCanvasNode": getCanvasNode,
       "focus": setFocus,
