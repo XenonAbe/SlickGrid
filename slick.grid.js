@@ -206,6 +206,7 @@ if (typeof Slick === "undefined") {
       editorOptions: {},
       cellFlashingCssClass: "flashing",
       selectedCellCssClass: "selected",
+      rowStripeSize: 1,
       multiSelect: true,
       enableTextSelectionOnCells: true,
       dataItemColumnValueExtractor: null,
@@ -2284,6 +2285,9 @@ if (typeof Slick === "undefined") {
       if (options.enableAddRow !== args.enableAddRow) {
         invalidateRow(getDataLength());
       }
+      if (options.rowStripeSize !== args.rowStripeSize) {
+        invalidateAllRows();
+      }
 
       options = $.extend(options, args);
       validateAndEnforceOptions();
@@ -3027,10 +3031,11 @@ if (typeof Slick === "undefined") {
     function appendRowHtml(stringArray, row, range, dataLength) {
       var d = getDataItem(row);
       var dataLoading = row < dataLength && !d;
+      var isOdd = row % (options.rowStripeSize * 2) < options.rowStripeSize;
       var rowCss = "ui-widget-content slick-row" +
           (dataLoading ? " loading" : "") +
           (row === activeRow ? " active" : "") +
-          (row % 2 === 1 ? " odd" : " even") +
+          (isOdd ? " odd" : " even") +
           " slick-row-" + row;
 
       if (!d) {
