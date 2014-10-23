@@ -88,13 +88,6 @@
     function handleKeyDown(e) {
       assert(!(e instanceof Slick.EventData));
 
-      /***
-       * Кey codes
-       * 37 left
-       * 38 up
-       * 39 right
-       * 40 down
-       */
       var ranges, last;
       var active = _grid.getActiveCell();
 
@@ -145,6 +138,11 @@
 
         setSelectedRanges(ranges);
 
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      else if (!e.shiftKey && !e.ctrlKey && !e.altKey && e.which == Slick.Keyboard.ESC) {
+        setSelectedRanges([]);
         e.preventDefault();
         e.stopPropagation();
       }
