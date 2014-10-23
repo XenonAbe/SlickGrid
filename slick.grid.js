@@ -128,7 +128,7 @@ if (typeof Slick === "undefined") {
    *                          {Function}  If present, will be called to retrieve a data value from the
    *                                      specified item for the corresponding column.
    *                                      Analogous to item[columnDef.field], where item is analogous to data[i].
-   *      formatterFactory:   {Object}    If present, its getFormatter(column, row) method will be called
+   *      formatterFactory:   {Object}    If present, its getFormatter(columnInfo, row, cell, rowMetadata, columnMetadata) method will be called
    *                                      to retrieve a formatter for the specified cell
    *      selectedCellCssClass: {Object?} (?)Object used to specify CSS class for selected cells
    *      cellFlashingCssClass: {Object?} (?)Object used to specify CSS class for flashing cells
@@ -143,7 +143,7 @@ if (typeof Slick === "undefined") {
    *                                      of time or *less*.
    *      editable:           {Boolean}   Is editing table cells supported?
    *      autoEdit:           {Boolean}   (?)Should editing be initiated automatically on click in cell?
-   *      editorFactory:      {Object}    If present, its getEditor(columnInfo, row, cell) method will be called
+   *      editorFactory:      {Object}    If present, its getEditor(columnInfo, row, cell, rowMetadata, columnMetadata) method will be called
    *                                      to retrieve an editor for the specified cell,
    *                                      unless column.editor is specified, which will be used.
    *      editorLock:         {Object}    a Slick.EditorLock instance; the default NULL will make SlickGrid use the Slick.GlobalEditorLock singleton
@@ -2859,7 +2859,7 @@ if (typeof Slick === "undefined") {
       return (columnMetadata && columnMetadata.formatter) ||
           (rowMetadata && rowMetadata.formatter) ||
           column.formatter ||
-          (options.formatterFactory && options.formatterFactory.getFormatter && options.formatterFactory.getFormatter(column, row, cell)) ||
+          (options.formatterFactory && options.formatterFactory.getFormatter && options.formatterFactory.getFormatter(column, row, cell, rowMetadata, columnMetadata)) ||
           options.defaultFormatter;
     }
 
@@ -2885,7 +2885,7 @@ if (typeof Slick === "undefined") {
       return (columnOverrides && columnOverrides.headerFormatter) ||
           (rowMetadata && rowMetadata.headerFormatter) ||
           column.headerFormatter ||
-          (options.formatterFactory && options.formatterFactory.getHeaderFormatter && options.formatterFactory.getHeaderFormatter(column, row, cell)) ||
+          (options.formatterFactory && options.formatterFactory.getHeaderFormatter && options.formatterFactory.getHeaderFormatter(column, row, cell, rowMetadata, columnMetadata)) ||
           options.defaultHeaderFormatter;
     }
 
@@ -2915,7 +2915,7 @@ if (typeof Slick === "undefined") {
       return (columnMetadata && columnMetadata.headerRowFormatter) ||
           (rowMetadata && rowMetadata.headerRowFormatter) ||
           column.headerRowFormatter ||
-          (options.formatterFactory && options.formatterFactory.getHeaderRowFormatter && options.formatterFactory.getHeaderRowFormatter(column, row, cell)) ||
+          (options.formatterFactory && options.formatterFactory.getHeaderRowFormatter && options.formatterFactory.getHeaderRowFormatter(column, row, cell, rowMetadata, columnMetadata)) ||
           options.defaultHeaderRowFormatter;
     }
 
@@ -2931,7 +2931,7 @@ if (typeof Slick === "undefined") {
       return (columnMetadata && columnMetadata.editor) ||
           (rowMetadata && rowMetadata.editor) ||
           column.editor ||
-          (options.editorFactory && options.editorFactory.getEditor && options.editorFactory.getEditor(column, row, cell)) ||
+          (options.editorFactory && options.editorFactory.getEditor && options.editorFactory.getEditor(column, row, cell, rowMetadata, columnMetadata)) ||
           options.defaultEditor;
     }
 
