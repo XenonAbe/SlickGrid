@@ -49,6 +49,8 @@ if (typeof Slick === "undefined") {
   /* @const */ var NAVIGATE_RIGHT = 4;
   /* @const */ var NAVIGATE_UP = 5;
   /* @const */ var NAVIGATE_DOWN = 6;
+  /* @const */ var NAVIGATE_HOME = 7;
+  /* @const */ var NAVIGATE_END = 8;
 
   //////////////////////////////////////////////////////////////////////////////////////////////
   // SlickGrid class implementation (available as Slick.Grid)
@@ -369,7 +371,9 @@ if (typeof Slick === "undefined") {
       NAVIGATE_LEFT, -1,
       NAVIGATE_RIGHT, 1,
       NAVIGATE_PREV, -1,
-      NAVIGATE_NEXT, 1
+      NAVIGATE_NEXT, 1,
+      NAVIGATE_HOME, -1,
+      NAVIGATE_END, 1
     );
     /* @const */ var stepFunctions = LU(
       NAVIGATE_UP, gotoUp,
@@ -377,7 +381,9 @@ if (typeof Slick === "undefined") {
       NAVIGATE_LEFT, gotoLeft,
       NAVIGATE_RIGHT, gotoRight,
       NAVIGATE_PREV, gotoPrev,
-      NAVIGATE_NEXT, gotoNext
+      NAVIGATE_NEXT, gotoNext,
+      NAVIGATE_HOME, gotoHome,
+      NAVIGATE_END, gotoEnd
     );
 
     // Internal use: generate a lookup table for a key,value set.
@@ -4934,13 +4940,11 @@ out:
             break;
 
           case Slick.Keyboard.HOME:
-            navigateHome();
-            handled = true;
+            handled = navigateHome();
             break;
 
           case Slick.Keyboard.END:
-            navigateEnd();
-            handled = true;
+            handled = navigateEnd();
             break;
 
           case Slick.Keyboard.TAB:
@@ -5520,8 +5524,8 @@ out:
         activeRow = activeCell = null;
 
         // when the activeCellNode is reset, we *still* want to retain focus inside slickgrid
-        // if it we had it previously: that way we ensure the keyboard events etc. will continue
-        // arrive at the appropriate handlers.
+        // if we had it previously: that way we ensure the keyboard events etc. will continue
+        // to arrive at the appropriate handlers.
         if (!oldFocusCellInfo && (oldFocusNode === document.body || takeFocus)) {
           // fake it to simplify the conditional check below:
           oldFocusCellInfo = {
@@ -5965,15 +5969,6 @@ out:
       scrollPage(-1);
     }
 
-    function navigateHome() {
-      //var range = getVisibleRange(viewportTop, viewportLeft);
-      scrollPage(-MAX_INT);
-    }
-
-    function navigateEnd() {
-      scrollPage(MAX_INT);
-    }
-
     function getSpans(row, cell) {
       if (!data.getItemMetadata) {
         return null;
@@ -6253,6 +6248,63 @@ out:
       return pos;
     }
 
+    function gotoEnd(row, cell, posY, posX) {
+      var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
+      var lastRow = dataLengthIncludingAddNew - 1;
+      var lastCol = columns.length - 1;
+      var spans = getSpans(lastRow, lastCol);
+      var r = spans.row;
+      var c = spans.cell;
+      if ((r > row || c > cell) && canCellBeActive(r, c)) {
+        return {
+          row: r,
+          cell: c,
+          posY: lastRow,
+          posX: lastCol
+        };
+      } 
+      for (r = lastRow; r > row; r--) {
+        for (c = lastCol; c > cell; c--) {
+          spans = getSpans(r, c);
+          if ((spans.row > row || spans.cell > cell) && canCellBeActive(spans.row, spans.cell)) {
+            return {
+              row: spans.row,
+              cell: spans.cell,
+              posY: lastRow,
+              posX: lastCol
+            };
+          } 
+        }
+      }
+      return null;
+    }
+
+    function gotoHome(row, cell, posY, posX) {
+      // no need to call getSpans(0, 0) as it top/left corner will be (0, 0) no matter what col/rowspan it has.
+      if ((row > 0 || cell > 0) && canCellBeActive(0, 0)) {
+        return {
+          row: 0,
+          cell: 0,
+          posY: 0,
+          posX: 0
+        };
+      } 
+      for (var r = 0; r < row; r++) {
+        for (var c = 0; c < cell; c++) {
+          var spans = getSpans(r, c);
+          if ((spans.row < row || spans.cell < cell) && canCellBeActive(spans.row, spans.cell)) {
+            return {
+              row: spans.row,
+              cell: spans.cell,
+              posY: 0,
+              posX: 0
+            };
+          } 
+        }
+      }
+      return null;
+    }
+
     function navigateRight() {
       return navigate(NAVIGATE_RIGHT);
     }
@@ -6277,6 +6329,14 @@ out:
       return navigate(NAVIGATE_PREV);
     }
 
+    function navigateHome() {
+      return navigate(NAVIGATE_HOME);
+    }
+
+    function navigateEnd() {
+      return navigate(NAVIGATE_END);
+    }
+
     /**
      * @param {string} dir Navigation direction.
      * @return {boolean} Whether navigation resulted in a change of active cell.
@@ -6286,20 +6346,37 @@ out:
         return false;
       }
 
-      if (!activeCellNode && dir !== NAVIGATE_PREV && dir !== NAVIGATE_NEXT) {
+      if (!activeCellNode && dir !== NAVIGATE_PREV && dir !== NAVIGATE_NEXT && dir !== NAVIGATE_HOME && dir !== NAVIGATE_END) {
         return false;
       }
 
       if (!getEditorLock().commitCurrentEdit()) {
         return true;
       }
-      setFocus();
 
       tabbingDirection = tabbingDirections[dir];
+      setFocus();
 
       var node;
       var stepFn = stepFunctions[dir];
-      var pos = stepFn(activeRow, activeCell, activePosY, activePosX);
+      var pos;
+      if (!activeCellNode) {
+        switch (dir) {
+        case NAVIGATE_HOME:
+          pos = stepFn(getDataLengthIncludingAddNew() - 1, columns.length - 1, activePosY, activePosX);
+          break;
+
+        case NAVIGATE_END:
+          pos = stepFn(0, 0, activePosY, activePosX);
+          break;
+
+        default:
+          pos = null;
+          break;
+        }
+      } else {
+        pos = stepFn(activeRow, activeCell, activePosY, activePosX);
+      }
       if (pos) {
         var isAddNewRow = (pos.row === getDataLength());
         scrollCellIntoView(pos.row, pos.cell, !isAddNewRow);
@@ -6309,10 +6386,13 @@ out:
         activePosY = pos.posY;
         activePosX = pos.posX;
         return true;
-      } else {
+      } else if (activeCellNode) {
         node = getCellNode(activeRow, activeCell, true);
         assert(node);
         setActiveCellInternal(node, false, false);
+        return false;
+      } else {
+        resetActiveCell();
         return false;
       }
     }
