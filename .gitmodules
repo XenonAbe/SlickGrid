@@ -29,6 +29,7 @@
 [submodule "lib/jquery-simulate"]
 	path = lib/jquery-simulate
 	url = git@github.com:GerHobbelt/jquery-simulate.git
+	ignore = dirty
 [submodule "lib/jquery-sparkline"]
 	path = lib/jquery-sparkline
 	url = git@github.com:GerHobbelt/jquery.sparkline.git
