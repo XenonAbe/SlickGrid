@@ -5642,7 +5642,7 @@ out:
         activeCellNode.innerHTML = "";
       }
 
-      var info = $.extend({}, options.editorOptions, columnDef.editorOptions, {
+      var info = $.extend({}, options.editorOptions, columnDef.editorOptions, rowMetadata.editorOptions, columnMetadata.editorOptions, {
         grid: self,
         gridPosition: getGridPosition(),
         position: getActiveCellPosition(),

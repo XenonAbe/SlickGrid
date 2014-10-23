@@ -393,13 +393,27 @@ function isValidModifier(v) {
     };
 
     this.validate = function () {
-      var val = $input.val();
+      var val = this.serializeValue();
       if (isNaN(val) && !isValidModifier(val)) {
         return {
           valid: false,
           msg: "Please enter a valid integer"
         };
       }
+	  
+		if (args.editorConfig && !isNaN(args.editorConfig.minValue) && val < args.editorConfig.minValue) {
+			return {
+				valid: false,
+				msg: 'Please enter a value no less than ' + args.editorConfig.minValue
+			};
+		}
+		
+		if (args.editorConfig && !isNaN(args.editorConfig.maxValue) && val > args.editorConfig.maxValue) {
+			return {
+				valid: false,
+				msg: 'Please enter a value no greater than ' + args.editorConfig.maxValue
+			};
+		}
 
       return {
         valid: true,

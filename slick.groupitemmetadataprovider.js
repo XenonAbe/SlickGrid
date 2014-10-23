@@ -82,6 +82,10 @@
     function handleGridClick(e, args) {
       var item = this.getDataItem(args.row);
       if (item && item instanceof Slick.Group && $(e.target).hasClass(options.toggleCssClass)) {
+		if (_grid.getEditorLock().isActive()) {
+			_grid.getEditorLock().commitCurrentEdit();
+		}
+
         var range = _grid.getRenderedRange();
         this.getData().setRefreshHints({
           ignoreDiffsBefore: range.top,
@@ -106,6 +110,9 @@
         if (activeCell) {
           var item = this.getDataItem(activeCell.row);
           if (item && item instanceof Slick.Group) {
+    		if (_grid.getEditorLock().isActive()) {
+    			_grid.getEditorLock().commitCurrentEdit();
+    		}
             var range = _grid.getRenderedRange();
             this.getData().setRefreshHints({
               ignoreDiffsBefore: range.top,
