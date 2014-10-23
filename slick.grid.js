@@ -156,6 +156,7 @@ if (typeof Slick === "undefined") {
    *      multiColumnSort:    {Boolean}   If true, rows can be sorted by multiple columns.
    *      defaultFormatter:   {Function}  Default function for converting cell values to strings.
    *      defaultEditor:      {Function}  Default function for editing cell values.
+   *      defaultRowFormatter: {Function} Default function for formatting each grid row container.
    *      defaultHeaderFormatter: 
    *                          {Function}  The Slick.Formatters compatible cell formatter used to render the header cell.
    *      defaultHeaderRowFormatter: 
@@ -206,7 +207,6 @@ if (typeof Slick === "undefined") {
       editorOptions: {},
       cellFlashingCssClass: "flashing",
       selectedCellCssClass: "selected",
-      rowStripeSize: 1,
       multiSelect: true,
       enableTextSelectionOnCells: true,
       dataItemColumnValueExtractor: null,
@@ -215,6 +215,7 @@ if (typeof Slick === "undefined") {
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
       defaultEditor: null,
+      defaultRowFormatter: defaultRowFormatter,
       defaultHeaderFormatter: defaultHeaderFormatter,
       defaultHeaderRowFormatter: defaultHeaderRowFormatter,
       scrollBands: 0,
@@ -2285,9 +2286,6 @@ if (typeof Slick === "undefined") {
       if (options.enableAddRow !== args.enableAddRow) {
         invalidateRow(getDataLength());
       }
-      if (options.rowStripeSize !== args.rowStripeSize) {
-        invalidateAllRows();
-      }
 
       options = $.extend(options, args);
       validateAndEnforceOptions();
@@ -2851,6 +2849,19 @@ if (typeof Slick === "undefined") {
       return output;
     }
 
+    function defaultRowFormatter(row, rowDataItem, rowMetaInfo) {
+      assert(rowMetaInfo);
+      // return nothing; all this formatter ever may do is tweak the rowMetaInfo.attributes collective.
+    }
+
+    function getRowFormatter(row) {
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, false);
+
+      return (rowMetadata && rowMetadata.formatter) ||
+          (options.formatterFactory && options.formatterFactory.getRowFormatter && options.formatterFactory.getRowFormatter(row, rowMetadata)) ||
+          options.defaultRowFormatter;
+    }
+
     function getFormatter(row, cell) {
       var column = columns[cell];
       var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, cell);
@@ -3031,34 +3042,56 @@ if (typeof Slick === "undefined") {
     function appendRowHtml(stringArray, row, range, dataLength) {
       var d = getDataItem(row);
       var dataLoading = row < dataLength && !d;
-      var isOdd = row % (options.rowStripeSize * 2) < options.rowStripeSize;
-      var rowCss = "ui-widget-content slick-row" +
-          (dataLoading ? " loading" : "") +
-          (row === activeRow ? " active" : "") +
-          (isOdd ? " odd" : " even") +
-          " slick-row-" + row;
+      var rowCss = ["ui-widget-content", "slick-row",
+          (row % 2 === 1 ? "odd" : "even"),
+          "slick-row-" + row
+      ];
+      if (dataLoading) {
+        rowCss.push("loading");
+      }
+      if (row === activeRow) {
+        rowCss.push("active");
+      }
 
       if (!d) {
-        rowCss += " " + options.addNewRowCssClass;
+        rowCss.push(options.addNewRowCssClass);
       }
 
       var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, false);
 
       if (rowMetadata && rowMetadata.cssClasses) {
-        rowCss += " " + (typeof rowMetadata.cssClasses === "function" ? rowMetadata.cssClasses(row) : rowMetadata.cssClasses);
+        if (typeof rowMetadata.cssClasses === "function") {
+          rowCss = rowCss.concat(rowMetadata.cssClasses(row));
+        } else {
+          rowCss.push(rowMetadata.cssClasses);
+        }
       }
 
       stringArray.push("<div");
 
       var metaData = getAllCustomMetadata(rowMetadata) || {};
       metaData.role = "row";
+      var rowStyles = ["top: " + getRowTop(row) + "px;"];
+      var rowHeight = getRowHeight(row);
+      if (rowHeight !== options.rowHeight - cellHeightDiff) {
+        rowStyles.push("height: " + rowHeight + "px;");
+      }
+
+      var info = $.extend({}, options.rowFormatterOptions, {
+        rowCss: rowCss,
+        rowStyles: rowStyles,
+        attributes: metaData,
+        rowHeight: rowHeight,
+        rowMetadata: rowMetadata
+      });
+      // I/F: function rowFormatter(row, rowDataItem, rowMetaInfo)
+      getRowFormatter(row)(row, rowMetadata, info);
       assert(!metaData.class);
-      metaData.class = rowCss;
-      var rowStyle = " top: " + getRowTop(row) + "px;" +
-            (getRowHeight(row) !== options.rowHeight - cellHeightDiff ? " height: " + getRowHeight(row) + "px;" : "");
+      metaData.class = info.rowCss.join(" ");
       assert(!metaData.style);
-      metaData.style = rowStyle;
-      appendMetadataAttributes(stringArray, row, null, metaData, null, null, {});
+      metaData.style = info.rowStyles.join(" ");
+
+      appendMetadataAttributes(stringArray, row, null, metaData, null, null, info);
 
       stringArray.push(">");
 
@@ -3655,7 +3688,7 @@ if (typeof Slick === "undefined") {
         cellHeight = getRowBottom(rowSpanBottomIdx) - getRowTop(row);
       } else {
         var rowHeight = getRowHeight(row);
-        if (rowHeight !== options.rowHeight) {
+        if (rowHeight !== options.rowHeight - cellHeightDiff) {
           cellHeight = rowHeight;
         }
       }
