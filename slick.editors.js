@@ -490,7 +490,7 @@ function isValidModifier(v) {
       if (isNaN(val) && !isValidModifier(val)) {
         return {
           valid: false,
-          msg: "Please enter a valid float"
+          msg: "Please enter a valid numeric value"
         };
       }
 
