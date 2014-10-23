@@ -193,7 +193,7 @@
       }
 
       if (args.pageNum != null) {
-        pagenum = Math.min(args.pageNum, Math.max(0, Math.ceil(totalRows / pagesize) - 1));
+        pagenum = pagesize ? Math.min(args.pageNum, Math.max(0, Math.ceil(totalRows / pagesize) - 1)) : 0;
       }
 
       onPagingInfoChanged.notify(getPagingInfo(), null, self);
