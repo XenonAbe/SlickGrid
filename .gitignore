@@ -9,6 +9,10 @@
 
 node_modules/
 
+__forks.info__/
+__forks__.bulk_dump
+
 # Editor backup files
 *~
 *.bak
+
