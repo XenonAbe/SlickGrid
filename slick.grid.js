@@ -241,6 +241,7 @@ if (typeof Slick === "undefined") {
       defaultSortAsc: true,
       focusable: true,
       selectable: true,
+      reorderable: true,
       dataItemColumnValueExtractor: null
       // childrenFirstIndex: <N>                set to the first flattened column index covered by this column when this column is a parent (forming an inclusive range)
       // childrenLastIndex:  <N>                set to the last flattened column index covered by this column when this column is a parent (forming an inclusive range)
@@ -1093,6 +1094,10 @@ if (typeof Slick === "undefined") {
           header.addClass("slick-header-sortable");
           header.append("<span class='slick-sort-indicator' />");
         }
+        
+        if (options.enableColumnReorder && m.reorderable) {
+          header.addClass("slick-header-reorderable");
+        }
 
         trigger(self.onHeaderCellRendered, {
           node: header[0],
@@ -1323,6 +1328,7 @@ if (typeof Slick === "undefined") {
         helper: "clone",
         delay: 300,
         placeholder: "slick-sortable-placeholder ui-state-default slick-header-column",
+        items: "> .slick-header-reorderable",
         start: function (e, ui) {
           ui.placeholder.width(ui.helper.width());
           trigger(self.onColumnsStartReorder, {
@@ -1360,8 +1366,9 @@ if (typeof Slick === "undefined") {
             $(this).sortable("cancel");
             return;
           }
-
-          var reorderedIds = $headers.sortable("toArray");
+          $headers.sortable("option", "items", "> *");                          // Reset items to grab all columns
+          var reorderedIds = $headers.sortable("toArray");                      // Get sorted order
+          $headers.sortable("option", "items", "> .slick-header-reorderable");  // Revert items
           var reorderedColumns = [];
           for (var i = 0; i < reorderedIds.length; i++) {
             var cell = extractCellFromDOMid(reorderedIds[i]);
