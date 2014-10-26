@@ -234,8 +234,8 @@
             "getSelectedRanges": getSelectedRanges,
             "setSelectedRanges": setSelectedRanges,
 
-            "getSelectedRanges": getSelectedRanges,
-            "setSelectedRanges": setSelectedRanges,
+            "getSelectedRows": getSelectedRows,
+            "setSelectedRows": setSelectedRows,
 
             "init": init,
             "destroy": destroy,
