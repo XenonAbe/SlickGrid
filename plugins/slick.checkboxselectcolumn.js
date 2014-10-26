@@ -113,7 +113,7 @@
           e.stopImmediatePropagation();
           return;
         }
-        
+
         toggleRowSelection(args.row);
         e.stopPropagation();
         e.stopImmediatePropagation();

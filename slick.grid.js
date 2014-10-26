@@ -115,7 +115,6 @@ if (typeof Slick === "undefined") {
    *      defaultColumnWidth: {Number}    Default column width for columns that don't specify a width
    *      enableColumnReorder: {Boolean}  Can columns be reordered?
    *      enableAddRow:       {Boolean}   Can rows be added?
-   *      leaveSpaceForNewRows: {Boolean} Should space be left for a new/data entry row at bottom?
    *      showTopPanel:       {Boolean}   Should the top panel be shown?
    *      topPanelHeight:     {Number}    Height of the top panel in pixels
    *      showHeaderRow:      {Boolean}   Should the extra header row be shown?
@@ -184,7 +183,6 @@ if (typeof Slick === "undefined") {
       rowHeight: 25,
       defaultColumnWidth: 80,
       enableAddRow: false,
-      leaveSpaceForNewRows: false,
       editable: false,
       autoEdit: true,
       enableCellNavigation: true,
@@ -224,6 +222,8 @@ if (typeof Slick === "undefined") {
       forceSyncScrolling: false,
       asyncRenderDelay: 5000,         // this value is picked to 'catch' typematic key repeat rates as low as 12-per-second: 
                                     // keep your navigator keys depressed to see the delayed render + mandatory mini-cell-renders kicking in. 
+      asyncRenderSlice: 50,
+      asyncRenderInterleave: 20,
       addNewRowCssClass: "new-row",
       syncColumnCellResize: false,
       editCommandHandler: null,
@@ -317,8 +317,7 @@ if (typeof Slick === "undefined") {
     // var deletedRowsCacheStartIndex = MAX_INT;
     var cellSpans = [];
     var renderedRows = 0;
-    var previousRenderWasIncomplete = false;
-    var numVisibleRows;
+    // var previousRenderWasIncomplete = false;
     var prevScrollTop = 0;
     var scrollTop = 0;
     var lastRenderedScrollTop = 0;
@@ -345,7 +344,8 @@ if (typeof Slick === "undefined") {
     var h_editorLoader = null;
     var h_render = null;
     var h_postrender = null;
-    var perftimer = null;
+    var postprocess_perftimer = null;
+    var render_perftimer = null;
     var postProcessedRows = [];
     var postProcessToRow = 0;
     var postProcessFromRow = MAX_INT;
@@ -429,6 +429,7 @@ if (typeof Slick === "undefined") {
 
       options = $.extend({}, defaults, options);
       validateAndEnforceOptions();
+      assert(options.defaultColumnWidth > 0);
       columnDefaults.width = options.defaultColumnWidth;
 
       parseColumns(columnDefinitions);
@@ -943,9 +944,10 @@ if (typeof Slick === "undefined") {
       return $footer && $footer[0];
     }
 
-    function mkSaneId(columnDef, cell) {
-      s = "" + uid + "_c" + cell + "_" + columnDef.id;
+    function mkSaneId(columnDef, cell, row) {
+      s = "" + uid + "_c" + cell + "_r" + row + "_" + columnDef.id;
       s = s.replace(/[^a-zA-Z0-9]+/g, "_");
+      //assert($("[aria-describedby=" + s + "]").length === 0);
       return s;
     }
 
@@ -1045,7 +1047,7 @@ if (typeof Slick === "undefined") {
         info.html = getHeaderFormatter(-2000, cell)(-2000, cell, columnDef.name, columnDef, null /* rowDataItem */, info);
         var metaData = getAllCustomMetadata(null, null, info) || {};
         patchupCellAttributes(metaData, info, "columnheader");
-        metaData.id = mkSaneId(columnDef, i);
+        metaData.id = mkSaneId(columnDef, i, -2000);
         var stringArray = [
           "<div"
         ];
@@ -1079,7 +1081,7 @@ if (typeof Slick === "undefined") {
 
       function createBaseColumnHeader(columnDef, level, cell) {
         var header = createColumnHeader(columnDef, $headers, level, cell);
-        var i, j, column;
+        var i, j, len, llen, column;
         var cellCss, cellStyles, info;
         var headerRowCell;
         var footerRowCell;
@@ -1095,7 +1097,7 @@ if (typeof Slick === "undefined") {
           header.append("<span class='slick-sort-indicator' />");
         }
         
-        if (options.enableColumnReorder && m.reorderable) {
+        if (options.enableColumnReorder && columnDef.reorderable) {
           header.addClass("slick-header-reorderable");
         }
 
@@ -1203,7 +1205,7 @@ if (typeof Slick === "undefined") {
       }
 
       if (hasNestedColumns) {
-        for (i = 0; i < nestedColumns.length; i++) {
+        for (i = 0, len = nestedColumns.length; i < len; i++) {
           var $row;
           var isParent = false;
           var layer = nestedColumns[i];
@@ -1211,7 +1213,7 @@ if (typeof Slick === "undefined") {
             $row = $("<div class='slick-header-columns slick-header-parents level" + i + "' style='left:-1000px' />").appendTo($headerParents);
             isParent = true;
           }
-          for (j = 0; j < layer.length; j++) {
+          for (j = 0, llen = layer.length; j < llen; j++) {
             column = layer[j];
             if (isParent) {
               createColumnHeader(column, $row, i, j);
@@ -1221,7 +1223,7 @@ if (typeof Slick === "undefined") {
           }
         }
       } else {
-        for (i = 0; i < columns.length; i++) {
+        for (i = 0, len = columns.length; i < len; i++) {
           column = columns[i];
           createBaseColumnHeader(column, 0, i);
         }
@@ -1254,8 +1256,8 @@ if (typeof Slick === "undefined") {
           }
 
           var sortOpts = null;
-          var i;
-          for (i = 0; i < sortColumns.length; i++) {
+          var i, len;
+          for (i = 0, len = sortColumns.length; i < len; i++) {
             if (sortColumns[i].columnId === column.id) {
               sortOpts = sortColumns[i];
               sortOpts.sortAsc = !sortOpts.sortAsc;
@@ -1370,7 +1372,7 @@ if (typeof Slick === "undefined") {
           var reorderedIds = $headers.sortable("toArray");                      // Get sorted order
           $headers.sortable("option", "items", "> .slick-header-reorderable");  // Revert items
           var reorderedColumns = [];
-          for (var i = 0; i < reorderedIds.length; i++) {
+          for (var i = 0, len = reorderedIds.length; i < len; i++) {
             var cell = extractCellFromDOMid(reorderedIds[i]);
             reorderedColumns.push(columns[cell]);
           }
@@ -1792,7 +1794,7 @@ if (typeof Slick === "undefined") {
         [".slickgrid-container." + uid + " .slick-row", "height:" + options.rowHeight + "px"]
       ];
 
-      for (var i = 0; i < columns.length; i++) {
+      for (var i = 0, len = columns.length; i < len; i++) {
         rules.push([".slickgrid-container." + uid + " .l" + i, ""]);
         rules.push([".slickgrid-container." + uid + " .r" + i, ""]);
       }
@@ -1827,7 +1829,7 @@ if (typeof Slick === "undefined") {
         result.push(document.styleSheets[style]);
       }
       var sheets = $("head").find("style");
-      for (var i = 0; i < sheets.length; i++) {
+      for (var i = 0, len = sheets.length; i < len; i++) {
         result.push(sheets[i].sheet);
       }
       return result;
@@ -1837,10 +1839,10 @@ if (typeof Slick === "undefined") {
     // (previously slickgrid would throw an exception for this!)
     // otherwise return the style reference.
     function getColumnCssRules(idx) {
-      var i;
+      var i, len;
       if (!stylesheet) {
         var sheets = getAllStyleSheets();
-        for (i = 0; i < sheets.length; i++) {
+        for (i = 0, len = sheets.length; i < len; i++) {
           if ((sheets[i].ownerNode || sheets[i].owningElement) == $style[0]) {
             stylesheet = sheets[i];
             break;
@@ -1858,7 +1860,7 @@ if (typeof Slick === "undefined") {
         columnCssRulesR = [];
         var cssRules = (stylesheet.cssRules || stylesheet.rules);
         var matches, columnIdx;
-        for (i = 0; i < cssRules.length; i++) {
+        for (i = 0, len = cssRules.length; i < len; i++) {
           var selector = cssRules[i].selectorText;
           if (matches = /\.l\d+/.exec(selector)) {
             columnIdx = parseInt(matches[0].substr(2, matches[0].length - 2), 10);
@@ -1985,14 +1987,14 @@ if (typeof Slick === "undefined") {
     }
 
     function autosizeColumns() {
-      var i, c,
+      var i, c, len,
           widths = [],
           shrinkLeeway = 0,
           total = 0,
           prevTotal,
           availWidth = viewportHasVScroll ? viewportW - scrollbarDimensions.width : viewportW;
 
-      for (i = 0; i < columns.length; i++) {
+      for (i = 0, len = columns.length; i < len; i++) {
         c = columns[i];
         widths.push(c.width);
         total += c.width;
@@ -2005,7 +2007,7 @@ if (typeof Slick === "undefined") {
       prevTotal = total;
       while (total > availWidth && shrinkLeeway) {
         var shrinkProportion = (total - availWidth) / shrinkLeeway;
-        for (i = 0; i < columns.length && total > availWidth; i++) {
+        for (i = 0, len = columns.length; i < len && total > availWidth; i++) {
           c = columns[i];
           var width = widths[i];
           if (!c.resizable || width <= Math.max(c.minWidth || 0, absoluteColumnMinWidth)) {
@@ -2028,7 +2030,7 @@ if (typeof Slick === "undefined") {
       prevTotal = total;
       while (total < availWidth) {
         var growProportion = availWidth / total;
-        for (i = 0; i < columns.length && total < availWidth; i++) {
+        for (i = 0, len = columns.length; i < len && total < availWidth; i++) {
           c = columns[i];
           var currentWidth = widths[i];
           var growSize;
@@ -2048,7 +2050,7 @@ if (typeof Slick === "undefined") {
       }
 
       var reRender = false;
-      for (i = 0; i < columns.length; i++) {
+      for (i = 0, len = columns.length; i < len; i++) {
         if (columns[i].rerenderOnResize && columns[i].width !== widths[i]) {
           reRender = true;
         }
@@ -2077,7 +2079,7 @@ if (typeof Slick === "undefined") {
       if (!initialized) { return; }
       applyNestedColumnHeaderWidths();
       var h;
-      for (var i = 0, headers = $headers.children(), ii = headers.length; i < ii; i++) {
+      for (var i = 0, headers = $headers.children(), len = headers.length; i < len; i++) {
         h = $(headers[i]);
         if (h.width() !== columns[i].width - headerColumnWidthDiff) {
           h.width(columns[i].width - headerColumnWidthDiff);
@@ -2110,14 +2112,14 @@ if (typeof Slick === "undefined") {
 
       function computeWidths(columns, depth) {
         var totalWidth = 0;
-        for (var i = 0; i < columns.length; i++) {
+        for (var i = 0, len = columns.length; i < len; i++) {
           var column = columns[i];
           assert(column.children ? !column.spacers : true);
           if (column.children) {
             column.width = computeWidths(column.children, depth + 1);
           } else if (column.spacers) {
             var spacer;
-            for (var j = 0; j < column.spacers.length; j++) {
+            for (var j = 0, jj = column.spacers.length; j < jj; j++) {
               spacer = column.spacers[j];
               spacer.width = column.width;
             }
@@ -2142,7 +2144,7 @@ if (typeof Slick === "undefined") {
      */
     function applyColumnWidths() {
       var x = 0, w, rule;
-      for (var i = 0; i < columns.length; i++) {
+      for (var i = 0, len = columns.length; i < len; i++) {
         w = columns[i].width;
 
         rule = getColumnCssRules(i);
@@ -2193,7 +2195,7 @@ if (typeof Slick === "undefined") {
     function handleSelectedRangesChanged(e, ranges) {
       selectedRows = [];
       var hash = {};
-      for (var i = 0; i < ranges.length; i++) {
+      for (var i = 0, len = ranges.length; i < len; i++) {
         for (var j = ranges[i].fromRow; j <= ranges[i].toRow; j++) {
           if (!hash[j]) {  // prevent duplicates
             selectedRows.push(j);
@@ -2244,7 +2246,7 @@ if (typeof Slick === "undefined") {
       columnPosLeft = [];
       //columnPosRight = [];
       var x = 0;
-      for (var i = 0, ii = columns.length; i < ii; i++) {
+      for (var i = 0, len = columns.length; i < len; i++) {
         columnPosLeft[i] = x;
         x += columns[i].width;
         //columnPosRight[i] = x;
@@ -2308,9 +2310,6 @@ if (typeof Slick === "undefined") {
     }
 
     function validateAndEnforceOptions() {
-      if (options.autoHeight) {
-        options.leaveSpaceForNewRows = false;
-      }
     }
 
     // Note: this is a separate function as the for..in causes the code to remain unoptimized
@@ -2373,8 +2372,8 @@ if (typeof Slick === "undefined") {
       }, config);
 
       // if the cell has other coordinates because of row/cell span, update that cell coordinate
-      var colspan = 1; // getColspan(row, cell);
-      var rowspan = 1; // getRowspan(row, cell);
+      var colspan = 1;
+      var rowspan = 1;
       var spans = getSpans(row, cell);
       assert(spans ? spans.colspan >= 1 : true);
       if (spans) {
@@ -2427,7 +2426,7 @@ if (typeof Slick === "undefined") {
       }
 
       if (config.uid) {
-        info.uid = mkSaneId(m, cell);
+        info.uid = mkSaneId(m, cell, row);
       }
       if (config.node) {
         info.cellNode = getCellNode(row, cell, true);
@@ -2495,7 +2494,7 @@ if (typeof Slick === "undefined") {
         }
         assert(input.length > 0);
         parent.childrenFirstIndex = columns.length;
-        for (var i = 0; i < input.length; i++) {
+        for (var i = 0, len = input.length; i < len; i++) {
           var column = $.extend({}, columnDefaults, input[i]);
           colset.push(column);
           if (column.children) {
@@ -2651,19 +2650,38 @@ if (typeof Slick === "undefined") {
     //
     // `returnValue.fraction === 0.0` would identify the top pixel within the row.
     //
-    // When the Y coordinate points outside the grid, out-of-range numbers will be produced.
+    // When the Y coordinate points outside the grid, out-of-range numbers 
+    // will be produced as this function will estimate the row number using the
+    // default row height.
     //
-    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>),
-    // unless the Y coordinate points outside the grid.
-    function getRowWithFractionFromPosition(maxPosition) {
-      //assert(maxPosition >= 0); -- maxPosition can be a negative number when this function is called from inside a drag from bottom-right to top-left where the user drags until outside the grid canvas area
+    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>).
+    function getRowWithFractionFromPosition(posY, clipToValidRange) {
+      if (clipToValidRange == null) {
+        clipToValidRange = true;
+      }
+
+      //assert(posY >= 0); -- posY can be a negative number when this function is called from inside a drag from bottom-right to top-left where the user drags until outside the grid canvas area
       var rowsInPosCache = getDataLengthIncludingAddNew();
+      var topRowInfo;
+      var bottomRowInfo;
+      var fraction;
+      var probe, top, probeInfo, height, dy;
 
       if (!rowsInPosCache) {
+        topRowInfo = getRowPosition(0);
+        top = topRowInfo.top;
+        probe = 0;
+        fraction = 0;
+        height = options.rowHeight;
+        assert(height > 0);
+        if (!clipToValidRange) {
+          probe = Math.floor((posY - top) / height);
+          fraction = (posY - probe * height) / height;
+        }
         return {
-          position: 0,
-          fraction: 0,
-          height: 1
+          position: probe,
+          fraction: fraction,
+          height: height
         };
       }
 
@@ -2672,30 +2690,55 @@ if (typeof Slick === "undefined") {
       // This first call to getRowTop(rowsInPosCache - 1) is here to help update the row cache
       // at the start of the search; at least for many scenarios where all (or the last) rows
       // have been invalidated:
-      var bottomRowInfo = getRowPosition(rowsInPosCache - 1);
-      var fraction;
-      if (maxPosition >= bottomRowInfo.top) {
-        // Return the last row in the grid
-        fraction = (maxPosition - bottomRowInfo.top) / bottomRowInfo.height;
+      bottomRowInfo = getRowPosition(rowsInPosCache - 1);
+      if (posY >= bottomRowInfo.top) {
+        // Return the last row in the grid if we've got to clip
+        top = bottomRowInfo.top;
+        probe = rowsInPosCache - 1;
+        height = bottomRowInfo.height;
+        fraction = (posY - top) / height;
+        assert(height > 0);
+        if (!clipToValidRange && posY >= top + height) {
+          height = options.rowHeight;
+          posY -= top + height;
+          dy = Math.floor(posY / height);
+          probe += 1 + dy;
+          fraction = (posY - dy * height) / height;
+          assert(fraction >= 0);
+          assert(fraction < 1);
+        }
         return {
-          position: rowsInPosCache - 1,
-          fraction: Math.min(0.999999, fraction),
-          height: bottomRowInfo.height
+          position: probe,
+          fraction: fraction,
+          height: height
         };
       }
-      var topRowInfo = getRowPosition(0);
-      if (maxPosition < topRowInfo.top) {
-        // Return the first row in the grid
+      topRowInfo = getRowPosition(0);
+      if (posY < topRowInfo.top) {
+        // Return the first row in the grid if we've got to clip
+        top = topRowInfo.top;
+        probe = 0;
+        height = topRowInfo.height;
+        fraction = (posY - top) / height;
+        assert(height > 0);
+        if (!clipToValidRange && posY < top) {
+          height = options.rowHeight;
+          posY -= top;
+          dy = Math.floor(posY / height);
+          probe += dy;
+          fraction = (posY - dy * height) / height;
+          assert(fraction >= 0);
+          assert(fraction < 1);
+        }
         return {
-          position: 0,
-          fraction: 0,
-          height: 1
+          position: probe,
+          fraction: fraction,
+          height: height
         };
       }
 
       var l = 0;
       var r = rowsInPosCache - 1;
-      var probe, top, probeInfo;
       // before we enter the binary search, we attempt to improve the initial guess + search range
       // using the heuristic that the variable cell height will be close to rowHeight:
       // we perform two probes (at ≈1‰ interval) to save 10 probes (1000 ≈ 2^10) if we are lucky;
@@ -2711,20 +2754,20 @@ if (typeof Slick === "undefined") {
       // (Yes, this discussion ignores the cost of the rowheight position cache table update which
       // is O(N) on its own but which is also to be treated as "negligible cost" when amortized over
       // the number of getRowWithFractionFromPosition calls vs. cache invalidation.)
-      probe = (maxPosition / options.rowHeight) | 0;
+      probe = (posY / options.rowHeight) | 0;
       probe = Math.min(rowsInPosCache - 1, Math.max(0, probe));
       probeInfo = getRowPosition(probe);
       top = probeInfo.top;
-      if (top > maxPosition) {
+      if (top > posY) {
         r = probe - 1;
         probe = r - 1 - (0.001 * rowsInPosCache) | 0;
         probe = Math.max(0, probe);
         probeInfo = getRowPosition(probe);
         top = probeInfo.top;
-        if (top > maxPosition) {
+        if (top > posY) {
           r = probe - 1;
-        } else if (top + probeInfo.height > maxPosition) {
-          fraction = (maxPosition - top) / probeInfo.height;
+        } else if (top + probeInfo.height > posY) {
+          fraction = (posY - top) / probeInfo.height;
           assert(fraction >= 0);
           assert(fraction < 1);
           return {
@@ -2735,8 +2778,8 @@ if (typeof Slick === "undefined") {
         } else {
           l = probe + 1;
         }
-      } else if (top + probeInfo.height > maxPosition) {
-        fraction = (maxPosition - top) / probeInfo.height;
+      } else if (top + probeInfo.height > posY) {
+        fraction = (posY - top) / probeInfo.height;
         assert(fraction >= 0);
         assert(fraction < 1);
         return {
@@ -2750,10 +2793,10 @@ if (typeof Slick === "undefined") {
         probe = Math.min(rowsInPosCache - 1, probe);
         probeInfo = getRowPosition(probe);
         top = probeInfo.top;
-        if (top > maxPosition) {
+        if (top > posY) {
           r = probe - 1;
-        } else if (top + probeInfo.height > maxPosition) {
-          fraction = (maxPosition - top) / probeInfo.height;
+        } else if (top + probeInfo.height > posY) {
+          fraction = (posY - top) / probeInfo.height;
           assert(fraction >= 0);
           assert(fraction < 1);
           return {
@@ -2771,10 +2814,10 @@ if (typeof Slick === "undefined") {
         probe = ((l + r) / 2) | 0; // INT/FLOOR
         probeInfo = getRowPosition(probe);
         top = probeInfo.top;
-        if (top > maxPosition) {
+        if (top > posY) {
           r = probe - 1;
-        } else if (top + probeInfo.height > maxPosition) {
-          fraction = (maxPosition - top) / probeInfo.height;
+        } else if (top + probeInfo.height > posY) {
+          fraction = (posY - top) / probeInfo.height;
           assert(fraction >= 0);
           assert(fraction < 1);
           return {
@@ -2787,7 +2830,7 @@ if (typeof Slick === "undefined") {
         }
       }
       probeInfo = getRowPosition(l);
-      fraction = (maxPosition - probeInfo.top) / probeInfo.height;
+      fraction = (posY - probeInfo.top) / probeInfo.height;
       assert(fraction >= 0);
       assert(fraction < 1);
       return {
@@ -2813,7 +2856,7 @@ if (typeof Slick === "undefined") {
 
       var oldOffset = pageOffset;
 
-      page = Math.min(numberOfPages - 1, (pageHeight > 0) ? Math.floor(y / pageHeight) : 0);
+      page = Math.min(numberOfPages - 1, pageHeight > 0 ? Math.floor(y / pageHeight) : 0);
       pageOffset = Math.round(page * jumpinessCoefficient);
       var newScrollTop = y - pageOffset;
 
@@ -3099,6 +3142,9 @@ if (typeof Slick === "undefined") {
         }
       }
 
+      assert(rowsCache[row]);
+      assert(rowsCache[row].cellRenderQueue.length === 0);
+
       stringArray.push("<div");
 
       var metaData = getAllCustomMetadata(rowMetadata) || {};
@@ -3130,19 +3176,28 @@ if (typeof Slick === "undefined") {
       var colspan, m, columnData;
       for (var i = 0, ii = columns.length; i < ii; i += colspan) {
         m = columns[i];
-        colspan = getColspan(row, i);
+        colspan = 1;
+        var spanRow = row;
+        var spans = getSpans(row, i);
+        if (spans) {
+          colspan = spans.colspan - cell + spans.cell;
+          spanRow = spans.row;
+        }
 
-        if (getSpanRow(row, i) < row) {
+        if (spanRow < row) {
           continue;
         }
 
         // Do not render cells outside of the viewport.
         assert(Math.min(ii, i + colspan) === i + colspan);
         if (columnPosLeft[i + colspan] > range.leftPx) {
-          if (columnPosLeft[i] > range.rightPx) {
+          if (columnPosLeft[i] >= range.rightPx) {
             // All columns to the right are outside the range.
             break;
           }
+
+          assert(rowsCache[row]);
+          assert(!rowsCache[row].cellNodesByColumnIdx[i]);
 
           // look up by id, then index
           columnData = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[i]);
@@ -3160,13 +3215,18 @@ if (typeof Slick === "undefined") {
 
     function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem) {
       var m = columns[cell];
+      var colspan = 1;
+      var rowspan = 1;
       var spans = getSpans(row, cell);
       assert(spans ? spans.colspan >= 1 : true);
-      var colspan = spans ? spans.colspan - cell + spans.cell : 1;
-      assert(spans ? spans.rowspan >= 1 : true);
-      var rowspan = spans ? spans.rowspan - row + spans.row : 1;
-      assert(spans ? spans.row === row : true);
-      assert(spans ? spans.cell === cell : true);
+      if (spans) {
+        assert(row === spans.row);
+        assert(cell === spans.cell);
+        rowspan = spans.rowspan - row + spans.row;
+        colspan = spans.colspan - cell + spans.cell;
+      }
+      assert(colspan >= 1);
+      assert(rowspan >= 1);
       assert(Math.min(columns.length - 1, cell + colspan - 1) === cell + colspan - 1);
       var cellStyles = [];
       var cellCss = ["slick-cell", "l" + cell, "r" + (cell + colspan - 1)];
@@ -3255,7 +3315,7 @@ if (typeof Slick === "undefined") {
       stringArray.push("<div");
 
       var metaData = getAllCustomMetadata(null, columnMetadata, info) || {};
-      patchupCellAttributes(metaData, info, "gridcell", mkSaneId(m, cell));
+      patchupCellAttributes(metaData, info, "gridcell", mkSaneId(m, cell, row));
       appendMetadataAttributes(stringArray, row, cell, metaData, m, rowDataItem, info);
 
       stringArray.push(">");
@@ -3311,45 +3371,72 @@ if (typeof Slick === "undefined") {
     }
 
     function cleanupRows(rangeToKeep) {
+      // pull up the lower bound while we're at it:
+      for (row = 0, endrow = rowsCache.length; row < endrow; row++) {
+        if (rowsCache[row]) {
+          break;
+        }
+      }
+      //assert(row === rowsCacheStartIndex);
+      assert(row >= rowsCacheStartIndex);
+      rowsCacheStartIndex = row;
+
       for (var row = rowsCacheStartIndex, endrow = rowsCache.length; row < endrow; row++) {
+        var cacheEntry = rowsCache[row];
         if (row !== activeRow) {
           if (row < rangeToKeep.top) {
             // do not remove rows with rowspanned cells overlapping rangeToKeep
             if (cellSpans[row] && row + cellSpans[row].maxRowSpan >= rangeToKeep.top) {
+              if (cacheEntry) {
+                cleanUpCells(rangeToKeep, row);
+              }
               continue;
             }
           } else if (row < rangeToKeep.bottom) {
+            if (cacheEntry) {
+              cleanUpCells(rangeToKeep, row);
+            }
             continue;
           }
-          if (rowsCache[row]) {
+          if (cacheEntry) {
             assert(row !== activeRow);
             removeRowFromCache(row);
+          }
+        } else {
+          if (cacheEntry) {
+            cleanUpCells(rangeToKeep, row);
           }
         }
       }
       // and clip off the tail end of the cache index array itself:
       for (row = rowsCacheStartIndex, endrow = rowsCache.length; row < endrow; endrow--) {
-        if (rowsCache[row]) {
+        if (rowsCache[endrow]) {
+          endrow++;
           break;
         }
       }
       rowsCache.length = endrow;
     }
 
-    function updateAllDirtyCells(rangeToUpdate) {
+    function updateAllDirtyCells(rangeToUpdate, checkIfMustAbort) {
       // do not update rows outside the specified range; when there's cells which are 
       // col/rowspanning and overlapping the specified range, than updateCell itself
       // will pick them up; after all, all the grid coordinates (cells) these 
       // row/colspanning nodes overlap are each flagged as "dirty" to ensure that we catch
       // them during this update process. 
-      for (var row = Math.max(rowsCacheStartIndex, rangeToUpdate.top), endrow = Math.min(rowsCache.length - 1, rangeToUpdate.bottom); row <= endrow; row++) {
+      for (var row = Math.max(rowsCacheStartIndex, rangeToUpdate.top), endrow = Math.min(rowsCache.length - 1, rangeToUpdate.bottom - 1); row <= endrow; row++) {
         var cacheEntry = rowsCache[row];
         if (cacheEntry) {
+          // flush any pending row render queue to cache first:
+          if (cacheEntry.cellRenderQueue.length) {
+            assert(0, "should not be necessary any more");
+            ensureCellNodesInRowsCache(row);
+          }
           var cellCache = cacheEntry.cellNodesByColumnIdx;
           var dirtyFlags = cacheEntry.dirtyCellNodes;
           for (var cell = cacheEntry.cellNodesByColumnStart, len = cellCache.length; cell < len; cell++) {
             if (cellCache[cell] && dirtyFlags[cell]) {
-              updateCell(row, cell);
+              updateCellInternal(row, cell, cacheEntry, cellCache[cell]);
               assert(!dirtyFlags[cell]);
             }
           }
@@ -3358,6 +3445,10 @@ if (typeof Slick === "undefined") {
           assert(cacheEntry.isDirty === 0);
           cacheEntry.dirtyCellNodes = [];
           cacheEntry.isDirty = 0;
+        }
+
+        if (checkIfMustAbort && checkIfMustAbort()) {
+          break;
         }
       }
     }
@@ -3629,29 +3720,51 @@ if (typeof Slick === "undefined") {
         return;
       }
 
-      var m = columns[cell],
-          d = getDataItem(row),
-          cacheEntry = rowsCache[row];
+      var cacheEntry = rowsCache[row];
       assert(cacheEntry);
       assert(cacheEntry.cellNodesByColumnIdx[cell]);
 
       // if the cell has other coordinates because of row/cell span, update that cell (which will invalidate this cellNode)
+      var rowspan = 1;
       var spans = getSpans(row, cell);
       assert(spans ? spans.colspan >= 1 : true);
-      if (spans && (spans.row !== row || spans.cell !== cell)) {
-        //updateCell(spans.row, spans.cell);
-        row = spans.row;
-        cell = spans.cell;
-        cellNode = getCellNode(row, cell);
-        if (!cellNode) {
-          return;
-        }
+      if (spans) {
+        rowspan = spans.rowspan;
 
-        m = columns[cell];
-        d = getDataItem(row);
-        cacheEntry = rowsCache[row];
-        assert(cacheEntry);
-        assert(cacheEntry.cellNodesByColumnIdx[cell]);
+        if (spans.row !== row || spans.cell !== cell) {
+          //updateCellInternal(spans.row, spans.cell, cacheEntry, cellNode);
+          row = spans.row;
+          cell = spans.cell;
+          cellNode = getCellNode(row, cell);
+          if (!cellNode) {
+            return;
+          }
+
+          cacheEntry = rowsCache[row];
+          assert(cacheEntry);
+          assert(cacheEntry.cellNodesByColumnIdx[cell]);
+        }
+      }
+
+      updateCellInternal(row, cell, cacheEntry, cellNode);
+    }
+
+    function updateCellInternal(row, cell, cacheEntry, cellNode) {
+      var m = columns[cell],
+          d = getDataItem(row);
+      assert(cacheEntry === rowsCache[row]);
+      assert(cacheEntry);
+      assert(cacheEntry.cellNodesByColumnIdx[cell]);
+
+      // if the cell has other coordinates because of row/cell span, update that cell (which will invalidate this cellNode)
+      var rowspan = 1;
+      var spans = getSpans(row, cell);
+      assert(spans ? spans.colspan >= 1 : true);
+      if (spans) {
+        rowspan = spans.rowspan;
+
+        assert(spans.row === row);
+        assert(spans.cell === cell);
       }
 
       if (cacheEntry.dirtyCellNodes[cell]) {
@@ -3667,7 +3780,7 @@ if (typeof Slick === "undefined") {
         // look up by id, then index
         var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[cell]);
 
-        var cellHeight = getCellHeight(row, getRowspan(row, cell));
+        var cellHeight = getCellHeight(row, rowspan);
         if (cellHeight !== options.rowHeight - cellHeightDiff) {
           cellNode.style.height = cellHeight + "px";
         } else if (cellNode.style.height) {
@@ -3702,7 +3815,7 @@ if (typeof Slick === "undefined") {
           continue;
         }
 
-        updateCell(row, columnIdx);
+        updateCellInternal(row, columnIdx, cacheEntry, node);
       }
 
       // flag the row as updated completely:
@@ -3790,7 +3903,6 @@ if (typeof Slick === "undefined") {
         viewportH = getViewportHeight();
       }
 
-      numVisibleRows = getRowWithFractionFromPosition(viewportH).position;
       viewportW = getContainerWidth();
       if (setHeight) {
         $viewport.height(viewportH);
@@ -3805,7 +3917,6 @@ if (typeof Slick === "undefined") {
           viewportH = actualViewportH;
           clippedAutoSize = (estimateH > viewportH);
     
-          numVisibleRows = getRowWithFractionFromPosition(viewportH).position;
           $viewport.height(viewportH);
         }
       }
@@ -3830,8 +3941,7 @@ if (typeof Slick === "undefined") {
       cacheRowPositions();
 
       var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
-      var numberOfRows = dataLengthIncludingAddNew +
-          (options.leaveSpaceForNewRows ? numVisibleRows - 1 : 0);
+      var numberOfRows = dataLengthIncludingAddNew;
 
       var oldViewportHasVScroll = viewportHasVScroll;
       viewportHasVScroll = (getRowBottom(numberOfRows - 1) > viewportH);
@@ -3918,8 +4028,8 @@ if (typeof Slick === "undefined") {
         viewportLeft = scrollLeft;
       }
 
-      var top = getRowWithFractionFromPosition(viewportTop + pageOffset);
-      var bottom = getRowWithFractionFromPosition(viewportTop + pageOffset + viewportH); // test at the first INvisible pixel
+      var top = getRowWithFractionFromPosition(viewportTop + pageOffset, false);
+      var bottom = getRowWithFractionFromPosition(viewportTop + pageOffset + viewportH, false); // test at the first INvisible pixel
       return {
         top: top.position,                          // the first visible row
         bottom: bottom.position + 1,                // first row which is guaranteed to be NOT visible, not even partly
@@ -3936,13 +4046,16 @@ if (typeof Slick === "undefined") {
     }
 
     function getRenderedRange(viewportTop, viewportLeft) {
-      var range = getVisibleRange(viewportTop, viewportLeft);
-      assert(numVisibleRows === getRowWithFractionFromPosition(viewportH).position);
-      var buffer = numVisibleRows;
+      var visibleRange = getVisibleRange(viewportTop, viewportLeft);
       var minBuffer = 3;
+      var buffer = Math.max(minBuffer, visibleRange.bottom - visibleRange.top);
 
-      delete range.topPx;
-      delete range.bottomPx;
+      var range = {
+        top: visibleRange.top,                      // the first visible row
+        bottom: visibleRange.bottom,                // first row which is guaranteed to be NOT visible, not even partly
+        leftPx: visibleRange.leftPx,
+        rightPx: visibleRange.rightPx
+      };
 
       if (vScrollDir === -1) {
         range.top -= buffer;
@@ -3956,7 +4069,7 @@ if (typeof Slick === "undefined") {
       }
 
       range.top = Math.max(0, range.top);
-      range.bottom = Math.min(getDataLengthIncludingAddNew() - 1, range.bottom);
+      range.bottom = Math.min(getDataLengthIncludingAddNew(), range.bottom);
 
       range.leftPx -= viewportW;
       range.rightPx += viewportW;
@@ -3978,6 +4091,7 @@ if (typeof Slick === "undefined") {
             assert(lastChild.className.indexOf("slick-cell") >= 0);
             if (lastChild.className.indexOf("slick-cell") >= 0) {
               var columnIdx = cacheEntry.cellRenderQueue.pop();
+              assert(!cacheEntry.cellNodesByColumnIdx[columnIdx]);
               cacheEntry.cellNodesByColumnIdx[columnIdx] = lastChild;
               minCachedCellNodeIndex = Math.min(minCachedCellNodeIndex, columnIdx);
             }
@@ -3991,6 +4105,13 @@ if (typeof Slick === "undefined") {
     function cleanUpCells(range, row) {
       var totalCellsRemoved = 0;
       var cacheEntry = rowsCache[row];
+      assert(cacheEntry);
+
+      var activeSpans = getSpans(activeRow, activeCell);
+      if (activeSpans) {
+        assert(activeSpans.row === activeRow);
+        assert(activeSpans.cell === activeCell);
+      }
 
       // Remove cells outside the range.
       var cellsToRemove = [];
@@ -4003,11 +4124,16 @@ if (typeof Slick === "undefined") {
           continue;
         }
 
-        var colspan = getColspan(row, columnIdx);
+        var colspan = 1;
+        var spans = getSpans(row, columnIdx);
+        if (spans) {
+          assert(row === spans.row);
+          colspan = spans.colspan;
+        }
         assert(Math.min(columns.length, columnIdx + colspan) === columnIdx + colspan);
-        if (columnPosLeft[columnIdx] > range.rightPx ||
-          columnPosLeft[columnIdx + colspan] < range.leftPx) {
-          if (!(row === activeRow && columnIdx === activeCell)) {
+        if (columnPosLeft[columnIdx] >= range.rightPx ||
+          columnPosLeft[columnIdx + colspan] <= range.leftPx) {
+          if (row !== activeRow || columnIdx !== activeCell) {
             cellsToRemove.push(columnIdx);
           }
         }
@@ -4015,6 +4141,7 @@ if (typeof Slick === "undefined") {
 
       var cellToRemove;
       while ((cellToRemove = cellsToRemove.pop()) != null) {
+        assert(cacheEntry.cellNodesByColumnIdx[cellToRemove]);
         cacheEntry.rowNode.removeChild(cacheEntry.cellNodesByColumnIdx[cellToRemove]);
         // cacheEntry.cellNodesByColumnIdx[cellToRemove].classList.add("destroyed");
         // cacheEntry.deletedCellNodesByColumnIdx[cellToRemove] = cacheEntry.cellNodesByColumnIdx[cellToRemove];
@@ -4036,7 +4163,7 @@ if (typeof Slick === "undefined") {
       cacheEntry.deletedCellNodesByColumnStart = minCachedDeletedCellNodeIndex;
     }
 
-    function cleanUpAndRenderCells(range, mandatoryRange) {
+    function cleanUpAndRenderCells(range, mandatoryRange, checkIfMustAbort) {
       var cacheEntry;
       var minCachedCellNodeIndex;
       var stringArray = [];
@@ -4050,7 +4177,8 @@ if (typeof Slick === "undefined") {
       var columnMetadata;
       var d;
 
-      for (var row = range.top, btm = range.bottom; row <= btm; row++) {
+      assert(range.bottom > range.top);
+      for (var row = range.top, btm = range.bottom; row < btm; row++) {
         cacheEntry = rowsCache[row];
         if (!cacheEntry) {
           continue;
@@ -4058,10 +4186,11 @@ if (typeof Slick === "undefined") {
 
         // cellRenderQueue populated in renderRows() needs to be cleared first
         ensureCellNodesInRowsCache(row);
+        assert(cacheEntry.cellRenderQueue.length === 0);
 
-        if (!mandatoryRange) {
-          cleanUpCells(range, row);
-        }
+        // if (!mandatoryRange) {
+        //   cleanUpCells(range, row);
+        // }
 
         // Render missing cells.
         cellsAdded = 0;
@@ -4073,16 +4202,24 @@ if (typeof Slick === "undefined") {
         // TODO:  shorten this loop (index? heuristics? binary search?)
         for (i = 0, ii = columns.length; i < ii; i += colspan) {
           // Cells to the right are outside the range.
-          if (columnPosLeft[i] > range.rightPx) {
+          if (columnPosLeft[i] >= range.rightPx) {
             break;
           }
-          colspan = getColspan(row, i);
+
+          colspan = 1;
+          var spanRow = row;
+          var spans = getSpans(row, i);
+          if (spans) {
+            assert(i === spans.cell);
+            colspan = spans.colspan;
+            spanRow = spans.row;
+          }
+
           // Already rendered.
           if (cacheEntry.cellNodesByColumnIdx[i] != null) {
             continue;
           }
 
-          var spanRow = getSpanRow(row, i);
           if (spanRow !== row) {
             continue;
           }
@@ -4100,6 +4237,10 @@ if (typeof Slick === "undefined") {
         if (cellsAdded) {
           totalCellsAdded += cellsAdded;
           processedRows.push(row);
+        }
+
+        if (checkIfMustAbort && checkIfMustAbort()) {
+          break;
         }
       }
 
@@ -4119,6 +4260,7 @@ if (typeof Slick === "undefined") {
         while ((columnIdx = cacheEntry.cellRenderQueue.pop()) != null) {
           node = x.lastChild;
           cacheEntry.rowNode.appendChild(node);
+          assert(!cacheEntry.cellNodesByColumnIdx[columnIdx]);
           cacheEntry.cellNodesByColumnIdx[columnIdx] = node;
           minCachedCellNodeIndex = Math.min(minCachedCellNodeIndex, columnIdx);
         }
@@ -4126,23 +4268,30 @@ if (typeof Slick === "undefined") {
       }
     }
 
-    function renderRows(range, mandatoryRange) {
+    function renderRows(range, mandatoryRange, checkIfMustAbort) {
       var parentNode = $canvas[0],
           stringArray = [],
           rows = [],
           needToReselectCell = false,
-          i, ii, colspan,
-          dataLength = getDataLength();
+          r, c, l, colspan,
+          dataLength = getDataLength(),
+          aborted = false;
 
       // collect rows with cell rowspans > 1 and overlapping the range top
-      for (ii = 0; ii < columns.length; ii += colspan) {
-        i = getSpanRow(range.top, ii);
-        colspan = getColspan(i, ii);
-        assert(ii + colspan <= columns.length);
-        if (i < range.top && !rowsCache[i] && columnPosLeft[ii + colspan] > range.leftPx && columnPosLeft[ii] <= range.rightPx) {
-          rows.push(i);
+      for (c = 0, l = columns.length; c < l; c += colspan) {
+        colspan = 1;
+        r = range.top;
+        var spans = getSpans(r, c);
+        if (spans) {
+          assert(c === spans.cell);
+          colspan = spans.colspan;
+          r = spans.row;
+        }
+        assert(c + colspan <= columns.length);
+        if (r < range.top && !rowsCache[r] && columnPosLeft[c + colspan] > range.leftPx && columnPosLeft[c] < range.rightPx) {
+          rows.push(r);
 
-          if (rowsCache[i]) {
+          if (rowsCache[r]) {
             continue;
           }
 
@@ -4151,7 +4300,7 @@ if (typeof Slick === "undefined") {
 
           // Create an entry right away so that appendRowHtml() can
           // start populating it.
-          rowsCache[i] = {
+          rowsCache[r] = {
             rowNode: null,
 
             // Cell nodes (by column idx).  Lazy-populated by ensureCellNodesInRowsCache().
@@ -4176,60 +4325,73 @@ if (typeof Slick === "undefined") {
             // end of the row.
             cellRenderQueue: []
           };
-          rowsCacheStartIndex = Math.min(rowsCacheStartIndex, i);
+          rowsCacheStartIndex = Math.min(rowsCacheStartIndex, r);
 
-          appendRowHtml(stringArray, i, range, dataLength);
+          appendRowHtml(stringArray, r, range, dataLength);
           //assert(rowsCache[i].rowNode);
-          if (activeCellNode && activeRow === i) {
+          if (activeCellNode && activeRow === r) {
             needToReselectCell = true;
           }
           counter_rows_rendered++;
         }
+
+        if (checkIfMustAbort && checkIfMustAbort()) {
+          aborted = true;
+          break;
+        }
       }
 
       // collect not rendered range rows
-      for (i = range.top, ii = range.bottom; i <= ii; i++) {
-        if (rowsCache[i]) {
-          continue;
+      if (!aborted) {
+        assert(range.bottom > range.top);
+        for (r = range.top, l = range.bottom; r < l; r++) {
+          if (rowsCache[r]) {
+            continue;
+          }
+          renderedRows++;
+          rows.push(r);
+
+          // Create an entry right away so that appendRowHtml() can
+          // start populating it.
+          rowsCache[r] = {
+            rowNode: null,
+
+            // Cell nodes (by column idx).  Lazy-populated by ensureCellNodesInRowsCache().
+            cellNodesByColumnIdx: [],
+
+            // The lowest = starting index for the cellNodesByColumnIdx[] array above.
+            cellNodesByColumnStart: MAX_INT,
+
+            // Flags cell nodes as invalidated ("dirty") (indexed by column idx).
+            dirtyCellNodes: [],
+
+            // counter to signal if any cells in the row are "dirty" and thus require re-rendering/updating:
+            isDirty: 0,
+
+            // deletedCellNodesByColumnIdx: [],
+
+            // // The lowest = starting index for the deletedCellNodesByColumnIdx[] array above.
+            // deletedCellNodesByColumnStart: MAX_INT,
+
+            // Column indices of cell nodes that have been rendered, but not yet indexed in
+            // cellNodesByColumnIdx.  These are in the same order as cell nodes added at the
+            // end of the row.
+            cellRenderQueue: []
+          };
+          rowsCacheStartIndex = Math.min(rowsCacheStartIndex, r);
+
+          appendRowHtml(stringArray, r, range, dataLength);
+          //assert(rowsCache[i].rowNode);
+          if (activeCellNode && activeRow === r) {
+            needToReselectCell = true;
+          }
+          counter_rows_rendered++;
+
+          if (checkIfMustAbort && checkIfMustAbort()) {
+            aborted = true;
+            break;
+          }
         }
-        renderedRows++;
-        rows.push(i);
-
-        // Create an entry right away so that appendRowHtml() can
-        // start populating it.
-        rowsCache[i] = {
-          rowNode: null,
-
-          // Cell nodes (by column idx).  Lazy-populated by ensureCellNodesInRowsCache().
-          cellNodesByColumnIdx: [],
-
-          // The lowest = starting index for the cellNodesByColumnIdx[] array above.
-          cellNodesByColumnStart: MAX_INT,
-
-          // Flags cell nodes as invalidated ("dirty") (indexed by column idx).
-          dirtyCellNodes: [],
-
-          // counter to signal if any cells in the row are "dirty" and thus require re-rendering/updating:
-          isDirty: 0,
-
-          // deletedCellNodesByColumnIdx: [],
-
-          // // The lowest = starting index for the deletedCellNodesByColumnIdx[] array above.
-          // deletedCellNodesByColumnStart: MAX_INT,
-
-          // Column indices of cell nodes that have been rendered, but not yet indexed in
-          // cellNodesByColumnIdx.  These are in the same order as cell nodes added at the
-          // end of the row.
-          cellRenderQueue: []
-        };
-        rowsCacheStartIndex = Math.min(rowsCacheStartIndex, i);
-
-        appendRowHtml(stringArray, i, range, dataLength);
-        //assert(rowsCache[i].rowNode);
-        if (activeCellNode && activeRow === i) {
-          needToReselectCell = true;
-        }
-        counter_rows_rendered++;
       }
 
       if (rows.length === 0) {
@@ -4241,22 +4403,23 @@ if (typeof Slick === "undefined") {
       x.innerHTML = stringArray.join("");
 
       var rowNodes = [];
-      for (i = 0, ii = rows.length; i < ii; i++) {
-        rowsCache[rows[i]].rowNode = parentNode.appendChild(x.firstChild);
-        assert(rowsCache[rows[i]].rowNode);
-        rowNodes.push(rowsCache[rows[i]]);
+      for (r = 0, l = rows.length; r < l; r++) {
+        rowsCache[rows[r]].rowNode = parentNode.appendChild(x.firstChild);
+        assert(rowsCache[rows[r]].rowNode);
+        rowNodes.push(rowsCache[rows[r]]);
         // Safari 6.0.5 doesn't always render the new row immediately.
         // "Touching" the node's offsetWidth is sufficient to force redraw.
         if (isBrowser.safari605) {
           // this is a very costly operation in all browsers, so only run it for those which need it here:
-          rowsCache[rows[i]].rowNode.offsetWidth;
+          rowsCache[rows[r]].rowNode.offsetWidth;
         }
       }
       
       trigger(self.onRowsRendered, { 
         rows: rows, 
         nodes: rowNodes,
-        mandatory: mandatoryRange 
+        mandatory: mandatoryRange,
+        mustContinue: aborted 
       });
 
       if (needToReselectCell && !mandatoryRange) {
@@ -4290,14 +4453,14 @@ if (typeof Slick === "undefined") {
       return needToReselectCell;
     }
 
-    function startPostProcessing() {
+    function startPostProcessing(renderDelay) {
       if (!options.enableAsyncPostRender) {
         return;
       }
       if (h_postrender) {
         clearTimeout(h_postrender);
       }
-      h_postrender = setTimeout(asyncPostProcessRows, options.asyncPostRenderDelay);
+      h_postrender = setTimeout(asyncPostProcessRows, renderDelay > 0 ? renderDelay : options.asyncPostRenderDelay);
     }
 
     function invalidatePostProcessingResults(row, cell) {
@@ -4322,7 +4485,7 @@ if (typeof Slick === "undefined") {
     }
 
     // Return TRUE when the render is pending (but hasn't executed yet)
-    function render(renderImmediately) {
+    function render(renderImmediately, renderDelay) {
       if (!initialized) { 
         return false; 
       }
@@ -4333,13 +4496,18 @@ if (typeof Slick === "undefined") {
       }
 
       if (options.forceSyncScrolling || renderImmediately || !options.asyncRenderDelay) {
-        forcedRender();
+        forcedRender(null, 0);
         return false;
       } else {
+        // We may delay rendering the entire grid, but we cannot ever postpone updating the active & focused cells!
+        if (activeCellNode) {
+          forcedRenderCriticalCell(activeRow, activeCell);
+        }
+
         h_render = setTimeout(function h_render_timer_f() {
           h_render = null;
-          forcedRender();
-        }, options.asyncRenderDelay);
+          forcedRender(null, options.asyncRenderSlice);
+        }, renderDelay > 0 ? renderDelay : options.asyncRenderDelay);
         return true;
       }
     }
@@ -4348,7 +4516,53 @@ if (typeof Slick === "undefined") {
       return h_render != null;
     }
 
-    function forcedRender(mandatoryRange) {
+    function forcedRenderCriticalCell(row, cell) {
+      var cellBoxInfo = getCellNodeBox(row, cell);
+      assert(cellBoxInfo);
+      var leftPx = scrollLeft;
+      var rightPx = scrollLeft + viewportW;
+      // when the sought-after cell is outside the visible part of the row, we don't render a series but only that single node:
+      if (cellBoxInfo) {
+        leftPx = cellBoxInfo.left;
+        rightPx = cellBoxInfo.right;
+      }
+      // now construct the range object a la getRenderedRange() to be the minimal area that should get us, at least, the rendered cell DIV we seek here.
+      var rendered = {
+        top: row,
+        bottom: row + 1,
+        left: cell,
+        right: cell + 1,
+        leftPx: leftPx,
+        rightPx: rightPx
+      };
+      return forcedRender(rendered, 0);
+    }
+
+    function forcedRender(mandatoryRange, timeSlice) {
+      var checkTheTime = null;
+      if (timeSlice > 0) {
+        if (!render_perftimer) {
+          render_perftimer = Slick.PerformanceTimer();
+        }
+        render_perftimer.start();
+
+        var signal_timeout = false;
+
+        checkTheTime = function h_checkTheTime_f() {
+          // Should we stop and postpone the execution of the pending tasks?
+          if (!signal_timeout && timeSlice > 0) {
+            var delta_t = render_perftimer.mark();
+            if (delta_t >= timeSlice) {
+              //break out;
+              signal_timeout = true;
+            }
+          }
+          return signal_timeout;
+        }; 
+      }
+
+      //assert($(".slick-row").filter(":not(:visible)").length === 0);
+
       var visible = getVisibleRange();
       var rendered;
       if (mandatoryRange && typeof mandatoryRange === "object") {
@@ -4356,6 +4570,8 @@ if (typeof Slick === "undefined") {
         assert("bottom" in mandatoryRange);
         assert("left" in mandatoryRange);
         assert("right" in mandatoryRange);
+        assert("leftPx" in mandatoryRange);
+        assert("rightPx" in mandatoryRange);
         rendered = mandatoryRange;
       } else {
         rendered = getRenderedRange();
@@ -4367,11 +4583,6 @@ if (typeof Slick === "undefined") {
         forced: mandatoryRange
       });
 
-      if (!mandatoryRange) {
-        // remove rows no longer in the viewport
-        cleanupRows(rendered);
-      }
-
       // Add new rows & missing cells in existing rows.
       // 
       // When a "mandatory" render is executed (which usually spans a tiny area)
@@ -4380,14 +4591,17 @@ if (typeof Slick === "undefined") {
       // viewport with lots of "missing cells". Then on the next non-mandatory
       // render() round, we should call cleanUpAndRenderCells() again to ensure 
       // those "missing cells" get rendered after all. 
-      if (lastRenderedScrollLeft !== scrollLeft || mandatoryRange || previousRenderWasIncomplete) {
-        if (isRenderPending() && mandatoryRange) {
-          previousRenderWasIncomplete = true;
-        } else {
-          previousRenderWasIncomplete = false;
-        }
-        cleanUpAndRenderCells(rendered, mandatoryRange);
-      }
+      
+      // if (lastRenderedScrollLeft !== scrollLeft || mandatoryRange || previousRenderWasIncomplete) {
+      //   if (isRenderPending() && mandatoryRange) {
+      //     previousRenderWasIncomplete = true;
+      //   } else {
+      //     previousRenderWasIncomplete = false;
+      //   }
+      cleanUpAndRenderCells(rendered, mandatoryRange, checkTheTime);
+      // } else {
+      //   assert(0, "I don't expect this to happen in a sane & efficient environment");
+      // }
 
       // // only destroy the nodes which are not going to be replaced by new ones yet:
       // if (!mandatoryRange || 1) {
@@ -4397,34 +4611,60 @@ if (typeof Slick === "undefined") {
       // }
 
       // render missing rows
-      var needToReselectCell = renderRows(rendered, mandatoryRange);
+      var needToReselectCell = false;
+      if (!checkTheTime || !checkTheTime()) {
+        needToReselectCell = renderRows(rendered, mandatoryRange, checkTheTime);
+      }
 
-      // update all cells which have been flagged as "dirty":
-      updateAllDirtyCells(visible);
-
-      // Make sure we inspect & post process the entire visible range where necessary:
-      postProcessFromRow = Math.min(postProcessFromRow, visible.top);
-      postProcessToRow = Math.max(postProcessToRow, Math.min(getDataLengthIncludingAddNew() - 1, visible.bottom));
-      startPostProcessing();
-
-      if (!mandatoryRange) {
-        lastRenderedScrollTop = scrollTop;
-        lastRenderedScrollLeft = scrollLeft;
-      } else {
-        // add new rows & their cells when we execute in mandatory render mode
-        assert(rowsCache[rendered.top]);
-        if (rowsCache[rendered.top].cellRenderQueue.length) {
-          assert(rowsCache[rendered.top].rowNode);
-          cleanUpAndRenderCells(rendered, mandatoryRange);
+      // add all new rendered rows & their cells to the cache
+      assert(rendered.bottom > rendered.top);
+      for (var row = rendered.top; row < rendered.bottom; row++) {
+        var cacheEntry = rowsCache[row];
+        if (cacheEntry && cacheEntry.cellRenderQueue.length) {
+          //assert(0, "should not be necessary any more");
+          assert(cacheEntry.rowNode);
+          //cleanUpAndRenderCells(rendered, mandatoryRange);
+          ensureCellNodesInRowsCache(row);
         }
       }
+
+      // update all cells which have been flagged as "dirty":
+      if (!checkTheTime || !checkTheTime()) {
+        // When we're executing a "forced render", we're only going to update the cells which
+        // we want actually rendered right now.
+        updateAllDirtyCells((mandatoryRange ? rendered : visible), checkTheTime);
+      }
+
+      // Make sure we inspect & post process the entire visible range where necessary:
+      if (!checkTheTime || !checkTheTime()) {
+        postProcessFromRow = Math.min(postProcessFromRow, visible.top);
+        postProcessToRow = Math.max(postProcessToRow, Math.min(getDataLengthIncludingAddNew() - 1, visible.bottom - 1));
+        startPostProcessing();
+      }
+
+      if (!mandatoryRange) {
+        // remove rows / columns no longer in the viewport
+        if (!checkTheTime || !checkTheTime()) {
+          cleanupRows(rendered);
+
+          // only set these when we're completely done with the render process:
+          lastRenderedScrollTop = scrollTop;
+          lastRenderedScrollLeft = scrollLeft;
+        }
+      } 
 
       trigger(self.onRenderEnd, {
         renderedArea: rendered, 
         visibleArea: visible,
         forced: mandatoryRange,
-        needToReselectCell: needToReselectCell
+        needToReselectCell: needToReselectCell,
+        mustContinue: checkTheTime && checkTheTime()
       });
+
+      if (checkTheTime && checkTheTime()) {
+        // fire the render action again at a later moment to continue the process:
+        render(false, options.asyncRenderInterleave);
+      }
 
       return needToReselectCell;
     }
@@ -4478,7 +4718,8 @@ if (typeof Slick === "undefined") {
             // see https://github.com/mleibman/SlickGrid/issues/309
             page = numberOfPages - 1;
           } else {
-            page = Math.min(numberOfPages - 1, Math.floor(scrollTop * ((virtualTotalHeight - viewportH) / (scrollableHeight - viewportH)) * (1 / pageHeight)));
+            assert(pageHeight > 0);
+            page = Math.min(numberOfPages - 1, Math.floor(scrollTop * ((virtualTotalHeight - viewportH) / (scrollableHeight - viewportH)) / pageHeight));
           }
           pageOffset = Math.round(page * jumpinessCoefficient);
           if (oldOffset !== pageOffset) {
@@ -4516,10 +4757,10 @@ if (typeof Slick === "undefined") {
     function asyncPostProcessRows() {
       h_postrender = null;
 
-      if (!perftimer) {
-        perftimer = Slick.PerformanceTimer();
+      if (!postprocess_perftimer) {
+        postprocess_perftimer = Slick.PerformanceTimer();
       }
-      perftimer.start();
+      postprocess_perftimer.start();
       var requeue = false;
 
       var dataLength = getDataLength();
@@ -4554,7 +4795,12 @@ out:
           postProcessedRows[row] = [];
         }
 
+        // As this is an sync process and the basic grid render itself may have been executed
+        // again in between runs of ours, we MAY have
+        // some new cells queued from the renderer: apply those before we continue working on
+        // our own stuff:
         ensureCellNodesInRowsCache(row);
+
         var cachedCellNodesByColumnIdxs = cacheEntry.cellNodesByColumnIdx;
         for (var columnIdx = cacheEntry.cellNodesByColumnStart, end = cachedCellNodesByColumnIdxs.length; columnIdx < end; columnIdx++) {
           var m = columns[columnIdx],
@@ -4566,9 +4812,9 @@ out:
             // When there was one async task, there may be more to follow...
             requeue = true;
             // Should we stop and postpone the execution of the pending tasks?
-            var delta_t = perftimer.mark();
+            var delta_t = postprocess_perftimer.mark();
             if (delta_t >= options.asyncPostRenderSlice) {
-              // This approach (see the comment above the startRow/ndRow loop) makes sure 
+              // This approach (see the comment above the startRow/endRow loop) makes sure 
               // this row is revisited as we abort here midway through 
               // (i.e. when not all of the async render cells in the current row have been processed yet)!
               break out;
@@ -4579,7 +4825,7 @@ out:
 
       // When there's anything left to do, queue it for the next time slice:
       if (requeue) {
-        h_postrender = setTimeout(asyncPostProcessRows, options.asyncPostRenderDelay);
+        startPostProcessing(options.asyncPostRenderDelay);
       } else {
         // There's nothing to update: we can safely declare the async post processing
         // to have completed.
@@ -4900,7 +5146,7 @@ out:
 
     function handleContainerKeyDown(e) {
       assert(!(e instanceof Slick.EventData));
-      //console.log("keydown @ CONTAINER: ", this, arguments, document.activeElement);
+      console.log("keydown @ CONTAINER: ", this, arguments, document.activeElement);
 
       // move focus back into slickgrid when it's not already there?
       //
@@ -4913,10 +5159,13 @@ out:
       //console.log("keydown: ", this, arguments, document.activeElement);
 
       var editCell = getCellFromEvent(e);
-      var activeCellInfo = {
-        row: activeRow, 
-        cell: activeCell
-      };
+      var activeCellInfo = null;
+      if (activeCellNode) {
+        activeCellInfo = {
+          row: activeRow, 
+          cell: activeCell
+        };
+      }
       assert("which" in e);
       var which = e.which;
       var shiftKey = e.shiftKey;
@@ -4929,6 +5178,13 @@ out:
 
       //console.warn("key @ after: ", which, handled, e, editCell, activeCellInfo, getActiveCell(), document.activeElement);
       if (!handled) {
+        // Check if we're triggered from inside the grid container: when we are, then 
+        // we simply activate the top/left visible cell and proceed from there:
+        if (!activeCellNode && !currentEditor) {
+          var visibleRange = getVisibleRange();
+          setActiveCell(visibleRange.row, visibleRange.cell, false);
+        }
+
         if (!shiftKey && !altKey && !ctrlKey) {
           switch (which) {
           case Slick.Keyboard.ESCAPE:
@@ -5012,7 +5268,7 @@ out:
 
     function handleContainerClickEvent(e) {
       assert(!(e instanceof Slick.EventData));
-      //console.log("container CLICK: ", this, arguments, document.activeElement);
+      console.log("container CLICK: ", this, arguments, document.activeElement);
     }
 
     function handleClick(e) {
@@ -5188,34 +5444,63 @@ out:
     // `returnValue.cellFraction === 0.0` would identify the left-most pixel within the cell.
     //
     // When the coordinate points outside the grid, out-of-range row/cell coordinates will be produced.
-    function getCellFromPoint(x, y) {
-      var rowInfo = getRowWithFractionFromPosition(y + pageOffset);
+    function getCellFromPoint(x, y, clipToValidRange) {
+      if (clipToValidRange == null) {
+        clipToValidRange = true;
+      }
+
+      var rowInfo = getRowWithFractionFromPosition(y + pageOffset, clipToValidRange);
+      var columnCount = columns.length;
       var cell = 0;
       var cellFraction;
 
       var w = 0;
       var cellWidth = 0;
-      for (var i = 0, l = columns.length; i < l && w < x; i++) {
+      for (var i = 0; i < columnCount && w < x; i++) {
         w += (cellWidth = columns[i].width);
         cell++;
       }
 
       // calculate fraction from the left edge:
-      // (outside the grid range the cell.fraction represents the number of pixels it is out of range)
+      // (outside the grid range the rowFraction/cellFraction represents the number of estimated rows/cells it is out of range)
       x -= w;
       if (x < 0) {
         cell--;
-        if (!cellWidth) {
-          assert(cell === -1);
-          cellWidth = 1;
+        assert(cell >= -1);
+        if (cell === -1) {
+          cellWidth = options.defaultColumnWidth;
+          assert(cellWidth);
+          if (clipToValidRange) {
+            cell = 0;
+          } else {
+            cell = Math.floor(x / cellWidth);
+            x -= cell * cellWidth;
+            assert(x >= 0);
+          }
+        } else {
+          x += cellWidth;
+          assert(x >= 0);
         }
-        x += cellWidth;
         cellFraction = x / cellWidth;
       } else if (x > 0) {
-        if (!cellWidth) {
-          assert(cell === columns.length);
-          cellWidth = 1;
+        assert(cell === columnCount);
+        cellWidth = options.defaultColumnWidth;
+        assert(cellWidth);
+        if (clipToValidRange) {
+          cell--;
+          x += cellWidth;  
+        } else {
+          var dx = Math.floor(x / cellWidth);
+          cell += dx;
+          x -= dx * cellWidth;
+          assert(x >= 0);
         }
+        cellFraction = x / cellWidth;
+      } else if (cell === columnCount && clipToValidRange) {
+        assert(x === 0);
+        assert(cellWidth);
+        cell--;
+        x += cellWidth;  
         cellFraction = x / cellWidth;
       }
 
@@ -5317,11 +5602,15 @@ out:
 
     function getCellNodeBox(row, cell) {
       if (!cellExists(row, cell)) {
-        return null;
+        // Are we perhaps looking at the "new data row at the bottom"?
+        // If not, then we are indeed outside the grid allowed area.
+        if (!options.enableAddRow || !cellExists(row - 1, cell)) {
+          return null;
+        }
       }
 
       var y1 = getRowTop(row) - pageOffset;
-      var y2 = y1 + getRowHeight(row) - 1;
+      var y2 = y1 + getRowHeight(row);
       var x1 = getColumnOffset(cell);
       var x2 = x1 + columns[cell].width;
 
@@ -5393,6 +5682,11 @@ out:
 
     function scrollCellIntoView(row, cell, doPaging, doCenteringY) {
       scrollRowIntoView(row, doPaging, doCenteringY);
+
+      // Clip `cell` to renderable range:
+      assert(cell >= 0);
+      assert(cell < columns.length);
+      cell = Math.min(columns.length, Math.max(0, cell));
 
       var colspan = getColspan(row, cell);
       var left = columnPosLeft[cell],
@@ -5466,9 +5760,7 @@ out:
         activeRow = activePosY = getRowFromNode(newCellNode.parentNode);
         activeCell = activePosX = getCellFromNode(newCellNode);
         assert(activeCell != null);
-        if (opt_editMode == null) {
-          opt_editMode = (activeRow === getDataLength()) || options.autoEdit;
-        }
+        assert(opt_editMode != null);
 
         $(newCellNode)
           .addClass("active")
@@ -5710,7 +6002,7 @@ out:
         activeCellNode.innerHTML = "";
       }
 
-      var info = $.extend({}, options.editorOptions, columnDef.editorOptions, rowMetadata.editorOptions, columnMetadata.editorOptions, {
+      var info = $.extend({}, options.editorOptions, columnDef.editorOptions, rowMetadata && rowMetadata.editorOptions, columnMetadata && columnMetadata.editorOptions, {
         grid: self,
         gridPosition: getGridPosition(),
         position: getActiveCellPosition(),
@@ -5908,6 +6200,11 @@ out:
     }
 
     function scrollRowIntoView(row, doPaging, doCenteringY) {
+      // Clip `row` to renderable range:
+      assert(row >= 0);
+      assert(row < getDataLengthIncludingAddNew());
+      row = Math.min(getDataLengthIncludingAddNew(), Math.max(0, row));
+
       var height = viewportH - (viewportHasHScroll ? scrollbarDimensions.height : 0);
       var rowAtTop = getRowTop(row);
       var rowAtBottom = getRowBottom(row) - height;
@@ -5934,12 +6231,22 @@ out:
     }
 
     function scrollRowToTop(row) {
+      // Clip `row` to renderable range:
+      assert(row >= 0);
+      assert(row < getDataLengthIncludingAddNew());
+      row = Math.min(getDataLengthIncludingAddNew(), Math.max(0, row));
+
       if (scrollTo(getRowTop(row), null)) {
         render();
       }
     }
 
     function scrollRowToCenter(row) {
+      // Clip `row` to renderable range:
+      assert(row >= 0);
+      assert(row < getDataLengthIncludingAddNew());
+      row = Math.min(getDataLengthIncludingAddNew(), Math.max(0, row));
+
       // TODO: account for the variable row height: actually measure to determine the offset towards the center
       var height = viewportH - (viewportHasHScroll ? scrollbarDimensions.height : 0);
       var offset = (height - options.rowHeight) / 2;
@@ -5949,8 +6256,8 @@ out:
     }
 
     function scrollPage(dir) {
-      var topRow = getRowWithFractionFromPosition(scrollTop + pageOffset);
-      var bottomRow = getRowWithFractionFromPosition(scrollTop + pageOffset + viewportH);
+      var topRow = getRowWithFractionFromPosition(scrollTop + pageOffset, false);
+      var bottomRow = getRowWithFractionFromPosition(scrollTop + pageOffset + viewportH, false);
       var deltaRows = dir * (bottomRow.position - topRow.position);
       // adjust the page positions according to the scroll direction and "speed" (`dir` can be a number other than +1 or -1):
       topRow.position += deltaRows;
@@ -6113,229 +6420,302 @@ out:
       return spans ? spans.cell : cell;
     }
 
-    function findFirstFocusableCell(row) {
-      var cell = 0, spanRow;
-      while (cell < columns.length) {
-        spanRow = getSpanRow(row, cell);
-        if (canCellBeActive(spanRow, cell)) {
-          return cell;
-        }
-        cell += getColspan(row, cell);
-      }
-      return null;
-    }
-
-    function findLastFocusableCell(row) {
-      var cell = columns.length - 1;
-      var lastFocusableCell = null;
-      var spanRow, spanCell;
-      while (cell >= 0) {
-        spanCell = getSpanCell(row, cell);
-        spanRow = getSpanRow(row, cell);
-        if (canCellBeActive(spanRow, spanCell)) {
-          lastFocusableCell = cell;
-          break;
-        }
-        cell = getSpanCell(row, cell - 1);
-      }
-      return lastFocusableCell;
-    }
-
     function gotoRight(row, cell, posY, posX) {
-      if (cell >= columns.length) {
+      if (row == null || cell == null) {
+        assert(0);
         return null;
       }
 
-      do {
-        cell += getColspan(posY, cell);
-      } while (cell < columns.length && !canCellBeActive((row = getSpanRow(posY, cell)), cell));
+      var lastCell = columns.length - 1;
+      var spanRow, endCell;
+      var spans;
 
-      if (cell < columns.length) {
-        return {
-          row: row,
-          cell: cell,
-          posY: posY,
-          posX: cell
-        };
+      assert(row >= 0);
+      assert(cell >= 0);
+      assert(cell <= lastCell);
+      
+      // In the beginning, we may be at a cell that's midway in a span: skip the span we're currently at
+      endCell = cell;
+      spans = getSpans(row, cell);
+      if (spans) {
+        assert(cell >= spans.cell);
+        endCell = spans.cell + spans.colspan;
+      }
+      // Find next focusable cell in this row
+      for (cell = endCell + 1; cell <= lastCell; cell = endCell + 1) {
+        spanRow = row;
+        endCell = cell;
+        spans = getSpans(row, cell);
+        if (spans) {
+          spanRow = spans.row;
+          assert(cell === spans.cell);
+          endCell = spans.cell + spans.colspan;
+        }
+        if (canCellBeActive(spanRow, cell)) {
+          return {
+            row: row,         // do not adjust the row!
+            cell: cell,
+            posY: posY,
+            posX: cell,
+            spanRow: spanRow,
+            spanCell: cell
+          };
+        }
       }
       return null;
     }
 
     function gotoLeft(row, cell, posY, posX) {
-      if (cell <= 0) {
+      if (row == null || cell == null) {
+        assert(0);
         return null;
       }
-      do {
-        cell = getSpanCell(posY, cell - 1);
-      } while (cell >= 0 && !canCellBeActive((row = getSpanRow(posY, cell)), cell));
 
-      if (cell >= 0) {
-        return {
-          row: row,
-          cell: cell,
-          posY: posY,
-          posX: cell
-        };
+      var spanRow, spanCell;
+      var spans;
+      
+      assert(row >= 0);
+      assert(cell >= 0);
+      assert(cell < columns.length);
+
+      // In the beginning, we may be at a cell that's midway in a span: skip the span we're currently at
+      spanCell = cell - 1;
+      spans = getSpans(row, cell);
+      if (spans) {
+        assert(cell >= spans.cell);
+        spanCell = spans.cell - 1;
+      }
+      // Find next focusable cell in this row
+      for (cell = spanCell; cell >= 0; cell = spanCell - 1) {
+        spanRow = row;
+        spanCell = cell;
+        spans = getSpans(row, cell);
+        if (spans) {
+          spanRow = spans.row;
+          spanCell = spans.cell;
+        }
+        if (canCellBeActive(spanRow, spanCell)) {
+          return {
+            row: row,         // do not adjust the row!
+            cell: spanCell,
+            posY: posY,
+            posX: spanCell,
+            spanRow: spanRow,
+            spanCell: spanCell
+          };
+        }
       }
       return null;
     }
 
     function gotoDown(row, cell, posY, posX) {
-      var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
-      var ub = dataLengthIncludingAddNew;
-      do {
-        row += getRowspan(row, posX);
-      } while (row <= ub && !canCellBeActive(row, cell = getSpanCell(row, posX)));
+      if (row == null || cell == null) {
+        assert(0);
+        return null;
+      }
 
-      if (row <= ub) {
-        return {
-          row: row,
-          cell: cell,
-          posY: row,
-          posX: posX
-        };
+      var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
+      var spanCell, endRow;
+      var spans;
+      
+      assert(row >= 0);
+      assert(row < dataLengthIncludingAddNew);
+      assert(cell >= 0);
+      assert(cell < columns.length);
+      
+      // In the beginning, we may be at a row that's midway in a span: skip the span we're currently at
+      endRow = row;
+      spans = getSpans(row, cell);
+      if (spans) {
+        assert(row >= spans.row);
+        endRow = spans.row + spans.rowspan;
+      }
+      // Find next focusable row in this column
+      for (row = endRow + 1; row < dataLengthIncludingAddNew; row = endRow + 1) {
+        endRow = row;
+        spanCell = cell;
+        spans = getSpans(row, cell);
+        if (spans) {
+          spanCell = spans.cell;
+          assert(row === spans.row);
+          endRow = spans.row + spans.rowspan;
+        }
+        if (canCellBeActive(row, spanCell)) {
+          return {
+            row: row,
+            cell: cell,         // do not adjust the cell!
+            posY: row,
+            posX: posX,
+            spanRow: row,
+            spanCell: cell 
+          };
+        }
       }
       return null;
     }
 
     function gotoUp(row, cell, posY, posX) {
-      if (row <= 0) {
+      if (row == null || cell == null) {
+        assert(0);
         return null;
       }
-      do {
-        row = getSpanRow(row - 1, posX);
-      } while (row >= 0 && !canCellBeActive(row, (cell = getSpanCell(row, posX))));
 
-      if (row >= 0 && cell < columns.length) {
-        return {
-          row: row,
-          cell: cell,
-          posY: row,
-          posX: posX
-        };
+      var spanRow, spanCell;
+      var spans;
+      
+      assert(row >= 0);
+      assert(cell >= 0);
+      assert(cell < columns.length);
+
+      // In the beginning, we may be at a row that's midway in a span: skip the span we're currently at
+      spanRow = row - 1;
+      spans = getSpans(row, cell);
+      if (spans) {
+        assert(row >= spans.row);
+        spanRow = spans.row - 1;
+      }
+      // Find next focusable row in this column
+      for (row = spanRow; row >= 0; row = spanRow - 1) {
+        spanRow = row;
+        spanCell = cell;
+        spans = getSpans(row, cell);
+        if (spans) {
+          spanRow = spans.row;
+          spanCell = spans.cell;
+        }
+        if (canCellBeActive(spanRow, spanCell)) {
+          return {
+            row: spanRow,
+            cell: cell,         // do not adjust the column!
+            posY: spanRow,
+            posX: posX,
+            spanRow: spanRow,
+            spanCell: spanCell
+          };
+        }
       }
       return null;
     }
 
     function gotoNext(row, cell, posY, posX) {
+      var origRow = row, origCell = cell;
+
       if (row == null && cell == null) {
         row = cell = posY = posX = 0;
-        if (canCellBeActive(row, cell)) {
-          return {
-            row: row,
-            cell: cell,
-            posY: posY,
-            posX: cell
-          };
-        }
       }
 
-      var pos = gotoRight(row, cell, posY, posX);
-      if (!pos) {
-        var firstFocusableCell;
-        var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
-        while (!pos && ++posY < dataLengthIncludingAddNew) {
-          firstFocusableCell = findFirstFocusableCell(posY);
-          if (firstFocusableCell !== null) {
-            row = getSpanRow(posY, firstFocusableCell);
-            pos = {
-              row: row,
-              cell: firstFocusableCell,
-              posY: posY,
-              posX: firstFocusableCell
-            };
-          }
+      // Scan right, then down, to find the next focusable grid cell.
+      // Wrap at the end.
+      // 
+      // Note: we loop length PLUS ONE lines, because worst case 
+      // we may find the "next" focusable cell on the same line we
+      // currently are, but just *left* of us!
+      var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
+      for (var i = 0; i <= dataLengthIncludingAddNew; i++) {
+        var pos = gotoRight(posY, cell, posY, posX);
+        if (pos && !(pos.row === origRow && pos.cell === origCell)) {
+          return pos;
         }
+        // Scan from the start of the next line & wrap at end if we have to
+        cell = posX = 0;
+        row = posY = (posY + 1) % dataLengthIncludingAddNew;
       }
-      return pos;
+      return null;
     }
 
     function gotoPrev(row, cell, posY, posX) {
+      var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
+      var lastCol = columns.length - 1;
+      
+      var origRow = row, origCell = cell;
+
       if (row == null && cell == null) {
-        row = posY = getDataLengthIncludingAddNew() - 1;
-        cell = posX = columns.length - 1;
-        if (canCellBeActive(row, cell)) {
-          return {
-            row: row,
-            cell: cell,
-            posY: posY,
-            posX: cell
-          };
-        }
+        row = posY = dataLengthIncludingAddNew - 1;
+        cell = posX = lastCol;
       }
 
-      var pos = gotoLeft(row, cell, posY, posX);
-      if (!pos) {
-        var lastSelectableCell;
-        while (!pos && --posY >= 0) {
-          lastSelectableCell = findLastFocusableCell(posY);
-          if (lastSelectableCell !== null) {
-            row = getSpanRow(posY, lastSelectableCell);
-            pos = {
-              row: row,
-              cell: lastSelectableCell,
-              posY: posY,
-              posX: lastSelectableCell
-            };
-          }
+      // Scan left, then up, to find the previous focusable grid cell.
+      // Wrap at the top.
+      // 
+      // Note: we loop length PLUS ONE lines, because worst case 
+      // we may find the "previous" focusable cell on the same line we
+      // currently are, but just *right* of us!
+      for (var i = 0; i <= dataLengthIncludingAddNew; i++) {
+        var pos = gotoLeft(posY, cell, posY, posX);
+        if (pos && !(pos.row === origRow && pos.cell === origCell)) {
+          return pos;
         }
+        // Scan from the end of the previous line & wrap at top if we have to
+        cell = posX = lastCol;
+        row = posY = Math.max(0, posY - 1);
       }
-      return pos;
+      return null;
     }
 
     function gotoEnd(row, cell, posY, posX) {
+      var origRow = row, origCell = cell;
+
       var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
       var lastRow = dataLengthIncludingAddNew - 1;
       var lastCol = columns.length - 1;
-      var spans = getSpans(lastRow, lastCol);
-      var r = spans.row;
-      var c = spans.cell;
-      if ((r > row || c > cell) && canCellBeActive(r, c)) {
-        return {
-          row: r,
-          cell: c,
-          posY: lastRow,
-          posX: lastCol
-        };
-      } 
-      for (r = lastRow; r > row; r--) {
-        for (c = lastCol; c > cell; c--) {
-          spans = getSpans(r, c);
-          if ((spans.row > row || spans.cell > cell) && canCellBeActive(spans.row, spans.cell)) {
-            return {
-              row: spans.row,
-              cell: spans.cell,
-              posY: lastRow,
-              posX: lastCol
-            };
-          } 
+
+      row = posY = lastRow;
+      cell = posX = lastCol;
+      var spans = getSpans(row, cell);
+      if (spans) {
+        row = spans.row;
+        cell = spans.cell;
+      }
+      var pos = {
+        row: posY,
+        cell: posX,
+        posY: posY,
+        posX: posX,
+        spanRow: row,
+        spanCell: cell
+      };
+      if (canCellBeActive(row, cell)) {
+        if (pos.row === origRow && pos.cell === origCell) {
+          return null;      // no change: do not end up once again where we already are right now.
         }
+        return pos;
+      }
+      // Otherwise find the *last* focusable node: 
+      pos = gotoPrev(posY, posX, posY, posX);
+      if (pos) {
+        pos.posY = posY;
+        pos.posX = posX;
+        return pos;
       }
       return null;
     }
 
     function gotoHome(row, cell, posY, posX) {
+      var origRow = row, origCell = cell;
+
+      row = posY = 0;
+      cell = posX = 0;
       // no need to call getSpans(0, 0) as it top/left corner will be (0, 0) no matter what col/rowspan it has.
-      if ((row > 0 || cell > 0) && canCellBeActive(0, 0)) {
-        return {
-          row: 0,
-          cell: 0,
-          posY: 0,
-          posX: 0
-        };
-      } 
-      for (var r = 0; r < row; r++) {
-        for (var c = 0; c < cell; c++) {
-          var spans = getSpans(r, c);
-          if ((spans.row < row || spans.cell < cell) && canCellBeActive(spans.row, spans.cell)) {
-            return {
-              row: spans.row,
-              cell: spans.cell,
-              posY: 0,
-              posX: 0
-            };
-          } 
+      var pos = {
+        row: posY,
+        cell: posX,
+        posY: posY,
+        posX: posX,
+        spanRow: row,
+        spanCell: cell
+      };
+      if (canCellBeActive(row, cell)) {
+        if (pos.row === origRow && pos.cell === origCell) {
+          return null;      // no change: do not end up once again where we already are right now.
         }
+        return pos;
+      }
+      // Otherwise find the *first* focusable node: 
+      pos = gotoNext(posY, posX, posY, posX);
+      if (pos) {
+        pos.posY = posY;
+        pos.posX = posX;
+        return pos;
       }
       return null;
     }
@@ -6394,25 +6774,14 @@ out:
 
       var node;
       var stepFn = stepFunctions[dir];
-      var pos;
-      if (!activeCellNode) {
-        switch (dir) {
-        case NAVIGATE_HOME:
-          pos = stepFn(getDataLengthIncludingAddNew() - 1, columns.length - 1, activePosY, activePosX);
-          break;
-
-        case NAVIGATE_END:
-          pos = stepFn(0, 0, activePosY, activePosX);
-          break;
-
-        default:
-          pos = null;
-          break;
-        }
-      } else {
-        pos = stepFn(activeRow, activeCell, activePosY, activePosX);
-      }
+      var pos = stepFn(activeRow, activeCell, activePosY, activePosX);
       if (pos) {
+        assert(pos.row !== undefined);
+        assert(pos.cell !== undefined);
+        assert(pos.posX !== undefined);
+        assert(pos.posY !== undefined);
+        assert(pos.spanRow !== undefined);
+        assert(pos.spanCell !== undefined);
         var isAddNewRow = (pos.row === getDataLength());
         scrollCellIntoView(pos.row, pos.cell, !isAddNewRow);
         node = getCellNode(pos.row, pos.cell, true);
@@ -6427,58 +6796,61 @@ out:
         setActiveCellInternal(node, false, false);
         return false;
       } else {
+        assert(activeRow == null && activeCell == null);
         resetActiveCell();
         return false;
       }
     }
 
+    var callCount = 0;
+
+    /**
+     * Get a reference to the grid cell DOM element. When the DOM element exists,
+     * it will refreshed on the spot if it has been invalidated (i.e. flagged "dirty")
+     * before.
+     *
+     * @param  {number} row       The row index
+     * @param  {number} cell      The column index
+     * @param  {boolean} mandatory When TRUE, the cell will be rendered on the spot if it hasn't been rendered yet.
+     *
+     * @return {Element}          The DOM Element which represents the grid node at coordinates (row, cell). NULL when the given coordinate has not been rendered yet or does not exist for other reasons (e.g. when the given coordinate is located outside the data range or when the given coordinate sits inside a row/colspanning cell and isn't its top/left corner coordinate).
+     */
     function getCellNode(row, cell, mandatory) {
-      if (rowsCache[row] || mandatory) {
+      callCount++;
+      assert(callCount === 1);
+      var cacheEntry = rowsCache[row];
+      if (cacheEntry || mandatory) {
         ensureCellNodesInRowsCache(row);
-        var node = rowsCache[row] && rowsCache[row].cellNodesByColumnIdx[cell];
+        var node = cacheEntry && cacheEntry.cellNodesByColumnIdx[cell];
+        var dirty = cacheEntry && cacheEntry.dirtyCellNodes[cell];
+
         var needToReselectCell = false;
-        var cnt = 0;
-        while (!node && mandatory) {
-          cnt++;
-          assert(cnt === 1);
+        if (!node && mandatory) {
           // force render the new active cell
-          var cellBoxInfo = getCellNodeBox(row, cell);
-          assert(cellBoxInfo);
-          var leftPx = scrollLeft;
-          var rightPx = scrollLeft + viewportW;
-          // when the sought-after cell is outside the visible part of the row, we don't render a series but only that single node:
-          if (cellBoxInfo) {
-            leftPx = cellBoxInfo.left;
-            rightPx = cellBoxInfo.right - 1;
-          }
-          // now construct the range object a la getRenderedRange() to be the minimal area that should get us, at least, the rendered cell DIV we seek here.
-          var rendered = {
-            top: row,
-            bottom: row,
-            left: cell,
-            right: cell,
-            leftPx: leftPx,
-            rightPx: rightPx
-          };
-          needToReselectCell = forcedRender(rendered);
-          
+          needToReselectCell = forcedRenderCriticalCell(row, cell);
+
           // and then attempt fetching the DOM node again:
           assert(rowsCache[row]);
           assert(rowsCache[row].cellNodesByColumnIdx);
           assert(rowsCache[row].cellNodesByColumnIdx.length > cell);
           node = rowsCache[row].cellNodesByColumnIdx[cell];
           assert(node);
+          if (needToReselectCell) {
+            assert(rowsCache[activeRow]);
+            assert(rowsCache[activeRow].cellNodesByColumnIdx);
+            assert(rowsCache[activeRow].cellNodesByColumnIdx.length > activeCell);
+            activeCellNode = getCellNode(activeRow, activeCell, true);
+            assert(activeCellNode);
+          }
+        } else if (dirty) {
+          assert(node);
+          updateCellInternal(row, cell, cacheEntry, node);
         }
-        if (needToReselectCell) {
-          assert(rowsCache[activeRow]);
-          assert(rowsCache[activeRow].cellNodesByColumnIdx);
-          assert(rowsCache[activeRow].cellNodesByColumnIdx.length > activeCell);
-          activeCellNode = getCellNode(activeRow, activeCell, true);
-          assert(activeCellNode);
-        }
+        callCount--;
         return node;
       }
       assert(!mandatory);
+      callCount--;
       return null;
     }
 
@@ -6666,7 +7038,7 @@ out:
     function rowsToRanges(rows) {
       var ranges = [];
       var lastCell = columns.length - 1;
-      for (var i = 0; i < rows.length; i++) {
+      for (var i = 0, len = rows.length; i < len; i++) {
         ranges.push(new Slick.Range(rows[i], 0, rows[i], lastCell));
       }
       return ranges;
@@ -6707,7 +7079,6 @@ out:
       s += ("\n" + "counter_rows_rendered:  " + counter_rows_rendered);
       s += ("\n" + "counter_rows_removed:  " + counter_rows_removed);
       s += ("\n" + "renderedRows:  " + renderedRows);
-      s += ("\n" + "numVisibleRows:  " + numVisibleRows);
       s += ("\n" + "maxSupportedCssHeight:  " + maxSupportedCssHeight);
       s += ("\n" + "n(umber of pages):  " + numberOfPages);
       s += ("\n" + "(current) page:  " + page);

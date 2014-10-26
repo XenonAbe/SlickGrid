@@ -22,7 +22,7 @@
         canGotoPrev: !cannotLeaveEditMode && pagingInfo.pageSize !== 0 && pagingInfo.pageNum > 0,
         canGotoNext: !cannotLeaveEditMode && pagingInfo.pageSize !== 0 && pagingInfo.pageNum < lastPage,
         pagingInfo: pagingInfo
-      }
+      };
     }
 
     function setPageSize(n) {
@@ -92,7 +92,7 @@
 
       $(icon_prefix + "ui-icon-lightbulb" + icon_suffix)
           .click(function () {
-            $(".slick-pager-settings-expanded").toggle()
+            $(".slick-pager-settings-expanded").toggle();
           })
           .appendTo($settings);
 

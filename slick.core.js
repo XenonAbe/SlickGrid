@@ -570,40 +570,41 @@
     var obj = {
     };
     // feature detect:
-    if (window.performance && window.performance.timing.navigationStart && window.performance.now) {
+    var p = window.performance;
+    if (p && p.timing.navigationStart && p.now) {
       obj.start = function () {
         start_time = {
-          start: window.performance.now()
+          start: p.now()
         };
       };
       obj.mark = function () {
         if (start_time === false) this.start();
-        var end_time = window.performance.now();
+        var end_time = p.now();
         return end_time - start_time.start;
       };
       obj.mark_delta = function (id) {
         id = id || "start";
         if (start_time === false) this.start();
-        var end_time = window.performance.now();
+        var end_time = p.now();
         var rv = end_time - start_time[id];
         start_time[id] = end_time;
         return rv;
       };
-    } else if (window.performance && window.performance.webkitNow) {
+    } else if (p && p.webkitNow) {
       obj.start = function () {
         start_time = {
-          start: window.performance.webkitNow()
+          start: p.webkitNow()
         };
       };
       obj.mark = function () {
         if (start_time === false) this.start();
-        var end_time = window.performance.webkitNow();
+        var end_time = p.webkitNow();
         return end_time - start_time.start;
       };
       obj.mark_delta = function (id) {
         id = id || "start";
         if (start_time === false) this.start();
-        var end_time = window.performance.webkitNow();
+        var end_time = p.webkitNow();
         var rv = end_time - start_time[id];
         start_time[id] = end_time;
         return rv;
