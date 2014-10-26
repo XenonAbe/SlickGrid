@@ -57,9 +57,11 @@
 
       _grid.focus();
 
-      var start = _grid.getCellFromPoint(
-          dd.startX - $(_canvas).offset().left,
-          dd.startY - $(_canvas).offset().top);
+      var x, y, o;
+      o = $(_canvas).offset();
+      x = dd.pageX - o.left;
+      y = dd.pageY - o.top;
+      var start = _grid.getCellFromPoint(x, y);
 
       dd.range = {start: start, end: {}};
       dd.currentCell = cell;
@@ -73,9 +75,11 @@
       }
       e.stopImmediatePropagation();
 
-      var end = _grid.getCellFromPoint(
-          e.pageX - $(_canvas).offset().left,
-          e.pageY - $(_canvas).offset().top);
+      var x, y, o;
+      o = $(_canvas).offset();
+      x = e.pageX - o.left;
+      y = e.pageY - o.top;
+      var end = _grid.getCellFromPoint(x, y);
 
       var eventData = {
           range: dd.range,
