@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: AJAX-based fullscreen pager: Fullscreen mode with paging and AJAX-loading</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-pager.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
+  <style>
+    body {
+      overflow: auto;
+    }
+
+    .options-panel {
+      position: fixed;
+      top: 50%;
+      right: 30px;
+      width: 25em;
+      background: #F0F0F0;
+      border: solid 1px gray;
+      z-index: 1000;
+    }
+
+    .options-panel h2 {
+      padding-left: 0.5em;
+    }
+
+    div.grid-outer-wrapper {
+      width: 100%;
+    }
+
+    #myGrid {
+      width: 100%;
+      border: 1px solid gray;
+    }
+
+    .grid-outer-wrapper {
+      float: none !important;
+    }
+  </style>
+</head>
+<body>
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div class="grid-header">
+	    <label>StackOverflow questions</label>
+	    <span style="float:right" class="ui-icon ui-icon-search" title="Search" onclick="getData()"></span>
+	    <span style="float:right;display:inline-block;">
+	      Tagged:
+	      <input type="text" id="txtSearch" value="slickgrid">
+	    </span>
+    </div>
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+    <div id="pager" class="grid-pager"></div>
+  </div>
+
+  <div class="options-panel">
+    <h2>Demonstrates</h2>
+      <ul>
+        <li>Using AJAX-loading</li>
+        <li>Using paging</li>
+        <li>Filling whole window when creating</li>
+      </ul>
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+      </ul>
+      <div id="displaycode"></div>
+  </div>
+</div>
+
+<script src="../lib/firebugx.js"></script>
+
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
+<script src="../lib/_/jquery.event.drag.js"></script>
+<script src="../lib/jquery.sizes.js"></script>
+<script src="../lib/_/verge.js"></script>
+<script src="../lib/detect_browser.js"></script>
+<script src="../lib/assert.js"></script>
+
+<script src="../slick.core.js"></script>
+<script src="../slick.grid.js"></script>
+<script src="../slick.dataview.js"></script>
+<script src="../controls/slick.pager.js"></script>
+
+
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
+var columns =
+[ 
+  { id: "number", name: "#",     field: "question_id", minWidth: 50, maxWidth: 50 }, 
+  { id: "title",  name: "Title", field: "title"}, 
+  { id: "link",   name: "Link",  field: "link"}
+];
+
+var options =
+{ 
+  enableCellNavigation: false, 
+  enableColumnReorder: false, 
+  forceFitColumns: true
+};
+
+//global closure
+var dataView, grid;
+
+$(document).ready(function () {
+  dataView = new Slick.Data.DataView({inlineFilters: true, idProperty: "question_id"});
+  grid = new Slick.Grid("#myGrid", dataView, columns, options);
+  var pager = new Slick.Controls.Pager(dataView, grid, $("#pager"));
+
+  //$(".slick-viewport").height($("#container").height() - $("#header").height() - $("#pager").height() - $(".slick-header").height());
+
+  // use VERGE to determine the viewport size:
+  var vh = verge.viewportH();
+  // and see how much we need to grow the grid:
+  var bh = $(document.body).height();
+  var bodymargin = $(document.body).margin();
+  var $container = $(grid.getContainerNode());
+  var vph = $container.height();
+
+  vph += vh - bh - bodymargin.top - bodymargin.bottom;
+
+  $container.height(vph);     // you must adjust the size of the $container for grid.resizeCanvas() to pick up the size change
+
+  grid.resizeCanvas();
+
+  $(".grid-header .ui-icon")
+    .addClass("ui-state-default ui-corner-all")
+    .mouseover(function (e) {
+      $(e.target).addClass("ui-state-hover")
+    })
+    .mouseout(function (e) {
+      $(e.target).removeClass("ui-state-hover")
+    });
+
+  dataView.onRowCountChanged.subscribe(function (e, args) {
+    grid.updateRowCount();
+    grid.render();
+  });
+
+  dataView.onRowsChanged.subscribe(function (e, args) {
+    grid.invalidateRows(args.rows);
+    grid.render();
+  });
+
+  getData();
+});
+
+var myURL = "http://api.stackexchange.com/2.1/search?order=desc&sort=activity&site=stackoverflow&tagged=";
+
+function getData() {
+  $.get(myURL + $("#txtSearch").val(), function(data) {
+    dataView.beginUpdate();
+    dataView.setItems(data.items);
+    dataView.endUpdate();
+  }, "jsonp");
+}
+</script>
+</body>
+</html>

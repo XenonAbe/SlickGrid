@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+  <title>SlickGrid Example: Basic Grid: rowspan spanning many columns</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css">
+  <link rel="stylesheet" href="examples.css" type="text/css">
+  <style type="text/css">
+    .slickgrid-container .slick-row.even .slick-cell.cell-very-high {
+        background: #F0FFE0;
+    }
+    .slickgrid-container .slick-row.odd .slick-cell.cell-var-span {
+        background: #87ceeb;
+    }
+    .slickgrid-container .slick-row.even.slick-row-6 .slick-cell {
+        background: #bea7ff;
+    }
+
+    .slick-row .slick-cell.rowspan {
+      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAQ0lEQVQYV2N8/fr1fwY84M6dOwyM+BSBFKioqOBWBFMAsgSrScgKsCpCV4ChCJsCFEW4FMAV4VMAVnT8+PH/IG/iAwDA1DlezHn8bwAAAABJRU5ErkJggg==);
+    }
+
+
+    .cellValue {
+        float: right;
+    }
+
+    .valueComment {
+        color: #AAA;
+    }
+  </style>
+</head>
+<body>
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+  </div>
+
+  <div class="options-panel">
+    <h2>Demonstrates</h2>
+      <ul>
+        <li>basic grid with minimal configuration</li>
+        <li>Cells with rowspan > 1</li>
+        <li>Row with custom height: 6</li>
+
+        <li><button id='scrollTo'>Scroll To Row</button><input id="nRow" type="text" value="100" style="width: 50px;" /></li>
+        <li><button id='toggleHeight'>Toggle row #6 height</button></li>
+        <li><button id='toggleSpans'>Toggle blue cell colspan &amp; rowspan</button></li>
+      </ul>
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+      </ul>
+      <div id="displaycode"></div>
+  </div>
+</div>
+
+<script src="../lib/firebugx.js"></script>
+
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
+<script src="../lib/jquery-ui.js"></script>
+<script src="../lib/_/jquery.event.drag.js"></script>
+<script src="../lib/detect_browser.js"></script>
+<script src="../lib/assert.js"></script>
+
+<script src="../slick.core.js"></script>
+<script src="../slick.grid.js"></script>
+
+<script src="examples.datasource.js"></script>
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
+(function(window, $) {
+    "use strict";
+    console.clear();
+    var grid;
+
+    var source = slickGridTests(DATA_EXAMPLE_NESTED_COLUMNS, 600);
+    var columns = source.createColumns(5, 2);
+    var data = source.getDataItems(columns.leafs);
+    var metadata = source.getMetaData(columns);
+
+    var dataView = {
+        getItem: function(row) {
+            return data[row];
+        },
+        getLength: function() {
+            return data.length;
+        },
+        getItemMetadata: function(row) {
+            return metadata[row] && metadata.attributes ? metadata[row]
+                : (metadata[row] = $.extend({attributes: {'data-row': row}}, metadata[row]));
+        }
+    };
+
+    var options = {
+        //enableAddRow: true,
+        enableCellNavigation: true,
+        enableColumnReorder: true
+    };
+
+    $(function() {
+        grid = new Slick.Grid("#myGrid", dataView, columns, options);
+
+        $('#toggleSpans').click(function (e) {
+            var cell = metadata[3].columns[1];
+            if (cell.colspan === 1) {
+                cell.rowspan = 3;
+                cell.colspan = 2;
+            } else {
+                cell.rowspan = 5;
+                cell.colspan = 1;
+            }
+            grid.invalidateRow(3);
+            grid.render();
+        });
+
+        $('#toggleHeight').click(function (e) {
+            metadata[6].height = metadata[6].height === metadata.userSettings.rowHeights[0] ? 
+                metadata.userSettings.rowHeights[1] : 
+                metadata.userSettings.rowHeights[0];
+            grid.invalidateRow(6);
+            grid.render();
+        });
+
+        $('#scrollTo').click(function (e) {
+            grid.scrollRowToTop($('#nRow').val());
+        });
+
+        $('#nRow').keydown(function (e) {
+            if (e.keyCode == 13) {
+                $('#scrollTo').click();
+            }
+        });
+    });
+
+})(window, $);
+</script>
+</body>
+</html>

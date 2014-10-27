@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Editing: Showing all the available Editors (and many Formatters besides...)</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../lib/_/jquery.multiselect.css" type="text/css" />
+  <link rel="stylesheet" href="../lib/_/jquery.multiselect.filter.css" type="text/css" />
+  <link rel="stylesheet" href="../lib/_/spectrum.css" type="text/css" />
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
+  <style>
+    .cell-title {
+      font-weight: bold;
+    }
+
+    .cell-effort-driven {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+  </div>
+
+  <div class="options-panel">
+    <h2>About</h2>
+    This example shows SlickGrid cell editing (all available cell editors).
+    <h2>Demonstrates</h2>
+    <ul>
+      <li>adding basic keyboard navigation and editing</li>
+      <li>custom editors and validators</li>
+      <li>auto-edit settings</li>
+    </ul>
+
+    <h2>Options:</h2>
+    <button onclick="grid.setOptions({autoEdit:true})">Auto-edit ON</button>
+    &nbsp;
+    <button onclick="grid.setOptions({autoEdit:false})">Auto-edit OFF</button>
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+      </ul>
+      <div id="displaycode"></div>
+  </div>
+</div>
+
+<script src="../lib/firebugx.js"></script>
+
+<script src="../lib/_/tinycolor.js"></script>
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
+<script src="../lib/jquery-ui.js"></script>
+<script src="../lib/_/jquery.event.drag.js"></script>
+<script src="../lib/_/jquery.multiselect.js"></script>
+<script src="../lib/_/jquery.multiselect.filter.js"></script>
+<script src="../lib/_/spectrum.js"></script>
+<script src="../lib/detect_browser.js"></script>
+<script src="../lib/assert.js"></script>
+
+<script src="../slick.core.js"></script>
+<script src="../plugins/slick.cellrangedecorator.js"></script>
+<script src="../plugins/slick.cellrangeselector.js"></script>
+<script src="../plugins/slick.cellselectionmodel.js"></script>
+<script src="../slick.formatters.js"></script>
+<script src="../slick.editors.js"></script>
+<script src="../slick.grid.js"></script>
+
+
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
+  function requiredFieldValidator(value) {
+    if (value == null || value == undefined || !value.length) {
+      return {valid: false, msg: "This is a required field"};
+    } else {
+      return {valid: true, msg: null};
+    }
+  }
+
+  var grid;
+  var columns = [
+    {id: "title", name: "Title", field: "title", width: 80, cssClass: "cell-title", editor: Slick.Editors.Text, validator: requiredFieldValidator},
+    {id: "desc", name: "Description", field: "description", width: 100, editor: Slick.Editors.LongText},
+    {id: "duration", name: "Duration", field: "duration", editor: Slick.Editors.Text},
+    {id: "%", name: "% Complete", field: "percentComplete", width: 80, resizable: false, formatter: Slick.Formatters.PercentCompleteBar, editor: Slick.Editors.PercentComplete},
+    {id: "start", name: "Start", field: "start", minWidth: 60, editor: Slick.Editors.Date},
+    {id: "finish", name: "Finish", field: "finish", minWidth: 60, editor: Slick.Editors.Date},
+    {id: "effort-driven", name: "Effort Driven", width: 80, minWidth: 20, maxWidth: 80, cssClass: "cell-effort-driven", field: "effortDriven", formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox},
+    {id: "color", name: "Color", field: "color", minWidth: 10, formatter: Slick.Formatters.BackColor, editor: Slick.Editors.Color},
+    {id: "opts", name: "Combo", field: "option", minWidth: 60, editor: Slick.Editors.Combo, options: [{key: "choice #1", val: 1}, {key: "choice #1", val: 2}, {key: "choice #1", val: 3}, {key: "choice #1", val: 4}]},
+    {id: "yn", name: "Y / N", field: "okay", minWidth: 20, formatter: Slick.Formatters.YesNo, editor: Slick.Editors.YesNoSelect},
+    {id: "pct", name: "%", field: "percentComplete", width: 80, resizable: true, formatter: Slick.Formatters.PercentCompleteBar, editor: Slick.Editors.Percentage},
+    {id: "flt", name: "Perunage", field: "percentComplete", width: 80, resizable: true, formatter: Slick.Formatters.PercentComplete, editor: Slick.Editors.Float},
+    {id: "ro", name: "Read Only", field: "percentComplete", width: 80, resizable: true, editor: Slick.Editors.ReadOnly},
+  ];
+
+  var options = {
+    editable: true,
+    enableAddRow: true,
+    enableCellNavigation: true,
+    enableColumnReorder: true,
+    asyncEditorLoading: false,
+    autoEdit: false
+  };
+
+  $(function () {
+    var data = [];
+    for (var i = 0; i < 500; i++) {
+      data[i] = {
+        title: "Task " + i,
+        description: "This is a sample task description.\n  It can be multiline",
+        duration: "5 days",
+        percentComplete: Math.min(100, Math.round(Math.random() * 110)),
+        start: "01/01/2009",
+        finish: "01/05/2009",
+        effortDriven: (i % 5 == 0),
+        color: "#" + ("000000" + ((i * 999999 / 500) | 0)).slice(-6),
+        option: (i * 7) % 4 + 1,
+        okay: ((i * 11) % 5) > 1,
+      };
+    }
+
+    var columnScrollTimer = null;
+    grid = new Slick.Grid("#myGrid", data, columns, options);
+    grid.onColumnsReordered.subscribe(function(e, args) {
+        clearInterval(columnScrollTimer);
+        columnScrollTimer = null;
+    });
+    grid.onAddNewRow.subscribe(function (e, args) {
+      var item = args.item;
+      grid.invalidateRow(data.length);
+      data.push(item);
+      grid.updateRowCount();
+      grid.render();
+    });
+    grid.onColumnsReordering.subscribe(function(e,args) {
+        function scrollColumnsRight() {
+            $('#myGrid > .slick-viewport')[0].scrollLeft = $('#myGrid > .slick-viewport')[0].scrollLeft + 10;
+        }
+
+        function scrollColumnsLeft() {
+            $('#myGrid > .slick-viewport')[0].scrollLeft = $('#myGrid > .slick-viewport')[0].scrollLeft - 10;
+        }
+        if (args.e.originalEvent.pageX > $('#myGrid')[0].clientWidth) {
+            if (!(columnScrollTimer)) {
+                columnScrollTimer = setInterval(scrollColumnsRight, 100);
+            }
+        } else if (args.e.originalEvent.pageX < $('#myGrid > .slick-viewport').offset().left) {
+            if (!(columnScrollTimer)) {
+                columnScrollTimer = setInterval(scrollColumnsLeft, 100);
+            }
+        } else {
+            clearInterval(columnScrollTimer);
+            columnScrollTimer = null;
+        }
+    });
+  });
+</script>
+</body>
+</html>

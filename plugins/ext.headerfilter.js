@@ -131,6 +131,7 @@
         }
 
         function showFilter(e) {
+            // Stop propagation so that it doesn't register as a header click event.
             e.stopPropagation();
             e.preventDefault();
 

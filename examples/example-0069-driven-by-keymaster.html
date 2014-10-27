@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Showing a grid which has all its keyboard handling done by the external library keymaster.js</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
+  <style>
+    /* use 5-level selector to 'win' and thus override the 4-level '.slick-row.odd .slick-cell.selected' CSS styled background */
+    div.slick-row .slick-cell.copied {
+      background: blue;
+      background: rgba(0, 0, 255, 0.2);
+      -webkit-transition: 0.5s background;
+    }
+    div.slick-row.odd .slick-cell.copied {
+      background: rgb(0, 0, 214);
+      background: rgba(0, 0, 194, 0.2);
+      -webkit-transition: 0.5s background;
+    }
+
+    /* and help us view when copied and selected ranges overlap */
+    div.slick-row .slick-cell.copied.selected {
+      background: rgb(3, 83, 226);
+      background: rgba(37, 98, 255, 0.2);
+      -webkit-transition: 0.5s background;
+    }
+    div.slick-row.odd .slick-cell.copied.selected {
+      background: rgb(0, 92, 255);
+      background: rgba(0, 71, 255, 0.2);
+      -webkit-transition: 0.5s background;
+    }
+
+  </style>
+</head>
+<body>
+<div style="position: relative">
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+  </div>
+
+  <div class="options-panel">
+    <h2>Demonstrates</h2>
+    <ul>
+      <li>a grid which has all its keyboard handling done by the external library keymaster.js</li>
+    </ul>
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+      </ul>
+      <div id="displaycode"></div>
+  </div>
+</div>
+
+<script src="../lib/firebugx.js"></script>
+
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
+<script src="../lib/jquery-ui.js"></script>
+<script src="../lib/_/jquery.event.drag.js"></script>
+<script src="../lib/detect_browser.js"></script>
+<script src="../lib/assert.js"></script>
+
+<script src="../lib/keymaster.js"></script>
+
+<script src="../slick.core.js"></script>
+<script src="../plugins/slick.formula.editor.js"></script>
+<script src="../plugins/slick.autotooltips.js"></script>
+<script src="../plugins/slick.cellrangedecorator.js"></script>
+<script src="../plugins/slick.cellrangeselector.js"></script>
+<script src="../plugins/slick.cellexternalcopymanager.js"></script>
+<script src="../plugins/slick.cellselectionmodel.js"></script>
+<script src="../slick.editors.js"></script>
+<script src="../slick.formatters.js"></script>
+<script src="../slick.grid.js"></script>
+
+
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
+  var grid;
+  var data = [];
+  var options = {
+    editable: true,
+    enableAddRow: true,
+    enableCellNavigation: true,
+    asyncEditorLoading: false,
+    autoEdit: false
+  };
+
+
+
+  var undoRedoBuffer = {
+    commandQueue: [],
+    commandCtr: 0,
+
+    queueAndExecuteCommand: function(editCommand) {
+      assert(editCommand.grid);
+      this.commandQueue[this.commandCtr] = editCommand;
+      this.commandCtr++;
+      editCommand.execute();
+    },
+
+    undo: function() {
+      if (this.commandCtr === 0) {
+        return;
+      }
+      this.commandCtr--;
+      var command = this.commandQueue[this.commandCtr];
+      assert(command && command.grid);
+      var grid = command.grid;
+      if (grid.getEditorLock().cancelCurrentEdit()) {
+        command.undo();
+      }
+    },
+    redo: function() {
+      if (this.commandCtr >= this.commandQueue.length) {
+        return;
+      }
+      this.commandCtr++;
+      var command = this.commandQueue[this.commandCtr];
+      assert(command && command.grid);
+      var grid = command.grid;
+      if (grid.getEditorLock().cancelCurrentEdit()) {
+        command.execute();
+      }
+    }
+  }
+
+  // undo shortcut
+  $(document).keydown(function(e)
+  {
+    if (e.which === 90 && (e.ctrlKey || e.metaKey)) {    // CTRL + (shift) + Z
+      if (e.shiftKey){
+        undoRedoBuffer.redo();
+      } else {
+        undoRedoBuffer.undo();
+      }
+    }
+  });
+
+  var copyManagerOptions = {
+    clipboardCommandHandler: function(editCommand) {
+      undoRedoBuffer.queueAndExecuteCommand.call(undoRedoBuffer, editCommand);
+    },
+    includeHeaderWhenCopying: false
+  };
+
+  var columns = [
+    {
+      id: "selector",
+      name: "",
+      field: "num",
+      width: 30
+    }
+  ];
+
+  function nameColumn(i) {
+    var s = String.fromCharCode("A".charCodeAt(0) + (i % 26));
+    i = (i / 26) | 0;
+    s = String.fromCharCode("A".charCodeAt(0) + (i % 26)) + s;
+    i = (i / 26) | 0;
+    if (i) {
+      i--;
+      s = String.fromCharCode("A".charCodeAt(0) + (i % 26)) + s;
+      i = (i / 26) | 0;
+    }
+    return s;
+  }
+
+  for (var i = 0; i < 1000; i++) {
+    columns.push({
+      id: i,
+      name: nameColumn(i),
+      field: i,
+      width: 60,
+      editor: Slick.Editors.Formula
+    });
+  }
+
+  $(function () {
+    function n2s(n) {
+      if (n < 10) return "0" + n;
+      return "" + n;
+    }
+
+    for (var i = 0; i < 420; i++) {
+      var d = (data[i] = {});
+      d["num"] = i;
+      for (var j = 0; j < 1000; j++) {
+        d[j] = n2s(j + 1) + "." + n2s(i + 1);
+      }
+    }
+
+    grid = new Slick.Grid("#myGrid", data, columns, options);
+
+    grid.setSelectionModel(new Slick.CellSelectionModel());
+    grid.registerPlugin(new Slick.AutoTooltips());
+
+    // set keyboard focus on the grid
+    grid.getCanvasNode().focus();
+
+    var copyManager = new Slick.CellExternalCopyManager(copyManagerOptions);
+    grid.registerPlugin(copyManager);
+
+    copyManager.onPasteCells.subscribe(function (e, args) {
+      if (args.from.length !== 1 || args.to.length !== 1) {
+        throw new Error("This implementation only supports single range copy and paste operations");
+      }
+
+      // As columns can be moved around and Ranges specify row/column indexes which must be mapped
+      // to data *fields*, it is paramount to always obtain the latest columns definition list
+      // using the new API .getColumnsInfo():
+      var colsInfo = grid.getColumnsInfo();
+      var columnDefs = colsInfo.gridColumns;
+      
+      var from = args.from[0];
+      var to = args.to[0];
+      var val;
+      for (var i = 0; i <= from.toRow - from.fromRow; i++) {
+        for (var j = 0; j <= from.toCell - from.fromCell; j++) {
+          if (i <= to.toRow - to.fromRow && j <= to.toCell - to.fromCell) {
+            val = data[from.fromRow + i][columnDefs[from.fromCell + j].field];
+            data[to.fromRow + i][columnDefs[to.fromCell + j].field] = "C:" + val;
+            grid.invalidateRow(to.fromRow + i);
+          }
+        }
+      }
+      grid.render();
+    });
+
+    grid.onAddNewRow.subscribe(function (e, args) {
+      var item = args.item;
+      var column = args.column;
+      grid.invalidateRow(data.length);
+      data.push(item);
+      grid.updateRowCount();
+      grid.render();
+    });
+  });
+</script>
+</body>
+</html>
