@@ -11,19 +11,16 @@
 @import (less) "slick.less.macros.less";
 
 
-.slickgrid-container
+.slickgrid-container 
 {
     .slick-header-columns, .slick-header-column {
       background: url('images/header-columns-bg.gif') repeat-x center bottom;
       // background-color: #EBECEE;
     }
 
-    .slick-header-columns {
-      border-bottom: 1px solid silver;
-    }
-
     .slick-header-column {
       border-right: 1px solid silver;
+      border-bottom: 1px solid silver;
     }
 
     .slick-header-column:hover, .slick-header-column-active {
@@ -37,18 +34,22 @@
     .slick-headerrow-column {
       background: #fafafa;
       border-bottom: 0;
-      height: 100%;
     }
 
     .slick-row {
-      position: absolute;
       background: white;
       border: 0;
       line-height: 20px;
 
       .slick-cell {
         background: white;
+
+        padding-top: 3px;
+        padding-bottom: 4px;
+        padding-left: 4px;
+        padding-right: 4px;
       }
+
 
       &.selected {
         z-index: 10;
@@ -63,11 +64,6 @@
       }
     }
 
-    .slick-cell {
-      padding-left: 4px;
-      padding-right: 4px;
-    }
-
     .slick-group {
       border-bottom: 2px solid silver;
     }
@@ -76,14 +72,14 @@
       width: 9px;
       height: 9px;
       margin-right: 5px;
-    }
+      
+      &.expanded {
+        background: url('images/collapse.gif') no-repeat center center;
+      }
 
-    .slick-group-toggle.expanded {
-      background: url('images/collapse.gif') no-repeat center center;
-    }
-
-    .slick-group-toggle.collapsed {
-      background: url('images/expand.gif') no-repeat center center;
+      &.collapsed {
+        background: url('images/expand.gif') no-repeat center center;
+      }
     }
 
     .slick-group-totals {
@@ -95,21 +91,28 @@
       background: silver !important;
     }
 
-    .slick-cell.selected {
-      background-color: beige;
-    }
-    // make sure we override the regular background color:
-    .slick-row.odd .slick-cell.selected {
-      background-color: rgb(231, 231, 195);  // beige
-    }
+    .slick-cell {
+      &.selected {
+        background-color: beige;
+      }
+      // make sure we override the regular background color:
+      .slick-row.odd &.selected {
+        background-color: rgb(231, 231, 195);  // beige
+      }
 
-    .slick-cell.active {
-      border-color: gray;
-      border-style: solid;
-    }
+      &.active {
+        border-color: gray;
+        border-style: solid;
+        border-width: 1px;
 
-    .slick-row.odd .slick-cell {
-      background: #fafafa;
+        // We compensate for the all-around border (now 1px at top and left too!) by reducing the padding: 
+        padding-top: 2px;
+        padding-left: 3px;
+      }
+
+      .slick-row.odd & {
+        background: #fafafa;
+      }
     }
 
     .slick-row.ui-state-active {
@@ -255,7 +258,9 @@
         border-color: #BFBDBD;
     }
 
-    .header-overlay, .cell-overlay, .selection-cell-overlay
+    .header-overlay, 
+    .cell-overlay, 
+    .selection-cell-overlay
     {
         display: block;
         position: absolute;

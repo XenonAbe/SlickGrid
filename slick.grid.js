@@ -117,8 +117,11 @@ if (typeof Slick === "undefined") {
    *      enableAddRow:       {Boolean}   Can rows be added?
    *      showTopPanel:       {Boolean}   Should the top panel be shown?
    *      topPanelHeight:     {Number}    Height of the top panel in pixels
+   *      headerHeight:       {Number}    Height of each column header row in pixels (*not the "extra header row"*)
    *      showHeaderRow:      {Boolean}   Should the extra header row be shown?
-   *      headerRowHeight:    {Number}    Height of the header row in pixels
+   *      headerRowHeight:    {Number}    Height of the extra header row in pixels
+   *      showFooterRow:      {Boolean}   Should the extra footer row be shown?
+   *      footerRowHeight:    {Number}    Height of the extra footer row in pixels
    *      enableCellNavigation: {Boolean} Should arrow keys navigate between cells?
    *      enableTextSelectionOnCells:
    *                          {Boolean}   Should text selection be allowed in cells? (This is MSIE specific; other browsers always assume `true`)
@@ -195,6 +198,7 @@ if (typeof Slick === "undefined") {
       asyncPostRenderSlice: 50,
       autoHeight: false,
       editorLock: Slick.GlobalEditorLock,
+      headerHeight: 25,
       showHeaderRow: false,
       headerRowHeight: 25,
       showFooterRow: false,
@@ -220,7 +224,7 @@ if (typeof Slick === "undefined") {
       defaultHeaderRowFormatter: defaultHeaderRowFormatter,
       scrollBands: 0,
       forceSyncScrolling: false,
-      asyncRenderDelay: 5000,         // this value is picked to 'catch' typematic key repeat rates as low as 12-per-second: 
+      asyncRenderDelay: 85,         // this value is picked to 'catch' typematic key repeat rates as low as 12-per-second: 
                                     // keep your navigator keys depressed to see the delayed render + mandatory mini-cell-renders kicking in. 
       asyncRenderSlice: 50,
       asyncRenderInterleave: 20,
@@ -259,25 +263,24 @@ if (typeof Slick === "undefined") {
     var vScrollDir = 1;
 
     // private
-    var initialized = false;
+    var initialized = 0;    // 0/1/2: 2 = fully initialized
     var $container;
     var uid = "slickgrid_" + Math.round(1000000 * Math.random());
     var self = this;
     var $focusSink, $focusSink2;
     var $headerScroller;
     var $headers;
-    var $headerRow, $headerRowScroller, $headerRowSpacer;
-    var $footerRow, $footerRowScroller, $footerRowSpacer;
+    var $headerRow, $headerRowScroller;
+    var $footerRow, $footerRowScroller;
     var $topPanelScroller;
     var $topPanel;
     var $viewport;
     var $canvas;
     var $style;
     var $boundAncestors;
-    var $headerParents;
-    var stylesheet, columnCssRulesL, columnCssRulesR;
+    var stylesheet, columnCssRulesL, columnCssRulesR, columnCssRulesHL, columnCssRulesHR;
     var viewportH, viewportW;
-    var canvasWidth;
+    var canvasWidth, totalColumnsWidth;
     var viewportHasHScroll, viewportHasVScroll;
     var headerColumnWidthDiff = 0, headerColumnHeightDiff = 0, // border+padding
         cellWidthDiff = 0, cellHeightDiff = 0;
@@ -434,7 +437,6 @@ if (typeof Slick === "undefined") {
 
       parseColumns(columnDefinitions);
       assert(columns);
-      computeNestedColumnHeaderWidths();
       updateColumnCaches();
 
       // validate loaded JavaScript modules against requested options
@@ -461,27 +463,15 @@ if (typeof Slick === "undefined") {
 
       $focusSink = $("<div tabIndex='0' hideFocus='true' style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
 
-      $headerScroller = $("<div class='slick-header ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
+      $headerScroller = $("<div class='slick-header ui-state-default' />").appendTo($container);
 
-      viewportW = getContainerWidth();
+      $headers = $("<div class='slick-header-columns' role='header-row' />").appendTo($headerScroller);
 
-      var headersWidth = getHeadersWidth();
-
-      $headerParents = $("<div/>").appendTo($headerScroller);
-      $headerParents.width(headersWidth);
-
-      $headers = $("<div class='slick-header-columns' style='left:-1000px;top:0;' role='row' />").appendTo($headerScroller);
-      $headers.width(headersWidth);
-
-      canvasWidth = getCanvasWidth();
-      $headerRowScroller = $("<div class='slick-headerrow ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
+      $headerRowScroller = $("<div class='slick-headerrow ui-state-default' />").appendTo($container);
       $headerRow = $("<div class='slick-headerrow-columns' />").appendTo($headerRowScroller);
-      $headerRowSpacer = $("<div style='display:block;height:1px;position:absolute;top:0;left:0;'></div>")
-        .width(canvasWidth + scrollbarDimensions.width)
-        .appendTo($headerRowScroller);
 
-      $topPanelScroller = $("<div class='slick-top-panel-scroller ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
-      $topPanel = $("<div class='slick-top-panel' style='width:10000px' />").appendTo($topPanelScroller);
+      $topPanelScroller = $("<div class='slick-top-panel-scroller ui-state-default' />").appendTo($container);
+      $topPanel = $("<div class='slick-top-panel' />").appendTo($topPanelScroller);
 
       if (!options.showTopPanel) {
         $topPanelScroller.hide();
@@ -491,20 +481,21 @@ if (typeof Slick === "undefined") {
         $headerRowScroller.hide();
       }
 
-      $viewport = $("<div class='slick-viewport' style='width:100%;overflow:auto;outline:0;position:relative;'>").appendTo($container);
+      $viewport = $("<div class='slick-viewport' >").appendTo($container);
       //$viewport.css("overflow-y", (options.autoHeight && !clippedAutoSize) ? "auto" : "auto");
 
       $canvas = $("<div class='grid-canvas' />").appendTo($viewport);
 
-      $footerRowScroller = $("<div class='slick-footerrow' style='overflow:hidden;position:relative;' />").appendTo($container);
+      $footerRowScroller = $("<div class='slick-footerrow' />").appendTo($container);
       $footerRow = $("<div class='slick-footerrow-columns' />").appendTo($footerRowScroller);
-      $footerRowSpacer = $("<div style='display:block;height:1px;position:absolute;top:0;left:0;'></div>")
-          .width(canvasWidth + scrollbarDimensions.width)
-          .appendTo($footerRowScroller);
 
       if (!options.showFooterRow) {
         $footerRowScroller.hide();
       }
+
+      assert(!initialized);
+      viewportW = getContainerWidth();
+      updateCanvasWidth();    // note that this call MUST NOT fire the onCanvasChanged event!
 
       $focusSink2 = $focusSink.clone().appendTo($container);
 
@@ -514,8 +505,8 @@ if (typeof Slick === "undefined") {
     }
 
     function finishInitialization() {
-      if (!initialized) {
-        initialized = true;
+      if (initialized < 2) {
+        initialized = 1;
 
         viewportW = getContainerWidth();
 
@@ -529,7 +520,6 @@ if (typeof Slick === "undefined") {
         // selection in grid cells (grid body) is already unavailable in
         // all browsers except IE
         disableSelection($headers); // disable all text selection in header (including input and textarea)
-        disableSelection($headerParents);
 
         if (!options.enableTextSelectionOnCells) {
           // disable text selection in grid cells except in input and textarea elements
@@ -539,7 +529,7 @@ if (typeof Slick === "undefined") {
           });
         }
 
-        canvasWidth = getCanvasWidth();
+        calcCanvasWidth();
         updateColumnCaches();
         createColumnHeaders();
         setupColumnSort();
@@ -684,6 +674,10 @@ if (typeof Slick === "undefined") {
             navigator.userAgent.toLowerCase().match(/macintosh/)) {
           $canvas.bind("mousewheel", handleMouseWheel);
         }
+
+        initialized = 2;
+
+        trigger(self.onAfterInit, {});
       } else if (!stylesheet) {
         // when a previous `init` run did not yet use the run-time stylesheet data, we have to adjust the canvas while waiting for the browser to actually parse that style.
         resizeCanvas();
@@ -759,43 +753,65 @@ if (typeof Slick === "undefined") {
       return columnPosLeft[cell];
     }
 
-    function getHeadersWidth() {
-      var headersWidth = getColumnOffset(columns.length);
-      headersWidth += scrollbarDimensions.width;
-      return Math.max(headersWidth, viewportW) + 1000;
-    }
-
-    function getCanvasWidth() {
+    function calcCanvasWidth() {
       var availableWidth = viewportHasVScroll ? viewportW - scrollbarDimensions.width : viewportW;
-      var rowWidth = getColumnOffset(columns.length);
-      return options.fullWidthRows ? Math.max(rowWidth, availableWidth) : rowWidth;
-    }
 
-    function updateCanvasWidth(forceColumnWidthsUpdate, forceCanvasResize) {
-      var oldCanvasWidth = canvasWidth;
-      canvasWidth = getCanvasWidth();
+      totalColumnsWidth = getColumnOffset(columns.length);
+      canvasWidth = (options.fullWidthRows ? Math.max(totalColumnsWidth, availableWidth) : totalColumnsWidth);
 
       // see https://github.com/mleibman/SlickGrid/issues/477
       viewportHasHScroll = (canvasWidth >= viewportW - scrollbarDimensions.width);
+    }
 
-      if (canvasWidth !== oldCanvasWidth || forceCanvasResize) {
+    var oldViewportW, oldCanvasWidth, oldTotalColumnsWidth;
+
+    function updateCanvasWidth() {
+      calcCanvasWidth();
+
+      var cached = false;
+      if (canvasWidth !== oldCanvasWidth) {
         $canvas.width(canvasWidth);
-        $headerRow.width(canvasWidth);
-        $footerRow.width(canvasWidth);
-        var headersWidth = getHeadersWidth();
-        $headers.width(headersWidth);
-        $headerParents.width(headersWidth);
+        cached = true;
+      }
+      if (oldTotalColumnsWidth !== totalColumnsWidth) {
+        $topPanel.width(totalColumnsWidth + scrollbarDimensions.width);
+        $headerRow.width(totalColumnsWidth + scrollbarDimensions.width);
+        $footerRow.width(totalColumnsWidth + scrollbarDimensions.width);
+        $headers.width(totalColumnsWidth + scrollbarDimensions.width);
+        cached = true;
+      }
+      if (oldViewportW !== viewportW) {
+        $topPanelScroller.width(viewportW);
+        $headerRowScroller.width(viewportW);
+        $footerRowScroller.width(viewportW);
+        $headerScroller.width(viewportW);
+        cached = true;
+      }
+
+      // when `stylesheet` has not been set yet, it means that any previous call to applyColumnWidths() did not use up to date values yet as the run-time generated stylesheet wasn't parsed in time.
+      if (canvasWidth !== oldCanvasWidth || !stylesheet || !initialized) {
+        applyColumnWidths();
+      }
+
+      // Only fire the event when there's actual change *and* we're past the initialization phase.
+      if (cached && initialized) {
         trigger(self.onCanvasWidthChanged, { 
-          width: canvasWidth 
+          width: canvasWidth,
+          oldWidth: oldCanvasWidth || 0,
+
+          oldTotalColumnsWidth: oldTotalColumnsWidth || 0,
+          totalColumnsWidth: totalColumnsWidth,
+
+          oldViewportW: oldViewportW || 0,
+          viewportW: viewportW
         });
       }
 
-      $headerRowSpacer.width(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
-      $footerRowSpacer.width(canvasWidth + (viewportHasVScroll ? scrollbarDimensions.width : 0));
-
-      // when `stylesheet` has not been set yet, it means that any previous call to applyColumnWidths() did not use up to date values yet as the run-time generated stylesheet wasn't parsed in time.
-      if (canvasWidth !== oldCanvasWidth || forceColumnWidthsUpdate || forceCanvasResize || !stylesheet) {
-        applyColumnWidths();
+      // only update the 'previous/old' markers when we can be sure that the new values are actually sound:
+      if (stylesheet && initialized) {
+        oldViewportW = viewportW;
+        oldCanvasWidth = canvasWidth;
+        oldTotalColumnsWidth = totalColumnsWidth;
       }
     }
 
@@ -989,11 +1005,7 @@ if (typeof Slick === "undefined") {
             });
           }
         });
-      var headersWidth = getHeadersWidth();
       $headers.empty();
-      $headers.width(headersWidth);
-      $headerParents.empty();
-      $headerParents.width(headersWidth);
 
       // Get the data for each column in the DOM
       $headerRow.find(".slick-headerrow-column")
@@ -1021,8 +1033,7 @@ if (typeof Slick === "undefined") {
       $footerRow.empty();
 
       function createColumnHeader(columnDef, appendTo, level, cell) {
-        var colspan = getColumnColspan(columnDef);
-        var cellCss = ["ui-state-default", "slick-header-column", "level" + (level || 0), "colspan" + colspan];
+        var cellCss = ["ui-state-default", "slick-header-column", "level" + level, "hl" + cell, "hr" + (cell + columnDef.headerColSpan - 1)];
         if (columnDef.headerCssClass) {
           cellCss.push(columnDef.headerCssClass);
         }
@@ -1030,12 +1041,11 @@ if (typeof Slick === "undefined") {
         var info = {
           cellCss: cellCss,
           cellStyles: cellStyles,
-          cellWidth: columnDef.width - headerColumnWidthDiff,
           html: "",
           attributes: {},
           toolTip: columnDef.toolTip || null,
-          colspan: colspan,
-          rowspan: 1,
+          colspan: columnDef.headerColSpan,
+          rowspan: columnDef.headerRowSpan,
           //cellHeight: cellHeight,
           //rowMetadata: rowMetadata,
           //columnMetadata: columnMetadata,
@@ -1046,15 +1056,15 @@ if (typeof Slick === "undefined") {
           }
         };
         // I/F: function formatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo)
-        info.html = getHeaderFormatter(-2000, cell)(-2000, cell, columnDef.name, columnDef, null /* rowDataItem */, info);
+        info.html = getHeaderFormatter(-2000 + level, cell)(-2000 + level, cell, columnDef.name, columnDef, null /* rowDataItem */, info);
         var metaData = getAllCustomMetadata(null, null, info) || {};
         patchupCellAttributes(metaData, info, "columnheader");
-        metaData.id = mkSaneId(columnDef, i, -2000);
+        metaData.id = mkSaneId(columnDef, i, "header" + level);
         var stringArray = [
           "<div"
         ];
         // I/F: function appendMetadataAttributes(stringArray, row, cell, data, columnDef, rowDataItem, cellMetaInfo)
-        appendMetadataAttributes(stringArray, -2000, cell, metaData, columnDef, null, info);
+        appendMetadataAttributes(stringArray, -2000 + level, cell, metaData, columnDef, null, info);
   
         stringArray.push(">");
 
@@ -1064,21 +1074,8 @@ if (typeof Slick === "undefined") {
 
         var header = $(stringArray.join(""))
             .data("column", columnDef)
-            .width(info.cellWidth)
             .appendTo(appendTo);
         return header;
-      }
-
-      function getColumnColspan(columnDef) {
-        var colspan = 0;
-        if (columnDef.children) {
-          for (var k = 0, len = columnDef.children.length; k < len; k++) {
-            colspan += getColumnColspan(columnDef.children[k]);
-          }
-        } else {
-          colspan = 1;
-        }
-        return colspan;
       }
 
       function createBaseColumnHeader(columnDef, level, cell) {
@@ -1111,7 +1108,7 @@ if (typeof Slick === "undefined") {
         });
 
         if (options.showHeaderRow) {
-          cellCss = ["ui-state-default", "slick-headerrow-column", "l" + cell, "r" + cell];
+          cellCss = ["ui-state-default", "slick-headerrow-column", "hl" + cell, "hr" + (cell + columnDef.headerColSpan - 1)];
           if (columnDef.headerCssClass) cellCss.push(columnDef.headerCssClass);
           cellStyles = [];
           info = {
@@ -1120,7 +1117,7 @@ if (typeof Slick === "undefined") {
             html: "",
             attributes: {},
             toolTip: columnDef.headerRowToolTip || null,
-            colspan: 1,
+            colspan: columnDef.headerColSpan,
             rowspan: 1,
             //cellHeight: cellHeight,
             //rowMetadata: rowMetadata,
@@ -1131,13 +1128,14 @@ if (typeof Slick === "undefined") {
               cell: cell
             }
           };
-          info.html = getHeaderRowFormatter(-1000, cell)(-1000, cell, columnDef.initialHeaderRowValue, columnDef, null /* rowDataItem */, info);
+          info.html = getHeaderRowFormatter(-1000 + level, cell)(-1000 + level, cell, columnDef.initialHeaderRowValue, columnDef, null /* rowDataItem */, info);
           var stringArray = [];
           stringArray.push("<div");
 
           var metaData = getAllCustomMetadata(null, null, info) || {};
           patchupCellAttributes(metaData, info, "columnbaseheader");
-          appendMetadataAttributes(stringArray, -1000, cell, metaData, columnDef, null, info);
+          metaData.id = mkSaneId(columnDef, i, "headerrow" + level);
+          appendMetadataAttributes(stringArray, -1000 + level, cell, metaData, columnDef, null, info);
 
           stringArray.push(">");
 
@@ -1157,7 +1155,7 @@ if (typeof Slick === "undefined") {
           });
         }
         if (options.showFooterRow) {
-          cellCss = ["ui-state-default", "slick-footerrow-column", "l" + cell, "r" + cell];
+          cellCss = ["ui-state-default", "slick-footerrow-column", "hl" + cell, "hr" + (cell + columnDef.headerColSpan - 1)];
           if (columnDef.footerCssClass) {
             cellCss.push(columnDef.footerCssClass);
           }
@@ -1168,7 +1166,7 @@ if (typeof Slick === "undefined") {
             html: "",
             attributes: {},
             toolTip: columnDef.footerRowToolTip || null,
-            colspan: 1,
+            colspan: columnDef.headerColSpan,
             rowspan: 1,
             //cellHeight: cellHeight,
             //rowMetadata: rowMetadata,
@@ -1179,13 +1177,14 @@ if (typeof Slick === "undefined") {
               cell: cell
             }
           };
-          info.html = getHeaderRowFormatter(-3000, cell)(-3000, cell, columnDef.initialFooterRowValue, columnDef, null /* rowDataItem */, info);
+          info.html = getHeaderRowFormatter(-3000 + level, cell)(-3000 + level, cell, columnDef.initialFooterRowValue, columnDef, null /* rowDataItem */, info);
           var stringArray = [];
           stringArray.push("<div");
 
           var metaData = getAllCustomMetadata(null, null, info) || {};
           patchupCellAttributes(metaData, info, "columnfooter");
-          appendMetadataAttributes(stringArray, -3000, cell, metaData, columnDef, null, info);
+          metaData.id = mkSaneId(columnDef, i, "footer" + level);
+          appendMetadataAttributes(stringArray, -3000 + level, cell, metaData, columnDef, null, info);
 
           stringArray.push(">");
 
@@ -1212,7 +1211,7 @@ if (typeof Slick === "undefined") {
           var isParent = false;
           var layer = nestedColumns[i];
           if (i + 1 < nestedColumns.length) {
-            $row = $("<div class='slick-header-columns slick-header-parents level" + i + "' style='left:-1000px' />").appendTo($headerParents);
+            $row = $("<div class='slick-header-columns level" + i + "' role='header-parent-row' />").appendTo($headers);
             isParent = true;
           }
           for (j = 0, llen = layer.length; j < llen; j++) {
@@ -1487,12 +1486,18 @@ if (typeof Slick === "undefined") {
         maxPageX = pageX + Math.min(shrinkLeewayOnRight, stretchLeewayOnLeft);
         minPageX = pageX - Math.min(shrinkLeewayOnLeft, stretchLeewayOnRight);
         trigger(self.onColumnsStartResize, {}, e); // onColumnsResizeStart
-        computeNestedColumnHeaderWidths();
         updateColumnCaches();
-        applyColumnHeaderWidths();
         if (options.syncColumnCellResize) {
           //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
-          updateCanvasWidth(true);
+          updateCanvasWidth();
+        } else {
+          // As the column **header** cells have a resize ability (`options.resizable`), those
+          // header cells cannot use the `position: absolute` + `.l<N> .r<N>` styling that all
+          // other cells in the grid (including headerRow cells -- `option.showHeaderRow`) use
+          // as the resize (drag) operation would then require a lot of continuous style
+          // recalculations to show the resize action as 'smooth': it would load the dragmove
+          // handler overmuch (`options.syncColumnCellResize`).
+          updateCanvasWidth();
         }
         //e.preventDefault();
         //e.stopPropagation();
@@ -1571,12 +1576,10 @@ if (typeof Slick === "undefined") {
             }
           }
         }
-        computeNestedColumnHeaderWidths();
         updateColumnCaches();
-        applyColumnHeaderWidths();
         if (options.syncColumnCellResize) {
           //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
-          updateCanvasWidth(true);
+          updateCanvasWidth();
         }
         trigger(self.onColumnsResizing, {}, e);
         //e.preventDefault();
@@ -1600,7 +1603,7 @@ if (typeof Slick === "undefined") {
             }
           }
         }
-        updateCanvasWidth(true);
+        updateCanvasWidth();
         handleScroll();
         //render();
         trigger(self.onColumnsResized, { 
@@ -1618,7 +1621,7 @@ if (typeof Slick === "undefined") {
         }
         var column = headerInfo.columnDef;
         assert(column);
-        assert(column.id);
+        assert(column.id || column.id === 0);
         var cell = getColumnIndex(column.id);
         assert(cell != null);
         assert(cell >= 0);
@@ -1637,10 +1640,8 @@ if (typeof Slick === "undefined") {
         // TODO: make autosize faster by introducing a bit of heuristic: longer raw string implies wider cell
         // TODO: apply the proper formatter so that we actually get what we will see when the cell is rendered for real
 
-        computeNestedColumnHeaderWidths();
         updateColumnCaches();
-        applyColumnHeaderWidths();
-        updateCanvasWidth(true);
+        updateCanvasWidth();
         render();
         trigger(self.onColumnsResized, {
           cell: cell, 
@@ -1773,23 +1774,32 @@ if (typeof Slick === "undefined") {
     // This code is based on
     //     http://davidwalsh.name/add-rules-stylesheets
     function createCssRules() {
-      $style = $("<style type='text/css' rel='stylesheet' />").appendTo($("head"));
-      if ($style[0].styleSheet) { // IE
-        $style[0].styleSheet.cssText = "";
+      var sheet;
+      if (!stylesheet) {
+        stylesheet = getStyleSheet();
+      }
+      if (!stylesheet) {
+        $style = $("<style type='text/css' rel='stylesheet' id='slickgrid_stylesheet_" + uid + "' />").appendTo($("head"));
+        if ($style[0].styleSheet) { // IE
+          $style[0].styleSheet.cssText = "";
+        } else {
+          // WebKit hack
+          $style[0].appendChild(document.createTextNode(""));
+        }
+
+        // Add a media (and/or media query) here if you'd like!
+        // $style[0].setAttribute("media", "screen")
+        // $style[0].setAttribute("media", "@media only screen and (max-width : 1024px)")
+
+        sheet = $style[0].sheet;
       } else {
-        // WebKit hack
-        $style[0].appendChild(document.createTextNode(""));
+        sheet = stylesheet;
       }
 
-      // Add a media (and/or media query) here if you'd like!
-      // $style[0].setAttribute("media", "screen")
-      // $style[0].setAttribute("media", "@media only screen and (max-width : 1024px)")
-
-      var sheet = $style[0].sheet;
       var rowHeight = options.rowHeight - cellHeightDiff;
       var rules = [
-        [".slickgrid-container." + uid + " .slick-header-column", "left: 1000px"],
         [".slickgrid-container." + uid + " .slick-top-panel", "height: " + options.topPanelHeight + "px"],
+        [".slickgrid-container." + uid + " .slick-header-columns", "height: " + options.headerHeight + "px"],
         [".slickgrid-container." + uid + " .slick-headerrow-columns", "height: " + options.headerRowHeight + "px"],
         [".slickgrid-container." + uid + " .slick-footerrow-columns", "height: " + options.footerRowHeight + "px"],
         [".slickgrid-container." + uid + " .slick-cell", "height:" + rowHeight + "px"],
@@ -1799,6 +1809,8 @@ if (typeof Slick === "undefined") {
       for (var i = 0, len = columns.length; i < len; i++) {
         rules.push([".slickgrid-container." + uid + " .l" + i, ""]);
         rules.push([".slickgrid-container." + uid + " .r" + i, ""]);
+        rules.push([".slickgrid-container." + uid + " .hl" + i, ""]);
+        rules.push([".slickgrid-container." + uid + " .hr" + i, ""]);
       }
 
       if (options.createCssRulesCallback) {
@@ -1817,24 +1829,27 @@ if (typeof Slick === "undefined") {
     }
 
     function addCSSRule(sheet, selector, rules, index) {
-        if (sheet.insertRule) {
-            sheet.insertRule(selector + " {" + rules + "}", index);
-        } else {
-            sheet.addRule(selector, rules, index);
-        }
+      if (sheet.insertRule) {
+        sheet.insertRule(selector + " {" + rules + "}", index);
+      } else {
+        sheet.addRule(selector, rules, index);
+      }
+      assert(sheet.ownerNode);
     }
 
     // Fix for Google Chrome
-    function getAllStyleSheets() {
-      var result = [];
+    function getStyleSheet() {
       for (var style in document.styleSheets) {
-        result.push(document.styleSheets[style]);
+        var sheet = document.styleSheets[style];
+        if (sheet && sheet.ownerNode && sheet.ownerNode.id === "slickgrid_stylesheet_" + uid) {
+          return sheet;
+        }
       }
-      var sheets = $("head").find("style");
-      for (var i = 0, len = sheets.length; i < len; i++) {
-        result.push(sheets[i].sheet);
+      var $sheet = $("style#slickgrid_stylesheet_" + uid);
+      if ($sheet.length) {
+        return $sheet[0].sheet;
       }
-      return result;
+      return null;
     }
 
     // Return FALSE when the relevant stylesheet has not been parsed yet
@@ -1843,14 +1858,7 @@ if (typeof Slick === "undefined") {
     function getColumnCssRules(idx) {
       var i, len;
       if (!stylesheet) {
-        var sheets = getAllStyleSheets();
-        for (i = 0, len = sheets.length; i < len; i++) {
-          if ((sheets[i].ownerNode || sheets[i].owningElement) == $style[0]) {
-            stylesheet = sheets[i];
-            break;
-          }
-        }
-
+        stylesheet = getStyleSheet();
         if (!stylesheet) {
           console.log("########### Cannot find stylesheet.");
           return false;
@@ -1860,23 +1868,33 @@ if (typeof Slick === "undefined") {
         // find and cache column CSS rules
         columnCssRulesL = [];
         columnCssRulesR = [];
+        columnCssRulesHL = [];
+        columnCssRulesHR = [];
         var cssRules = (stylesheet.cssRules || stylesheet.rules);
         var matches, columnIdx;
         for (i = 0, len = cssRules.length; i < len; i++) {
           var selector = cssRules[i].selectorText;
-          if (matches = /\.l\d+/.exec(selector)) {
+          if ((matches = /\.l\d+/.exec(selector))) {
             columnIdx = parseInt(matches[0].substr(2, matches[0].length - 2), 10);
             columnCssRulesL[columnIdx] = cssRules[i];
-          } else if (matches = /\.r\d+/.exec(selector)) {
+          } else if ((matches = /\.r\d+/.exec(selector))) {
             columnIdx = parseInt(matches[0].substr(2, matches[0].length - 2), 10);
             columnCssRulesR[columnIdx] = cssRules[i];
+          } else if ((matches = /\.hl\d+/.exec(selector))) {
+            columnIdx = parseInt(matches[0].substr(3, matches[0].length - 3), 10);
+            columnCssRulesHL[columnIdx] = cssRules[i];
+          } else if ((matches = /\.hr\d+/.exec(selector))) {
+            columnIdx = parseInt(matches[0].substr(3, matches[0].length - 3), 10);
+            columnCssRulesHR[columnIdx] = cssRules[i];
           }
         }
       }
 
       return {
         left: columnCssRulesL[idx],
-        right: columnCssRulesR[idx]
+        right: columnCssRulesR[idx],
+        headerLeft: columnCssRulesHL[idx],
+        headerRight: columnCssRulesHR[idx],
       };
     }
 
@@ -1884,6 +1902,7 @@ if (typeof Slick === "undefined") {
       $style.remove();
       $style = null;
       stylesheet = null;
+      assert($("style#slickgrid_stylesheet_" + uid).length === 0);
     }
 
     function destroy() {
@@ -1920,7 +1939,6 @@ if (typeof Slick === "undefined") {
 
       $headerScroller = undefined;
       $headers = undefined;
-      $headerParents = undefined;
       $headerRowScroller = undefined;
       $headerRow = undefined;
       $headerRowSpacer = undefined;
@@ -1994,7 +2012,7 @@ if (typeof Slick === "undefined") {
           shrinkLeeway = 0,
           total = 0,
           prevTotal,
-          availWidth = viewportHasVScroll ? viewportW - scrollbarDimensions.width : viewportW;
+          availableWidth = viewportHasVScroll ? viewportW - scrollbarDimensions.width : viewportW;
 
       for (i = 0, len = columns.length; i < len; i++) {
         c = columns[i];
@@ -2007,9 +2025,9 @@ if (typeof Slick === "undefined") {
 
       // shrink
       prevTotal = total;
-      while (total > availWidth && shrinkLeeway) {
-        var shrinkProportion = (total - availWidth) / shrinkLeeway;
-        for (i = 0, len = columns.length; i < len && total > availWidth; i++) {
+      while (total > availableWidth && shrinkLeeway) {
+        var shrinkProportion = (total - availableWidth) / shrinkLeeway;
+        for (i = 0, len = columns.length; i < len && total > availableWidth; i++) {
           c = columns[i];
           var width = widths[i];
           if (!c.resizable || width <= Math.max(c.minWidth || 0, absoluteColumnMinWidth)) {
@@ -2030,9 +2048,9 @@ if (typeof Slick === "undefined") {
 
       // grow
       prevTotal = total;
-      while (total < availWidth) {
-        var growProportion = availWidth / total;
-        for (i = 0, len = columns.length; i < len && total < availWidth; i++) {
+      while (total < availableWidth) {
+        var growProportion = availableWidth / total;
+        for (i = 0, len = columns.length; i < len && total < availableWidth; i++) {
           c = columns[i];
           var currentWidth = widths[i];
           var growSize;
@@ -2059,10 +2077,9 @@ if (typeof Slick === "undefined") {
         columns[i].width = widths[i];
       }
 
-      computeNestedColumnHeaderWidths();
       updateColumnCaches();
-      applyColumnHeaderWidths();
-      updateCanvasWidth(true);
+      //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
+      updateCanvasWidth();
       if (reRender) {
         invalidateAllRows();
         render();
@@ -2070,76 +2087,8 @@ if (typeof Slick === "undefined") {
     }
 
     /**
-     * As the column **header** cells have a resize ability (`options.resizable`), those
-     * header cells cannot use the `position: absolute` + `.l<N> .r<N>` styling that all
-     * other cells in the grid (including headerRow cells -- `option.showHeaderRow`) use
-     * as the resize (drag) operation would then require a lot of continuous style
-     * recalculations to show the resize action as 'smooth': it would load the dragmove
-     * handler overmuch (`options.syncColumnCellResize`).
-     */
-    function applyColumnHeaderWidths() {
-      if (!initialized) { return; }
-      applyNestedColumnHeaderWidths();
-      var h;
-      for (var i = 0, headers = $headers.children(), len = headers.length; i < len; i++) {
-        h = $(headers[i]);
-        if (h.width() !== columns[i].width - headerColumnWidthDiff) {
-          h.width(columns[i].width - headerColumnWidthDiff);
-        }
-      }
-    }
-
-    function applyNestedColumnHeaderWidths() {
-      if (!hasNestedColumns) {
-        return;
-      }
-      var nh;
-
-      for (var j = 0, nestedHeaderRows = $headerParents.children(), jj = nestedHeaderRows.length; j < jj; j++) {
-        for (var k = 0, nestedHeaders = $(nestedHeaderRows[j]).children(), kk = nestedHeaders.length; k < kk; k++) {
-          nh = $(nestedHeaders[k]);
-
-          if (nh.width() !== nestedColumns[j][k].width - headerColumnWidthDiff) {
-            nh.width(nestedColumns[j][k].width - headerColumnWidthDiff);
-          }
-        }
-      }
-    }
-
-    /* this function (re)computes header column widths based on the (possibly resized) leaf column widths */ 
-    function computeNestedColumnHeaderWidths() {
-      if (!hasNestedColumns) {
-        return;
-      }
-
-      function computeWidths(columns, depth) {
-        var totalWidth = 0;
-        for (var i = 0, len = columns.length; i < len; i++) {
-          var column = columns[i];
-          assert(column.children ? !column.spacers : true);
-          if (column.children) {
-            column.width = computeWidths(column.children, depth + 1);
-          } else if (column.spacers) {
-            var spacer;
-            for (var j = 0, jj = column.spacers.length; j < jj; j++) {
-              spacer = column.spacers[j];
-              spacer.width = column.width;
-            }
-          }
-          totalWidth += column.width;
-        }
-        return totalWidth;
-      }
-
-      computeWidths(nestedColumns[0], 0);
-    }
-
-    /**
      * This function tweaks the generated `.l<N>` and `.r<N>` CSS rules, setting their
      * `left` and `right` CSS styles to calculated pixel positions.
-     *
-     * Note that google Chrome, when debugging/inspecting the elements/styles,
-     * does NOT show these styles and their values!
      *
      * Also note that this assumes the addressed DOM nodes (cells in columns) have
      *     position: absolute;
@@ -2147,15 +2096,21 @@ if (typeof Slick === "undefined") {
     function applyColumnWidths() {
       var x = 0, w, rule;
       assert(canvasWidth != null);
+      assert(totalColumnsWidth != null);
+      var gridWidth = canvasWidth;
+      var headerWidth = totalColumnsWidth + scrollbarDimensions.width;
+      var headerScrollCompensation = scrollbarDimensions.width;
       for (var i = 0, len = columns.length; i < len; i++) {
         w = columns[i].width;
 
         rule = getColumnCssRules(i);
-        if (rule) {
-          rule.left.style.left = x + "px";
-          rule.right.style.right = (canvasWidth - x - w) + "px";
-        }
-        x += columns[i].width;
+        if (!rule) break;             // when the styles for one column aren't loaded yet, then you can bet the bank the others are neither: abort operation!
+        
+        rule.left.style.left = x + "px";
+        rule.headerLeft.style.left = x + "px";
+        x += w;
+        rule.right.style.right = (gridWidth - x) + "px";
+        rule.headerRight.style.right = (headerWidth - x) + "px";
       }
     }
 
@@ -2284,9 +2239,9 @@ if (typeof Slick === "undefined") {
       parseColumns(newColumnDefinitions);
       updateColumnCaches();
       if (initialized) {
-        $headers.width(getHeadersWidth()); // Set the full width of all the headers together
-        applyColumnHeaderWidths(); // Surgically update only the widths of the header cells
-        applyColumnWidths(); // Surgically update only cell widths (but not header cells, unfortunately)
+        // Surgically update all cell widths, including header cells:
+        //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth()
+        updateCanvasWidth();
       }
     }
 
@@ -2490,7 +2445,7 @@ if (typeof Slick === "undefined") {
       columnsById = {};
 
       function parse(input, depth, parent) {
-        var totalWidth = 0;
+        var totalHeaderColSpan = 0;
         var colset = [];
         if (depth > maxDepth) {
           maxDepth = depth;
@@ -2502,7 +2457,8 @@ if (typeof Slick === "undefined") {
           colset.push(column);
           if (column.children) {
             hasNestedColumns = true;
-            column.width = parse(column.children, depth + 1, column);
+            column.headerColSpan = parse(column.children, depth + 1, column);
+            column.headerRowSpan = 1;
           } else {
             columnsById[column.id] = columns.length;
             // make sure `minWidth <= width <= maxWidth`
@@ -2512,13 +2468,15 @@ if (typeof Slick === "undefined") {
             if (column.maxWidth && column.width > column.maxWidth) {
               column.width = column.maxWidth;
             }
+            column.headerColSpan = 1;
+            column.headerRowSpan = 1;
             columns.push(column);
           }
-          totalWidth += column.width;
+          totalHeaderColSpan += column.headerColSpan;
         }
         parent.children = colset;
         parent.childrenLastIndex = columns.length;
-        return totalWidth;
+        return totalHeaderColSpan;
       }
 
       function addToNested(column, depth) {
@@ -2531,7 +2489,6 @@ if (typeof Slick === "undefined") {
         nestedColumns[depth].push(column);
       }
 
-      var spacerIndex = 0;
       function splitIntoLayers(input, depth) {
         for (var index = 0; index < input.length; index++) {
           var column = input[index];
@@ -2539,31 +2496,7 @@ if (typeof Slick === "undefined") {
           if (column.children) {
             splitIntoLayers(column.children, depth + 1);
           } else {
-            var spacer;
-            var spacers = [];
-            for (var d = depth + 1; d <= maxDepth; d++) {
-              // while the spacers extend all the way down to leaf level, 
-              // the column itself ends up in both the columns[]
-              // leaf columns array so we produce the master column info, 
-              // such as custom formatters, etc. where slickgrid expects
-              // them (in a flat 1D columns[] array) while the same
-              // column object now also ends up in the nestedColumns[]
-              // array at a non-leaf depth.
-              //
-              // Meanwhile the spacers are used to render the header cells
-              // at each tree depth level.
-              spacer = {
-                spacer: true,
-                width: column.width || columnDefaults.width,
-                name: "",
-                id: "spacer" + spacerIndex,
-                masterColumn: column
-              };
-              addToNested(spacer, d);
-              spacers.push(spacer);
-              spacerIndex++;
-            }
-            column.spacers = spacers;
+            column.headerRowSpan = maxDepth - depth + 1;
           }
         }
       }
@@ -2578,8 +2511,6 @@ if (typeof Slick === "undefined") {
       if (hasNestedColumns) {
         splitIntoLayers(columnsDefTree, 0);
       }
-
-      computeNestedColumnHeaderWidths();
     }
 
     function getContainerNode() {
@@ -4263,7 +4194,7 @@ if (typeof Slick === "undefined") {
       if (options.forceFitColumns && oldViewportHasVScroll !== viewportHasVScroll) {
         autosizeColumns();
       }
-      updateCanvasWidth(false);
+      updateCanvasWidth();
     }
 
     /*
@@ -7415,6 +7346,7 @@ out:
       "onCellChange": new Slick.Event(),
       "onBeforeEditCell": new Slick.Event(),
       "onBeforeCellEditorDestroy": new Slick.Event(),
+      "onAfterInit": new Slick.Event(),
       "onBeforeDestroy": new Slick.Event(),
       "onActiveCellChanging": new Slick.Event(),
       "onActiveCellChanged": new Slick.Event(),
