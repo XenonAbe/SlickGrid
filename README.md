@@ -30,6 +30,9 @@ Also exposes the existing method `grid.setupColumnResize`, which allows you to r
 
 
 
+
+**UPDATE:  March 5th, 2014 - I have too many things going on in my life right now to really give SlickGrid support and development the time and attention it deserves.  I am not stopping it, but I will most likely be unresponsive for some time.  Sorry.**
+
 ## SlickGrid is an advanced JavaScript grid/spreadsheet component
 
 Some highlights:
