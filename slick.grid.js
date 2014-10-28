@@ -473,10 +473,11 @@ if (typeof Slick === "undefined") {
       $headers = $("<div class='slick-header-columns' style='left:-1000px;top:0;' role='row' />").appendTo($headerScroller);
       $headers.width(headersWidth);
 
+      canvasWidth = getCanvasWidth();
       $headerRowScroller = $("<div class='slick-headerrow ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
       $headerRow = $("<div class='slick-headerrow-columns' />").appendTo($headerRowScroller);
       $headerRowSpacer = $("<div style='display:block;height:1px;position:absolute;top:0;left:0;'></div>")
-        .width(getCanvasWidth() + scrollbarDimensions.width)
+        .width(canvasWidth + scrollbarDimensions.width)
         .appendTo($headerRowScroller);
 
       $topPanelScroller = $("<div class='slick-top-panel-scroller ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
@@ -498,7 +499,7 @@ if (typeof Slick === "undefined") {
       $footerRowScroller = $("<div class='slick-footerrow' style='overflow:hidden;position:relative;' />").appendTo($container);
       $footerRow = $("<div class='slick-footerrow-columns' />").appendTo($footerRowScroller);
       $footerRowSpacer = $("<div style='display:block;height:1px;position:absolute;top:0;left:0;'></div>")
-          .width(getCanvasWidth() + scrollbarDimensions.width)
+          .width(canvasWidth + scrollbarDimensions.width)
           .appendTo($footerRowScroller);
 
       if (!options.showFooterRow) {
@@ -538,6 +539,7 @@ if (typeof Slick === "undefined") {
           });
         }
 
+        canvasWidth = getCanvasWidth();
         updateColumnCaches();
         createColumnHeaders();
         setupColumnSort();
@@ -2144,6 +2146,7 @@ if (typeof Slick === "undefined") {
      */
     function applyColumnWidths() {
       var x = 0, w, rule;
+      assert(canvasWidth != null);
       for (var i = 0, len = columns.length; i < len; i++) {
         w = columns[i].width;
 
@@ -2840,6 +2843,211 @@ if (typeof Slick === "undefined") {
       };
     }
 
+    // Return the column index at the given grid pixel coordinate X.
+    //
+    // Also return the "fraction" of the index within the column, i.e.
+    // if the X coordinate points at a spot 25% from the left of the column, then
+    // `returnValue.fraction` will be 0.25
+    //
+    // `returnValue.fraction === 0.0` would identify the left-most pixel within the column.
+    //
+    // When the X coordinate points outside the grid, out-of-range numbers 
+    // will be produced as this function will estimate the column number using the
+    // default column width.
+    //
+    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>).
+    // 
+    // Use a binary search alike algorithm to find the column, using 
+    // linear estimation to produce the split/probe point: this should improve
+    // significantly on the O(log(n)) of a binary search. 
+    function getColumnWithFractionFromPosition(posX, clipToValidRange) {
+      if (clipToValidRange == null) {
+        clipToValidRange = true;
+      }
+
+      //assert(posY >= 0); -- posY can be a negative number when this function is called from inside a drag from bottom-right to top-left where the user drags until outside the grid canvas area
+      assert(columnPosLeft.length === columns.length + 1);
+      // prime the cache if it wasn't already:
+      var bottomColInfo = getColumnOffset(columns.length);
+      var colsInPosCache = columns.length; // WARNING: here specifically **NOT** columnPosLeft.length! 
+      var topColInfo;
+      var fraction;
+      var probe, top, probeInfo, width, dy;
+
+      if (!colsInPosCache) {
+        topColInfo = getColumnOffset(0);
+        top = topColInfo;
+        probe = 0;
+        fraction = 0;
+        width = options.defaultColumnWidth;
+        assert(width > 0);
+        if (!clipToValidRange) {
+          probe = Math.floor((posX - top) / width);
+          fraction = (posX - probe * width) / width;
+        }
+        return {
+          position: probe,
+          fraction: fraction,
+          width: width
+        };
+      }
+
+      // perform a binary search through the col cache: O(log2(n)) vs. linear scan at O(n):
+      //
+      // This first call to getColTop(colsInPosCache - 1) is here to help update the col cache
+      // at the start of the search; at least for many scenarios where all (or the last) cols
+      // have been invalidated:
+      bottomColInfo = getColumnOffset(colsInPosCache - 1);
+      if (posX >= bottomColInfo.top) {
+        // Return the last col in the grid if we've got to clip
+        top = bottomColInfo.top;
+        probe = colsInPosCache - 1;
+        width = bottomColInfo.width;
+        fraction = (posX - top) / width;
+        assert(width > 0);
+        if (!clipToValidRange && posX >= top + width) {
+          width = options.defaultColumnWidth;
+          posX -= top + width;
+          dy = Math.floor(posX / width);
+          probe += 1 + dy;
+          fraction = (posX - dy * width) / width;
+          assert(fraction >= 0);
+          assert(fraction < 1);
+        }
+        return {
+          position: probe,
+          fraction: fraction,
+          width: width
+        };
+      }
+      topColInfo = getColumnOffset(0);
+      if (posX < topColInfo.top) {
+        // Return the first col in the grid if we've got to clip
+        top = topColInfo.top;
+        probe = 0;
+        width = topColInfo.width;
+        fraction = (posX - top) / width;
+        assert(width > 0);
+        if (!clipToValidRange && posX < top) {
+          width = options.defaultColumnWidth;
+          posX -= top;
+          dy = Math.floor(posX / width);
+          probe += dy;
+          fraction = (posX - dy * width) / width;
+          assert(fraction >= 0);
+          assert(fraction < 1);
+        }
+        return {
+          position: probe,
+          fraction: fraction,
+          width: width
+        };
+      }
+
+      var l = 0;
+      var r = colsInPosCache - 1;
+      // before we enter the binary search, we attempt to improve the initial guess + search range
+      // using the heuristic that the variable cell width will be close to defaultColumnWidth:
+      // we perform two probes (at ≈1‰ interval) to save 10 probes (1000 ≈ 2^10) if we are lucky;
+      // we "loose" 1 probe (the second) to inefficiency if we are unlucky (though one may argue
+      // that the possibly extremely skewed split point for the first probe is also a loss -- which
+      // would be true if the number of cols with non-standard defaultColumnWidth is large and/or deviating
+      // from that norm `options.defaultColumnWidth` a lot for some cols, thus moving the targets outside the
+      // "is probably within 1‰ of the norm" for most col positions.
+      // 
+      // Alas, for my tested (large!) grids this heuristic gets us very near O(2) vs O(log2(N)).
+      // For grids which do not employ custom defaultColumnWidth at all, the performance is O(1). I like that!
+      //
+      // (Yes, this discussion ignores the cost of the colwidth position cache table update which
+      // is O(N) on its own but which is also to be treated as "negligible cost" when amortized over
+      // the number of getColWithFractionFromPosition calls vs. cache invalidation.)
+      probe = (posX / options.defaultColumnWidth) | 0;
+      probe = Math.min(colsInPosCache - 1, Math.max(0, probe));
+      probeInfo = getColumnOffset(probe);
+      top = probeInfo.top;
+      if (top > posX) {
+        r = probe - 1;
+        probe = r - 1 - (0.001 * colsInPosCache) | 0;
+        probe = Math.max(0, probe);
+        probeInfo = getColumnOffset(probe);
+        top = probeInfo.top;
+        if (top > posX) {
+          r = probe - 1;
+        } else if (top + probeInfo.width > posX) {
+          fraction = (posX - top) / probeInfo.width;
+          assert(fraction >= 0);
+          assert(fraction < 1);
+          return {
+            position: probe,
+            fraction: fraction,
+            width: probeInfo.width
+          };
+        } else {
+          l = probe + 1;
+        }
+      } else if (top + probeInfo.width > posX) {
+        fraction = (posX - top) / probeInfo.width;
+        assert(fraction >= 0);
+        assert(fraction < 1);
+        return {
+          position: probe,
+          fraction: fraction,
+          width: probeInfo.width
+        };
+      } else {
+        l = probe + 1;
+        probe = l + 1 + (0.001 * colsInPosCache) | 0;
+        probe = Math.min(colsInPosCache - 1, probe);
+        probeInfo = getColumnOffset(probe);
+        top = probeInfo.top;
+        if (top > posX) {
+          r = probe - 1;
+        } else if (top + probeInfo.width > posX) {
+          fraction = (posX - top) / probeInfo.width;
+          assert(fraction >= 0);
+          assert(fraction < 1);
+          return {
+            position: probe,
+            fraction: fraction,
+            width: probeInfo.width
+          };
+        } else {
+          l = probe + 1;
+        }
+      }
+      assert(l <= r || r < 0);
+
+      while (l < r) {
+        probe = ((l + r) / 2) | 0; // INT/FLOOR
+        probeInfo = getColumnOffset(probe);
+        top = probeInfo.top;
+        if (top > posX) {
+          r = probe - 1;
+        } else if (top + probeInfo.width > posX) {
+          fraction = (posX - top) / probeInfo.width;
+          assert(fraction >= 0);
+          assert(fraction < 1);
+          return {
+            position: probe,
+            fraction: fraction,
+            width: probeInfo.width
+          };
+        } else {
+          l = probe + 1;
+        }
+      }
+      probeInfo = getColumnOffset(l);
+      fraction = (posX - probeInfo.top) / probeInfo.width;
+      assert(fraction >= 0);
+      assert(fraction < 1);
+      return {
+        position: l,
+        fraction: fraction,
+        width: probeInfo.width
+      };
+    }
+
+
     // Return TRUE when the viewport has been actually scrolled;
     // return FALSE when there's been no movement.
     function scrollTo(y, x) {
@@ -3371,15 +3579,20 @@ if (typeof Slick === "undefined") {
     }
 
     function cleanupRows(rangeToKeep) {
-      // pull up the lower bound while we're at it:
+      // Pull up the lower bound while we're at it.
       for (row = 0, endrow = rowsCache.length; row < endrow; row++) {
         if (rowsCache[row]) {
           break;
         }
       }
       //assert(row === rowsCacheStartIndex);
-      assert(row >= rowsCacheStartIndex);
-      rowsCacheStartIndex = row;
+      assert(rowsCache[row] ? row >= rowsCacheStartIndex : true);
+      if (!rowsCache[row]) {
+        // rowsCache turns out to be completely empty!
+        rowsCacheStartIndex = MAX_INT;  
+      } else {
+        rowsCacheStartIndex = row;
+      }
 
       for (var row = rowsCacheStartIndex, endrow = rowsCache.length; row < endrow; row++) {
         var cacheEntry = rowsCache[row];
@@ -3684,13 +3897,6 @@ if (typeof Slick === "undefined") {
           }
         }
       }
-
-      // for (row = intersectingCellsRowStartIndex, endrow = intersectingCells.length; row < endrow; row++) {
-      //   var rowSpec = intersectingCells[row];
-      //   for (c = intersectingCellsColStartIndex, endcol = rowSpec.length; c < endcol; c++) {
-      //     updateCell(row, c);
-      //   }
-      // }
     }
 
     function invalidateRow(row) {
@@ -3712,6 +3918,52 @@ if (typeof Slick === "undefined") {
           cacheEntry.isDirty++;
         }
       }
+    }
+
+    function invalidateColumns(cols) {
+      var r, c, i, lr, lc, col, spans, rowspan, colspan, rr, cc, node;
+      if (!cols || !cols.length) {
+        return;
+      }
+      cols.sort(function (a, b) { 
+        return a - b; 
+      });
+      // flag all cached cells as dirty:
+      var colcnt = cols.length;
+      for (r = rowsCacheStartIndex, lr = rowsCache.length; r < lr; r++) {
+        var cacheEntry = rowsCache[r];
+        if (cacheEntry) {
+          var cellNodes = cacheEntry.cellNodesByColumnIdx;
+          var dirtyFlaggingArray = cacheEntry.dirtyCellNodes;
+          for (i = 0; i < colcnt; i++) {
+            c = cols[i];
+            node = cellNodes[c];
+            if (node) {
+              if (!dirtyFlaggingArray[c]) {
+                if (currentEditor && activeRow === r && activeCell === c) {
+                  makeActiveCellNormal();
+                  assert(!currentEditor);
+                }
+          
+                dirtyFlaggingArray[c] = true;
+                assert(cacheEntry.isDirty >= 0);
+                cacheEntry.isDirty++;
+              }
+            } else {
+              // When there's no node at the given coordinate, we MAY be looking at a row/colspanning node.
+              // (Otherwise, we're just looking at a node which hasn't been cached/rendered yet...)
+              spans = getSpans(r, c);
+              if (spans) {
+                invalidateCell(spans.row, spans.cell);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    function invalidateColumn(cell) {
+      invalidateColumns([cell]);
     }
 
     function updateCell(row, cell) {
@@ -3876,7 +4128,10 @@ if (typeof Slick === "undefined") {
           contentWidth = canvasWidth + (hasVScroll ? scrollbarDimensions.width : 0),
           hasHScroll = contentWidth > $viewport.width(),
           contentHeight = canvasHeight + (hasHScroll ? scrollbarDimensions.height : 0);
-      return { width: contentWidth, height: contentHeight };
+      return { 
+        width: contentWidth, 
+        height: contentHeight 
+      };
     }
 
     // Returns the size of the visible area, i.e. between the scroll bars
@@ -4030,6 +4285,12 @@ if (typeof Slick === "undefined") {
 
       var top = getRowWithFractionFromPosition(viewportTop + pageOffset, false);
       var bottom = getRowWithFractionFromPosition(viewportTop + pageOffset + viewportH, false); // test at the first INvisible pixel
+
+      // Use a binary search alike algorithm to find the left and right columns, using 
+      // linear estimation to produce the split/probe point:
+      // 
+      //getColumnWithFractionFromPosition(...)
+      //  
       return {
         top: top.position,                          // the first visible row
         bottom: bottom.position + 1,                // first row which is guaranteed to be NOT visible, not even partly
@@ -4074,6 +4335,7 @@ if (typeof Slick === "undefined") {
       range.leftPx -= viewportW;
       range.rightPx += viewportW;
 
+      assert(canvasWidth != null);
       range.leftPx = Math.max(0, range.leftPx);
       range.rightPx = Math.min(canvasWidth, range.rightPx);
 
@@ -4177,7 +4439,7 @@ if (typeof Slick === "undefined") {
       var columnMetadata;
       var d;
 
-      assert(range.bottom > range.top);
+      assert(range.bottom > range.top || (range.bottom === range.top && getDataLength() === 0));
       for (var row = range.top, btm = range.bottom; row < btm; row++) {
         cacheEntry = rowsCache[row];
         if (!cacheEntry) {
@@ -4343,7 +4605,7 @@ if (typeof Slick === "undefined") {
 
       // collect not rendered range rows
       if (!aborted) {
-        assert(range.bottom > range.top);
+        assert(range.bottom > range.top || (range.bottom === range.top && getDataLength() === 0));
         for (r = range.top, l = range.bottom; r < l; r++) {
           if (rowsCache[r]) {
             continue;
@@ -4617,7 +4879,7 @@ if (typeof Slick === "undefined") {
       }
 
       // add all new rendered rows & their cells to the cache
-      assert(rendered.bottom > rendered.top);
+      assert(rendered.bottom > rendered.top || (rendered.bottom === rendered.top && getDataLength() === 0));
       for (var row = rendered.top; row < rendered.bottom; row++) {
         var cacheEntry = rowsCache[row];
         if (cacheEntry && cacheEntry.cellRenderQueue.length) {
@@ -5269,6 +5531,14 @@ out:
     function handleContainerClickEvent(e) {
       assert(!(e instanceof Slick.EventData));
       console.log("container CLICK: ", this, arguments, document.activeElement);
+
+      // When there's no activeCell yet and the user clicked on a spot which *will* be covered by a
+      // cell once the "lazy render" has run, then we should act if that node was clicked already
+      // and activate it right away:
+      //
+      //var info = getCellFromPoint(e.)    
+      //...
+      //
     }
 
     function handleClick(e) {
@@ -7200,6 +7470,8 @@ out:
       "isRenderPending": isRenderPending,
       "invalidate": invalidate,
       "invalidateCell": invalidateCell,
+      "invalidateColumn": invalidateColumn,
+      "invalidateColumns": invalidateColumns,
       "invalidateRow": invalidateRow,
       "invalidateRows": invalidateRows,
       "invalidateAllRows": invalidateAllRows,
