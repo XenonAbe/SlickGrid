@@ -117,7 +117,7 @@ var SlickGridTable = (function () {
 
             $(self.columns).each(function(index, column) {
                 if (column.name != "<input type='checkbox'>") {
-                    var headerContainer = $(".slick-headerrow-column.r" + index);
+                    var headerContainer = $(".slick-headerrow-column.hl" + index);
                     self.populateFilters(headerContainer, column);
                 }
             });
