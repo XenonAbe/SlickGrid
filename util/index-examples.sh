@@ -12,7 +12,7 @@ function munch_file {
   if test -z "$strippedtitle" ; then 
     title="----- $3 -----"
   fi 
-  printf "%-70s%-70s%s\n" "      <li><a href=\"$3\">" "$title" "</a></li>"  >> __html
+  printf "%-70s %s: %-70s%s\n" "      <li><a href=\"$3\">" $2 "$title" "</a></li>"  >> __html
 
   # and rename the file:
   if test "$1" != "./$3" ; then

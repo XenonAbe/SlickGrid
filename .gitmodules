@@ -56,3 +56,6 @@
 [submodule "lib/jquery-iCheck"]
 	path = lib/jquery-iCheck
 	url = git@github.com:GerHobbelt/iCheck.git
+[submodule "lib/jquery-jsonp"]
+	path = lib/jquery-jsonp
+	url = git@github.com:GerHobbelt/jquery-jsonp.git
