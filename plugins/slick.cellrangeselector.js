@@ -59,8 +59,8 @@
 
       var x, y, o;
       o = $(_canvas).offset();
-      x = dd.pageX - o.left;
-      y = dd.pageY - o.top;
+      x = dd.startX - o.left;
+      y = dd.startY - o.top;
       var start = _grid.getCellFromPoint(x, y);
 
       dd.range = {start: start, end: {}};
