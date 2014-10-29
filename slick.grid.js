@@ -1842,7 +1842,6 @@ if (typeof Slick === "undefined") {
         if (options.forceFitColumns) {
           autosizeColumns();
         }
-
         updateRowCount();
         handleScroll();
         // Since the width has changed, force the render() to reevaluate virtually rendered cells.
@@ -1860,15 +1859,10 @@ if (typeof Slick === "undefined") {
       var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
       var numberOfRows = dataLengthIncludingAddNew +
           (options.leaveSpaceForNewRows ? numVisibleRows - 1 : 0);
-
       var oldViewportHasVScroll = viewportHasVScroll;
+
       // with autoHeight, we do not need to accommodate the vertical scroll bar
-      if (options.enableWrap){
-          viewportHasVScroll = !options.autoHeight && (rowTops[rowHeights.length-1] > viewportH);
-      }
-      else {
-          viewportHasVScroll = !options.autoHeight && (numberOfRows * options.rowHeight > viewportH);
-      }
+      viewportHasVScroll = !options.autoHeight && (numberOfRows * options.rowHeight > viewportH);
 
       makeActiveCellNormal();
 
@@ -1888,9 +1882,9 @@ if (typeof Slick === "undefined") {
       var oldH = h;
         if(options.enableWrap) {
             th = maxSupportedCssHeight;
+
             //th = Math.max(getGridHeight(), viewportH - scrollbarDimensions.height);
             //th = Math.max(rowTops[rowHeights.length-1], viewportH - scrollbarDimensions.height);
-            //th = 15000
         }
         else {
             th = Math.max(options.rowHeight * numberOfRows, viewportH - scrollbarDimensions.height);
@@ -2266,7 +2260,7 @@ if (typeof Slick === "undefined") {
       h_render = null;
 
       if(options.enableWrap){
-        $canvas.css('height', rowHeights[rowHeights.length -1]);
+        $canvas.css('height', rowTops[rowHeights.length -1]);
       }
     }
 
@@ -3094,7 +3088,7 @@ if (typeof Slick === "undefined") {
               calculateAdjustedRowTop();
           }
           sumSizesInitialized = true;
-          updateRowCount();
+          //updateRowCount();
       }
     }
 
