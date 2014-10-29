@@ -166,8 +166,14 @@ if (typeof Slick === "undefined") {
    *      defaultHeaderRowFormatter: 
    *                          {Function}  The Slick.Formatters compatible cell formatter used to render the headerRow cell.
    *                                      The "headerRow" is the header row shown by SlickGrid when the `option.showHeaderRow` is enabled.
-   *      scrollHoldoff:      {Number | Function}
-   *                                      Specify the number of rows/columns away from the edge where keyboard navigation
+   *      scrollHoldoffX:     {Number | Function}
+   *                                      Specify the number of columns away from the edge where keyboard navigation
+   *                                      should scroll the view; when specified as a single number, than all four edges
+   *                                      (top/bottom/left/right) will "hold off" this amount; otherwise you may specify 
+   *                                      a function which should return the number of rows/cells to hold off, depending on
+   *                                      the input arguments.
+   *      scrollHoldoffY:     {Number | Function}
+   *                                      Specify the number of rows away from the edge where keyboard navigation
    *                                      should scroll the view; when specified as a single number, than all four edges
    *                                      (top/bottom/left/right) will "hold off" this amount; otherwise you may specify 
    *                                      a function which should return the number of rows/cells to hold off, depending on
@@ -222,9 +228,11 @@ if (typeof Slick === "undefined") {
       defaultRowFormatter: defaultRowFormatter,
       defaultHeaderFormatter: defaultHeaderFormatter,
       defaultHeaderRowFormatter: defaultHeaderRowFormatter,
-      scrollBands: 0,
+      scrollHoldoffX: 2,
+      scrollHoldoffY: 3,
+      smoothScrolling: true,
       forceSyncScrolling: false,
-      asyncRenderDelay: 85,         // this value is picked to 'catch' typematic key repeat rates as low as 12-per-second: 
+      asyncRenderDelay: 45,         // this value is picked to 'catch' typematic key repeat rates as low as 12-per-second: 
                                     // keep your navigator keys depressed to see the delayed render + mandatory mini-cell-renders kicking in. 
       asyncRenderSlice: 50,
       asyncRenderInterleave: 20,
@@ -3585,8 +3593,12 @@ if (typeof Slick === "undefined") {
             }
           }
 
-          // flag the row as updated completely:
-          assert(cacheEntry.isDirty === 0);
+          // flag the row as updated completely.
+          // 
+          // Note: the rowCache may have been partially cleaned after the last set-dirty action, 
+          // hence expect lingering 'dirty' entries. These are utterly useless by now as their
+          // accompanying DOM node(s) have been eradicated already.
+          assert(cacheEntry.isDirty >= 0);          
           cacheEntry.dirtyCellNodes = [];
           cacheEntry.isDirty = 0;
         }
@@ -5339,7 +5351,7 @@ out:
 
     function handleContainerKeyDown(e) {
       assert(!(e instanceof Slick.EventData));
-      console.log("keydown @ CONTAINER: ", this, arguments, document.activeElement);
+      //console.log("keydown @ CONTAINER: ", this, arguments, document.activeElement);
 
       // move focus back into slickgrid when it's not already there?
       //
@@ -5646,6 +5658,8 @@ out:
     //
     // When the coordinate points outside the grid, out-of-range row/cell coordinates will be produced.
     function getCellFromPoint(x, y, clipToValidRange) {
+      assert(!isNaN(x));
+      assert(!isNaN(y));
       if (clipToValidRange == null) {
         clipToValidRange = true;
       }
@@ -6402,8 +6416,8 @@ out:
 
     function scrollRowIntoView(row, doPaging, doCenteringY) {
       // Clip `row` to renderable range:
-      assert(row >= 0);
-      assert(row < getDataLengthIncludingAddNew());
+      // assert(row >= 0);
+      // assert(row < getDataLengthIncludingAddNew());
       row = Math.min(getDataLengthIncludingAddNew(), Math.max(0, row));
 
       var height = viewportH - (viewportHasHScroll ? scrollbarDimensions.height : 0);
@@ -6963,6 +6977,64 @@ out:
       }
 
       if (!activeCellNode && dir !== NAVIGATE_PREV && dir !== NAVIGATE_NEXT && dir !== NAVIGATE_HOME && dir !== NAVIGATE_END) {
+if (0) {
+        // See if a cell has focus and if so, use that one to base the move on;
+        // otherwise simply scroll in the indicated direction if possible.
+        assert(!activeCell);
+        assert(!activeRow);
+        assert(!getEditorLock().isActive());
+        var focusedNode = getCellFromElement(document.activeElement);
+        if (focusedNode) {
+          setActiveCellInternal(focusedNode, false, false);
+          assert(activeCellNode);
+          // and continue with the regular execution path for activeCellNode
+        } else {
+          // WARNING: the stepFunctions assume a starting coordinate to be valid
+          // to that they can properly step through the col/rowspans. 
+          // Today we are not located on a cell per se, so we simply move a
+          // given number of rows/columns in the indicated direction.
+          var visible = getVisibleRange();
+          assert(visible);
+          var left = getCellFromPoint(visible.topPx, visible.leftPx);
+          var right = getCellFromPoint(visible.topPx, visible.rightPx);
+          var row, cell;
+          switch (dir) {
+          case NAVIGATE_UP:
+            row = visible.top - 1;
+            if (row >= 0) {
+              scrollRowIntoView(row, false, false);
+            }
+            break;
+
+          case NAVIGATE_DOWN:
+            row = visible.bottom + 1;
+            if (row >= 0) {
+              scrollRowIntoView(row, false, false);
+            }
+            visible.top += 1;
+            visible.bottom += 1;
+            break;
+
+          case NAVIGATE_LEFT:
+            visible.left -= 1;
+            visible.right -= 1;
+            break;
+
+          case NAVIGATE_RIGHT:
+            visible.left += 1;
+            visible.right += 1;
+            break;
+
+          default:
+            assert(0);
+            break;
+          }
+
+
+
+        }
+}
+
         return false;
       }
 
