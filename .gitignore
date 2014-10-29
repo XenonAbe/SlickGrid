@@ -1,3 +1,18 @@
 .gitk*
 .idea/*
+*.orig
+.project
 .DS_Store
+.settings/
+.project
+.idea
+
+node_modules/
+
+__forks.info__/
+__forks__.bulk_dump
+
+# Editor backup files
+*~
+*.bak
+

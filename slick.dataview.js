@@ -521,6 +521,9 @@
 
     function calculateTotals(totals) {
       var group = totals.group;
+      if (!group) {
+        group = totals;
+      }
       var gi = groupingInfos[group.level];
       var isLeafLevel = (group.level == groupingInfos.length);
       var agg, idx = gi.aggregators.length;
