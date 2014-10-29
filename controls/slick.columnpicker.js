@@ -9,7 +9,6 @@
     var defaults = {
       fadeSpeed: 250,
       forceFitColumnsText: "Force fit columns",
-      syncColumnCellResizeText: "Synchronous resize"
     };
 
     function updateColumnLookupTable(list) {
@@ -50,7 +49,7 @@
         // - have an empty 'name' field in their column definition (they would show up as a checkbox for 'nothing' anyway)
         // - are marked as hidden by having an ID which starts with an underscore, e.g. "_checkbox_selector"
         var colName = columns[i].name; 
-        if (typeof colName !== 'string' && !colName) continue;
+        if (typeof colName !== "string" && !colName) continue;
         if (colName === '') continue;
         if (/^_./.test(columns[i].id)) continue;
 
@@ -76,16 +75,6 @@
           .prepend($input)
           .appendTo($li);
       if (grid.getOptions().forceFitColumns) {
-        $input.attr("checked", "checked");
-      }
-
-      $li = $("<li />").appendTo($menu);
-      $input = $("<input type='checkbox' />").data("option", "syncresize");
-      $("<label />")
-          .text(options.syncColumnCellResizeText)
-          .prepend($input)
-          .appendTo($li);
-      if (grid.getOptions().syncColumnCellResize) {
         $input.attr("checked", "checked");
       }
 
@@ -132,21 +121,12 @@
         return;
       }
 
-      if ($(e.target).data("option") === "syncresize") {
-        if (e.target.checked) {
-          grid.setOptions({syncColumnCellResize: true});
-        } else {
-          grid.setOptions({syncColumnCellResize: false});
-        }
-        return;
-      }
-
       if ($(e.target).is(":checkbox")) {
         var visibleColumns = [];
         var invisibleColumns = [];
 
         $.each(columnCheckboxes, function (i, e) {
-          var columnID = $(e).data('column-id');
+          var columnID = $(e).data("column-id");
           if (columnID != null && columnsLookup[columnID]) {
             if ($(this).is(":checked")) {
               visibleColumns.push( columnsLookup[columnID] );

@@ -126,8 +126,6 @@ if (typeof Slick === "undefined") {
    *      enableTextSelectionOnCells:
    *                          {Boolean}   Should text selection be allowed in cells? (This is MSIE specific; other browsers always assume `true`)
    *      forceFitColumns:    {Boolean}   Should column widths be automatically resized to fit?
-   *      syncColumnCellResize:{Boolean}  Should the grid width be changed dynamically during a drag
-   *                                      to change column widths, or only once the mouse is released?
    *      dataItemColumnValueExtractor(item, columnDef, rowMetadata, columnMetadata):
    *                          {Function}  If present, will be called to retrieve a data value from the
    *                                      specified item for the corresponding column.
@@ -237,7 +235,6 @@ if (typeof Slick === "undefined") {
       asyncRenderSlice: 50,
       asyncRenderInterleave: 20,
       addNewRowCssClass: "new-row",
-      syncColumnCellResize: false,
       editCommandHandler: null,
       clearCellBeforeEdit: true,
       createCssRulesCallback: null
@@ -1494,18 +1491,8 @@ if (typeof Slick === "undefined") {
         minPageX = pageX - Math.min(shrinkLeewayOnLeft, stretchLeewayOnRight);
         trigger(self.onColumnsStartResize, {}, e); // onColumnsResizeStart
         updateColumnCaches();
-        if (options.syncColumnCellResize) {
-          //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
-          updateCanvasWidth();
-        } else {
-          // As the column **header** cells have a resize ability (`options.resizable`), those
-          // header cells cannot use the `position: absolute` + `.l<N> .r<N>` styling that all
-          // other cells in the grid (including headerRow cells -- `option.showHeaderRow`) use
-          // as the resize (drag) operation would then require a lot of continuous style
-          // recalculations to show the resize action as 'smooth': it would load the dragmove
-          // handler overmuch (`options.syncColumnCellResize`).
-          updateCanvasWidth();
-        }
+        //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
+        updateCanvasWidth();
         //e.preventDefault();
         //e.stopPropagation();
       }
@@ -1584,10 +1571,8 @@ if (typeof Slick === "undefined") {
           }
         }
         updateColumnCaches();
-        if (options.syncColumnCellResize) {
-          //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
-          updateCanvasWidth();
-        }
+        //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
+        updateCanvasWidth();
         trigger(self.onColumnsResizing, {}, e);
         //e.preventDefault();
         //e.stopPropagation();
