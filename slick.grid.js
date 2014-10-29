@@ -350,7 +350,6 @@ if (typeof Slick === "undefined") {
     var columnPosLeft = [];      // this cache array length is +1 longer than columns[] itself as we store the 'right edge + 1 pixel' as the 'left edge' of the first column beyond the grid width just as it would have been anyway. This simplifies the rest of the code.
     //var columnPosRight = [];
 
-
     // async call handles
     var h_editorLoader = null;
     var h_render = null;
@@ -1917,6 +1916,20 @@ if (typeof Slick === "undefined") {
       getEditorLock().cancelCurrentEdit();
 
       trigger(self.onBeforeDestroy, {});
+
+      // abort any delayed actions in timers:
+      if (h_postrender) {
+        clearTimeout(h_postrender);
+        h_postrender = null;
+      }
+      if (h_render) {
+        clearTimeout(h_render);
+        h_render = null;
+      }
+      if (h_editorLoader) {
+        clearTimeout(h_editorLoader);
+        h_editorLoader = null;
+      }
 
       var i = plugins.length;
       while (i--) {
