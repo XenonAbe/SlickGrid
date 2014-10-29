@@ -3340,7 +3340,7 @@ if (typeof Slick === "undefined") {
         var spanRow = row;
         var spans = getSpans(row, i);
         if (spans) {
-          colspan = spans.colspan - cell + spans.cell;
+          colspan = spans.colspan - i + spans.cell;
           spanRow = spans.row;
         }
 
