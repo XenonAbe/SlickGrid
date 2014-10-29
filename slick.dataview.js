@@ -12,7 +12,9 @@
           Sum: SumAggregator,
           Std: StdAggregator,
           CheckCount: CheckCountAggregator,
-          DateRange: DateRangeAggregator
+          DateRange: DateRangeAggregator,
+          Unique: UniqueAggregator,
+          WeightedAverage: WeightedAverageAggregator
         }
       }
     }
@@ -193,7 +195,7 @@
       }
 
       if (args.pageNum != null) {
-        pagenum = Math.min(args.pageNum, Math.max(0, Math.ceil(totalRows / pagesize) - 1));
+        pagenum = pagesize ? Math.min(args.pageNum, Math.max(0, Math.ceil(totalRows / pagesize) - 1)) : 0;
       }
 
       onPagingInfoChanged.notify(getPagingInfo(), null, self);
@@ -841,7 +843,7 @@
       var val;
       var groups = [];
       var groupsByVal = {};
-      var r, i;
+      var r, i, l;
       var level = parentGroup ? parentGroup.level + 1 : 0;
       var gi = groupingInfos[level];
 
@@ -974,8 +976,10 @@
 
         if (!g.collapsed) {
           rows = g.groups ? options.flattenGroupedRows(g.groups, level + 1, groupingInfos, filteredItems, options) : g.rows;
-          for (var j = 0, jj = rows.length; j < jj; j++) {
-            groupedRows[gl++] = rows[j];
+          if (!options.rollupSingleChildGroup || (rows && rows.length > 1)) {
+            for (var j = 0, jj = rows.length; j < jj; j++) {
+              groupedRows[gl++] = rows[j];
+            }
           }
         }
 
@@ -1427,7 +1431,7 @@
       if (!groupTotals.avg) {
         groupTotals.avg = {};
       }
-      if (this.nonNullCount_ != 0) {
+      if (this.nonNullCount_ !== 0) {
         groupTotals.avg[this.field_] = this.sum_ / this.nonNullCount_;
       }
     };
@@ -1514,7 +1518,7 @@
     this.accumulate = function (item) {
       var val = item[this.field_];
       var found = false;
-      if (val != null && val !== "" && val !== NaN) {
+      if (val != null && val !== "" && !isNaN(val)) {
         for (var i = 0; i < this.pairs_.length; i++) {
           if (this.pairs_[i].value == val) {
             this.pairs_[i].count++;
@@ -1552,7 +1556,7 @@
     this.accumulate = function (item) {
       var val = item[this.field_];
       var spliced = false;
-      if (val != null && val !== "" && val !== NaN) {
+      if (val != null && val !== "" && !isNaN(val)) {
         for (var i = 0; i < this.sorted_.length; i++) {
           if (val < this.sorted_[i]) {
             this.sorted_.splice(i, 0, val);
@@ -1589,7 +1593,7 @@
 
     this.accumulate = function (item) {
       var val = item[this.field_];
-      if (val != null && val !== "" && val !== NaN) {
+      if (val != null && val !== "" && !isNaN(val)) {
         this.nonNullCount_++;
         if (this.Mk_ != null) {
           this.Qk_ = this.Qk_ + (this.nonNullCount_ - 1) * Math.pow((val - this.Mk_), 2) / this.nonNullCount_;
@@ -1667,7 +1671,69 @@
     };
   }
 
+  function UniqueAggregator(field) {
+    this.field_ = field;
+
+    this.init = function () {
+      this.valueSeen_ = null;
+      this.isStillUnique_ = true;
+    };
+
+    this.accumulate = function (item) {
+      var currentValue = item[this.field_];
+      if(!this.isStillUnique_)
+        return;
+
+      if (this.valueSeen_ == null) {
+        this.valueSeen_ = currentValue;
+      } else if(this.valueSeen_ != currentValue) {
+        this.valueSeen_ = null;
+        this.isStillUnique_ = false;
+      }
+    };
+
+    this.storeResult = function (groupTotals) {
+      if (!groupTotals.unique) {
+        groupTotals.unique = {};
+      }
+      groupTotals.unique[this.field_] = this.valueSeen_;
+    }
+  }
+
+  function WeightedAverageAggregator(field, weightField) {
+    this.field_ = field;
+    this.weightField_ = weightField;
+
+    this.init = function () {
+      this.weightedSum_ = null;
+      this.weightSum_ = null;
+    };
+
+    this.accumulate = function (item) {
+      var currentValue = item[this.field_];
+      var currentWeight = item[this.weightField_];
+
+      // we only accumulate if both the value and the weight are numbers
+      // this is equivalent to treating null weights or values as zero
+      // weight or values.
+      if (currentValue != null && currentValue !== "" && currentValue !== NaN &&
+          currentWeight != null & currentWeight !== "" && currentWeight != NaN ) {
+        var parsedWeight = parseFloat(currentWeight);
+        this.weightedSum_ += parseFloat(currentValue)+parsedWeight;
+        this.weightSum_ += parsedWeight;
+      }
+    };
+
+    this.storeResult = function (groupTotals) {
+      if (!groupTotals.weightedAverage) {
+        groupTotals.weightedAverage = {};
+      }
+      groupTotals.weightedAverage[this.field_] = this.weightedSum_/this.weightSum_;
+    }
+  }
+
   // TODO:  add more built-in aggregators
   // TODO:  merge common aggregators in one to prevent needles iterating
 
 })(jQuery);
+

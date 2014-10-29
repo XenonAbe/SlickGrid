@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Checkbox Row Select Plugin: Checkbox row selectors with CheckboxSelectColumn plugin</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
+  <link rel="stylesheet" href="../plugins/slick-checkboxselectcolumn.css" type="text/css"/>
+  <link rel="stylesheet" href="../controls/slick-columnpicker.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
+  <style>
+    .slick-cell-checkboxsel {
+      background: #f0f0f0;
+      border-right-color: silver;
+      border-right-style: solid;
+    }
+  </style>
+</head>
+<body>
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+  </div>
+
+  <div class="options-panel">
+    <h2>Demonstrates</h2>
+    <ul>
+      <li>Checkbox row select column</li>
+    </ul>
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+      </ul>
+      <div id="displaycode"></div>
+  </div>
+</div>
+
+<script src="../lib/firebugx.js"></script>
+
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
+<script src="../lib/jquery-ui.js"></script>
+<script src="../lib/_/jquery.event.drag.js"></script>
+<script src="../lib/detect_browser.js"></script>
+<script src="../lib/assert.js"></script>
+
+<script src="../slick.core.js"></script>
+<script src="../plugins/slick.checkboxselectcolumn.js"></script>
+<script src="../plugins/slick.autotooltips.js"></script>
+<script src="../plugins/slick.cellrangedecorator.js"></script>
+<script src="../plugins/slick.cellrangeselector.js"></script>
+<script src="../plugins/slick.cellcopymanager.js"></script>
+<script src="../plugins/slick.cellselectionmodel.js"></script>
+<script src="../plugins/slick.rowselectionmodel.js"></script>
+<script src="../controls/slick.columnpicker.js"></script>
+<script src="../slick.formatters.js"></script>
+<script src="../slick.editors.js"></script>
+<script src="../slick.grid.js"></script>
+
+
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
+  var grid;
+  var data = [];
+  var options = {
+    editable: true,
+    enableCellNavigation: true,
+    asyncEditorLoading: false,
+    autoEdit: false
+  };
+  var columns = [];
+
+  $(function () {
+    for (var i = 0; i < 100; i++) {
+      var d = (data[i] = {});
+      d[0] = "Row " + i;
+    }
+
+    var checkboxSelector = new Slick.CheckboxSelectColumn({
+      cssClass: "slick-cell-checkboxsel",
+      selectable: true // false to disable the checkbox
+    });
+
+    columns.push(checkboxSelector.getColumnDefinition());
+
+    for (var i = 0; i < 5; i++) {
+      columns.push({
+        id: i,
+        name: String.fromCharCode("A".charCodeAt(0) + i),
+        field: i,
+        width: 100,
+        editor: Slick.Editors.Text
+      });
+    }
+
+    grid = new Slick.Grid("#myGrid", data, columns, options);
+    grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+    grid.registerPlugin(checkboxSelector);
+    /*
+  	// for ajax loading supporting the disabled checkbox feature
+
+    grid.getItemMetadata = function (row) {
+       if (row >= view.getLength() - 2) {        // only on last two rows.
+          return { selectable: false };
+       } else {
+          return {};
+       }
+    }
+    */
+    grid.setSelectedRows([4, 6, 8, 2]);
+    var columnpicker = new Slick.Controls.ColumnPicker(columns, grid, options);
+  });
+</script>
+</body>
+</html>

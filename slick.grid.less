@@ -15,41 +15,89 @@
     overflow: hidden;
     outline: 0;
 
-
-    .slick-header.ui-state-default, .slick-headerrow.ui-state-default {
+    .slick-viewport,
+    .slick-top-panel-scroller,
+    .slick-header, 
+    .slick-headerrow, 
+    .slick-footerrow {
+      position: relative;
       width: 100%;
+      border: 1px solid silver;
+      border-right-color: transparent;
+      border-bottom-color: transparent;
+      border-right-width: 0;
+      border-bottom-width: 0;
+      margin: 0;
+      outline: 0;
+    }
+    .slick-viewport {
+      overflow: auto;
+    }
+    .slick-header, 
+    .slick-headerrow, 
+    .slick-footerrow {
       overflow: hidden;
-      border-left: 0;
+    }
+    .slick-headerrow {
+      border-top-color: transparent;
+      border-top-width: 0;
     }
 
-    .slick-header-columns, .slick-headerrow-columns {
+    .slick-top-panel,
+    .slick-header-columns, 
+    .slick-headerrow-columns, 
+    .slick-footerrow-columns {
       position: relative;
       white-space: nowrap;
       cursor: default;
       overflow: hidden;
-      height: @row-box-height;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      outline: 0;
     }
 
-    .slick-header-column.ui-state-default {
-      position: relative;
-      // display: inline-block;  -- clashes with (float: left) below
+    .slick-cell, 
+    .slick-header-column, 
+    .slick-headerrow-column, 
+    .slick-footerrow-column {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+
+      border: 1px solid silver;
+      border-top-color: transparent;
+      border-left-color: transparent;
+      border-top-width: 0;
+      border-left-width: 0;
+      margin: 0;
+      padding: 0;
+
       overflow: hidden;
       .text-overflow(ellipsis);
-      height: (@row-box-height - @cell-padding-top - @cell-padding-bottom);
-      line-height: (@row-box-height - @cell-padding-top - @cell-padding-bottom);
-      margin: 0;
+      vertical-align: middle;
+      z-index: 1;
+      white-space: nowrap;
+      cursor: default;
+    }
+    .slick-cell {
+      border-style: dotted;
+      padding: 1px 2px 1px 2px;
+    } 
+
+    .slick-header-column {
       padding: @cell-padding-top @cell-padding-right @cell-padding-bottom @cell-padding-left;
-      border-right: 1px solid silver;
-      border-left: 0;
-      border-top: 0;
-      border-bottom: 0;
-      float: left;
     }
 
-    .slick-headerrow-column.ui-state-default {
-      //padding: @cell-padding-top @cell-padding-right @cell-padding-bottom @cell-padding-left;
-      padding: 0;
-      margin: 0;
+    .grid-canvas {
+      position: relative;
+      outline: 0;
+    }
+
+    .slick-row {
+      position: absolute;
+      border: 0;
+      width: 100%;
     }
 
     .slick-header-column-sorted {
@@ -96,43 +144,6 @@
 
     .slick-sortable-placeholder {
       background: silver;
-    }
-
-    .grid-canvas {
-      position: relative;
-      outline: 0;
-    }
-
-    .slick-row {
-      &.ui-widget-content,
-      &.ui-state-active {
-        position: absolute;
-        border: 0;
-        width: 100%;
-      }
-    }
-
-    .slick-cell, .slick-headerrow-column {
-      position: absolute;
-      border: 1px solid transparent;
-      border-right: 1px dotted silver;
-      border-bottom-color: silver;
-      overflow: hidden;
-      .text-overflow(ellipsis);
-      vertical-align: middle;
-      z-index: 1;
-      white-space: nowrap;
-      cursor: default;
-    }
-
-    .slick-cell {
-      padding: 1px 2px 2px 1px;
-      margin: 0;
-    }
-
-    .slick-headerrow-column {
-      padding: 0;
-      margin: 0;
     }
 
     .slick-group {

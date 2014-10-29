@@ -171,12 +171,13 @@
 
       // Let the user modify the menu or cancel altogether,
       // or provide alternative menu implementation.
+      var evt = new Slick.EventData(e);
       var rv = _self.onBeforeMenuShow.notify({
           grid: _grid,
           column: columnDef,
           menu: menu
-        }, e, _self);
-      if (rv === false || e.isImmediatePropagationStopped() || e.isPropagationStopped()) {
+        }, evt, _self);
+      if (rv === false || evt.isHandled()) {
         return;
       }
 

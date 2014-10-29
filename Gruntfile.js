@@ -168,6 +168,29 @@ module.exports = function (grunt) {
     },
 
     copy: {
+      // synchronize library files in submodules to lib/_/
+      libsync: {
+        files: [
+          {
+            expand: true,       // `mkdir -p` equivalent
+            cwd: 'lib/', 
+            src: [
+              'threedubmedia/event.drag/jquery.event.drag*.js', 'threedubmedia/event.drop/jquery.event.drop*.js', 
+              'spectrum/spectrum.*', '!spectrum/spectrum.*.json', 
+              'TinyColor/tinycolor.js',
+              'verge-screendimensions/verge.js',
+              'jquery-sparkline/dist/jquery.sparkline.js',
+              'jquery-simulate/jquery.simulate.js',
+              'jquery-multiselect/jquery.multiselect.*', 'jquery-multiselect/src/jquery.multiselect.js', 'jquery-multiselect/src/jquery.multiselect.filter.js'
+            ], 
+            flatten: true,      // ensures tinycolor.js, etc. all land in lib/_/ *sans subdirectory* 
+            dest: 'lib/_/', 
+            filter: 'isFile'
+          }
+        ]
+      },
+      // ---
+      // copy fonts, etc. to the `dist/` output directory
       fonts: {
         expand: true,
         src: 'fonts/*',
@@ -197,9 +220,10 @@ module.exports = function (grunt) {
   // Load all files starting with `grunt-`
   require('load-grunt-tasks')(grunt, {scope: 'devDependencies'});
   grunt.loadNpmTasks('assemble-less');
+  grunt.loadNpmTasks('grunt-contrib-copy');
 
   // Preparation (compile) task.
-  grunt.registerTask('compile', ['clean', 'less']);
+  grunt.registerTask('compile', ['clean', 'copy:libsync', 'less']);
 
   // Lint task.
   grunt.registerTask('lint', ['csslint', 'jshint', 'jscs']);

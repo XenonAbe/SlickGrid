@@ -45,10 +45,12 @@
     function removeInvalidRanges(ranges) {
       var result = [];
 
-      for (var i = 0; i < ranges.length; i++) {
-        var r = ranges[i];
-        if (_grid.canCellBeSelected(r.fromRow, r.fromCell) && _grid.canCellBeSelected(r.toRow, r.toCell)) {
-          result.push(r);
+      if (ranges) {
+        for (var i = 0; i < ranges.length; i++) {
+          var r = ranges[i];
+          if (_grid.canCellBeSelected(r.fromRow, r.fromCell) && _grid.canCellBeSelected(r.toRow, r.toCell)) {
+            result.push(r);
+          }
         }
       }
 
@@ -84,18 +86,13 @@
     }
 
     function handleKeyDown(e) {
-      /***
-       * Кey codes
-       * 37 left
-       * 38 up
-       * 39 right
-       * 40 down
-       */
+      assert(!(e instanceof Slick.EventData));
+
       var ranges, last;
       var active = _grid.getActiveCell();
 
       if (active && e.shiftKey && !e.ctrlKey && !e.altKey &&
-          (e.which === $.ui.keyCode.LEFT || e.which === $.ui.keyCode.RIGHT || e.which === $.ui.keyCode.UP || e.which === $.ui.keyCode.DOWN) ) {
+          (e.which === Slick.Keyboard.LEFT || e.which === Slick.Keyboard.RIGHT || e.which === Slick.Keyboard.UP || e.which === Slick.Keyboard.DOWN) ) {
 
         ranges = getSelectedRanges();
         if (!ranges.length) {
@@ -116,13 +113,13 @@
             dirRow = active.row == last.fromRow ? 1 : -1,
             dirCell = active.cell == last.fromCell ? 1 : -1;
 
-        if (e.which === $.ui.keyCode.LEFT) {
+        if (e.which === Slick.Keyboard.LEFT) {
           dCell -= dirCell;
-        } else if (e.which === $.ui.keyCode.RIGHT) {
+        } else if (e.which === Slick.Keyboard.RIGHT) {
           dCell += dirCell;
-        } else if (e.which === $.ui.keyCode.UP) {
+        } else if (e.which === Slick.Keyboard.UP) {
           dRow -= dirRow;
-        } else if (e.which === $.ui.keyCode.DOWN) {
+        } else if (e.which === Slick.Keyboard.DOWN) {
           dRow += dirRow;
         }
 
@@ -130,6 +127,7 @@
         var new_last = new Slick.Range(active.row, active.cell, active.row + dirRow * dRow, active.cell + dirCell * dCell);
         if (removeInvalidRanges([new_last]).length) {
           ranges.push(new_last);
+          // scroll the grid automatically when selection expands out of viewport
           var viewRow = dirRow > 0 ? new_last.toRow : new_last.fromRow;
           var viewCell = dirCell > 0 ? new_last.toCell : new_last.fromCell;
           _grid.scrollRowIntoView(viewRow);
@@ -140,6 +138,11 @@
 
         setSelectedRanges(ranges);
 
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      else if (!e.shiftKey && !e.ctrlKey && !e.altKey && e.which == Slick.Keyboard.ESC) {
+        setSelectedRanges([]);
         e.preventDefault();
         e.stopPropagation();
       }

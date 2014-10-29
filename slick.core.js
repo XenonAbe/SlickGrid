@@ -7,15 +7,18 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "Event": Event,
-      "EventData": EventData,
-      "EventHandler": EventHandler,
-      "Range": Range,
-      "NonDataRow": NonDataItem,
-      "Group": Group,
-      "GroupTotals": GroupTotals,
-      "EditorLock": EditorLock,
+    Slick: {
+      Event: Event,
+      EventData: EventData,
+      EventHandler: EventHandler,
+      Keyboard: Keyboard(),
+      PerformanceTimer: PerformanceTimer,
+      HtmlEntities: HtmlEntities,
+      Range: Range,
+      NonDataRow: NonDataItem,
+      Group: Group,
+      GroupTotals: GroupTotals,
+      EditorLock: EditorLock,
 
       /***
        * A global singleton editor lock.
@@ -23,7 +26,7 @@
        * @static
        * @constructor
        */
-      "GlobalEditorLock": new EditorLock()
+      GlobalEditorLock: new EditorLock()
     }
   });
 
@@ -33,16 +36,42 @@
    * @class EventData
    * @constructor
    */
-  function EventData(sourceEvent) {
+  function EventData(sourceEvent, propagateSignals) {
     var isPropagationStopped = false;
     var isImmediatePropagationStopped = false;
+    var isDefaultPrevented = false;
+
+    /***
+     * Stops event from executing its default behaviour.
+     * @method preventDefault
+     */
+    this.preventDefault = function (propagateSignalsOverride) {
+      isDefaultPrevented = true;
+      if ((propagateSignalsOverride == null ? propagateSignals : propagateSignalsOverride) && 
+          this.sourceEvent && typeof this.sourceEvent.preventDefault === 'function') {
+        this.sourceEvent.preventDefault();
+      }
+    };
+
+    /***
+     * Returns whether preventDefault was called on this event object.
+     * @method isDefaultPrevented
+     * @return {Boolean}
+     */
+    this.isDefaultPrevented = function () {
+      return isDefaultPrevented;
+    };
 
     /***
      * Stops event from propagating up the DOM tree.
      * @method stopPropagation
      */
-    this.stopPropagation = function () {
+    this.stopPropagation = function (propagateSignalsOverride) {
       isPropagationStopped = true;
+      if ((propagateSignalsOverride == null ? propagateSignals : propagateSignalsOverride) && 
+          this.sourceEvent && typeof this.sourceEvent.stopPropagation === 'function') {
+        this.sourceEvent.stopPropagation();
+      }
     };
 
     /***
@@ -58,9 +87,12 @@
      * Prevents the rest of the handlers from being executed.
      * @method stopImmediatePropagation
      */
-    this.stopImmediatePropagation = function () {
-      isPropagationStopped = true;
+    this.stopImmediatePropagation = function (propagateSignalsOverride) {
       isImmediatePropagationStopped = true;
+      if ((propagateSignalsOverride == null ? propagateSignals : propagateSignalsOverride) && 
+          this.sourceEvent && typeof this.sourceEvent.stopImmediatePropagation === 'function') {
+        this.sourceEvent.stopImmediatePropagation();
+      }
     };
 
     /***
@@ -71,6 +103,19 @@
     this.isImmediatePropagationStopped = function () {
       return isImmediatePropagationStopped;
     }
+
+    /**
+     * Returns TRUE when any of these methods of this event has been called:
+     * - isImmediatePropagationStopped()
+     * - isPropagationStopped()
+     * - isDefaultPrevented()
+     *
+     * This method serves as a shorthand for
+     * `e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented()`
+     */
+    this.isHandled = function () {
+      return this.isImmediatePropagationStopped() || this.isPropagationStopped() || this.isDefaultPrevented();
+    };
 
     if (sourceEvent) {
       this.sourceEvent = sourceEvent;
@@ -143,7 +188,7 @@
       scope = scope || this;
 
       var returnValue = true;
-      for (var i = 0; i < handlers.length && !e.isImmediatePropagationStopped(); i++) {
+      for (var i = 0; i < handlers.length && !(e.isPropagationStopped() || e.isImmediatePropagationStopped()); i++) {
         returnValue = handlers[i].call(scope, e, args, returnValue);
       }
 
@@ -258,6 +303,17 @@
           cell >= this.fromCell && cell <= this.toCell;
     };
 
+    /***
+     * Returns whether the range matches the given range.
+     * @method equals
+     * @param range {Range}
+     * @return {Boolean}
+     */
+    this.matches = function (range) {
+      return range.fromRow === this.fromRow && range.toRow === this.toRow &&
+          range.fromCell === this.fromCell && range.toCell === this.toCell;
+    };
+    
     /***
      * Returns a readable representation of a range.
      * @method toString
@@ -471,13 +527,13 @@
      * @method commitCurrentEdit
      * @return {Boolean}
      */
-    this.commitCurrentEdit = function () {
+    this.commitCurrentEdit = function commitCurrentEdit() {
       return (activeEditController ? activeEditController.commitCurrentEdit() : true);
     };
 
     /***
      * Attempts to cancel the current edit by calling "cancelCurrentEdit" method on the active edit
-     * controller and returns whether the edit was successfully cancelled.  If no edit controller is
+     * controller and returns whether the edit was successfully canceled.  If no edit controller is
      * active, returns true.
      * @method cancelCurrentEdit
      * @return {Boolean}
@@ -486,6 +542,183 @@
       return (activeEditController ? activeEditController.cancelCurrentEdit() : true);
     };
   }
+
+
+
+
+  /***
+   * Provide a generic performance timer, which strives to produce highest possible accuracy time measurements.
+   * 
+   * methods:
+   * - start() (re)starts the timer. .start() also CLEARS ALL .mark_delta() timers!
+   * - mark() calculates the elapsed time for the current timer in MILLISECONDS (floating point).
+   * - mark_delta(ID) is identical to .mark() except that the time elapsed since the last call 
+   *   to .mark_delta() with the same ID is returned in MILLISECONDS (floating point).
+   * 
+   * Notes:
+   * 
+   * - when you invoke .mark() without having called .start() before, then the timer is started at the mark.
+   * - you are responsible to keep the IDs for .mark_delta() unique. The ID MUST NOT be "start" 
+   *   (as ID = "start" identifies the .start() timer)
+   * 
+   * References for the internal implementation:
+   *     http://updates.html5rocks.com/2012/08/When-milliseconds-are-not-enough-performance-now
+   *     http://ejohn.org/blog/accuracy-of-javascript-time/
+   */
+  function PerformanceTimer() {
+    /* private */ var start_time = false;
+    var obj = {
+    };
+    // feature detect:
+    var p = window.performance;
+    if (p && p.timing.navigationStart && p.now) {
+      obj.start = function () {
+        start_time = {
+          start: p.now()
+        };
+      };
+      obj.mark = function () {
+        if (start_time === false) this.start();
+        var end_time = p.now();
+        return end_time - start_time.start;
+      };
+      obj.mark_delta = function (id) {
+        id = id || "start";
+        if (start_time === false) this.start();
+        var end_time = p.now();
+        var rv = end_time - start_time[id];
+        start_time[id] = end_time;
+        return rv;
+      };
+    } else if (p && p.webkitNow) {
+      obj.start = function () {
+        start_time = {
+          start: p.webkitNow()
+        };
+      };
+      obj.mark = function () {
+        if (start_time === false) this.start();
+        var end_time = p.webkitNow();
+        return end_time - start_time.start;
+      };
+      obj.mark_delta = function (id) {
+        id = id || "start";
+        if (start_time === false) this.start();
+        var end_time = p.webkitNow();
+        var rv = end_time - start_time[id];
+        start_time[id] = end_time;
+        return rv;
+      };
+    } else {
+      var f = function () {
+        return Date.now();
+      };
+      try {
+        f();
+      } catch (ex) {
+        f = function () {
+          return +new Date();
+        };
+      }
+      obj.start = function () {
+        start_time = {
+          start: f()
+        };
+      };
+      obj.mark = function () {
+        if (start_time === false) this.start();
+        return f() - start_time.start;
+      };
+      obj.mark_delta = function (id) {
+        id = id || "start";
+        if (start_time === false) this.start();
+        var end_time = f();
+        var rv = end_time - start_time[id];
+        start_time[id] = end_time;
+        return rv;
+      };
+    }
+
+    return obj;
+  }
+
+
+  // This is inspired by
+  // http://stackoverflow.com/questions/7753448/how-do-i-escape-quotes-in-html-attribute-values
+  function HtmlEntities(options) {
+    var entityMap = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': '&quot;',
+        "'": "&#39;", // "&apos;"
+        "/": "&#x2F;",
+        "\n": "&#13;",  // LF
+        "\r": "&#13;"   // treat classic Apple CR-only as LF
+        /*
+        You may add other replacements here for HTML only
+        (but it's not necessary).
+        Or for XML, only if the named entities are defined in its DTD.
+        */
+    };
+    options = options || {};
+    if (!options.suitableForUriPrinting) {
+        delete entityMap["/"];
+    }
+    if (!options.preserveCR) {
+        delete entityMap["\n"];
+        delete entityMap["\r"];
+    }
+
+    this.encode = function (s) {
+      if (s == null) {
+        return "";
+      } else {
+        return ("" + s) /* Forces the conversion to string. */
+            .replace(/\r\n/g, "\n") /* Must be before the next replacement. */
+            .replace(/[&<>"'\/\r\n]/g, function (s) {
+                return entityMap[s] || s;
+            });
+      }
+    };
+  }
+
+
+  /***
+   * Define a keyboard as a set of names for keypress codes, etc. for better code readability.
+   */
+  function Keyboard() {
+    // for now, base the keyboard code set off of jQueryUI, if it is present
+    var keycodes = $.extend({},  $.ui && $.ui.keyCode, {
+      BACKSPACE: 8,
+      COMMA: 188,
+      DELETE: 46,
+      DOWN: 40,
+      END: 35,
+      ENTER: 13,
+      ESCAPE: 27,
+      HOME: 36,
+      LEFT: 37,
+      PAGE_DOWN: 34,
+      PAGE_UP: 33,
+      PERIOD: 190,
+      RIGHT: 39,
+      SPACE: 32,
+      TAB: 9,
+      UP: 38,
+
+      SHIFT: 16,
+      ALT: 18,    // Windows/Unix
+      OPTION: 18, // OSX
+      CONTROL: 17,
+      COMMAND: 91,
+
+      F2: 113,
+    });
+
+    return keycodes;
+  }
+
 })(jQuery);
 
 

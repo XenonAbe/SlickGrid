@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Custom CSS classes for cells / columns</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
+  <style>
+    .cell-title {
+      font-weight: bold;
+      color: red;
+      font-family: Consolas, monospace;
+      font-size: 1.2em;
+
+      box-shadow: inset 0px 0px 5px 2px rgba(242,84,84,0.2);
+      -webkit-box-shadow: inset 0px 0px 5px 2px rgba(242,84,84,0.2);
+      -moz-box-shadow: inset 0px 0px 5px 2px rgba(242,84,84,0.2);
+    }
+
+    .cell-effort-driven {
+      text-align: center;
+
+      box-shadow: inset 0px 0px 1px 2px rgba(25,138,0,0.66);
+      -webkit-box-shadow: inset 0px 0px 1px 2px rgba(25,138,0,0.66);
+      -moz-box-shadow: inset 0px 0px 1px 2px rgba(25,138,0,0.66);
+    }
+
+    .cell-effort-driven img {
+      margin-top: 2px;
+    }
+
+    .cell-just-started {
+        background-color: #ffa500 !important;  /* override background color in slick-default-theme.css */
+
+        box-shadow: inset 0px 0px 5px 2px rgba(255,247,0,0.7);
+        -webkit-box-shadow: inset 0px 0px 5px 2px rgba(255,247,0,0.7);
+        -moz-box-shadow: inset 0px 0px 5px 2px rgba(255,247,0,0.7);
+    }
+  </style>
+</head>
+<body>
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+  </div>
+
+  <div class="options-panel">
+    <h2>Demonstrates</h2>
+      <ul>
+        <li>width, minWidth, maxWidth, resizable, cssClass column attributes</li>
+        <li>custom column formatters</li>
+      </ul>
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+      </ul>
+      <div id="displaycode"></div>
+  </div>
+</div>
+
+<script src="../lib/firebugx.js"></script>
+
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
+<script src="../lib/jquery-ui.js"></script>
+<script src="../lib/_/jquery.event.drag.js"></script>
+<script src="../lib/detect_browser.js"></script>
+<script src="../lib/assert.js"></script>
+
+<script src="../slick.core.js"></script>
+<script src="../slick.formatters.js"></script>
+<script src="../slick.grid.js"></script>
+
+
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
+    (function(window, $, undefined) {
+        "use strict";
+
+        function formatter(row, cell, value, columnDef, dataContext) {
+            return value;
+        }
+
+        var grid;
+        var data = [];
+        data.getItemMetadata = function (row, cell) {
+            var item = this[row];
+            return !item ? null :
+                {
+                    columns: {
+                        "finish": {
+                            cssClass: item.percentComplete < 30 ? "cell-just-started" : ""
+                        }
+                    }
+                };
+        };
+        var columns = [
+            {id: "title", name: "Title", field: "title", width: 120, cssClass: "cell-title", formatter: formatter},
+            {id: "duration", name: "Duration", field: "duration"},
+            {id: "%", name: "% Complete", field: "percentComplete", width: 80, resizable: false, formatter: Slick.Formatters.PercentCompleteBar},
+            {id: "start", name: "Start", field: "start", minWidth: 60},
+            {id: "finish", name: "Finish", field: "finish", minWidth: 60},
+            {id: "effort-driven", name: "Effort Driven", sortable: false, width: 80, minWidth: 20, maxWidth: 80, cssClass: "cell-effort-driven", field: "effortDriven", formatter: Slick.Formatters.Checkmark}
+        ];
+
+        var options = {
+            editable: false,
+            enableAddRow: false,
+            enableCellNavigation: true
+        };
+
+        $(function() {
+            for (var i = 0; i < 500; i++) {
+                var d = (data[i] = {});
+
+                d["title"] = "<a href='#' tabindex='0'>Task</a> " + i;
+                d["duration"] = "5 days";
+                d["percentComplete"] = Math.min(100, Math.round(Math.random() * 110));
+                d["start"] = "01/01/2009";
+                d["finish"] = "01/05/2009";
+                d["effortDriven"] = (i % 5 == 0);
+            }
+
+            grid = new Slick.Grid("#myGrid", data, columns, options);
+        });
+    })(window, $);
+</script>
+</body>
+</html>

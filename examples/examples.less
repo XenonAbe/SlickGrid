@@ -19,6 +19,19 @@ body {
   background: beige;
   padding: 0;
   margin: 8px;
+
+  /* 
+    prevent the user from accidentally selecting a chunk of text in the grid:
+    we provide that functionality via select range + copy/paste 
+    while it makes usage of the grid on mouse+touch devices dissatisfactory
+    (Windows 8.1 + touchscreen laptop hardware, e.g. ASUS N550JV series)
+   */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 h2 {
@@ -59,18 +72,19 @@ li {
 }
 
 .grid-pager {
-  width: 100%;
-  height: 20px;
+  //width: 100%;
+  //height: 20px;
 }
 
 .grid-header {
-  border: 1px solid gray;
+  //border: 1px solid gray;
   border-bottom: 0;
   border-top: 0;
   background: url('../images/header-bg.gif') repeat-x center top;
   color: black;
   height: 24px;
   line-height: 24px;
+  //width: 100%;			// this matches the width with the DIV below: .grid-inner-wrapper
 }
 
 .grid-header label {

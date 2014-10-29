@@ -108,7 +108,7 @@
     }
 
     //return "<span style='background:" + value  + "'>" + value + "</span>";
-    cellStyles.push("background:" + value);
+    cellMetaInfo.cellStyles.push("background:" + value);
     return "<span style='color:black; padding-left: 1px; padding-right: 1px; background-color: rgba(255, 255, 255, 0.4); text-shadow: 1px 1px 3px white; -webkit-box-shadow: 0px 0px 3px 1px rgba(255, 255, 255, 0.4); box-shadow: 0px 0px 3px 1px rgba(255, 255, 255, 0.4);'>" + value + "</span>";
   }
 
@@ -142,7 +142,7 @@
     if (options) {
       var match;
       for (var i in options) {
-        if (options[i].id == value || options[i].key == value) {
+        if (options[i].id === value || options[i].key === value) {
           match = options[i];
           break;
         }
@@ -189,7 +189,7 @@
   /*
    *  utility for chaining formatters
    */
-  function Chain() {
+  function Chain(/* ...formatters */) {
     var formatters = Array.prototype.slice.call(arguments);
 
     return function(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
@@ -208,7 +208,8 @@
   function LinkFormatter(options) {
     var urlTemplate = typeof options === 'string' ? options : options.urlTemplate;
     var matches = urlTemplate.match(/:(\w+)/g);
-    var splatParams = [], i, result, val;
+    var splatParams = [];
+    var i, result, val;
 
     for (i in matches) {
       splatParams.push(matches[i].substring(1));
@@ -219,12 +220,12 @@
     return function(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       result = urlTemplate;
       for (i = 0; i < len; i++) {
-        val = dataContext[splatParams[i]];
-        if (typeof val !== null) {
+        val = rowDataItem[splatParams[i]];
+        if (typeof val != null) {
           result = result.replace(':' + splatParams[i], val);
         }
       }
-      return (typeof value !== 'undefined' && value !== null) ? ('<a href="' + result + '">' + value + '</a>') : null;
+      return value != null ? '<a href="' + result + '">' + value + '</a>' : null;
     };
   }
 
@@ -235,13 +236,14 @@
     if (typeof fields === 'string') {
       fields = fields.split(',');
     }
-    var len = fields.length, data;
+    var len = fields.length;
 
     return function(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
       var result = [];
+      var data;
       for (var i = 0; i < len; i++) {
-        data = dataContext[ fields[i] ];
-        if (data) {
+        data = rowDataItem[ fields[i] ];
+        if (data != null) {
           result.push(data);
         }
       }

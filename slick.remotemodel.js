@@ -152,7 +152,7 @@
         return;
       }
 
-      // it there's a running request we cancel it. 
+      // it there's a running request we cancel it.
       // TODO: not cancel but save the result
       if (req) {
         req.abort();
@@ -353,8 +353,8 @@
   RemoteModel.ArrayAdapter = ArrayAdapter;
 
 
-  $.extend(true, window, { 
-    Slick: { 
+  $.extend(true, window, {
+    Slick: {
       Data: {
         RemoteModel: RemoteModel,
         ODataSortAdapter: ODataSortAdapter

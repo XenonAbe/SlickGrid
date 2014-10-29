@@ -14,10 +14,15 @@
     var _selectedRowsLookup = {};
     var _defaults = {
       columnId: "_checkbox_selector",
+      columnName: "checkbox",
       cssClass: null,
+      headerCssClass: null,
+      selectable: true,
       toolTip: "Select/Deselect All",
       field: "sel",
       width: 30,
+      minWidth: 26,
+      maxWidth: 40,
       resizable: true,
       sortable: false,
       rowselector: true   // is it a column for grid row selection
@@ -77,7 +82,7 @@
       _selectedRowsLookup = lookup;
       _grid.render();
 
-      if (selectedRows.length == selectableRowCount) {
+      if (selectedRows.length === selectableRowCount) {
         _grid.updateColumnHeader(_options.columnId, "<input type='checkbox' checked='checked'>", _options.toolTip);
       } else {
         _grid.updateColumnHeader(_options.columnId, "<input type='checkbox'>", _options.toolTip);
@@ -87,7 +92,7 @@
     }
 
     function handleKeyDown(e, args) {
-      if (e.which == 32) {
+      if (e.which === 32) {
         if (_grid.getColumns()[args.cell].id === _options.columnId) {
           // if editing, try to commit
           if (!_grid.getEditorLock().isActive() || _grid.getEditorLock().commitCurrentEdit()) {
@@ -127,7 +132,7 @@
     }
 
     function handleHeaderClick(e, args) {
-      if (args.column.id == _options.columnId && $(e.target).is(":checkbox")) {
+      if (args.column.id === _options.columnId && $(e.target).is(":checkbox")) {
         // if editing, try to commit
         if (_grid.getEditorLock().isActive() && !_grid.getEditorLock().commitCurrentEdit()) {
           e.preventDefault();
@@ -157,15 +162,19 @@
     function getColumnDefinition() {
       return {
         id: _options.columnId,
-        name: 'checkbox',
+        name: _options.columnName,
         toolTip: _options.toolTip,
         field: _options.field,
         width: _options.width,
+        minWidth: _options.minWidth,
+        maxWidth: _options.maxWidth,
         resizable: _options.resizable,
         sortable: _options.sortable,
         nofilter: true,
         hideable: false,
         cssClass: _options.cssClass,
+        headerCssClass: _options.headerCssClass,
+        selectable: _options.selectable,
         formatter: checkboxSelectionFormatter,
         headerFormatter: checkboxSelectionHeaderFormatter
       };
@@ -187,9 +196,15 @@
           return false;
         }
       } else {
-        return _selectedRowsLookup[row]
-          ? "<input type='checkbox' checked='checked'>"
-          : "<input type='checkbox'>";
+        if (columnDef.selectable) {
+          return _selectedRowsLookup[row]
+                 ? "<input type='checkbox' checked='checked'>"
+                 : "<input type='checkbox'>";
+        } else {
+          return _selectedRowsLookup[row]
+                 ? "<input type='checkbox' checked='checked' disabled>"
+                 : "<input type='checkbox' disabled>";
+        }
       }
     }
 

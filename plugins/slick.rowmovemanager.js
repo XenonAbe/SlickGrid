@@ -32,8 +32,15 @@
     }
 
     function handleDragInit(e, dd) {
+      var cell = _grid.getCellFromEvent(e);
+
+      if (!/move|selectAndMove/.test(_grid.getColumns()[cell.cell].behavior)) {
+        return;
+      }
+
       // prevent the grid from cancelling drag'n'drop by default
-      e.stopImmediatePropagation();
+      //e.stopImmediatePropagation();
+      e.preventDefault();
     }
 
     function handleDragStart(e, dd) {

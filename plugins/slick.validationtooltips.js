@@ -33,11 +33,11 @@
         $node = $(args.cellNode);
 
       var ts = $node.data('tooltipsy');
-      if (ts) ts.destroy();
+      if (ts) { ts.destroy(); }
 
       $node.tooltipsy({
         alignTo: "element",
-        offset: [0,8],
+        offset: [0, 8],
         content: errorMessage,
         showEvent: null,
         hideEvent: null,

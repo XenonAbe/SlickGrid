@@ -82,11 +82,15 @@
     function handleGridClick(e, args) {
       var item = this.getDataItem(args.row);
       if (item && item instanceof Slick.Group && $(e.target).hasClass(options.toggleCssClass)) {
+		if (_grid.getEditorLock().isActive()) {
+			_grid.getEditorLock().commitCurrentEdit();
+		}
+
         var range = _grid.getRenderedRange();
         this.getData().setRefreshHints({
           ignoreDiffsBefore: range.top,
-          ignoreDiffsAfter: range.bottom
-        });
+          ignoreDiffsAfter: range.bottom + 1
+        }); // take diff till range.bottom and ignore it after.
 
         if (item.collapsed) {
           this.getData().expandGroup(item.groupingKey);
@@ -101,16 +105,19 @@
 
     // TODO:  add -/+ handling
     function handleGridKeyDown(e, args) {
-      if (options.enableExpandCollapse && (e.which == $.ui.keyCode.SPACE)) {
+      if (options.enableExpandCollapse && (e.which == Slick.Keyboard.SPACE)) {
         var activeCell = this.getActiveCell();
         if (activeCell) {
           var item = this.getDataItem(activeCell.row);
           if (item && item instanceof Slick.Group) {
+    		if (_grid.getEditorLock().isActive()) {
+    			_grid.getEditorLock().commitCurrentEdit();
+    		}
             var range = _grid.getRenderedRange();
             this.getData().setRefreshHints({
               ignoreDiffsBefore: range.top,
-              ignoreDiffsAfter: range.bottom
-            });
+              ignoreDiffsAfter: range.bottom + 1
+            }); // take diff till range.bottom and ignore it after.
 
             if (item.collapsed) {
               this.getData().expandGroup(item.groupingKey);

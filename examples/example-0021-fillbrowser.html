@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Filling the whole window: Full screen mode</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
+  <link rel="stylesheet" href="examples.css" type="text/css"/>
+  <style>
+    /* as taken from http://stackoverflow.com/questions/1719452/how-to-make-a-div-always-full-screen */
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    .grid-fullscreen-wrapper {
+      min-height: 100%;
+      position: relative;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: White;
+      overflow: hidden;
+    }
+
+    body {
+      font: 11px Helvetica, Arial, sans-serif;
+    }
+
+    #myGrid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+
+    div.options-panel {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      width: 25em;
+      background: beige;
+      border: solid 1px gray;
+      z-index: 1000;
+
+      float: none;
+      margin: 0;
+    }
+
+  </style>
+  <!--[if lte IE 6]>
+  <style type="text/css">
+    .grid-fullscreen-wrapper {
+      height: 100%;
+    }
+  </style>
+  <![endif]-->
+</head>
+<body>
+<div class="grid-fullscreen-wrapper">
+  <div id="myGrid"></div>
+</div>
+
+<div class="options-panel">
+  <h2>Demonstrates</h2>
+    <ul>
+      <li>Grid filling browser window completely (using absolute positioning)</li>
+      <li>Grid resizing when browser window changes size</li>
+      <li>Overall performance of the grid when displaying large tabular data (17 columns x 10,000 rows)</li>
+    </ul>
+
+  <h2>View Source:</h2>
+    <ul>
+        <li id="viewsource">View Source Code</li>
+    </ul>
+    <div id="displaycode"></div>
+</div>
+
+<script src="../lib/firebugx.js"></script>
+
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
+<script src="../lib/jquery.ba-resize.js"></script>
+<script src="../lib/_/jquery.event.drag.js"></script>
+<script src="../lib/detect_browser.js"></script>
+<script src="../lib/assert.js"></script>
+
+<script src="../slick.core.js"></script>
+<script src="../slick.grid.js"></script>
+
+
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
+  var grid,
+      data = [],
+      columns = [
+          { id: "title", name: "Title", field: "title", width: 120 },
+          { id: "duration", name: "Duration", field: "duration", width: 120 },
+          { id: "%", name: "% Complete", field: "percentComplete", width: 120 },
+          { id: "start", name: "Start", field: "start", width: 120 },
+          { id: "finish", name: "Finish", field: "finish", width: 120 },
+          { id: "effort-driven", name: "Effort Driven", field: "effortDriven", width: 120 },
+          { id: "c7", name: "C7", field: "c7", width: 120 },
+          { id: "c8", name: "C8", field: "c8", width: 120 },
+          { id: "c9", name: "C9", field: "c9", width: 120 },
+          { id: "c10", name: "C10", field: "c10", width: 120 },
+          { id: "c11", name: "C11", field: "c11", width: 120 },
+          { id: "c12", name: "C12", field: "c12", width: 120 },
+          { id: "c13", name: "C13", field: "c13", width: 120 },
+          { id: "c14", name: "C14", field: "c14", width: 120 },
+          { id: "c15", name: "C15", field: "c15", width: 120 },
+          { id: "c16", name: "C16", field: "c16", width: 120 },
+          { id: "c17", name: "C17", field: "c17", width: 120 }
+      ],
+      options = {
+        enableCellNavigation: false,
+        enableColumnReorder: false
+      };
+
+  for (var i = 10000; i-- > 0;) {
+    data[i] = {
+        title: "Task " + i,
+        duration: "5 days",
+        percentComplete: Math.round(Math.random() * 100),
+        start: "01/01/2009",
+        finish: "01/05/2009",
+        effortDriven: (i % 5 == 0),
+        c7: "C7-" + i,
+        c8: "C8-" + i,
+        c9: "C9-" + i,
+        c10: "C10-" + i,
+        c11: "C11-" + i,
+        c12: "C12-" + i,
+        c13: "C13-" + i,
+        c14: "C14-" + i,
+        c15: "C15-" + i,
+        c16: "C16-" + i,
+        c17: "C17-" + i
+    };
+  }
+
+  grid = new Slick.Grid("#myGrid", data, columns, options);
+</script>
+</body>
+</html>

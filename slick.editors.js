@@ -4,6 +4,25 @@
  * Contains basic SlickGrid editors.
  * @module Editors
  * @namespace Slick
+ *
+ * Editor API:
+ *
+ * init()
+ * destroy()
+ * focus()
+ * setDirectValue(val)
+ * loadValue(item)
+ * serializeValue()
+ * applyValue(item, state)
+ * isValueChanged()
+ * validate()
+ *
+ * save()
+ * cancel()
+ * 
+ * hide()
+ * show()
+ * position(position)
  */
 
 (function ($) {
@@ -45,6 +64,26 @@
 
       this.destroy = function () {
         theEditor.destroy();
+      };
+
+      this.save = function () {
+        theEditor.save();
+      };
+
+      this.cancel = function () {
+        theEditor.cancel();
+      };
+
+      this.hide = function () {
+        theEditor.hide();
+      };
+
+      this.show = function () {
+        theEditor.show();
+      };
+
+      this.position = function (position) {
+        theEditor.position(position);
       };
 
       this.focus = function () {
@@ -89,7 +128,7 @@
       $input = $("<INPUT type='text' class='editor-text' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -100,6 +139,27 @@
 
     this.destroy = function () {
       $input.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $input.hide();
+    };
+
+    this.show = function () {
+      $input.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function () {
@@ -159,6 +219,26 @@
 
     this.destroy = function () {
       $input.remove();
+    };
+
+    this.save = function () {
+      // nada
+    };
+
+    this.cancel = function () {
+      // nada
+    };
+
+    this.hide = function () {
+      $input.hide();
+    };
+
+    this.show = function () {
+      $input.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function () { };
@@ -246,7 +326,7 @@ function isValidModifier(v) {
       $input = $("<INPUT type='number' class='editor-integer' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -257,6 +337,27 @@ function isValidModifier(v) {
 
     this.destroy = function () {
       $input.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $input.hide();
+    };
+
+    this.show = function () {
+      $input.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function () {
@@ -292,13 +393,27 @@ function isValidModifier(v) {
     };
 
     this.validate = function () {
-      var val = $input.val();
+      var val = this.serializeValue();
       if (isNaN(val) && !isValidModifier(val)) {
         return {
           valid: false,
           msg: "Please enter a valid integer"
         };
       }
+	  
+		if (args.editorConfig && !isNaN(args.editorConfig.minValue) && val < args.editorConfig.minValue) {
+			return {
+				valid: false,
+				msg: 'Please enter a value no less than ' + args.editorConfig.minValue
+			};
+		}
+		
+		if (args.editorConfig && !isNaN(args.editorConfig.maxValue) && val > args.editorConfig.maxValue) {
+			return {
+				valid: false,
+				msg: 'Please enter a value no greater than ' + args.editorConfig.maxValue
+			};
+		}
 
       return {
         valid: true,
@@ -318,7 +433,7 @@ function isValidModifier(v) {
       $input = $("<INPUT type='text' class='editor-float' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -329,6 +444,27 @@ function isValidModifier(v) {
 
     this.destroy = function () {
       $input.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $input.hide();
+    };
+
+    this.show = function () {
+      $input.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function () {
@@ -368,7 +504,7 @@ function isValidModifier(v) {
       if (isNaN(val) && !isValidModifier(val)) {
         return {
           valid: false,
-          msg: "Please enter a valid float"
+          msg: "Please enter a valid numeric value"
         };
       }
 
@@ -408,7 +544,7 @@ function isValidModifier(v) {
       $input = $("<INPUT type='text' class='editor-percentage' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -419,6 +555,27 @@ function isValidModifier(v) {
 
     this.destroy = function () {
       $input.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $input.hide();
+    };
+
+    this.show = function () {
+      $input.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function () {
@@ -500,32 +657,33 @@ function isValidModifier(v) {
     var regionSettings = $.datepicker.regional["en"] || $.datepicker.regional;
     /* jshint +W069 */
     var datepickerParseSettings = {
-        shortYearCutoff: 20,
-        dayNamesShort: regionSettings.dayNamesShort,
-        dayNames: regionSettings.dayNames,
-        monthNamesShort: regionSettings.monthNamesShort,
-        monthNames: regionSettings.monthNames
-      };
-      var datePickerOptions = {};
-      var datePickerDefaultOptions = {
-        dateFormat: "yy-mm-dd",                 // this format is used for displaying the date while editing / picking it
-        defaultDate: 0,                         // default date: today
-        showOn: "button",
-        buttonImageOnly: true,
-        buttonImage: args.dateButtonImage || (imageDir + "/calendar.png"),
-      };
-      var datePickerFixedOptions = {
-        beforeShow: function () {
-          calendarOpen = true;
-        },
-        onClose: function () {
-          calendarOpen = false;
-        }
-      };
-      // Override DatePicker options from datePickerOptions on column definition.
-      // Make sure that beforeShow and onClose events are not clobbered.
-      datePickerOptions = $.extend(datePickerOptions, datePickerDefaultOptions,
-        args.column.datePickerOptions, datePickerFixedOptions);
+      shortYearCutoff: 20,
+      dayNamesShort: regionSettings.dayNamesShort,
+      dayNames: regionSettings.dayNames,
+      monthNamesShort: regionSettings.monthNamesShort,
+      monthNames: regionSettings.monthNames
+    };
+    var datePickerOptions = {};
+    var datePickerDefaultOptions = {
+      dateFormat: "yy-mm-dd",                 // this format is used for displaying the date while editing / picking it
+      defaultDate: 0,                         // default date: today
+      showOn: "button",
+      buttonImageOnly: true,
+      buttonImage: args.dateButtonImage || (imageDir + "/calendar.png"),
+      buttonText: "Select date"
+    };
+    var datePickerFixedOptions = {
+      beforeShow: function () {
+        calendarOpen = true;
+      },
+      onClose: function () {
+        calendarOpen = false;
+      }
+    };
+    // Override DatePicker options from datePickerOptions on column definition.
+    // Make sure that beforeShow and onClose events are not clobbered.
+    datePickerOptions = $.extend(datePickerOptions, datePickerDefaultOptions,
+      args.column.datePickerOptions, datePickerFixedOptions);
 
     function parseDateStringAndDetectFormat(s) {
       dateFormat = 0;
@@ -537,7 +695,7 @@ function isValidModifier(v) {
         try {
           d = $.datepicker.parseDate(fmt, s, datepickerParseSettings);
           break;
-        } catch (e) {
+        } catch (ex) {
           continue;
         }
       }
@@ -549,14 +707,14 @@ function isValidModifier(v) {
       $input = $("<INPUT type='text' class='editor-date' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
           .focus()
           .select();
       $input.datepicker(datePickerOptions);
-      $input.width($input.width() - 18);
+      $input.outerWidth($input.outerWidth() - 18);
     };
 
     this.destroy = function () {
@@ -564,6 +722,15 @@ function isValidModifier(v) {
       $input.datepicker("hide");
       $input.datepicker("destroy");
       $input.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
     };
 
     this.show = function () {
@@ -646,99 +813,6 @@ function isValidModifier(v) {
   }
 
 
-  function SelectCellEditor(args) {
-    var $select;
-    var defaultValue;
-    var scope = this;
-    var opt;
-
-    function getKeyFromKeyVal(opt, val) {
-      var i, v, index = 0;
-
-      for (i in opt) {
-        v = opt[i];
-        if (v.val == val) {
-          index = i;
-          break;
-        }
-      }
-      return index;
-    }
-
-    this.init = function() {
-        var i;
-
-        defaultValue = null;
-        opt = (args.metadataColumn && args.metadataColumn.options) || args.column.options;
-        assert(opt);
-        option_str = [];
-        for (i in opt) {
-          v = opt[i];
-          option_str.push("<OPTION value='" + v.key + "'>" + v.val + "</OPTION>");
-        }
-        $select = $('<SELECT class="editor-select">' + option_str.join('') + "</SELECT>")
-         .appendTo(args.container)
-         .focus()
-         .select();
-        // this expects the multiselect widget (http://www.erichynds.com/jquery/jquery-ui-multiselect-widget/) to be loaded
-        $select.multiselect({
-          autoOpen: true,
-          minWidth: $(args.container).innerWidth() - 5,
-          multiple: false,
-          header: false,
-          noneSelectedText: "...",
-          classes: "editor-multiselect",
-          selectedList: 1,
-          close: function(event, ui) {
-            //args.grid.getEditorLock().commitCurrentEdit();
-          }
-        });
-    };
-
-    this.destroy = function() {
-        $select.multiselect("destroy");
-        $select.remove();
-    };
-
-    this.focus = function() {
-        $select.focus();
-    };
-
-    this.setDirectValue = function (val) {
-        var key = getKeyFromKeyVal(opt, val);
-        key = opt[key].key;
-        defaultValue = key;
-        $select.val(key);
-        $select.multiselect("refresh");
-    };
-
-    this.loadValue = function (item) {
-      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
-      $select.select();
-    };
-
-    this.serializeValue = function() {
-        return $select.val();
-    };
-
-    this.applyValue = function(item, state) {
-      args.grid.setDataItemValueForColumn(item, args.column, state);
-    };
-
-    this.isValueChanged = function() {
-        return scope.serializeValue() != defaultValue;
-    };
-
-    this.validate = function() {
-        return {
-            valid: true,
-            msg: null
-        };
-    };
-
-    this.init();
-  }
-
   function YesNoSelectEditor(args) {
     var $select;
     var defaultValue;
@@ -753,6 +827,27 @@ function isValidModifier(v) {
 
     this.destroy = function () {
       $select.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $select.hide();
+    };
+
+    this.show = function () {
+      $select.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function () {
@@ -809,6 +904,27 @@ function isValidModifier(v) {
       $select.remove();
     };
 
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $select.hide();
+    };
+
+    this.show = function () {
+      $select.show();
+    };
+
+    this.position = function (position) {
+      // nada 
+    };
+
     this.focus = function () {
       $select.focus();
     };
@@ -858,14 +974,14 @@ function isValidModifier(v) {
       $input = $("<INPUT type='text' class='editor-percentcomplete' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
           .focus()
           .select();
 
-      $input.width($(args.container).innerWidth() - 25);
+      $input.outerWidth($(args.container).innerWidth() - 25);
 
       $picker = $("<div class='editor-percentcomplete-picker' />").appendTo(args.container);
 
@@ -923,6 +1039,31 @@ function isValidModifier(v) {
       $input.remove();
       $picker.remove();
       $helper.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $input.hide();
+      $picker.hide();
+      $helper.hide();
+    };
+
+    this.show = function () {
+      $input.show();
+      $picker.show();
+      $helper.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function () {
@@ -986,7 +1127,7 @@ function isValidModifier(v) {
       $input = $("<TEXTAREA type='text' class='editor-longtext-basic-input' rows='1' />")
           .appendTo(args.container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           });
@@ -1028,15 +1169,15 @@ function isValidModifier(v) {
     };
 
     this.handleKeyDown = function (e) {
-      if (e.which == $.ui.keyCode.ENTER && e.ctrlKey) {
+      if (e.which == Slick.Keyboard.ENTER && e.ctrlKey) {
         scope.save();
-      } else if (e.which == $.ui.keyCode.ESCAPE) {
+      } else if (e.which == Slick.Keyboard.ESCAPE) {
         e.preventDefault();
         scope.cancel();
-      } else if (e.which == $.ui.keyCode.TAB && e.shiftKey) {
+      } else if (e.which == Slick.Keyboard.TAB && e.shiftKey) {
         e.preventDefault();
         args.grid.navigatePrev();
-      } else if (e.which == $.ui.keyCode.TAB) {
+      } else if (e.which == Slick.Keyboard.TAB) {
         e.preventDefault();
         args.grid.navigateNext();
       }
@@ -1068,6 +1209,14 @@ function isValidModifier(v) {
 
       scope.position(args);
     }
+
+    this.hide = function () {
+      hidePanel();
+    };
+
+    this.show = function () {
+      showPanel();
+    };
 
     /*
      * info: {
@@ -1160,7 +1309,7 @@ function isValidModifier(v) {
       $input = $("<input type='color' />")
           .appendTo($container)
           .bind("keydown.nav", function (e) {
-            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
+            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -1173,6 +1322,15 @@ function isValidModifier(v) {
       $input.spectrum("destroy");
       $input.remove();
       isOpen = false;
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
     };
 
     this.show = function () {
@@ -1259,50 +1417,111 @@ function isValidModifier(v) {
 
 
   function SelectCellEditor(args) {
-    var $select, defaultValue,
-      scope = this;
+    var $select;
+    var defaultValue;
+    var scope = this;
+    var opt;
+
+    function getKeyFromKeyVal(opt, val) {
+      var i, v, index = 0;
+
+      for (i in opt) {
+        v = opt[i];
+        if (v.val === val) {
+          index = i;
+          break;
+        }
+      }
+      return index;
+    }
 
     this.init = function() {
-      var options = typeof args.column.options === 'function' ? args.column.options() : args.column.options;
-      if (options) {
-        var option_str = "";
-        for (var i in options) {
-          v = options[i];
-          option_str += "<OPTION value='" + ( v.key == null ? v.id : v.key ) + "'>" + (v.value == null ? v.label : v.value) + "</OPTION>";
+      var i;
+
+      defaultValue = null;
+      opt = (args.metadataColumn && args.metadataColumn.options) || args.column.options;
+      assert(opt);
+      opt = typeof opt === 'function' ? opt.call(args.column) : opt;
+      assert(opt);
+
+        option_str = [];
+        for (i in opt) {
+          v = opt[i];
+          option_str.push("<OPTION value='" + (v.key == null ? v.id : v.key) + "'>" + (v.value == null ? v.label : v.value) + "</OPTION>");
         }
-        $select = $("<SELECT tabIndex='0' class='editor-select'>" + option_str + "</SELECT>");
-        $select.appendTo(args.container);
-        $select.focus();
-      }
+        $select = $("<SELECT tabIndex='0' class='editor-select'>" + option_str.join('') + "</SELECT>")
+         .appendTo(args.container)
+         .focus()
+         .select();
+
+        // this expects the multiselect widget (http://www.erichynds.com/jquery/jquery-ui-multiselect-widget/) to be loaded
+        $select.multiselect({
+          autoOpen: true,
+          minWidth: $(args.container).innerWidth() - 5,
+          multiple: false,
+          header: false,
+          noneSelectedText: "...",
+          classes: "editor-multiselect",
+          selectedList: 1,
+          close: function(event, ui) {
+            //args.grid.getEditorLock().commitCurrentEdit();
+          }
+        });
     };
 
     this.destroy = function() {
+      $select.multiselect("destroy");
       $select.remove();
+    };
+
+    this.save = function () {
+      args.commitChanges();
+    };
+
+    this.cancel = function () {
+      this.setDirectValue(defaultValue);
+      args.cancelChanges();
+    };
+
+    this.hide = function () {
+      $select.hide();
+    };
+
+    this.show = function () {
+      $select.show();
+    };
+
+    this.position = function (position) {
+      // nada 
     };
 
     this.focus = function() {
       $select.focus();
     };
 
-    this.loadValue = function(item) {
-      defaultValue = args.grid.getDataItemValueForColumn(item, args.column) || "";
-      $select.val(defaultValue);
+    this.setDirectValue = function (val) {
+        var key = getKeyFromKeyVal(opt, val);
+        key = opt[key].key;
+        defaultValue = key;
+        $select.val(key);
+        $select.multiselect("refresh");
     };
 
-    this.serializeValue = function() {
-      if (args.column.options) {
-        return $select.val();
-      } else {
-        return ($select.val() == "yes");
-      }
+    this.loadValue = function (item) {
+      scope.setDirectValue(args.grid.getDataItemValueForColumn(item, args.column));
+      $select.select();
     };
 
-    this.applyValue = function(item,state) {
+    this.serializeValue = function () {
+      return $select.val();
+    };
+
+    this.applyValue = function (item, state) {
       args.grid.setDataItemValueForColumn(item, args.column, state);
     };
 
     this.isValueChanged = function() {
-        return ($select.val() != defaultValue);
+      return scope.serializeValue() != defaultValue;
     };
 
     this.validate = function() {

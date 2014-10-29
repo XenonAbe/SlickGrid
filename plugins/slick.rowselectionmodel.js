@@ -12,7 +12,6 @@
     var _rowIndexes = [];
     var _self = this;
     var _handler = new Slick.EventHandler();
-    var _inHandler;
     var _dragging;
     var _canvas;
     var _options;
@@ -24,12 +23,9 @@
     function init(grid) {
       _options = $.extend(true, {}, _defaults, options);
       _grid = grid;
-      _handler.subscribe(_grid.onActiveCellChanged,
-          wrapHandler(handleActiveCellChange));
-      _handler.subscribe(_grid.onKeyDown,
-          wrapHandler(handleKeyDown));
-      _handler.subscribe(_grid.onClick,
-          wrapHandler(handleClick));
+      _handler.subscribe(_grid.onActiveCellChanged, handleActiveCellChange);
+      _handler.subscribe(_grid.onKeyDown, handleKeyDown);
+      _handler.subscribe(_grid.onClick, handleClick);
 
       if (_options.dragToMultiSelect) {
         if (_grid.getOptions().multiSelect) {
@@ -47,16 +43,6 @@
 
     function destroy() {
       _handler.unsubscribeAll();
-    }
-
-    function wrapHandler(handler) {
-      return function () {
-        if (!_inHandler) {
-          _inHandler = true;
-          handler.apply(this, arguments);
-          _inHandler = false;
-        }
-      };
     }
 
     function rangesToRows(ranges) {
@@ -161,8 +147,8 @@
     }
 
     function handleActiveCellChange(e, data) {
-      if (_options.selectActiveRow && data.row != null) {
-        setSelectedRanges([new Slick.Range(data.row, 0, data.row, _grid.getColumns().length - 1)]);
+      if (_options.selectActiveRow && data.activeCell.row != null) {
+        setSelectedRanges([new Slick.Range(data.activeCell.row, 0, data.activeCell.row, _grid.getColumns().length - 1)]);
       }
     }
 
@@ -261,10 +247,11 @@
 
       _grid.focus();
 
-      var start = _grid.getCellFromPoint(
-          dd.startX - $(_canvas).offset().left,
-          dd.startY - $(_canvas).offset().top
-      );
+      var x, y, o;
+      o = $(_canvas).offset();
+      x = dd.pageX - o.left;
+      y = dd.pageY - o.top;
+      var start = _grid.getCellFromPoint(x, y);
 
       var combinationMode = 'replace';
       if (e.shiftKey) {
@@ -285,9 +272,11 @@
       }
       e.stopImmediatePropagation();
 
-      var end = _grid.getCellFromPoint(
-          e.pageX - $(_canvas).offset().left,
-          e.pageY - $(_canvas).offset().top);
+      var x, y, o;
+      o = $(_canvas).offset();
+      x = e.pageX - o.left;
+      y = e.pageY - o.top;
+      var end = _grid.getCellFromPoint(x, y);
 
       if (!_grid.canCellBeSelected(end.row, end.cell)) {
         return;

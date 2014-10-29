@@ -222,9 +222,11 @@
 
             e.stopImmediatePropagation();
 
-            var end = grid.getCellFromPoint(
-                e.pageX - $(canvas).offset().left,
-                e.pageY - $(canvas).offset().top);
+            var x, y, o;
+            o = $(canvas).offset();
+            x = e.pageX - o.left;
+            y = e.pageY - o.top;
+            var end = grid.getCellFromPoint(x, y);
 
             if (!grid.canCellBeSelected(end.row, end.cell)) {
                 return;
