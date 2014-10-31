@@ -157,7 +157,6 @@ register_remote lib/TinyColor                                                 lo
 register_remote lib/TinyColor                                                 local-dep-spectrum-original              ../spectrum/lib/TinyColor/                                                       $# $@
 register_remote lib/TinyColor                                                 pgooch                                   git@github.com:pgooch/TinyColor.git                                              $# $@
 register_remote lib/TinyColor                                                 piercus                                  git@github.com:piercus/TinyColor.git                                             $# $@
-register_remote lib/TinyColor                                                 slickgrid-dep-original                   ../slickgrid/lib/TinyColor/                                                      $# $@
 register_remote lib/TinyColor                                                 spectrum-dep-original                    ../spectrum/lib/TinyColor/                                                       $# $@
 register_remote lib/TinyColor                                                 tylerl                                   git@github.com:tylerl/TinyColor.git                                              $# $@
 register_remote lib/hammer                                                    EightMedia                               git@github.com:EightMedia/hammer.js.git                                          $# $@
@@ -238,6 +237,17 @@ register_remote lib/jquery-iCheck                                             ve
 register_remote lib/jquery-iCheck                                             wefiy                                    git@github.com:wefiy/iCheck.git                                                  $# $@
 register_remote lib/jquery-iCheck                                             yc2164708                                git@github.com:yc2164708/iCheck.git                                              $# $@
 register_remote lib/jquery-iCheck                                             ziscloud                                 git@github.com:ziscloud/iCheck.git                                               $# $@
+register_remote lib/jquery-jsonp                                              ZeeD                                     git@github.com:ZeeD/jquery-jsonp.git                                             $# $@
+register_remote lib/jquery-jsonp                                              basos9                                   git@github.com:basos9/jquery-jsonp.git                                           $# $@
+register_remote lib/jquery-jsonp                                              calebclark                               git@github.com:calebclark/jquery-jsonp.git                                       $# $@
+register_remote lib/jquery-jsonp                                              collinanderson                           git@github.com:collinanderson/jquery-jsonp.git                                   $# $@
+register_remote lib/jquery-jsonp                                              fivetanley                               git@github.com:fivetanley/jquery-jsonp.git                                       $# $@
+register_remote lib/jquery-jsonp                                              hanguyenst                               git@github.com:hanguyenst/jquery-jsonp.git                                       $# $@
+register_remote lib/jquery-jsonp                                              hull                                     git@github.com:hull/jquery-jsonp.git                                             $# $@
+register_remote lib/jquery-jsonp                                              jaubourg                                 git@github.com:jaubourg/jquery-jsonp.git                                         $# $@
+register_remote lib/jquery-jsonp                                              jaubourg-original                        git@github.com:jaubourg/jquery-jsonp.git                                         $# $@
+register_remote lib/jquery-jsonp                                              timtucker                                git@github.com:timtucker/jquery-jsonp.git                                        $# $@
+register_remote lib/jquery-jsonp                                              zamesnonet                               git@github.com:zamesnonet/jquery-jsonp.git                                       $# $@
 register_remote lib/jquery-multiselect                                        0plus1                                   git@github.com:0plus1/jquery-ui-multiselect-widget.git                           $# $@
 register_remote lib/jquery-multiselect                                        AquaSwami                                git@github.com:AquaSwami/jquery-ui-multiselect-widget.git                        $# $@
 register_remote lib/jquery-multiselect                                        BangBoy                                  git@github.com:BangBoy/jquery-ui-multiselect-widget.git                          $# $@

@@ -1041,10 +1041,9 @@ if (typeof Slick === "undefined") {
         if (columnDef.headerCssClass) {
           cellCss.push(columnDef.headerCssClass);
         }
-        var cellStyles = [];
         var info = {
           cellCss: cellCss,
-          cellStyles: cellStyles,
+          cellStyles: [],
           html: "",
           attributes: {},
           toolTip: columnDef.toolTip || null,
@@ -1085,7 +1084,7 @@ if (typeof Slick === "undefined") {
       function createBaseColumnHeader(columnDef, level, cell) {
         var header = createColumnHeader(columnDef, $headers, level, cell);
         var i, j, len, llen, column;
-        var cellCss, cellStyles, info;
+        var cellCss, info;
         var headerRowCell;
         var footerRowCell;
 
@@ -1114,10 +1113,9 @@ if (typeof Slick === "undefined") {
         if (options.showHeaderRow) {
           cellCss = ["ui-state-default", "slick-headerrow-column", "hl" + cell, "hr" + (cell + columnDef.headerColSpan - 1)];
           if (columnDef.headerCssClass) cellCss.push(columnDef.headerCssClass);
-          cellStyles = [];
           info = {
             cellCss: cellCss,
-            cellStyles: cellStyles,
+            cellStyles: [],
             html: "",
             attributes: {},
             toolTip: columnDef.headerRowToolTip || null,
@@ -1163,10 +1161,9 @@ if (typeof Slick === "undefined") {
           if (columnDef.footerCssClass) {
             cellCss.push(columnDef.footerCssClass);
           }
-          cellStyles = [];
           info = {
             cellCss: cellCss,
-            cellStyles: cellStyles,
+            cellStyles: [],
             html: "",
             attributes: {},
             toolTip: columnDef.footerRowToolTip || null,
@@ -3434,9 +3431,11 @@ if (typeof Slick === "undefined") {
       if (info.toolTip && metaData.title === undefined) {
         metaData.title = metaData["data-title"] = info.toolTip;
       }
+      assert(!metaData.style);
       if (info.cellStyles.length) {
         metaData.style = info.cellStyles.join("; ") + ";";
       }
+      assert(!metaData.class);
       if (info.cellCss.length) {
         metaData.class = info.cellCss.join(" ");
       }
@@ -3489,16 +3488,15 @@ if (typeof Slick === "undefined") {
       if (info.toolTip && metaData.title === undefined) {
         metaData.title = metaData["data-title"] = info.toolTip;
       }
+      assert(!metaData.style);
       if (info.cellStyles.length) {
         metaData.style = info.cellStyles.join("; ") + ";";
       } else {
         metaData.style = null;
       }
+      assert(!metaData.class);
       if (info.cellCss.length) {
         metaData.class = info.cellCss.join(" ");
-      } else {
-        assert(0);
-        metaData.class = null;
       }
       var tabindex = -1;
       if (info.attributes.tabindex != null) {

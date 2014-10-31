@@ -81,6 +81,7 @@ git_submod_add   git@github.com:GerHobbelt/TinyColor.git                        
 git_submod_add   git@github.com:GerHobbelt/guriddo.git                                   lib/slickgrid-guriddo-frozencolumns
 git_submod_add   git@github.com:GerHobbelt/hammer.js.git                                 lib/hammer
 git_submod_add   git@github.com:GerHobbelt/iCheck.git                                    lib/jquery-iCheck
+git_submod_add   git@github.com:GerHobbelt/jquery-jsonp.git                              lib/jquery-jsonp
 git_submod_add   git@github.com:GerHobbelt/jquery-multiselect.git                        lib/jquery-multiselect
 git_submod_add   git@github.com:GerHobbelt/jquery-simulate.git                           lib/jquery-simulate
 git_submod_add   git@github.com:GerHobbelt/jquery.sparkline.git                          lib/jquery-sparkline
