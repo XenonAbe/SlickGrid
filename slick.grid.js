@@ -4778,11 +4778,20 @@ if (typeof Slick === "undefined") {
         rendered = getRenderedRange();
       }
 
+      var e = new Slick.EventData();
       trigger(self.onRenderStart, {
         renderedArea: rendered, 
         visibleArea: visible,
         forced: mandatoryRange
-      });
+      }, e);
+      var handled = e.isHandled();
+      if (handled) {
+        // userland code decided the render is either already done or premature.
+        // 
+        // In either case, we don't bother with rendering again until the same userland
+        // code deigns to call our render() API again.
+        return false;
+      }
 
       // Add new rows & missing cells in existing rows.
       // 
