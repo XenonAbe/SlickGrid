@@ -569,7 +569,7 @@ if (typeof Slick === "undefined") {
         var m = columns[i];
 
         var header = $("<div class='ui-state-default slick-header-column' />")
-            .html("<span class='slick-column-name'>" + m.name + "</span>")
+            .html("<div class='slick-column-name'>" + m.name + "</div>")
             .width(m.width - headerColumnWidthDiff)
             .attr("id", "" + uid + m.id)
             .attr("title", m.toolTip || "")
@@ -678,7 +678,8 @@ if (typeof Slick === "undefined") {
       });
     }
 
-    function setupColumnReorder() {
+    function setupColumnReorder() { /*
+      cb: disabling as not needed
       $headers.filter(":ui-sortable").sortable("destroy");
       $headers.sortable({
         containment: "parent",
@@ -713,6 +714,7 @@ if (typeof Slick === "undefined") {
           setupColumnResize();
         }
       });
+        */
     }
 
     function calculateColWidth( column, maxWidth ){
@@ -750,27 +752,11 @@ if (typeof Slick === "undefined") {
         }
         $col = $(e);
 
-          $col.bind("dblclick", function(e, dd){
-                var column = $(e.target).parent();
-                var idx = column.index();
-
-                if (idx >= 0) {
-                    var width = calculateColWidth(column, 200);
-                    $(".l" + idx).width(width + 4);
-                    columns[idx].width = width + 10;
-
-                    applyColumnHeaderWidths();
-                    applyColumnWidths();
-                    updateCanvasWidth(true);
-                    render();
-                    trigger(self.onColumnsResized, {});
-                }
-
-            })
-              //$("<div class='slick-resizable-handle' />")
-              ///$(".slick-header-column")
+        $("<div class='slick-resizable-handle ui-resizable-handle' />").appendTo(e)
+              //$(".slick-header-column")
               //.appendTo(e)
-            .bind("dragstart", function (e, dd) {
+          /*
+            $col.bind("a", function (e, dd) {
               if (!getEditorLock().commitCurrentEdit()) {
                 return false;
               }
@@ -914,7 +900,7 @@ if (typeof Slick === "undefined") {
               render();
               trigger(self.onColumnsResized, {});
             });
-
+*/
       });
     }
 
@@ -1039,7 +1025,7 @@ if (typeof Slick === "undefined") {
 
       if (options.enableColumnReorder) {
           $headers.filter(":ui-sortable").sortable("destroy");
-      }
+      } $headers.filter(":ui-sortable").sortable("destroy");
 
       unbindAncestorScrollEvents();
       $container.unbind(".slickgrid");
@@ -1250,6 +1236,7 @@ if (typeof Slick === "undefined") {
       columns = columnDefinitions;
 
       columnsById = {};
+
       for (var i = 0; i < columns.length; i++) {
         var m = columns[i] = $.extend({}, columnDefaults, columns[i]);
         columnsById[m.id] = i;
@@ -1739,7 +1726,7 @@ if (typeof Slick === "undefined") {
       } else {
         $canvas[0].removeChild(cacheEntry.rowNode);
       }
-      
+
       delete rowsCache[row];
       delete postProcessedRows[row];
       renderedRows--;
@@ -2262,6 +2249,7 @@ if (typeof Slick === "undefined") {
       if(options.enableWrap){
         $canvas.css('height', rowTops[rowHeights.length -1]);
       }
+
     }
 
     function handleHeaderRowScroll() {
@@ -2464,7 +2452,7 @@ if (typeof Slick === "undefined") {
           $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
           zombieRowNodeFromLastMouseWheelEvent = null;
         }
-        rowNodeFromLastMouseWheelEvent = rowNode;      
+        rowNodeFromLastMouseWheelEvent = rowNode;
       }
     }
 
@@ -2519,7 +2507,7 @@ if (typeof Slick === "undefined") {
             cancelEditAndSetFocus();
           } else if (e.which == 34) {
             navigatePageDown();
-            handled = true;           
+            handled = true;
           } else if (e.which == 33) {
             navigatePageUp();
             handled = true;
@@ -3141,7 +3129,7 @@ if (typeof Slick === "undefined") {
         var prevActivePosX = activePosX;
         while (cell <= activePosX) {
           if (canCellBeActive(row, cell)) {
-            prevCell = cell;  
+            prevCell = cell;
           }
           cell += getColspan(row, cell);
         }
@@ -3786,7 +3774,9 @@ if (typeof Slick === "undefined") {
       "refreshRowTops": refreshRowTops,
       "initializeRowHeights": initializeRowHeights,
       "calculateAdjustedRowTop": calculateAdjustedRowTop,
-      "initGridRows": initGridRows
+      "initGridRows": initGridRows,
+      "applyColumnHeaderWidths": applyColumnHeaderWidths,
+      "updateCanvasWidth": updateCanvasWidth
     });
 
     init();
