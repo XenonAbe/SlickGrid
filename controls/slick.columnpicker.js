@@ -152,6 +152,11 @@
         });
 
         grid.setColumns(newColumnSet);
+        
+        if (grid.getSelectedRows().length > 0) {
+          grid.setSelectedRows(grid.getSelectedRows());
+        }
+
         var evd = new Slick.EventData();
         evd.hiddenColumns = invisibleColumns;
         evd.visibleColumns = visibleColumns;
