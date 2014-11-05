@@ -93,10 +93,11 @@
       // of the current column sort.
       var current = grid.getColumns().slice(0);
       var ordered = new Array(columns.length);
-      for (var i = 0; i < ordered.length; i++) {
-        if (grid.getColumnIndex(columns[i].id) != null) {
+      for (var i = 0; i < columns.length; i++) {
+        var idx = grid.getColumnIndex(columns[i].id);
+        if (idx == null) {
           // If the column doesn't return a value from getColumnIndex,
-          // it is hidden. Leave it in this position.
+          // it is not visible. Inject it in its original position.
           ordered[i] = columns[i];
         } else {
           // Otherwise, grab the next visible column.

@@ -113,7 +113,10 @@
     assert(typeof grid.slickGridVersion);
     if (command && grid.getEditorLock().cancelCurrentEdit()) {
       command.undo();
-      grid.gotoCell(command.row, command.cell, false);
+      grid.gotoCell(command.row, command.cell, {
+        forceEdit: false,
+        takeFocus: false
+      });
     }
   }
 
@@ -129,7 +132,10 @@
     assert(typeof grid.getEditorLock === 'function');
     assert(typeof grid.slickGridVersion);
     if (command && grid.getEditorLock().cancelCurrentEdit()) {
-      grid.gotoCell(command.row, command.cell, false);
+      grid.gotoCell(command.row, command.cell, {
+        forceEdit: false,
+        takeFocus: false
+      });
       command.execute();
     }
   }

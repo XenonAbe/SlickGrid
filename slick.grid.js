@@ -52,6 +52,8 @@ if (typeof Slick === "undefined") {
   /* @const */ var NAVIGATE_HOME = 7;
   /* @const */ var NAVIGATE_END = 8;
 
+  /* @const */ var HEADER_ROW_WIDTH_CORRECTION = 2000;
+
   //////////////////////////////////////////////////////////////////////////////////////////////
   // SlickGrid class implementation (available as Slick.Grid)
 
@@ -778,10 +780,10 @@ if (typeof Slick === "undefined") {
         cached = true;
       }
       if (oldTotalColumnsWidth !== totalColumnsWidth) {
-        $topPanel.width(totalColumnsWidth + scrollbarDimensions.width);
-        $headerRow.width(totalColumnsWidth + scrollbarDimensions.width);
-        $footerRow.width(totalColumnsWidth + scrollbarDimensions.width);
-        $headers.width(totalColumnsWidth + scrollbarDimensions.width);
+        $topPanel.width(totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION);
+        $headerRow.width(totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION);
+        $footerRow.width(totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION);
+        $headers.width(totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION);
         cached = true;
       }
       if (oldViewportW !== viewportW) {
@@ -2101,7 +2103,7 @@ if (typeof Slick === "undefined") {
       assert(canvasWidth != null);
       assert(totalColumnsWidth != null);
       var gridWidth = canvasWidth;
-      var headerWidth = totalColumnsWidth + scrollbarDimensions.width;
+      var headerWidth = totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION;
       var headerScrollCompensation = scrollbarDimensions.width;
       for (var i = 0, len = columns.length; i < len; i++) {
         w = columns[i].width;
@@ -3256,7 +3258,7 @@ if (typeof Slick === "undefined") {
       return null;
     }
 
-    function appendRowHtml(stringArray, row, range, dataLength) {
+    function mkRowHtml(row, dataLength) {
       var d = getDataItem(row);
       var dataLoading = row < dataLength && !d;
       var rowCss = ["ui-widget-content", "slick-row",
@@ -3266,8 +3268,8 @@ if (typeof Slick === "undefined") {
       if (dataLoading) {
         rowCss.push("loading");
       }
-      if (row === activeRow) {
-        rowCss.push("active");
+      if (row === activePosY) {
+        rowCss.push("active-row");
       }
 
       if (!d) {
@@ -3287,14 +3289,12 @@ if (typeof Slick === "undefined") {
       assert(rowsCache[row]);
       assert(rowsCache[row].cellRenderQueue.length === 0);
 
-      stringArray.push("<div");
-
       var metaData = getAllCustomMetadata(rowMetadata) || {};
       metaData.role = "row";
-      var rowStyles = ["top: " + getRowTop(row) + "px;"];
+      var rowStyles = ["top: " + getRowTop(row) + "px"];
       var rowHeight = getRowHeight(row);
       if (rowHeight !== options.rowHeight - cellHeightDiff) {
-        rowStyles.push("height: " + rowHeight + "px;");
+        rowStyles.push("height: " + rowHeight + "px");
       }
 
       var info = $.extend({}, options.rowFormatterOptions, {
@@ -3302,18 +3302,29 @@ if (typeof Slick === "undefined") {
         rowStyles: rowStyles,
         attributes: metaData,
         rowHeight: rowHeight,
-        rowMetadata: rowMetadata
+        rowMetadata: rowMetadata,
+        rowData: d
       });
       // I/F: function rowFormatter(row, rowDataItem, rowMetaInfo)
       getRowFormatter(row)(row, rowMetadata, info);
-      assert(!metaData.class);
-      metaData.class = info.rowCss.join(" ");
-      assert(!metaData.style);
-      metaData.style = info.rowStyles.join(" ");
+      assert(metaData === info.attributes);
 
+      return info;
+    }
+
+    function appendRowHtml(stringArray, row, range, dataLength) {
+      var info = mkRowHtml(row, dataLength);
+      var metaData = info.attributes;
+
+      stringArray.push("<div");
+
+      patchupCellAttributes(metaData, info, "row");
       appendMetadataAttributes(stringArray, row, null, metaData, null, null, info);
 
       stringArray.push(">");
+
+      var rowMetadata = info.rowMetadata;
+      var d = info.rowData;
 
       var colspan, m, columnData;
       for (var i = 0, ii = columns.length; i < ii; i += colspan) {
@@ -3357,6 +3368,7 @@ if (typeof Slick === "undefined") {
 
     function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem) {
       var m = columns[cell];
+      assert(m);
       var colspan = 1;
       var rowspan = 1;
       var spans = getSpans(row, cell);
@@ -3432,18 +3444,23 @@ if (typeof Slick === "undefined") {
         metaData.title = metaData["data-title"] = info.toolTip;
       }
       assert(!metaData.style);
-      if (info.cellStyles.length) {
+      if (info.cellStyles && info.cellStyles.length) {
         metaData.style = info.cellStyles.join("; ") + ";";
+      } else if (info.rowStyles && info.rowStyles.length) {
+        metaData.style = info.rowStyles.join("; ") + ";";
       }
+
       assert(!metaData.class);
-      if (info.cellCss.length) {
+      if (info.cellCss && info.cellCss.length) {
         metaData.class = info.cellCss.join(" ");
+      } else if (info.rowCss && info.rowCss.length) {
+        metaData.class = info.rowCss.join(" ");
       }
-      var tabindex = -1;
+
       if (info.attributes.tabindex != null) {
-        tabindex = info.attributes.tabindex; 
+        metaData.tabindex = info.attributes.tabindex; 
       }
-      metaData.tabindex = tabindex;
+
       if (ariaRefID) {
         metaData["aria-describedby"] = ariaRefID;
       }
@@ -3453,6 +3470,7 @@ if (typeof Slick === "undefined") {
       assert(row >= 0);
       assert(cell >= 0);
       var m = columns[cell];
+      assert(m);
       // I/F: function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem)
       var info = mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem);
       
@@ -3489,20 +3507,24 @@ if (typeof Slick === "undefined") {
         metaData.title = metaData["data-title"] = info.toolTip;
       }
       assert(!metaData.style);
-      if (info.cellStyles.length) {
+      if (info.cellStyles && info.cellStyles.length) {
         metaData.style = info.cellStyles.join("; ") + ";";
+      } else if (info.rowStyles && info.rowStyles.length) {
+        metaData.style = info.rowStyles.join("; ") + ";";
       } else {
         metaData.style = null;
       }
       assert(!metaData.class);
-      if (info.cellCss.length) {
+      if (info.cellCss && info.cellCss.length) {
         metaData.class = info.cellCss.join(" ");
+      } else if (info.rowCss && info.rowCss.length) {
+        metaData.class = info.rowCss.join(" ");
+      } else {
+        metaData.class = null;
       }
-      var tabindex = -1;
       if (info.attributes.tabindex != null) {
-        tabindex = info.attributes.tabindex; 
+        metaData.tabindex = info.attributes.tabindex; 
       }
-      metaData.tabindex = tabindex;
 
       // apply the new attributes:
       for (var attr in metaData) {
@@ -3510,7 +3532,9 @@ if (typeof Slick === "undefined") {
         var val = metaData[attr];
         $el.attr(attr, val);
       }
-      $el.html(info.html);
+      if (info.html != null) {
+        $el.html(info.html);
+      }
     }
 
     function cleanupRows(rangeToKeep) {
@@ -3567,7 +3591,9 @@ if (typeof Slick === "undefined") {
     }
 
     function updateAllDirtyCells(rangeToUpdate, checkIfMustAbort) {
-      // do not update rows outside the specified range; when there's cells which are 
+      var dataLength = getDataLength();
+
+      // Do not update rows outside the specified range; when there's cells which are 
       // col/rowspanning and overlapping the specified range, than updateCell itself
       // will pick them up; after all, all the grid coordinates (cells) these 
       // row/colspanning nodes overlap are each flagged as "dirty" to ensure that we catch
@@ -3582,21 +3608,48 @@ if (typeof Slick === "undefined") {
           }
           var cellCache = cacheEntry.cellNodesByColumnIdx;
           var dirtyFlags = cacheEntry.dirtyCellNodes;
-          for (var cell = cacheEntry.cellNodesByColumnStart, len = cellCache.length; cell < len; cell++) {
+          // Before we update any dirty cells in the row, update the row itself!
+          if (cacheEntry.isDirty) {
+            updateRowInternal(row, dataLength);
+          }
+          for (var cell = cacheEntry.cellNodesByColumnStart, len = Math.min(cellCache.length, columns.length); cell < len; cell++) {
+            var colspan = 1;
+            var spans = getSpans(row, cell);
+            if (spans) {
+              assert(row === spans.row);
+              colspan = spans.colspan;
+            }
+            if (columnPosLeft[cell + colspan] > rangeToUpdate.leftPx) {
+              if (columnPosLeft[cell] >= rangeToUpdate.rightPx) {
+                // All columns to the right are outside the range.
+                break;
+              }
+            }
             if (cellCache[cell] && dirtyFlags[cell]) {
               updateCellInternal(row, cell, cacheEntry, cellCache[cell]);
               assert(!dirtyFlags[cell]);
             }
           }
 
-          // flag the row as updated completely.
-          // 
-          // Note: the rowCache may have been partially cleaned after the last set-dirty action, 
-          // hence expect lingering 'dirty' entries. These are utterly useless by now as their
-          // accompanying DOM node(s) have been eradicated already.
-          assert(cacheEntry.isDirty >= 0);          
-          cacheEntry.dirtyCellNodes = [];
-          cacheEntry.isDirty = 0;
+          // Kill all cells which are still around after the column count has changed:
+          for (var cellToRemove = cellCache.length - 1; cellToRemove >= columns.length; cellToRemove--) {
+            var node = cellCache[cellToRemove];
+            if (node) {
+              cacheEntry.rowNode.removeChild(node);
+              delete cellCache[cellToRemove];
+
+              if (dirtyFlags[cellToRemove]) {
+                dirtyFlags[cellToRemove] = false;
+                cacheEntry.isDirty--;
+                assert(cacheEntry.isDirty >= 0);
+              }
+
+              //totalCellsRemoved++;
+            }
+          }
+
+          // We cannot yet flag the row as updated completely, as we only updated the *visible* cells.
+          assert(cacheEntry.isDirty >= 0);
         }
 
         if (checkIfMustAbort && checkIfMustAbort()) {
@@ -3766,7 +3819,7 @@ if (typeof Slick === "undefined") {
                 // (intersectingCells[r] || (intersectingCells[r] = []))[span.cell] = true;
                 // intersectingCellsRowStartIndex = Math.min(intersectingCellsRowStartIndex, r);
                 // intersectingCellsColStartIndex = Math.min(intersectingCellsColStartIndex, span.cell);
-                invalidateCell(r, span.cell);
+                invalidateCellSpan(span);
               }
             }
           }
@@ -3842,22 +3895,55 @@ if (typeof Slick === "undefined") {
       invalidateRows([row]);
     }
 
-    function invalidateCell(row, cell) {
-      var cacheEntry = rowsCache[row];
-      if (cacheEntry) {
-        var cellNodes = cacheEntry.cellNodesByColumnIdx;
-        var dirtyFlaggingArray = cacheEntry.dirtyCellNodes;
-        if (cellNodes[cell] && !dirtyFlaggingArray[cell]) {
-          if (currentEditor && activeRow === row && activeCell === cell) {
-            makeActiveCellNormal();
-            assert(!currentEditor);
+    function invalidateCellSpan(span) {
+      assert(span);
+      var row = span.row;
+      var cell = span.cell;
+      var endRow = row + span.rowspan;
+      var endCell = cell + span.colspan;
+      if (currentEditor && activeRow >= row && activeRow < endRow && activeCell >= cell && activeCell < endCell) {
+        makeActiveCellNormal();
+        assert(!currentEditor);
+      }
+      for (var r = row; r < endRow; r++) {
+        var cacheEntry = rowsCache[r];
+        if (cacheEntry) {
+          var cellNodes = cacheEntry.cellNodesByColumnIdx;
+          var dirtyFlaggingArray = cacheEntry.dirtyCellNodes;
+          for (var c = cell; c < endCell; c++) {
+            if (cellNodes[c] && !dirtyFlaggingArray[c]) {
+              dirtyFlaggingArray[c] = true;
+              assert(cacheEntry.isDirty >= 0);
+              cacheEntry.isDirty++;
+            }
           }
-          dirtyFlaggingArray[cell] = true;
-          assert(cacheEntry.isDirty >= 0);
-          cacheEntry.isDirty++;
         }
       }
     }
+
+    // Invalidate the entire row/colspan area covered by the cell
+    function invalidateCell(row, cell) {
+      // Get the old row/colspan for this cell:
+      var spanRow = cellSpans[row];
+      var spanCell = spanRow && spanRow[cell];
+      var oldRowspan = (spanCell && spanCell.rowspan) || 1;
+      var oldColspan = (spanCell && spanCell.colspan) || 1;
+
+      // Get the new row/colspan for this cell:
+      var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, false);
+      var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[columns[cell].id] || rowMetadata.columns[cell]);
+      var rowspan = (columnMetadata && columnMetadata.rowspan) || 1;
+      var colspan = (columnMetadata && columnMetadata.colspan) || 1;
+
+      var span = {
+        row: row, 
+        cell: cell, 
+        rowspan: Math.max(rowspan, oldRowspan), 
+        colspan: Math.max(colspan, oldColspan)
+      };
+      invalidateCellSpan(span);
+    }
+
 
     function invalidateColumns(cols) {
       var r, c, i, lr, lc, col, spans, rowspan, colspan, rr, cc, node;
@@ -3893,7 +3979,7 @@ if (typeof Slick === "undefined") {
               // (Otherwise, we're just looking at a node which hasn't been cached/rendered yet...)
               spans = getSpans(r, c);
               if (spans) {
-                invalidateCell(spans.row, spans.cell);
+                invalidateCellSpan(spans);
               }
             }
           }
@@ -3943,6 +4029,7 @@ if (typeof Slick === "undefined") {
     function updateCellInternal(row, cell, cacheEntry, cellNode) {
       var m = columns[cell],
           d = getDataItem(row);
+      assert(m);
       assert(cacheEntry === rowsCache[row]);
       assert(cacheEntry);
       assert(cacheEntry.cellNodesByColumnIdx[cell]);
@@ -3953,6 +4040,8 @@ if (typeof Slick === "undefined") {
       assert(spans ? spans.colspan >= 1 : true);
       if (spans) {
         rowspan = spans.rowspan;
+
+        // All DOM nodes which are now covered by this row/colspan are nuked by cleanupRows()/cleanupCells() later on!
 
         assert(spans.row === row);
         assert(spans.cell === cell);
@@ -3978,15 +4067,11 @@ if (typeof Slick === "undefined") {
           cellNode.style.height = "";
         }
 
-        if (d) {
-          // I/F: function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem)
-          var info = mkCellHtml(row, cell, rowMetadata, columnMetadata, d);
-          var el = $(cellNode);
-          updateElementHtml(el, info);
-        } else {
-          cellNode.innerHTML = "";
-          // TODO: clear all attributes?
-        }
+        // I/F: function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem)
+        var info = mkCellHtml(row, cell, rowMetadata, columnMetadata, d);
+        var $el = $(cellNode);
+        assert(info.html != null);
+        updateElementHtml($el, info);
         invalidatePostProcessingResults(row, cell);
       }
     }
@@ -3999,14 +4084,35 @@ if (typeof Slick === "undefined") {
 
       ensureCellNodesInRowsCache(row);
 
-      var cachedCellNodesByColumnIdxs = cacheEntry.cellNodesByColumnIdx;
-      for (var columnIdx = cacheEntry.cellNodesByColumnStart, end = cachedCellNodesByColumnIdxs.length; columnIdx < end; columnIdx++) {
-        var node = cachedCellNodesByColumnIdxs[columnIdx];
+      var dataLength = getDataLength();
+      updateRowInternal(row, dataLength);
+
+      var cellCache = cacheEntry.cellNodesByColumnIdx;
+      var dirtyFlags = cacheEntry.dirtyCellNodes;
+      for (var columnIdx = cacheEntry.cellNodesByColumnStart, end = Math.min(cellCache.length, columns.length); columnIdx < end; columnIdx++) {
+        var node = cellCache[columnIdx];
         if (!node) {
           continue;
         }
 
         updateCellInternal(row, columnIdx, cacheEntry, node);
+      }
+
+      // Kill all cells which are still around after the column count has changed:
+      for (var cellToRemove = cellCache.length - 1; cellToRemove >= columns.length; cellToRemove--) {
+        var node = cellCache[cellToRemove];
+        if (node) {
+          cacheEntry.rowNode.removeChild(node);
+          delete cellCache[cellToRemove];
+
+          if (dirtyFlags[cellToRemove]) {
+            dirtyFlags[cellToRemove] = false;
+            cacheEntry.isDirty--;
+            assert(cacheEntry.isDirty >= 0);
+          }
+
+          //totalCellsRemoved++;
+        }
       }
 
       // flag the row as updated completely:
@@ -4015,6 +4121,17 @@ if (typeof Slick === "undefined") {
       cacheEntry.isDirty = 0;
 
       invalidatePostProcessingResults(row, null);
+    }
+
+    function updateRowInternal(row, dataLength) {
+      var cacheEntry = rowsCache[row];
+      assert(cacheEntry);
+      assert(cacheEntry.isDirty > 0);
+      assert(cacheEntry.rowNode);
+
+      var info = mkRowHtml(row, dataLength);
+      assert(info.html == null);
+      updateElementHtml($(cacheEntry.rowNode), info);
     }
 
     function getCellHeight(row, rowspan) {
@@ -4156,9 +4273,9 @@ if (typeof Slick === "undefined") {
         }
       }
       
-      if (rowsCache.length > dataLengthIncludingAddNew) {
-        rowsCache.length = dataLengthIncludingAddNew;
-      }
+      // if (rowsCache.length > dataLengthIncludingAddNew) {
+      //   rowsCache.length = dataLengthIncludingAddNew;
+      // }
 
       var rowMax = (options.enableAddRow
         ? getRowBottom(getDataLength())
@@ -4304,7 +4421,7 @@ if (typeof Slick === "undefined") {
     }
 
     function cleanUpCells(range, row) {
-      var totalCellsRemoved = 0;
+      //var totalCellsRemoved = 0;
       var cacheEntry = rowsCache[row];
       assert(cacheEntry);
 
@@ -4315,12 +4432,14 @@ if (typeof Slick === "undefined") {
       }
 
       // Remove cells outside the range.
-      var cellsToRemove = [];
-      var minCachedDeletedCellNodeIndex = cacheEntry.deletedCellNodesByColumnStart;
+      // 
+      // Also remove the cells inside the range which are overlapped by other row/colspanning cells. 
+      // (The latter situation occurs when one or more cells had their row/colspan changed recently.)
       var minCachedCellNodeIndex = cacheEntry.cellNodesByColumnStart;
-      var cachedCellNodesByColumnIdxs = cacheEntry.cellNodesByColumnIdx;
-      for (var columnIdx = minCachedCellNodeIndex, end = cachedCellNodesByColumnIdxs.length; columnIdx < end; columnIdx++) {
-        var node = cachedCellNodesByColumnIdxs[columnIdx];
+      var cellCache = cacheEntry.cellNodesByColumnIdx;
+      var dirtyFlags = cacheEntry.dirtyCellNodes;
+      for (var columnIdx = minCachedCellNodeIndex, end = cellCache.length; columnIdx < end; columnIdx++) {
+        var node = cellCache[columnIdx];
         if (!node) {
           continue;
         }
@@ -4330,38 +4449,69 @@ if (typeof Slick === "undefined") {
         if (spans) {
           assert(row === spans.row);
           colspan = spans.colspan;
+          if (columnIdx !== spans.cell) {
+            // Remove the cells inside the range which are overlapped by other row/colspanning cells. 
+            for (var c = spans.cell + 1, ec = spans.cell + spans.colspan; c < ec; c++) {
+              var olNode = cellCache[c];
+              if (!olNode) {
+                continue;
+              }
+              // We NEVER nuke the 'active cell', even when it's a cell which is now overlapped by another cell: 
+              // when this happens, the userland code which changed the row/colspans that did this must be allowed
+              // to change the active cell at their own pace; until that time, you will be stuck with a
+              // (temporarily) overlapped~illegal active cell DOM node.
+              if (row !== activeRow || columnIdx !== activeCell) {
+                if (dirtyFlags[c]) {
+                  dirtyFlags[c] = false;
+                  cacheEntry.isDirty--;
+                  assert(cacheEntry.isDirty >= 0);
+                }
+
+                cacheEntry.rowNode.removeChild(olNode);
+                delete cellCache[c];
+                if (postProcessedRows[row]) {
+                  // array element delete vs. setting it to undefined (here: FALSE): http://jsperf.com/delete-vs-undefined-vs-null/19 
+                  postProcessedRows[row][c] = false;
+                }
+                if (minCachedCellNodeIndex === c) {
+                  minCachedCellNodeIndex++;
+                }
+
+                //totalCellsRemoved++;
+              }
+            }
+            columnIdx = spans.cell + spans.colspan - 1;
+            continue;
+          }
         }
-        assert(Math.min(columns.length, columnIdx + colspan) === columnIdx + colspan);
-        if (columnPosLeft[columnIdx] >= range.rightPx ||
-          columnPosLeft[columnIdx + colspan] <= range.leftPx) {
+        assert(columnIdx < columns.length ? Math.min(columns.length, columnIdx + colspan) === columnIdx + colspan : true);
+        if (columnIdx >= columns.length ||
+            columnPosLeft[columnIdx] >= range.rightPx ||
+            columnPosLeft[columnIdx + colspan] <= range.leftPx) {
           if (row !== activeRow || columnIdx !== activeCell) {
-            cellsToRemove.push(columnIdx);
+            if (dirtyFlags[columnIdx]) {
+              dirtyFlags[columnIdx] = false;
+              cacheEntry.isDirty--;
+              assert(cacheEntry.isDirty >= 0);
+            }
+
+            cacheEntry.rowNode.removeChild(node);
+            delete cellCache[columnIdx];
+            if (postProcessedRows[row]) {
+              // array element delete vs. setting it to undefined (here: FALSE): http://jsperf.com/delete-vs-undefined-vs-null/19 
+              postProcessedRows[row][columnIdx] = false;
+            }
+            if (minCachedCellNodeIndex === columnIdx) {
+              minCachedCellNodeIndex++;
+            }
+
+            //totalCellsRemoved++;
           }
         }
       }
 
-      var cellToRemove;
-      while ((cellToRemove = cellsToRemove.pop()) != null) {
-        assert(cacheEntry.cellNodesByColumnIdx[cellToRemove]);
-        cacheEntry.rowNode.removeChild(cacheEntry.cellNodesByColumnIdx[cellToRemove]);
-        // cacheEntry.cellNodesByColumnIdx[cellToRemove].classList.add("destroyed");
-        // cacheEntry.deletedCellNodesByColumnIdx[cellToRemove] = cacheEntry.cellNodesByColumnIdx[cellToRemove];
-        delete cacheEntry.cellNodesByColumnIdx[cellToRemove];
-        if (postProcessedRows[row]) {
-          // array element delete vs. setting it to undefined (here: FALSE): http://jsperf.com/delete-vs-undefined-vs-null/19 
-          postProcessedRows[row][cellToRemove] = false;
-        }
-        if (minCachedCellNodeIndex === cellToRemove) {
-          minCachedCellNodeIndex++;
-        }
-        if (minCachedDeletedCellNodeIndex > cellToRemove) {
-          minCachedDeletedCellNodeIndex = cellToRemove;
-        }
-        totalCellsRemoved++;
-      }
-
       cacheEntry.cellNodesByColumnStart = minCachedCellNodeIndex;
-      cacheEntry.deletedCellNodesByColumnStart = minCachedDeletedCellNodeIndex;
+      //cacheEntry.deletedCellNodesByColumnStart = minCachedDeletedCellNodeIndex;
     }
 
     function cleanUpAndRenderCells(range, mandatoryRange, checkIfMustAbort) {
@@ -4370,7 +4520,7 @@ if (typeof Slick === "undefined") {
       var stringArray = [];
       var processedRows = [];
       var cellsAdded;
-      var totalCellsAdded = 0;
+      //var totalCellsAdded = 0;
       var colspan;
       var columnData;
       var i, ii;
@@ -4436,7 +4586,7 @@ if (typeof Slick === "undefined") {
         }
 
         if (cellsAdded) {
-          totalCellsAdded += cellsAdded;
+          //totalCellsAdded += cellsAdded;
           processedRows.push(row);
         }
 
@@ -4719,24 +4869,21 @@ if (typeof Slick === "undefined") {
 
     function forcedRenderCriticalCell(row, cell) {
       var cellBoxInfo = getCellNodeBox(row, cell);
-      assert(cellBoxInfo);
-      var leftPx = scrollLeft;
-      var rightPx = scrollLeft + viewportW;
       // when the sought-after cell is outside the visible part of the row, we don't render a series but only that single node:
       if (cellBoxInfo) {
-        leftPx = cellBoxInfo.left;
-        rightPx = cellBoxInfo.right;
+        // now construct the range object a la getRenderedRange() to be the minimal area that should get us, at least, the rendered cell DIV we seek here.
+        var spanInfo = cellBoxInfo.spanInfo;
+        var rendered = {
+          top: spanInfo.row,
+          bottom: spanInfo.row + spanInfo.rowspan,
+          left: spanInfo.cell,
+          right: spanInfo.cell + spanInfo.colspan,
+          leftPx: cellBoxInfo.left,
+          rightPx: cellBoxInfo.right
+        };
+        return forcedRender(rendered, 0);
       }
-      // now construct the range object a la getRenderedRange() to be the minimal area that should get us, at least, the rendered cell DIV we seek here.
-      var rendered = {
-        top: row,
-        bottom: row + 1,
-        left: cell,
-        right: cell + 1,
-        leftPx: leftPx,
-        rightPx: rightPx
-      };
-      return forcedRender(rendered, 0);
+      return false;
     }
 
     function forcedRender(mandatoryRange, timeSlice) {
@@ -5011,10 +5158,10 @@ out:
         // our own stuff:
         ensureCellNodesInRowsCache(row);
 
-        var cachedCellNodesByColumnIdxs = cacheEntry.cellNodesByColumnIdx;
-        for (var columnIdx = cacheEntry.cellNodesByColumnStart, end = cachedCellNodesByColumnIdxs.length; columnIdx < end; columnIdx++) {
+        var cellCache = cacheEntry.cellNodesByColumnIdx;
+        for (var columnIdx = cacheEntry.cellNodesByColumnStart, end = Math.min(cellCache.length, columns.length); columnIdx < end; columnIdx++) {
           var m = columns[columnIdx],
-              node = cachedCellNodesByColumnIdxs[columnIdx];
+              node = cellCache[columnIdx];
           assert(m);
           if (node && m.asyncPostRender && !postProcessedRows[row][columnIdx]) {
             m.asyncPostRender(node, row, columnIdx, getDataItem(row), m);
@@ -5392,7 +5539,10 @@ out:
         // we simply activate the top/left visible cell and proceed from there:
         if (!activeCellNode && !currentEditor) {
           var visibleRange = getVisibleRange();
-          setActiveCell(visibleRange.row, visibleRange.cell, false);
+          setActiveCell(visibleRange.row, visibleRange.cell, {
+            forceEdit: false,
+            takeFocus: false
+          });
         }
 
         if (!shiftKey && !altKey && !ctrlKey) {
@@ -5509,7 +5659,11 @@ out:
         if (!getEditorLock().isActive() || getEditorLock().commitCurrentEdit()) {
           scrollRowIntoView(cell.row, false);
           assert(cell.node);
-          setActiveCellInternal(cell.node, false, false);
+          setActiveCellInternal(cell.node, {
+            forceEditMode: false, 
+            takeFocus: false,
+            coordinate: cell
+          });
         }
       }
     }
@@ -5544,7 +5698,10 @@ out:
         return;
       }
 
-      gotoCell(cell.row, cell.cell, (options.editable ? 2 /* truthy value which "wins" over options.asyncEditorLoading: open the editor immediately! */ : null));
+      gotoCell(cell.row, cell.cell, {
+        forceEdit: (options.editable ? 2 /* truthy value which "wins" over options.asyncEditorLoading: open the editor immediately! */ : null),
+        takeFocus: false
+      });
     }
 
     function handleHeaderMouseEnter(e) {
@@ -5781,10 +5938,23 @@ out:
       if (row == null || cell == null) {
         return null;
       } else {
+        var rowspan = 1;
+        var colspan = 1;
+        var spans = getSpans(row, cell);
+        if (spans) {
+          assert(row === spans.row);
+          assert(cell === spans.cell);
+          row = spans.row;
+          cell = spans.cell;
+          rowspan = spans.rowspan;
+          colspan = spans.colspan;
+        }
         assert(cellExists(row, cell) || (options.enableAddRow ? (row === getDataLength() && cell < columns.length && cell >= 0) : true));
         return {
           row: row,
           cell: cell,
+          rowspan: rowspan,
+          colspan: colspan,
           node: node
         };
       }
@@ -5829,16 +5999,36 @@ out:
         }
       }
 
+      var rowspan = 1;
+      var colspan = 1;
+      var spans = getSpans(row, cell);
+      if (spans) {
+        assert(row === spans.row);
+        assert(cell === spans.cell);
+        row = spans.row;
+        cell = spans.cell;
+        rowspan = spans.rowspan;
+        colspan = spans.colspan;
+      } else {
+        spans = {
+          row: row,
+          cell: cell,
+          rowspan: rowspan,
+          colspan: colspan
+        };
+      }
+
       var y1 = getRowTop(row) - pageOffset;
-      var y2 = y1 + getRowHeight(row);
+      var y2 = getRowTop(row + rowspan) - pageOffset;
       var x1 = getColumnOffset(cell);
-      var x2 = x1 + columns[cell].width;
+      var x2 = getColumnOffset(cell + colspan);
 
       return {
         top: y1,
         left: x1,
         bottom: y2,
-        right: x2
+        right: x2,
+        spanInfo: spans
       };
     }
 
@@ -5846,7 +6036,10 @@ out:
     // Cell switching
 
     function resetActiveCell() {
-      setActiveCellInternal(null, false, false);
+      setActiveCellInternal(null, {
+        forceEditMode: false, 
+        takeFocus: false
+      });
     }
 
     function setFocus() {
@@ -5924,7 +6117,7 @@ out:
       }
     }
 
-    function setActiveCellInternal(newCellNode, opt_editMode, takeFocus) {
+    function setActiveCellInternal(newCellNode, cfg) {
       // Also check which node currently has focus *before* we send events and thus give userland
       // code to move the focus.
       // 
@@ -5932,12 +6125,15 @@ out:
       var oldFocusNode = document.activeElement;
       var oldFocusCellInfo = getCellFromElement(oldFocusNode);
 
+      assert(cfg); // opt_editMode, takeFocus
+
       var activeCellChanged = (activeCellNode != newCellNode);
       var newActiveRow;
       if (newCellNode != null) {
         newActiveRow = getRowFromNode(newCellNode.parentNode);
-        if (opt_editMode == null) {
-          opt_editMode = (options.enableAddRow && newActiveRow === getDataLength()) || options.autoEdit;
+        assert(newActiveRow != null);
+        if (cfg.forceEdit == null) {
+          cfg.forceEdit = (options.enableAddRow && newActiveRow === getDataLength()) || options.autoEdit;
         }
       }
 
@@ -5952,7 +6148,7 @@ out:
         trigger(self.onActiveCellChanging, {
           activeCell:     newCellNode,
           prevActiveCell: activeCellNode,
-          editMode:       opt_editMode,
+          editMode:       cfg.forceEdit,
         }, e);
         if (e.isHandled()) {
           return false;
@@ -5963,13 +6159,7 @@ out:
         makeActiveCellNormal();
         $(activeCellNode)
           .removeClass("active")
-          .parent().removeClass("active-row");
-        if (rowsCache[activeRow]) {
-          assert(rowsCache[activeRow].rowNode);
-          $(rowsCache[activeRow].rowNode)
-            .removeClass("active")
-            .parent().removeClass("active-row");
-        }
+          .parent().removeClass("active-row");          // We don't know the old PosY so this only works well for rowspan=1 cells
       }
 
       var prevActiveCell = activeCellNode;
@@ -5977,24 +6167,44 @@ out:
 
       if (newCellNode != null) {
         assert(activeCellNode);
-        activeRow = activePosY = getRowFromNode(newCellNode.parentNode);
-        activeCell = activePosX = getCellFromNode(newCellNode);
+        activeRow = getRowFromNode(newCellNode.parentNode);
+        activeCell = getCellFromNode(newCellNode);
+        assert(activeRow != null);
         assert(activeCell != null);
-        assert(opt_editMode != null);
+        assert(cfg.forceEdit != null);
+        // Only update the active cursor coordinate (which may be anywhere inside the cell span!)
+        // when the coordinate is either outside the current cell span OR when the caller has 
+        // explicitly demanded we set the cursor coordinate as well:
+        var spans = getSpans(activeRow, activeCell);
+        if (!spans) {
+          spans = {
+            row: activeRow,
+            cell: activeCell,
+            colspan: 1,
+            rowspan: 1
+          };
+        }
+        assert(spans.row === activeRow);
+        assert(spans.cell === activeCell);
+        if (cfg.forcePosition || activePosY == null || activePosX == null || activePosY < spans.row || activePosY >= spans.row + spans.rowspan || activePosX < spans.cell || activePosX >= spans.cell + spans.colspan) {
+          activePosY = activeRow;
+          activePosX = activeCell;
+        }
 
+        assert($(newCellNode).parent()[0] === rowsCache[activeRow].rowNode);
         $(newCellNode)
-          .addClass("active")
-          .parent().addClass("active-row");
-        $(rowsCache[activeRow].rowNode)
-          .addClass("active")
-          .parent().addClass("active-row");
+          .addClass("active");
+        if (rowsCache[activePosY] && rowsCache[activePosY].rowNode) {
+          $(rowsCache[activePosY].rowNode)
+            .addClass("active-row");
+        }
 
         if (activeCellChanged) {
           //activeCellNode.focus();
           trigger(self.onActiveCellChanged, {
             activeCell:     newCellNode,
             prevActiveCell: prevActiveCell,
-            editMode:       opt_editMode,
+            editMode:       cfg.forceEdit,
           }, e);
           if (e.isHandled()) {
             return true;
@@ -6016,7 +6226,7 @@ out:
         var oldFocusNode2 = document.activeElement;
         // TODO: detect focus moving in userland code.
         
-        if (!oldFocusCellInfo && (oldFocusNode === document.body || takeFocus)) {
+        if (!oldFocusCellInfo && (oldFocusNode === document.body || cfg.takeFocus)) {
           // fake it to simplify the conditional check below:
           oldFocusCellInfo = {
             node: oldFocusNode
@@ -6044,12 +6254,12 @@ out:
           //console.log("focus fixup exec END: ", document.activeElement);
         }
 
-        if (options.editable && opt_editMode && isCellPotentiallyEditable(activeRow, activeCell)) {
+        if (options.editable && cfg.forceEdit && isCellPotentiallyEditable(activeRow, activeCell)) {
           clearTimeout(h_editorLoader);
           h_editorLoader = null;
 
-          // if opt_editMode > 1 then show the editor immediately (this happens for instance when the cell is double-clicked)
-          if (options.asyncEditorLoading >= opt_editMode) {
+          // if cfg.forceEdit > 1 then show the editor immediately (this happens for instance when the cell is double-clicked)
+          if (options.asyncEditorLoading >= cfg.forceEdit) {
             h_editorLoader = setTimeout(function h_show_editor_f() {
               makeActiveCellEditable();
             }, options.asyncEditorLoadDelay);
@@ -6060,11 +6270,12 @@ out:
       } else {
         assert(activeCellNode == null);
         activeRow = activeCell = null;
+        activePosX = activePosY = null;
 
         // when the activeCellNode is reset, we *still* want to retain focus inside slickgrid
         // if we had it previously: that way we ensure the keyboard events etc. will continue
         // to arrive at the appropriate handlers.
-        if (!oldFocusCellInfo && (oldFocusNode === document.body || takeFocus)) {
+        if (!oldFocusCellInfo && (oldFocusNode === document.body || cfg.takeFocus)) {
           // fake it to simplify the conditional check below:
           oldFocusCellInfo = {
             node: oldFocusNode
@@ -6112,13 +6323,19 @@ out:
     }
 
     function isCellPotentiallyEditable(row, cell) {
+      // is this coordinate legal?
       var dataLength = getDataLength();
+      if (!(row <= dataLength && row >= 0 && cell < columns.length && cell >= 0)) {
+        return false;
+      }
+
       // is the data for this row loaded?
       if (row < dataLength && !getDataItem(row)) {
         return false;
       }
 
-      // are we in the Add New row?  can we create new from this cell?
+      // are we in the Add New row?  can we create a new row from this cell?
+      assert(columns[cell]);
       if (columns[cell].cannotTriggerInsert && row >= dataLength) {
         return false;
       }
@@ -6154,16 +6371,15 @@ out:
         var d = getDataItem(activeRow);
         var $activeCellNode = $(activeCellNode);
         $activeCellNode.removeClass("editable invalid");
-        if (d) {
-          var column = columns[activeCell];
-          var rowMetadata = data.getItemMetadata && data.getItemMetadata(activeRow, activeCell);
-          // look up by id, then index
-          var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
-          // I/F: function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem)
-          var info = mkCellHtml(activeRow, activeCell, rowMetadata, columnMetadata, d);
-          updateElementHtml($activeCellNode, info);
-          invalidatePostProcessingResults(activeRow, activeCell);
-        }
+        var column = columns[activeCell];
+        var rowMetadata = data.getItemMetadata && data.getItemMetadata(activeRow, activeCell);
+        // look up by id, then index
+        var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[column.id] || rowMetadata.columns[activeCell]);
+        // I/F: function mkCellHtml(row, cell, rowMetadata, columnMetadata, rowDataItem)
+        var info = mkCellHtml(activeRow, activeCell, rowMetadata, columnMetadata, d);
+        assert(info.html != null);
+        updateElementHtml($activeCellNode, info);
+        invalidatePostProcessingResults(activeRow, activeCell);
       }
 
       // if there previously was text selected on a page (such as selected text in the edit cell just removed),
@@ -6515,7 +6731,10 @@ out:
         if (prevCell !== -1) {
           var node = getCellNode(row, prevCell, true);
           assert(node);
-          setActiveCellInternal(node, false, false);
+          setActiveCellInternal(node, {
+            forceEditMode: false, 
+            takeFocus: false
+          });
           activePosX = prevActivePosX;
         } else {
           resetActiveCell();
@@ -6645,11 +6864,14 @@ out:
         assert(0);
         return null;
       }
+      assert(posY != null);
+      assert(posX != null);
 
       var lastCell = columns.length - 1;
       var spanRow, endCell;
       var spans;
 
+      row = posY;
       assert(row >= 0);
       assert(cell >= 0);
       assert(cell <= lastCell);
@@ -6659,7 +6881,7 @@ out:
       spans = getSpans(row, cell);
       if (spans) {
         assert(cell >= spans.cell);
-        endCell = spans.cell + spans.colspan;
+        endCell = spans.cell + spans.colspan - 1;
       }
       // Find next focusable cell in this row
       for (cell = endCell + 1; cell <= lastCell; cell = endCell + 1) {
@@ -6669,16 +6891,15 @@ out:
         if (spans) {
           spanRow = spans.row;
           assert(cell === spans.cell);
-          endCell = spans.cell + spans.colspan;
+          endCell = spans.cell + spans.colspan - 1;
         }
         if (canCellBeActive(spanRow, cell)) {
+          // The returned (row, cell) coordinate MUST be the top/left corner of the cell span:
           return {
-            row: row,         // do not adjust the row!
+            row: spanRow,
             cell: cell,
             posY: posY,
-            posX: cell,
-            spanRow: spanRow,
-            spanCell: cell
+            posX: cell
           };
         }
       }
@@ -6690,23 +6911,26 @@ out:
         assert(0);
         return null;
       }
+      assert(posY != null);
+      assert(posX != null);
 
       var spanRow, spanCell;
       var spans;
-      
+
+      row = posY;      
       assert(row >= 0);
       assert(cell >= 0);
       assert(cell < columns.length);
 
       // In the beginning, we may be at a cell that's midway in a span: skip the span we're currently at
-      spanCell = cell - 1;
+      spanCell = cell;
       spans = getSpans(row, cell);
       if (spans) {
         assert(cell >= spans.cell);
-        spanCell = spans.cell - 1;
+        spanCell = spans.cell;
       }
       // Find next focusable cell in this row
-      for (cell = spanCell; cell >= 0; cell = spanCell - 1) {
+      for (cell = spanCell - 1; cell >= 0; cell = spanCell - 1) {
         spanRow = row;
         spanCell = cell;
         spans = getSpans(row, cell);
@@ -6715,13 +6939,12 @@ out:
           spanCell = spans.cell;
         }
         if (canCellBeActive(spanRow, spanCell)) {
+          // The returned (row, cell) coordinate MUST be the top/left corner of the cell span:
           return {
-            row: row,         // do not adjust the row!
+            row: spanRow,
             cell: spanCell,
             posY: posY,
-            posX: spanCell,
-            spanRow: spanRow,
-            spanCell: spanCell
+            posX: spanCell
           };
         }
       }
@@ -6733,11 +6956,14 @@ out:
         assert(0);
         return null;
       }
+      assert(posY != null);
+      assert(posX != null);
 
       var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
       var spanCell, endRow;
       var spans;
       
+      cell = posX;
       assert(row >= 0);
       assert(row < dataLengthIncludingAddNew);
       assert(cell >= 0);
@@ -6748,7 +6974,7 @@ out:
       spans = getSpans(row, cell);
       if (spans) {
         assert(row >= spans.row);
-        endRow = spans.row + spans.rowspan;
+        endRow = spans.row + spans.rowspan - 1;
       }
       // Find next focusable row in this column
       for (row = endRow + 1; row < dataLengthIncludingAddNew; row = endRow + 1) {
@@ -6758,16 +6984,15 @@ out:
         if (spans) {
           spanCell = spans.cell;
           assert(row === spans.row);
-          endRow = spans.row + spans.rowspan;
+          endRow = spans.row + spans.rowspan - 1;
         }
         if (canCellBeActive(row, spanCell)) {
+          // The returned (row, cell) coordinate MUST be the top/left corner of the cell span:
           return {
             row: row,
-            cell: cell,         // do not adjust the cell!
+            cell: spanCell,         
             posY: row,
-            posX: posX,
-            spanRow: row,
-            spanCell: cell 
+            posX: posX 
           };
         }
       }
@@ -6779,23 +7004,26 @@ out:
         assert(0);
         return null;
       }
+      assert(posY != null);
+      assert(posX != null);
 
       var spanRow, spanCell;
       var spans;
-      
+
+      cell = posX;      
       assert(row >= 0);
       assert(cell >= 0);
       assert(cell < columns.length);
 
       // In the beginning, we may be at a row that's midway in a span: skip the span we're currently at
-      spanRow = row - 1;
+      spanRow = row;
       spans = getSpans(row, cell);
       if (spans) {
         assert(row >= spans.row);
-        spanRow = spans.row - 1;
+        spanRow = spans.row;
       }
       // Find next focusable row in this column
-      for (row = spanRow; row >= 0; row = spanRow - 1) {
+      for (row = spanRow - 1; row >= 0; row = spanRow - 1) {
         spanRow = row;
         spanCell = cell;
         spans = getSpans(row, cell);
@@ -6804,13 +7032,12 @@ out:
           spanCell = spans.cell;
         }
         if (canCellBeActive(spanRow, spanCell)) {
+          // The returned (row, cell) coordinate MUST be the top/left corner of the cell span:
           return {
             row: spanRow,
-            cell: cell,         // do not adjust the column!
+            cell: spanCell,
             posY: spanRow,
-            posX: posX,
-            spanRow: spanRow,
-            spanCell: spanCell
+            posX: posX
           };
         }
       }
@@ -6823,6 +7050,8 @@ out:
       if (row == null && cell == null) {
         row = cell = posY = posX = 0;
       }
+      assert(posY != null);
+      assert(posX != null);
 
       // Scan right, then down, to find the next focusable grid cell.
       // Wrap at the end.
@@ -6853,6 +7082,8 @@ out:
         row = posY = dataLengthIncludingAddNew - 1;
         cell = posX = lastCol;
       }
+      assert(posY != null);
+      assert(posX != null);
 
       // Scan left, then up, to find the previous focusable grid cell.
       // Wrap at the top.
@@ -6867,7 +7098,7 @@ out:
         }
         // Scan from the end of the previous line & wrap at top if we have to
         cell = posX = lastCol;
-        row = posY = Math.max(0, posY - 1);
+        row = posY = (posY - 1 + dataLengthIncludingAddNew) % dataLengthIncludingAddNew;
       }
       return null;
     }
@@ -6886,13 +7117,12 @@ out:
         row = spans.row;
         cell = spans.cell;
       }
+      // The returned (row, cell) coordinate MUST be the top/left corner of the cell span:
       var pos = {
-        row: posY,
-        cell: posX,
+        row: row,
+        cell: cell,
         posY: posY,
-        posX: posX,
-        spanRow: row,
-        spanCell: cell
+        posX: posX
       };
       if (canCellBeActive(row, cell)) {
         if (pos.row === origRow && pos.cell === origCell) {
@@ -6903,8 +7133,9 @@ out:
       // Otherwise find the *last* focusable node: 
       pos = gotoPrev(posY, posX, posY, posX);
       if (pos) {
-        pos.posY = posY;
-        pos.posX = posX;
+        if (pos.row === origRow && pos.cell === origCell) {
+          return null;      // no change: do not end up once again where we already are right now.
+        }
         return pos;
       }
       return null;
@@ -6917,12 +7148,10 @@ out:
       cell = posX = 0;
       // no need to call getSpans(0, 0) as it top/left corner will be (0, 0) no matter what col/rowspan it has.
       var pos = {
-        row: posY,
-        cell: posX,
+        row: row,
+        cell: cell,
         posY: posY,
-        posX: posX,
-        spanRow: row,
-        spanCell: cell
+        posX: posX
       };
       if (canCellBeActive(row, cell)) {
         if (pos.row === origRow && pos.cell === origCell) {
@@ -6933,8 +7162,9 @@ out:
       // Otherwise find the *first* focusable node: 
       pos = gotoNext(posY, posX, posY, posX);
       if (pos) {
-        pos.posY = posY;
-        pos.posX = posX;
+        if (pos.row === origRow && pos.cell === origCell) {
+          return null;      // no change: do not end up once again where we already are right now.
+        }
         return pos;
       }
       return null;
@@ -6990,7 +7220,10 @@ if (0) {
         assert(!getEditorLock().isActive());
         var focusedNode = getCellFromElement(document.activeElement);
         if (focusedNode) {
-          setActiveCellInternal(focusedNode, false, false);
+          setActiveCellInternal(focusedNode, {
+            forceEditMode: false, 
+            takeFocus: false
+          });
           assert(activeCellNode);
           // and continue with the regular execution path for activeCellNode
         } else {
@@ -7052,26 +7285,34 @@ if (0) {
 
       var node;
       var stepFn = stepFunctions[dir];
+      assert(activeRow != null);
+      assert(activeCell != null);
+      assert(activePosY != null);
+      assert(activePosX != null);
       var pos = stepFn(activeRow, activeCell, activePosY, activePosX);
       if (pos) {
-        assert(pos.row !== undefined);
-        assert(pos.cell !== undefined);
-        assert(pos.posX !== undefined);
-        assert(pos.posY !== undefined);
-        assert(pos.spanRow !== undefined);
-        assert(pos.spanCell !== undefined);
+        assert(pos.row != null);
+        assert(pos.cell != null);
+        assert(pos.posX != null);
+        assert(pos.posY != null);
+        activePosY = pos.posY;
+        activePosX = pos.posX;
         var isAddNewRow = (pos.row === getDataLength());
         scrollCellIntoView(pos.row, pos.cell, !isAddNewRow);
         node = getCellNode(pos.row, pos.cell, true);
         assert(node);
-        setActiveCellInternal(node, false, false);
-        activePosY = pos.posY;
-        activePosX = pos.posX;
+        setActiveCellInternal(node, {
+          forceEditMode: false, 
+          takeFocus: false
+        });
         return true;
       } else if (activeCellNode) {
         node = getCellNode(activeRow, activeCell, true);
         assert(node);
-        setActiveCellInternal(node, false, false);
+        setActiveCellInternal(node, {
+          forceEditMode: false, 
+          takeFocus: false
+        });
         return false;
       } else {
         assert(activeRow == null && activeCell == null);
@@ -7132,7 +7373,7 @@ if (0) {
       return null;
     }
 
-    function setActiveCell(row, cell, takeFocus) {
+    function setActiveCell(row, cell, cfg) {
       if (!initialized) { return; }
       // catch NaN, undefined, etc. row/cell values by inclusive checks instead of exclusive checks:
       if (cellExists(row, cell)) {
@@ -7143,7 +7384,7 @@ if (0) {
         scrollCellIntoView(row, cell, false);
         var node = getCellNode(row, cell, true);
         assert(node);
-        setActiveCellInternal(node, false, takeFocus);
+        setActiveCellInternal(node, cfg);
       }
     }
 
@@ -7195,7 +7436,7 @@ if (0) {
       return false;
     }
 
-    function gotoCell(row, cell, forceEdit, takeFocus) {
+    function gotoCell(row, cell, cfg) {
       if (!initialized) { return; }
       if (!canCellBeActive(row, cell)) {
         return;
@@ -7211,7 +7452,7 @@ if (0) {
       assert(newCellNode);
 
       // if selecting the "add new" row, start editing right away
-      setActiveCellInternal(newCellNode, forceEdit, takeFocus);
+      setActiveCellInternal(newCellNode, cfg);
 
       // if no editor was created, set the focus back on the grid
       if (!currentEditor) {
@@ -7479,6 +7720,7 @@ if (0) {
       "isRenderPending": isRenderPending,
       "invalidate": invalidate,
       "invalidateCell": invalidateCell,
+      "invalidateCellSpan": invalidateCellSpan,
       "invalidateColumn": invalidateColumn,
       "invalidateColumns": invalidateColumns,
       "invalidateRow": invalidateRow,
