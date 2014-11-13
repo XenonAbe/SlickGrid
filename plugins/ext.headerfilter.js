@@ -47,7 +47,7 @@
                    .subscribe(grid.onClick, handleBodyMouseDown)
                    .subscribe(grid.onColumnsResized, columnsResized);
 
-            grid.setColumns(grid.getColumns());
+            //grid.setColumns(grid.getColumns());
 
             $(document.body).bind("mousedown", handleBodyMouseDown);
         }
@@ -62,7 +62,7 @@
         }
 
         function handleBodyMouseDown(e) {
-            if ($menu && $menu[0] != e.target && !$.contains($menu[0], e.target)) {
+            if ($menu && $menu[0] !== e.target && !$.contains($menu[0], e.target)) {
                 hideMenu();
             }
         }

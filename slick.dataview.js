@@ -99,7 +99,9 @@
     var groupingInfoDefaults = {
       getter: null,
       formatter: null,
-      comparer: function(a, b) { return a.value - b.value; },
+      comparer: function (a, b) { 
+        return a.value - b.value; 
+      },
       predefinedValues: [],
       aggregators: [],
       aggregateEmpty: false,
@@ -285,6 +287,10 @@
                 case 'object':                      // this is equivalent to y === NULL thanks to the valueExtractor above
                     return 1;
                 }
+                // This next statement, and all its brethren below, are here merely to appease 
+                // the JSHint/JSCS Gods and other less-than-truly-intelligent JIT engines; 
+                // *we*, on the other hand, know we'll never get here!               
+                break;                              
             case 'number':
                 if (isNaN(xv)) {
                     switch (typeof yv) {
@@ -355,6 +361,7 @@
                         return 1;
                     }
                 }
+                break;
             case 'string':
                 switch (typeof yv) {
                 case 'boolean':
@@ -374,6 +381,7 @@
                 case 'object':
                     return 1;
                 }
+                break;
             case 'undefined':
                 switch (typeof yv) {
                 case 'boolean':
@@ -400,6 +408,7 @@
                 case 'object':
                     return -1;
                 }
+                break;
             case 'object':                          // this is representing NULL
                 switch (typeof yv) {
                 case 'boolean':
@@ -426,6 +435,7 @@
                     assert(0);                      // So what are we doin' here, eh?! We should never get here!
                     return x.order - y.order;
                 }
+                break;
             }
         },
         // fast comparator for when you don't care about stable sort provisions nor very tight handling of NULL, UNDEFINED, NaN, etc.
@@ -460,10 +470,10 @@
       sortUnstable = unstable || false;
       if (typeof comparer === 'function') {
         sortComparer = {
-            valueExtractor: function(node) {
+            valueExtractor: function (node) {
                 return node;
             },
-            comparator: function(x, y) {
+            comparator: function (x, y) {
                 var rv = comparer(x.value, y.value);
                 if (!rv) {
                     return x.order - y.order;
@@ -473,7 +483,7 @@
         };
       } else if (typeof comparer === 'string' || typeof comparer === 'number') {
         sortComparer = {
-            valueExtractor: function(node) {
+            valueExtractor: function (node) {
                 return node[comparer];
             },
             comparator: sortUnstable ? defaultSortComparator.fastComparator : defaultSortComparator.comparator
@@ -509,11 +519,12 @@
       //
       // Extra notes:
       //
-      // We also use the mapper phase to turn sort into a stable sort by initializing the stableSortIdProperty for each data item:
+      // We also use the mapper phase to turn sort into a stable sort by initializing 
+      // the stableSortIdProperty for each data item:
       // by including that one in the comparer check we create a stable sort.
 
       // temporary holder of position and sort-value
-      var map = items.map(function(d, i) {
+      var map = items.map(function (d, i) {
         return {
             value: sortComparer.valueExtractor(d),
             order: i
@@ -703,18 +714,32 @@
 
     function getItem(i) {
       var item = rows[i];
+      var gi;
 
       // if this is a group row, make sure totals are calculated and update the title
       if (item && item.__group && item.totals && !item.totals.initialized) {
-        var gi = groupingInfos[item.level];
-        if (!gi.displayTotalsRow) {
-          calculateTotals(item.totals);
-          item.title = gi.formatter ? gi.formatter(item) : item.value;
-        }
+        gi = groupingInfos[item.level];
+        // We'll always have to calculate the totals once we get here as those totals
+        // may not just be used in the totals row only: see the 'grouping' example for a 
+        // situation where aggregated data is used as part of the group line itself, in 
+        // a userland custom formatter.
+        // 
+        // Hence we do NOT check for `!gi.displayTotalsRow` here.
+        // 
+        // Also note that a side effect of the totals calculation here is the proper
+        // initialization of the group title when lazy calculation for the group has 
+        // been enabled: this is the quickest and overall cleanest way to ensure that
+        // the optional title userland formatter always is guaranteed to receive 
+        // properly initialized group/totals data on invocation.
+        // (The 'grouping' example, for instance, would crash without this 'delayed'
+        // rendering of the group title.)
+        calculateTotals(item.totals);
+        assert(item.totals.initialized);
       }
       // if this is a totals row, make sure it's calculated
       else if (item && item.__groupTotals && !item.initialized) {
         calculateTotals(item);
+        assert(item.initialized);
       }
 
       return item;
@@ -763,14 +788,14 @@
     }
 
     /**
-     * @param level {Number} Optional level to collapse.  If not specified, applies to all levels.
+     * @param level {Number} Optional level to collapse.  If not specified, collapse all levels.
      */
     function collapseAllGroups(level) {
       expandCollapseAllGroups(level, true);
     }
 
     /**
-     * @param level {Number} Optional level to expand.  If not specified, applies to all levels.
+     * @param level {Number} Optional level to expand.  If not specified, expand all levels.
      */
     function expandAllGroups(level) {
       expandCollapseAllGroups(level, false);
@@ -785,14 +810,14 @@
      * @param varArgs Either a Slick.Group's "groupingKey" property, or a
      *     variable argument list of grouping values denoting a unique path to the row.
      *     For example, calling isGroupCollapsed('high', '10%') will return whether the
-     *     collapse the '10%' subgroup of the 'high' setGrouping is collapsed.
+     *     '10%' subgroup of the 'high' setGrouping is collapsed.
      */
     function isGroupCollapsed(groupingValue) {
       var args = Array.prototype.slice.call(arguments);
       var arg0 = args[0];
       var level;
       var groupingKey;
-      if (args.length == 1 && arg0.indexOf(groupingDelimiter) != -1) {
+      if (args.length === 1 && arg0.indexOf(groupingDelimiter) !== -1) {
         level = arg0.split(groupingDelimiter).length - 1;
         groupingKey = arg0;
       } else {
@@ -811,7 +836,7 @@
     function collapseGroup(varArgs) {
       var args = Array.prototype.slice.call(arguments);
       var arg0 = args[0];
-      if (args.length == 1 && arg0.indexOf(groupingDelimiter) != -1) {
+      if (args.length === 1 && arg0.indexOf(groupingDelimiter) !== -1) {
         expandCollapseGroup(arg0.split(groupingDelimiter).length - 1, arg0, true);
       } else {
         expandCollapseGroup(args.length - 1, args.join(groupingDelimiter), true);
@@ -827,7 +852,7 @@
     function expandGroup(varArgs) {
       var args = Array.prototype.slice.call(arguments);
       var arg0 = args[0];
-      if (args.length == 1 && arg0.indexOf(groupingDelimiter) != -1) {
+      if (args.length === 1 && arg0.indexOf(groupingDelimiter) !== -1) {
         expandCollapseGroup(arg0.split(groupingDelimiter).length - 1, arg0, false);
       } else {
         expandCollapseGroup(args.length - 1, args.join(groupingDelimiter), false);
@@ -895,7 +920,7 @@
     function calculateTotals(totals) {
       var group = totals.group;
       var gi = groupingInfos[group.level];
-      var isLeafLevel = (group.level == groupingInfos.length);
+      var isLeafLevel = (group.level === groupingInfos.length);
       var agg, idx = gi.aggregators.length;
 
       if (!isLeafLevel && gi.aggregateChildGroups) {
@@ -919,6 +944,13 @@
         agg.storeResult(totals);
       }
       totals.initialized = true;
+
+      // And when we have lazy initialization enabled, we'll also have to set the title
+      // now, because we wouldn't have been able to do that one before!
+      
+      //if (gi.lazyTotalsCalculation) {
+      group.title = gi.formatter ? gi.formatter(group) : group.value;
+      //}
     }
 
     function addGroupTotals(group) {
@@ -955,7 +987,10 @@
         }
 
         g.collapsed = groupCollapsed ^ toggledGroups[g.groupingKey];
-        g.title = gi.formatter ? gi.formatter(g) : g.value;
+
+        if (!gi.lazyTotalsCalculation || (g.totals && g.totals.initialized)) {
+          g.title = gi.formatter ? gi.formatter(g) : g.value;
+        }
       }
     }
 
@@ -966,8 +1001,9 @@
       for (var i = 0, l = groups.length; i < l; i++) {
         g = groups[i];
 
-        if (options.showExpandedGroupRows || g.collapsed)
+        if (options.showExpandedGroupRows || g.collapsed) {
           groupedRows[gl++] = g;
+        }
 
         var displayTotalsRow = g.totals && gi.displayTotalsRow && (!g.collapsed || gi.aggregateCollapsed);
         if (displayTotalsRow && gi.totalsRowBeforeItems) {
@@ -1138,7 +1174,10 @@
         paged = filteredItems;
       }
 
-      return {totalRows: filteredItems.length, rows: paged};
+      return {
+        totalRows: filteredItems.length, 
+        rows: paged
+      };
     }
 
     function getRowDiffs(rows, newRows) {
@@ -1170,7 +1209,7 @@
               // deep object comparison is pretty expensive
               // always considering them 'dirty' seems easier for the time being
                   (item.__groupTotals || r.__groupTotals))
-              || item[idProperty] != r[idProperty]
+              || item[idProperty] !== r[idProperty]
               || (updated && updated[item[idProperty]])
               ) {
             diff[diff.length] = i;
@@ -1216,27 +1255,32 @@
       var countBefore = rows.length;
       var totalRowsBefore = totalRows;
 
-      var diff = recalc(items, filter); // pass as direct refs to avoid closure perf hit
+      var diff = recalc(items); // pass as direct refs to avoid closure perf hit
 
-      // if the current page is no longer valid, go to last page and recalc
-      // we suffer a performance penalty here, but the main loop (recalc) remains highly optimized
-      if (pagesize && totalRows < pagenum * pagesize) {
+      // If the current page is no longer valid, go to last page and recalc.
+      // We suffer a performance penalty here, but the main loop (recalc) remains highly optimized.
+      if (pagesize && pagenum && totalRows < pagenum * pagesize) {
         pagenum = Math.max(0, Math.ceil(totalRows / pagesize) - 1);
-        diff = recalc(items, filter);
+        diff = recalc(items);
       }
 
       updated = null;
       prevRefreshHints = refreshHints;
       refreshHints = {};
 
-      if (totalRowsBefore != totalRows) {
+      if (totalRowsBefore !== totalRows) {
         onPagingInfoChanged.notify(getPagingInfo(), null, self);
       }
-      if (countBefore != rows.length) {
-        onRowCountChanged.notify({previous: countBefore, current: rows.length}, null, self);
+      if (countBefore !== rows.length) {
+        onRowCountChanged.notify({
+          previous: countBefore, 
+          current: rows.length
+        }, null, self);
       }
       if (diff.length > 0) {
-        onRowsChanged.notify({rows: diff}, null, self);
+        onRowsChanged.notify({
+          rows: diff
+        }, null, self);
       }
     }
 
@@ -1266,15 +1310,15 @@
       var onSelectedRowIdsChanged = new Slick.Event();
 
       function setSelectedRowIds(rowIds) {
-        if (selectedRowIds.join(",") == rowIds.join(",")) {
+        if (selectedRowIds.join(",") === rowIds.join(",")) {
           return;
         }
 
         selectedRowIds = rowIds;
 
         onSelectedRowIdsChanged.notify({
-          "grid": grid,
-          "ids": selectedRowIds
+          grid: grid,
+          ids: selectedRowIds
         }, new Slick.EventData(), self);
       }
 
@@ -1290,14 +1334,16 @@
         }
       }
 
-      grid.onSelectedRowsChanged.subscribe(function(e, args) {
+      grid.onSelectedRowsChanged.subscribe(function (e, args) {
         if (inHandler) { return; }
         var newSelectedRowIds = self.mapRowsToIds(grid.getSelectedRows());
         if (!preserveHiddenOnSelectionChange || !grid.getOptions().multiSelect) {
           setSelectedRowIds(newSelectedRowIds);
         } else {
           // keep the ones that are hidden
-          var existing = $.grep(selectedRowIds, function(id) { return self.getRowById(id) === undefined; });
+          var existing = $.grep(selectedRowIds, function (id) { 
+            return self.getRowById(id) === undefined; 
+          });
           // add the newly selected ones
           setSelectedRowIds(existing.concat(newSelectedRowIds));
         }
@@ -1342,9 +1388,9 @@
         }
       }
 
-      grid.onCellCssStylesChanged.subscribe(function(e, args) {
+      grid.onCellCssStylesChanged.subscribe(function (e, args) {
         if (inHandler) { return; }
-        if (key != args.key) { return; }
+        if (key !== args.key) { return; }
         if (args.hash) {
           storeCellCssStyles(args.hash);
         }
@@ -1353,6 +1399,10 @@
       this.onRowsChanged.subscribe(update);
 
       this.onRowCountChanged.subscribe(update);
+    }
+
+    function getOptions() {
+      return options;
     }
 
     $.extend(this, {
@@ -1366,6 +1416,7 @@
       "setItems": setItems,
       "setFilter": setFilter,
       "getDefaultSortComparator": getDefaultSortComparator,
+      "getOptions": getOptions,
       "sort": sort,
       "reSort": reSort,
       "setGrouping": setGrouping,
@@ -1421,7 +1472,7 @@
     this.accumulate = function (item) {
       var val = item[this.field_];
       this.count_++;
-      if (val != null && val !== "" && isFinite(val)) {
+      if (val != null && val !== "" && !isNaN(val)) {
         this.nonNullCount_++;
         this.sum_ += parseFloat(val);
       }
@@ -1446,7 +1497,8 @@
 
     this.accumulate = function (item) {
       var val = item[this.field_];
-      if (val != null && val !== "" && isFinite(val)) {
+      if (val != null && val !== "" && !isNaN(val)) {
+        val = parseFloat(val);
         if (this.min_ == null || val < this.min_) {
           this.min_ = val;
         }
@@ -1470,7 +1522,8 @@
 
     this.accumulate = function (item) {
       var val = item[this.field_];
-      if (val != null && val !== "" && isFinite(val)) {
+      if (val != null && val !== "" && !isNaN(val)) {
+        val = parseFloat(val);
         if (this.max_ == null || val > this.max_) {
           this.max_ = val;
         }
@@ -1494,7 +1547,7 @@
 
     this.accumulate = function (item) {
       var val = item[this.field_];
-      if (val != null && val !== "" && isFinite(val)) {
+      if (val != null && val !== "" && !isNaN(val)) {
         this.sum_ += parseFloat(val);
       }
     };
@@ -1519,14 +1572,20 @@
       var val = item[this.field_];
       var found = false;
       if (val != null && val !== "" && !isNaN(val)) {
-        for (var i = 0; i < this.pairs_.length; i++) {
-          if (this.pairs_[i].value == val) {
+        val = parseFloat(val);
+        for (var i = 0, len = this.pairs_.length; i < len; i++) {
+          if (this.pairs_[i].value === val) {
             this.pairs_[i].count++;
             found = true;
             break;
           }
         }
-        if (!found) this.pairs_.push({value: val, count: 1});
+        if (!found) {
+          this.pairs_.push({
+            value: val, 
+            count: 1
+          });
+        }
       }
     };
 
@@ -1535,7 +1594,7 @@
         groupTotals.mde = {};
       }
       var maxCountI = 0;
-      for (var i = 0; i < this.pairs_.length; i++) {
+      for (var i = 0, len = this.pairs_.length; i < len; i++) {
         if ((this.pairs_[i].count > this.pairs_[maxCountI].count) || ((this.pairs_[i].count === this.pairs_[maxCountI].count) && (this.pairs_[i].value < this.pairs_[maxCountI].value))) {
           maxCountI = i;
         }
@@ -1557,14 +1616,17 @@
       var val = item[this.field_];
       var spliced = false;
       if (val != null && val !== "" && !isNaN(val)) {
-        for (var i = 0; i < this.sorted_.length; i++) {
+        val = parseFloat(val);
+        for (var i = 0, len = this.sorted_.length; i < len; i++) {
           if (val < this.sorted_[i]) {
             this.sorted_.splice(i, 0, val);
             spliced = true;
             break;
           }
         }
-        if (!spliced) this.sorted_.push(val);
+        if (!spliced) {
+          this.sorted_.push(val);
+        }
       }
     };
 
@@ -1573,11 +1635,11 @@
         groupTotals.mdn = {};
       }
       var n = this.sorted_.length;
-      if (n % 2 == 1) {
+      if (n % 2 === 1) {
         groupTotals.mdn[this.field_] = this.sorted_[(n - 1) / 2];
       } else {
         var i = n / 2;
-        groupTotals.mdn[this.field_] = 0.5 * (this.sorted_[i] + this.sorted_[i-1]);
+        groupTotals.mdn[this.field_] = 0.5 * (this.sorted_[i] + this.sorted_[i - 1]);
       }
     };
   }
@@ -1594,6 +1656,7 @@
     this.accumulate = function (item) {
       var val = item[this.field_];
       if (val != null && val !== "" && !isNaN(val)) {
+        val = parseFloat(val);
         this.nonNullCount_++;
         if (this.Mk_ != null) {
           this.Qk_ = this.Qk_ + (this.nonNullCount_ - 1) * Math.pow((val - this.Mk_), 2) / this.nonNullCount_;
@@ -1631,8 +1694,9 @@
     };
 
     this.storeResult = function (groupTotals) {
-      if (!groupTotals.checkCount)
+      if (!groupTotals.checkCount) {
         groupTotals.checkCount = {};
+      }
 
       groupTotals.checkCount[this.field_] = {
         checked: this.checkCount_,
@@ -1681,12 +1745,12 @@
 
     this.accumulate = function (item) {
       var currentValue = item[this.field_];
-      if(!this.isStillUnique_)
+      if (!this.isStillUnique_)
         return;
 
-      if (this.valueSeen_ == null) {
+      if (this.valueSeen_ === null) {
         this.valueSeen_ = currentValue;
-      } else if(this.valueSeen_ != currentValue) {
+      } else if (this.valueSeen_ !== currentValue) {
         this.valueSeen_ = null;
         this.isStillUnique_ = false;
       }
@@ -1713,13 +1777,13 @@
       var currentValue = item[this.field_];
       var currentWeight = item[this.weightField_];
 
-      // we only accumulate if both the value and the weight are numbers
+      // we only accumulate if both the value and the weight are numbers.
       // this is equivalent to treating null weights or values as zero
       // weight or values.
-      if (currentValue != null && currentValue !== "" && currentValue !== NaN &&
-          currentWeight != null & currentWeight !== "" && currentWeight != NaN ) {
+      if (currentValue != null && currentValue !== "" && !isNaN(currentValue) &&
+          currentWeight != null & currentWeight !== "" && !isNaN(currentWeight)) {
         var parsedWeight = parseFloat(currentWeight);
-        this.weightedSum_ += parseFloat(currentValue)+parsedWeight;
+        this.weightedSum_ += parseFloat(currentValue) * parsedWeight;
         this.weightSum_ += parsedWeight;
       }
     };
@@ -1728,12 +1792,12 @@
       if (!groupTotals.weightedAverage) {
         groupTotals.weightedAverage = {};
       }
-      groupTotals.weightedAverage[this.field_] = this.weightedSum_/this.weightSum_;
+      groupTotals.weightedAverage[this.field_] = this.weightedSum_ / this.weightSum_;
     }
   }
 
   // TODO:  add more built-in aggregators
-  // TODO:  merge common aggregators in one to prevent needles iterating
+  // TODO:  merge common aggregators in one to prevent needless iterating
 
 })(jQuery);
 

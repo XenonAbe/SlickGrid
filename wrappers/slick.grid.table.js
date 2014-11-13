@@ -1,7 +1,7 @@
 ﻿/*
     SlickGridTable is a wrapper that simplifies the setup process for creating a simple table.
 
-    SlickGrid is an excellent, customizeable tool.  However, initial setup and configuration can be a
+    SlickGrid is an excellent, customizable tool.  However, initial setup and configuration can be a
     bit cumbersome.  SlickGridTable helps make the process easier.
 
     Required scripts:
@@ -106,16 +106,16 @@ var SlickGridTable = (function () {
         this.onSelectedItemsChangedHandler = $.proxy(this.updateSelectedProperty, this);
     };
 
-    SlickGridTable.prototype.getData = function(url, inputData) {
+    SlickGridTable.prototype.getData = function (url, inputData) {
         this.deferred = $.Deferred();
         var self = this;
-        $.post(url, inputData, function(data) {
+        $.post(url, inputData, function (data) {
             self.dataView.beginUpdate();
             self.dataView.setItems(data, self.options.itemKeyProperty);
             self.dataView.setFilter(self.onFilterHandler); //TODO: Can this be moved?
             self.dataView.endUpdate();
 
-            $(self.columns).each(function(index, column) {
+            $(self.columns).each(function (index, column) {
                 if (column.name != "<input type='checkbox'>") {
                     var headerContainer = $(".slick-headerrow-column.hl" + index);
                     self.populateFilters(headerContainer, column);
@@ -126,23 +126,23 @@ var SlickGridTable = (function () {
         return this.deferred.promise();
     };
 
-    SlickGridTable.prototype.onDataLoadComplete = function(data) {
+    SlickGridTable.prototype.onDataLoadComplete = function (data) {
         this.deferred.resolve(data);
     };
 
-    SlickGridTable.prototype.onDataLoadFailure = function(jqXHR, textError, exception) {
+    SlickGridTable.prototype.onDataLoadFailure = function (jqXHR, textError, exception) {
         this.deferred.reject('Error' + exception);
     };
 
     SlickGridTable.prototype.sortRows = function (e, args) {
         var cols = args.sortCols;
-        this.dataView.sort(function(dataRow1, dataRow2) {
+        this.dataView.sort(function (dataRow1, dataRow2) {
             for (var i = 0, l = cols.length; i < l; i++) {
                 var field = cols[i].sortCol.field;
                 var sign = cols[i].sortAsc ? 1 : -1;
                 var value1 = dataRow1[field], value2 = dataRow2[field];
-                var result = (value1 == value2 ? 0 : (value1 > value2 ? 1 : -1)) * sign;
-                if (result != 0) {
+                var result = (value1 === value2 ? 0 : (value1 > value2 ? 1 : -1)) * sign;
+                if (result !== 0) {
                     return result;
                 }
             }
@@ -179,7 +179,7 @@ var SlickGridTable = (function () {
         this.grid.render();
     };
 
-    SlickGridTable.prototype.refreshRows = function(e, args) {
+    SlickGridTable.prototype.refreshRows = function (e, args) {
         this.grid.invalidateRows(args.rows);
         this.grid.render();
     };
@@ -190,9 +190,9 @@ var SlickGridTable = (function () {
 
         var filterOptions = [];
         //Iterate through each item in the row
-        $.each(this.dataView.getItems(), function(index, row) {
+        $.each(this.dataView.getItems(), function (index, row) {
             var value = row[propertyName];
-            if (value !== undefined && value != "" && $.inArray(value, filterOptions) == -1) {
+            if (value != null && value !== "" && $.inArray(value, filterOptions) === -1) {
                 filterOptions.push(value);
             }
         });
@@ -200,18 +200,18 @@ var SlickGridTable = (function () {
         var output = [];
         filterOptions.sort();
         filterOptions.unshift("");
-        $.each(filterOptions, function(index, value) {
+        $.each(filterOptions, function (index, value) {
             output.push('<option value="' + value + '">' + value + '</option>');
         });
 
         var selectTag = $("<select>").data("columnId", propertyName).val(this.columnFilters[propertyName]);
-        selectTag.css("width", colWidth * .93);
+        selectTag.css("width", colWidth * 0.93);
         selectTag.html(output.join(""));
         selectTag.appendTo(containerDiv);
     };
 
     SlickGridTable.prototype.updateSelectedProperty = function (e, args) {
-        $(this.dataView.getItems()).each($.proxy(function(idx, item) {
+        $(this.dataView.getItems()).each($.proxy(function (idx, item) {
             item[this.options.checkboxBoundProperty] = false;
         }, this));
 

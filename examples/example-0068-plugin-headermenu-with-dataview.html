@@ -1,11 +1,11 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
   <title>SlickGrid example: Plugin: Use the HeaderMenu plugin to add drop-down menus to column headers and apply DataView filtering</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../plugins/slick-headermenu.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
@@ -47,8 +47,8 @@
 </head>
 <body>
 <div style="position:relative">
-  <div style="width:600px;">
-    <div id="myGrid" style="width:100%;height:500px;"></div>
+  <div class="grid-outer-wrapper">
+    <div id="myGrid" class="grid-inner-wrapper"></div>
   </div>
 
   <div class="options-panel">
@@ -57,19 +57,33 @@
       This example demonstrates using the <b>Slick.Plugins.HeaderMenu</b> plugin to add drop-down menus to column
       headers and apply filtering to DataView plugin.
     </p>
+
+    <h2>View Source:</h2>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+      </ul>
+      <div id="displaycode"></div>
   </div>
 </div>
 
+<script src="../lib/firebugx.js"></script>
+
 <script src="../lib/jquery.js"></script>
-<script src="../lib/jquery.event.drag-2.2.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
+<script src="../lib/jquery-ui.js"></script>
+<script src="../lib/_/jquery.event.drag.js"></script>
+<script src="../lib/detect_browser.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.dataview.js"></script>
 <script src="../slick.grid.js"></script>
 <script src="../plugins/slick.headermenu.js"></script>
 
-<script>
 
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
   function textFilter(menu, col) {
     var
       $li = $("<div class='slick-header-menuitem'></div>"),
@@ -96,7 +110,7 @@
 
   }
 
-  function textFilterFn(a,b) {
+  function textFilterFn(a, b) {
     return a.indexOf(b) > -1;
   }
 
@@ -111,12 +125,12 @@
         menu: {
           items: [
             {
-              iconImage: "../images/sort-asc.gif",
+              iconImage: "../images/sort-asc.png",
               title: "Sort Ascending",
               command: "sort-asc"
             },
             {
-              iconImage: "../images/sort-desc.gif",
+              iconImage: "../images/sort-desc.png",
               title: "Sort Descending",
               command: "sort-desc"
             },
@@ -148,12 +162,12 @@
       menu: {
         items: [
           {
-            iconImage: "../images/sort-asc.gif",
+            iconImage: "../images/sort-asc.png",
             title: "Sort Ascending",
             command: "sort-asc"
           },
           {
-            iconImage: "../images/sort-desc.gif",
+            iconImage: "../images/sort-desc.png",
             title: "Sort Descending",
             command: "sort-desc"
           },
@@ -175,7 +189,9 @@
 
 
   var options = {
-    enableColumnReorder: false
+    enableColumnReorder: false,
+    explicitInitialization: true,
+	forceFitColumns: true
   };
 
 
@@ -191,19 +207,28 @@
     return true;
   }
 
-  $(function () {
+  var counter = 0;
+
+  function generateData(length) {
     var data = [];
-    for (var i = 0; i < 100000; i++) {
+    for (var i = 0; i < length; i++) {
       data[i] = {
-        id: i,
-        title: "Task " + i,
+        id: counter++,
+        title: "Task " + counter,
+        description: "This is a sample task description.\n  It can be multiline",
         duration: "5 days",
         percentComplete: Math.round(Math.random() * 100),
         start: "01/01/2009",
         finish: "01/05/2009",
-        effortDriven: (i % 5 == 0)
+        effortDriven: (i % 5 === 0),
+		status: 0
       };
     }
+    return data;
+  }
+
+  $(function () {
+    var data = generateData(100000);
 
     function onHeaderFilter(value) {
       columnFilters[this.id] = value;
@@ -259,7 +284,7 @@
     dataView.setFilter(filter);
     dataView.endUpdate();
 
-  })
+  });
 </script>
 </body>
 </html>

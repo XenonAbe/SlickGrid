@@ -2,11 +2,11 @@
   // register namespace
   $.extend(true, window, {
     Slick: {
-      RowMoveManager: RowMoveManager
+      ColumnMoveManager: ColumnMoveManager
     }
   });
 
-  function RowMoveManager(options) {
+  function ColumnMoveManager(options) {
     var _grid;
     var _canvas;
     var _dragging;
@@ -21,10 +21,10 @@
       _grid = grid;
       _canvas = _grid.getCanvasNode();
       _handler
-        .subscribe(_grid.onDragInit, handleDragInit)
-        .subscribe(_grid.onDragStart, handleDragStart)
-        .subscribe(_grid.onDrag, handleDrag)
-        .subscribe(_grid.onDragEnd, handleDragEnd);
+        .subscribe(_grid.onHeaderDragInit, handleDragInit)
+        .subscribe(_grid.onHeaderDragStart, handleDragStart)
+        .subscribe(_grid.onHeaderDrag, handleDrag)
+        .subscribe(_grid.onHeaderDragEnd, handleDragEnd);
     }
 
     function destroy() {

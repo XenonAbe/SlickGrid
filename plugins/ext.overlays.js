@@ -226,7 +226,9 @@
             o = $(canvas).offset();
             x = e.pageX - o.left;
             y = e.pageY - o.top;
-            var end = grid.getCellFromPoint(x, y);
+            var end = grid.getCellFromPoint(x, y, {
+                clipToValidRange: true
+            });
 
             if (!grid.canCellBeSelected(end.row, end.cell)) {
                 return;

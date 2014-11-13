@@ -40,9 +40,9 @@
     </ul>
 
     <h2>Options:</h2>
-      <button onclick="grid.setOptions({autoEdit:true})">Auto-edit ON</button>
+      <button onclick="grid.setOptions({autoEdit:true});">Auto-edit ON</button>
 
-      <button onclick="grid.setOptions({autoEdit:false})">Auto-edit OFF</button>
+      <button onclick="grid.setOptions({autoEdit:false});">Auto-edit OFF</button>
 
 
     <h2>View Source:</h2>
@@ -69,11 +69,10 @@
 <script src="../plugins/slick.validators.js"></script>
 <script src="../plugins/slick.validationtooltips.js"></script>
 
-
 <script src="../slick.formatters.js"></script>
 <script src="../slick.editors.js"></script>
-<script src="../slick.grid.js"></script>
 <script src="../slick.dataview.js"></script>
+<script src="../slick.grid.js"></script>
 
 
 <script src="examples.showcode.js"></script>
@@ -144,9 +143,9 @@
       editor: Slick.Editors.SelectCell,
       formatter: Slick.Formatters.ReferenceValue,
       options: [
-        { key : 0, label: 'in-progress' },
-        { key : 1, label: 'invalid' },
-        { key : 2, label: 'done' }
+        { key: 0, label: 'in-progress' },
+        { key: 1, label: 'invalid' },
+        { key: 2, label: 'done' }
       ],
       validator: Slick.Validators.required
     }
@@ -157,25 +156,26 @@
     //enableAddRow: true,
     enableCellNavigation: true,
     asyncEditorLoading: false,
-    autoEdit: false
+    autoEdit: false,
+    explicitInitialization: true
   };
 
   var counter = 0;
 
-  function generateData(length){
+  function generateData(length) {
     var data = [];
     for (var i = 0; i < length; i++) {
-      var d = (data[i] = {});
-
-      d["id"] = ++counter;
-      d["title"] = "Task " + counter;
-      d["description"] = "This is a sample task description.\n  It can be multiline";
-      d["duration"] = "5 days";
-      d["percentComplete"] = Math.round(Math.random() * 100);
-      d["start"] = "01/01/2009";
-      d["finish"] = "01/05/2009";
-      d["effortDriven"] = (i % 5 == 0);
-      d["status"] = 0;
+      data[i] = {
+        id: counter++,
+        title: "Task " + counter,
+        description: "This is a sample task description.\n  It can be multiline",
+        duration: "5 days",
+        percentComplete: Math.round(Math.random() * 100),
+        start: "01/01/2009",
+        finish: "01/05/2009",
+        effortDriven: (i % 5 === 0),
+		status: 0
+      };
     }
     return data;
   }
@@ -215,10 +215,9 @@
 
     dataView.beginUpdate();
     dataView.setItems(data);
-    //dataView.setFilter(filter);
     dataView.endUpdate();
 
-    window.command = function(cmd) {
+    window.command = function (cmd) {
       if (cmd === 'add') {
         var rowData  = generateData(1)[0];
 
@@ -232,7 +231,7 @@
         grid.setActiveCell(row, 0);
       }
 
-      if (cmd === 'remove'){
+      if (cmd === 'remove') {
         var selections = dataView.mapRowsToIds(grid.getSelectedRows());
 
         for (var i = 0, len = selections.length; i < len; i++) {

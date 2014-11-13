@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>Test modifiability of native event objects in relation to event bubbling</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+</head>
+<body class="body-level">
+  <h1>Test modifiability of native event objects in relation to event bubbling</h1>
+  <div class="level1">
+    <div class="level2">
+      <div class="level3">
+        <div class="level4">
+          <p>Click on any of the checkboxes to test event bubbling avec du event object modification...</p>
+          <input id="clicktargetA" class="level5_1" type="checkbox" />
+          <input id="clicktargetB" class="level5_2" type="checkbox" />
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>Also: when you press a key, the keydown event will be tagged and reported here. We check if the browser
+  and/or jQuery are re-using their event instances...</p>
+  <hr/>
+  <pre id="log"></pre>
+
+<script src="../lib/jquery.js"></script>
+<script src="../lib/assert.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
+var msgs = [];
+
+var first_tag_nr = 1;
+
+function setValue(e, value, nr) {
+  nr = nr || first_tag_nr++;
+  e.__className__ = value + ":" + nr;
+  if (e.originalEvent) {
+    setValue(e.originalEvent, value, nr);
+  }
+} 
+
+function getValue(e, srcref, depth) {
+  depth = depth || 0;
+  if (e.__className__) {
+    if (srcref) {
+      srcref.e = e;
+      srcref.depth = depth;
+    }
+    return e.__className__;
+  }
+  if (e.originalEvent) {
+    return getValue(e.originalEvent, srcref, depth + 1);
+  }
+  return null;
+} 
+
+function click_h(e) {
+    var $el = $(this);
+    var cname = $el[0].className;
+    var rv = getValue(e);
+    if (!rv) {
+      setValue(e, cname);
+      rv = getValue(e);
+      msgs.push(e.type + " @ apparent origin: " + rv);
+    } else {
+      msgs.push(e.type + " @ detected bubbled-up-to-element: " + cname + " from apparent origin: " + rv);
+    }
+    $("#log").html(msgs.join("\n"));
+}
+
+function key_h(e) {
+  var $el = $(this);
+  var cname = $el[0].className;
+
+  var ref = {};
+  var i = getValue(e, ref);
+  if (!i) {
+    setValue(e, "key");
+    i = getValue(e, ref);
+    msgs.push(e.type + " @ " + cname + " w. NEW tag #" + i);
+  } else {
+    var m = e.type + " @ " + cname + " w. EXISTING tag #" + i;
+    if (ref.e instanceof $.Event) {
+      m += "     --> Turns out it's jQuery re-using an event object instance at depth = " + ref.depth;
+    } else {
+      m += "     --> Turns out it's the browser re-using an event object instance at depth = " + ref.depth;
+    }
+    msgs.push(m);
+  }
+  $("#log").html(msgs.join("\n"));
+}
+
+for (var i = 1; i <= 5; i++) {
+  var $els = $(".level" + i)
+  .on("click mousedown", click_h)
+  .on("keydown keyup keypress input", key_h);
+}
+
+$(".level5_1")
+.on("click mousedown", click_h)
+.on("keydown keyup keypress input", key_h);
+
+$(".level5_2")
+.on("click mousedown", click_h)
+.on("keydown keyup keypress input", key_h);
+
+$('body')
+.on("click", click_h)
+.on("keydown", key_h);
+
+</script>
+</body>
+</html>

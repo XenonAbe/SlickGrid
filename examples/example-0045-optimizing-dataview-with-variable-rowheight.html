@@ -116,14 +116,14 @@
   var h_runfilters = null;
 
   function myFilter(item, args) {
-    return item["percentComplete"] >= args;
+    return item.percentComplete >= args;
   }
 
   function DataItem(i) {
     this.num = i;
     this.id = "id_" + i;
     this.percentComplete = Math.round(Math.random() * 100);
-    this.effortDriven = (i % 5 == 0);
+    this.effortDriven = (i % 5 === 0);
     this.start = "01/01/2009";
     this.finish = "01/05/2009";
     this.title = "Task " + i;
@@ -197,12 +197,14 @@
     function filterAndUpdate() {
       var isNarrowing = percentCompleteThreshold > prevPercentCompleteThreshold;
       var isExpanding = percentCompleteThreshold < prevPercentCompleteThreshold;
-      var renderedRange = grid.getRenderedRange();
+      var cachedRangeInfo = grid.getCachedRowRangeInfo();
 
       dataView.setFilterArgs(percentCompleteThreshold);
       dataView.setRefreshHints({
-        ignoreDiffsBefore: renderedRange.top,
-        ignoreDiffsAfter: renderedRange.bottom + 1,
+        // WARING: do NOT simply use `cachedRangeInfo.top/bottom` here as the span cache 
+        // can be much larger and needs to be cleared entirely too:
+        ignoreDiffsBefore: Math.max(cachedRangeInfo.spanCacheTop, cachedRangeInfo.top),
+        ignoreDiffsAfter: Math.max(cachedRangeInfo.spanCacheBottom, cachedRangeInfo.bottom),   
         isFilterNarrowing: isNarrowing,
         isFilterExpanding: isExpanding
       });

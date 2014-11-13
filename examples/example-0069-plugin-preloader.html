@@ -2,19 +2,21 @@
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>SlickGrid example 1: Basic grid</title>
+  <title>SlickGrid plugin example: Preloader</title>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
   <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    .slick-preloader{
+    .slick-preloader 
+    {
       position:absolute;
       top: 0; right: 0; bottom: 0; left: 0;
       background: rgb(255, 255, 255) transparent; /* default fallback */
       background: rgba(255, 255, 255, 0.1); /* nice browsers */
     }
-    .slick-preloader-inner{
+    .slick-preloader-inner 
+    {
       background-image: url(../images/preloader-hbar.gif);
       width: 67px;
       height: 10px;
@@ -63,21 +65,21 @@
     enableColumnReorder: false
   };
 
-  function loadData(){
+  function loadData() {
     var dfd = $.Deferred();
 
     console.log('data load start');
-    setTimeout(function(){
+    setTimeout(function () {
       var data = [];
       for (var i = 0; i < 1500; i++) {
         data[i] = {
           id: i,
           title: "Task " + i,
-          duration: Math.round(Math.random()*10) + " days",
+          duration: Math.round(Math.random() * 10) + " days",
           percentComplete: Math.round(Math.random() * 100),
           start: "01/01/2009",
           finish: "01/05/2009",
-          effortDriven: (i % 5 == 0)
+          effortDriven: (i % 5 === 0)
         };
       }
       console.log('data load done');
@@ -95,10 +97,10 @@
       grid.render();
     });
 
-    window.refreshData = function(){
+    window.refreshData = function () {
       // emulating async load
       preloader.show();
-      loadData().then(function(data){
+      loadData().then(function (data) {
         dataView.beginUpdate();
         dataView.setItems(data);
         dataView.endUpdate();
@@ -109,7 +111,7 @@
     var preloader = new Slick.Preloader();
     grid.registerPlugin(preloader);
     window.refreshData();
-  })
+  });
 </script>
 </body>
 </html>

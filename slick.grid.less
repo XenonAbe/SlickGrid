@@ -15,6 +15,12 @@
     overflow: hidden;
     outline: 0;
 
+    border: 1px solid silver;
+    border-left-color: transparent;
+    border-top-color: transparent;
+    border-left-width: 0;
+    border-top-width: 0;
+
     .slick-viewport,
     .slick-top-panel-scroller,
     .slick-header, 
@@ -79,7 +85,15 @@
       z-index: 1;
       white-space: nowrap;
       cursor: default;
+
+      // do not include a bottom border for the bottom-most = leaf header cells:
+      // that border will be provided by the rows container.
+      &.slick-header-is-leaf {
+        border-bottom-color: transparent;
+        border-bottom-width: 0;
+      }
     }
+
     .slick-cell {
       border-style: dotted;
       padding: 1px 2px 1px 2px;

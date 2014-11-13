@@ -61,9 +61,15 @@
       o = $(_canvas).offset();
       x = dd.startX - o.left;
       y = dd.startY - o.top;
-      var start = _grid.getCellFromPoint(x, y);
+      var start = _grid.getCellFromPoint(x, y, {
+        clipToValidRange: true
+      });
+      assert(start);
 
-      dd.range = {start: start, end: {}};
+      dd.range = {
+        start: start, 
+        end: {}
+      };
       dd.currentCell = cell;
 
       return _decorator.show(new Slick.Range(start.row, start.cell));
@@ -79,8 +85,11 @@
       o = $(_canvas).offset();
       x = e.pageX - o.left;
       y = e.pageY - o.top;
-      var end = _grid.getCellFromPoint(x, y);
-
+      var end = _grid.getCellFromPoint(x, y, {
+        clipToValidRange: true
+      });
+      assert(end);
+      
       var eventData = {
           range: dd.range,
           currentCell: end

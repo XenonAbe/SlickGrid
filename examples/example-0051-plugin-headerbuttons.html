@@ -134,7 +134,7 @@
   };
 
 
-  //Set a button on the third column to demonstrate how to manipulate it programatically
+  // Set a button on the third column to demonstrate how to manipulate it programmatically
   columns[2].name = "Dynamic";
   columns[2].header = {
     buttons: [
@@ -152,7 +152,7 @@
   // Set up some test data.
   for (var i = 0; i < 100; i++) {
     var d = (data[i] = {});
-    d["id"] = i;
+    d.id = i;
     for (var j = 0; j < columns.length; j++) {
       d[j] = Math.round(Math.random() * 10) - 5;
     }
@@ -202,8 +202,8 @@
       var button = args.button;
       var command = args.command;
 
-      if (command == "toggle-highlight") {
-        if (button.cssClass == "icon-highlight-on") {
+      if (command === "toggle-highlight") {
+        if (button.cssClass === "icon-highlight-on") {
           delete columnsWithHighlightingById[column.id];
           button.cssClass = "icon-highlight-off";
           button.tooltip = "Highlight negative numbers."
@@ -216,7 +216,7 @@
         grid.invalidate();
       }
 
-      if (command == "remove-filter") {
+      if (command === "remove-filter") {
         hideColumnFilterDisplay(column);
       }
     });
