@@ -348,6 +348,7 @@ if (typeof Slick === "undefined") {
     //var columnPosRight = [];
 
     // async call handles
+    var h_retry_init = null;
     var h_editorLoader = null;
     var h_render = null;
     var h_postrender = null;
@@ -499,13 +500,34 @@ if (typeof Slick === "undefined") {
 
       assert(!initialized);
       viewportW = getViewportWidth();
-      updateCanvasWidth();    // note that this call MUST NOT fire the onCanvasChanged event!
+      var rv = updateCanvasWidth();    // note that this call MUST NOT fire the onCanvasChanged event!
 
       $focusSink2 = $focusSink.clone().appendTo($container);
 
       if (!options.explicitInitialization) {
-        finishInitialization();
+        rv &= finishInitializationUntilDone();
       }
+      return rv;
+    }
+
+    // Stubbornly keep at it until the init is really completely done.
+    function finishInitializationUntilDone() {
+      clearTimeout(h_retry_init);
+      h_retry_init = null;
+
+      // Only execute the initialization when it hasn't run to completion yet:
+      if (initialized < 3) {
+        if (!finishInitialization()) {
+          // When the initialization didn't complete entirely, we have to poll the browser to 
+          // get to a state where we get the initialization done -- the culprit is almost always 
+          // a delay in the stylesheet node becoming available.
+          assert(initialized < 3); 
+          assert(!stylesheet);
+          h_retry_init = setTimeout(finishInitializationUntilDone, 100);
+          return false;
+        }
+      }
+      return true;
     }
 
     function finishInitialization() {
@@ -681,12 +703,19 @@ if (typeof Slick === "undefined") {
         }
 
         initialized = 2;
-
-        trigger(self.onAfterInit, {});
-      } else if (!stylesheet) {
-        // when a previous `init` run did not yet use the run-time stylesheet data, we have to adjust the canvas while waiting for the browser to actually parse that style.
+      } else if (!stylesheet && initialized > 1) {
+        // when a previous `init` run did not yet use the run-time stylesheet data, 
+        // we have to adjust the canvas while waiting for the browser to actually 
+        // parse that style.
         resizeCanvas();
       }
+
+      // Only fire the onAfterInit event when we really have done it all:
+      if (stylesheet && initialized === 2) {
+        initialized = 3;
+        trigger(self.onAfterInit, {});
+      }
+
       // report the user whether we are a complete success (truthy) or not (falsey):
       return !!stylesheet;
     }
@@ -793,9 +822,13 @@ if (typeof Slick === "undefined") {
         cached = true;
       }
 
-      // when `stylesheet` has not been set yet, it means that any previous call to applyColumnWidths() did not use up to date values yet as the run-time generated stylesheet wasn't parsed in time.
+      // When `stylesheet` has not been set yet, it means that any previous call to 
+      // applyColumnWidths() did not use up to date values yet as the run-time generated 
+      // stylesheet wasn't parsed in time.
       if (canvasWidth !== oldCanvasWidth || !stylesheet || !initialized) {
-        applyColumnWidths();
+        if (!applyColumnWidths()) {
+          return false;
+        }
       }
 
       // Only fire the event when there's actual change *and* we're past the initialization phase.
@@ -820,7 +853,10 @@ if (typeof Slick === "undefined") {
 
         // and (re)render the affected columns
         render();
+
+        return true;
       }
+      return false;
     }
 
     function disableSelection($target) {
@@ -1421,7 +1457,8 @@ if (typeof Slick === "undefined") {
             assert(columns[cell]);
             reorderedColumns.push(columns[cell]);
           }
-          setColumns(reorderedColumns);
+          var rv = setColumns(reorderedColumns);
+          assert(rv === true);
 
           trigger(self.onColumnsReordered, {
             ui: ui
@@ -1529,7 +1566,8 @@ if (typeof Slick === "undefined") {
         trigger(self.onColumnsStartResize, {}, e); // onColumnsResizeStart
         updateColumnCaches();
         //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
-        updateCanvasWidth();
+        var rv = updateCanvasWidth();
+        assert(rv === true);
         //e.preventDefault();
         //e.stopPropagation();
       }
@@ -1609,7 +1647,8 @@ if (typeof Slick === "undefined") {
         }
         updateColumnCaches();
         //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
-        updateCanvasWidth();
+        var rv = updateCanvasWidth();
+        assert(rv === true);
         trigger(self.onColumnsResizing, {}, e);
         //e.preventDefault();
         //e.stopPropagation();
@@ -1633,7 +1672,8 @@ if (typeof Slick === "undefined") {
             }
           }
         }
-        updateCanvasWidth();
+        var rv = updateCanvasWidth();
+        assert(rv === true);
         handleScroll();
         //render();
         trigger(self.onColumnsResized, { 
@@ -1687,7 +1727,8 @@ if (typeof Slick === "undefined") {
         }
 
         updateColumnCaches();
-        updateCanvasWidth();
+        var rv = updateCanvasWidth();
+        assert(rv === true);
         //render();
         trigger(self.onColumnsResized, {
           cell: cell, 
@@ -2161,7 +2202,8 @@ if (typeof Slick === "undefined") {
 
       updateColumnCaches();
       //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth(true)
-      updateCanvasWidth();
+      var rv = updateCanvasWidth();
+      assert(rv === true);
       //render();
     }
 
@@ -2183,14 +2225,19 @@ if (typeof Slick === "undefined") {
         w = columns[i].width;
 
         rule = getColumnCssRules(i);
-        if (!rule) break;             // when the styles for one column aren't loaded yet, then you can bet the bank the others are neither: abort operation!
-        
+        if (!rule) {
+          // When the styles for one column aren't loaded yet, then you can bet the bank 
+          // the others are neither: abort operation!
+          return false;             
+        }
+
         rule.left.style.left = x + "px";
         rule.headerLeft.style.left = x + "px";
         x += w;
         rule.right.style.right = (gridWidth - x) + "px";
         rule.headerRight.style.right = (headerWidth - x) + "px";
       }
+      return true;
     }
 
     function setSortColumn(columnId, ascending) {
@@ -2323,9 +2370,13 @@ if (typeof Slick === "undefined") {
         removeCssRules();
         createCssRules();
         resizeCanvas();
-        applyColumnWidths();   // this one would break as the run-time created style in createCssRules() may not have been parsed by the browser yet! (At least in Chrome/MAC)
+        // Warning: the next call would break as the run-time created style in createCssRules() 
+        // may not have been parsed by the browser yet! (At least in Chrome/MAC)
+        var rv = applyColumnWidths();   
         handleScroll();
+        return rv;
       }
+      return false;
     }
 
     // Given a column definition object, do all the steps required to react to a change in the widths of any of the columns
@@ -2335,8 +2386,9 @@ if (typeof Slick === "undefined") {
       if (initialized) {
         // Surgically update all cell widths, including header cells:
         //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth()
-        updateCanvasWidth();
+        return updateCanvasWidth();
       }
+      return false;
     }
 
     function getOptions() {
@@ -4441,7 +4493,9 @@ if (typeof Slick === "undefined") {
     }
 
     function updateRowCount() {
-      if (!initialized) { return; }
+      if (!initialized) { 
+        return false; 
+      }
 
       cacheRowPositions();
 
@@ -4521,7 +4575,7 @@ if (typeof Slick === "undefined") {
       if (options.forceFitColumns && oldViewportHasVScroll !== viewportHasVScroll) {
         autosizeColumns();
       }
-      updateCanvasWidth();
+      return updateCanvasWidth();
     }
 
     /*
@@ -6098,7 +6152,8 @@ out:
       assert(cell);
 
       trigger(self.onContextMenu, cell, e);
-      // when the right-click context menu event actually was received by any handlers, then we make sure no default browser right-click popup menu shows up as well:
+      // When the right-click context menu event actually was received by any handlers, 
+      // then we make sure no default browser right-click popup menu shows up as well:
       if (self.onContextMenu.handlers().length) {
         // http://stackoverflow.com/questions/10483937/need-to-disable-context-menu-on-right-click-and-call-a-function-on-right-click
         e.preventDefault();

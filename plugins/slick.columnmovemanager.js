@@ -32,7 +32,12 @@
     }
 
     function handleDragInit(e, dd) {
-      var cell = _grid.getCellFromEvent(e);
+      var cell = _grid.getCellFromEvent(e, {
+        clipToValidRange: true
+      });
+      assert(cell && cell.sourceInfo && cell.sourceInfo.source === "headers");
+      assert(cell && cell.sourceInfo && cell.sourceInfo.subSource === "header");
+
       if (!cell) {
         return;
       }
