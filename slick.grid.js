@@ -663,6 +663,7 @@ if (typeof Slick === "undefined") {
               //   // commit failed, jump back to edited field so user can edit it and make sure it passes the next time through
               //   assert(currentEditor);
               //   currentEditor.focus();
+              //   assert(document.activeElement !== document.body);
               // }
             })
             .fixClick(handleContainerClickEvent, handleContainerDblClickEvent)
@@ -3593,7 +3594,14 @@ if (typeof Slick === "undefined") {
         cellCss: cellCss,
         cellStyles: cellStyles,
         html: "",
-        attributes: {},
+        attributes: {
+          // Make every cell keyboard-focusable as per W3C spec ( https://html.spec.whatwg.org/#focus-management-apis ); 
+          // without us setting a valid tabindex DOM node attribute any `takeFocus=true` config option for
+          // setActiveCell() et al will fail to deliver in Chrome 38.x and upwards, at least, as calling `.focus()`
+          // on a node which doesn't have this apparently keeps the focus (document.activeElement) stuck at BODY
+          // level :-(  -- added assertions elsewhere in the code to catch this problem.
+          tabindex: 0    
+        },
         colspan: colspan,
         rowspan: rowspan,
         cellHeight: cellHeight,
@@ -3697,9 +3705,6 @@ if (typeof Slick === "undefined") {
         metaData.class = info.rowCss.join(" ");
       } else {
         metaData.class = null;
-      }
-      if (info.attributes.tabindex != null) {
-        metaData.tabindex = info.attributes.tabindex; 
       }
 
       // apply the new attributes:
@@ -3918,6 +3923,7 @@ if (typeof Slick === "undefined") {
           oldNode: activeCellNode
         };
         $focusSink[0].focus();
+        assert(document.activeElement === $focusSink[0]);
         movingFocusLock--;
         if (!movingFocusLock) {
           movingFocusLockData = [];
@@ -5106,6 +5112,7 @@ if (typeof Slick === "undefined") {
             newNode: activeCellNode
           };
           activeCellNode.focus();
+          assert(document.activeElement === activeCellNode);
           movingFocusLock--;
           if (!movingFocusLock) {
             movingFocusLockData = [];
@@ -6125,6 +6132,7 @@ out:
         // When there is an editor active, we make sure the focus jumps back to that editor!
         assert(currentEditor);
         currentEditor.focus();
+        assert(document.activeElement !== document.body);
       } else if (activeCellNode === cell.node && !getEditorLock().isActive()) {
         // When there's no editor active on the current cell already, simply focus the grid.
         assert(!currentEditor);
@@ -6210,6 +6218,7 @@ out:
         // When there is an editor active, we make sure the focus jumps back to that editor!
         assert(currentEditor);
         currentEditor.focus();
+        assert(document.activeElement !== document.body);
       } else if (activeCellNode === cell.node && !getEditorLock().isActive()) {
         // When there's no editor active on the current cell already, make it so. (forceEditMode=2 like)
         if (options.editable) {
@@ -6772,8 +6781,10 @@ out:
       // console.log("setFocus: SET FOCUS TO A SINK: START");
       if (tabbingDirection === -1) {
         $focusSink[0].focus();
+        assert(document.activeElement === $focusSink[0]);
       } else {
         $focusSink2[0].focus();
+        assert(document.activeElement === $focusSink2[0]);
       }
       // console.log("setFocus: SET FOCUS TO A SINK: END");
     }
@@ -6966,6 +6977,7 @@ out:
             oldNodeInfo: oldFocusCellInfo
           };
           activeCellNode.focus();
+          assert(document.activeElement === activeCellNode);
           movingFocusLock--;
           if (!movingFocusLock) {
             movingFocusLockData = [];
@@ -7020,6 +7032,7 @@ out:
             oldNodeInfo: oldFocusCellInfo
           };
           $focusSink[0].focus();
+          assert(document.activeElement === $focusSink[0]);
           movingFocusLock--;
           if (!movingFocusLock) {
             movingFocusLockData = [];
@@ -7211,6 +7224,7 @@ out:
       } else {
         currentEditor.show();
         currentEditor.focus();
+        assert(document.activeElement !== document.body);
       }
       // old code for this chunk was:         handleActiveCellPositionChange();
 
@@ -8351,6 +8365,7 @@ if (0) {
             }
 
             currentEditor.focus();
+            assert(document.activeElement !== document.body);
             return false;
           }
         }
