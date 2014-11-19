@@ -222,8 +222,11 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('assemble-less');
   grunt.loadNpmTasks('grunt-contrib-copy');
 
+  // Preparation task: synchronize the libraries (lib/*) from the submodules.
+  grunt.registerTask('libsync', ['copy:libsync']);
+
   // Preparation (compile) task.
-  grunt.registerTask('compile', ['clean', 'copy:libsync', 'less']);
+  grunt.registerTask('compile', ['clean', 'libsync', 'less']);
 
   // Lint task.
   grunt.registerTask('lint', ['csslint', 'jshint', 'jscs']);
