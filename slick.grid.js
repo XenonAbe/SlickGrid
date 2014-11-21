@@ -1601,7 +1601,7 @@ if (typeof Slick === "undefined") {
             }
         } else { cellCache = {}}
 
-      var d = getDataItem(row);
+      var dataItem = getDataItem(row);
 
       if (options.enableWrap) {
           if (!sumSizesInitialized) {
@@ -1623,9 +1623,15 @@ if (typeof Slick === "undefined") {
         }
       }
         var colWidth = 75;
+
         if(options.enableWrap ){
-           if (!d["__group"]) {
-               colWidth = $($(".slick-header-column")[cell + 1]).css("width")
+           $("#width_tester").css({"width": '', "white-space": '', "word-wrap": ''});
+
+           if (!dataItem["__group"]) {
+               colWidth = $($(".slick-header-column")[cell]).css("width")
+               if (colWidth == undefined){
+
+               }
            }
 
             // determine the height
@@ -1633,26 +1639,37 @@ if (typeof Slick === "undefined") {
             $("#width_tester").addClass("ui-widget")
 
             // is this a visible field, or a group column
-            if (/\S/.test(columns[cell].name) && !(d.group)){
-                $("#width_tester").text(d[columns[cell].ColumnHeader]);
-            } else if (d.group && !(d.group.sum || d.group.avg)){
+            if (/\S/.test(columns[cell].name) && !(dataItem.group)){
+                $("#width_tester").text(dataItem[columns[cell].ColumnHeader]);
+            // group footer message
+            } else if (dataItem.group && !(dataItem.group.sum || dataItem.group.avg)){
                 $("#width_tester").css({"width": "500px"})
-                $("#width_tester").text("Totals for " + d.group.value);
+                $("#width_tester").text("Totals for " + dataItem.group.value);
             }
-            else if (d.group && (d.group.sum || d.group.avg)) {
+            // group aggregate
+            else if (dataItem.group && (dataItem.group.sum || dataItem.group.avg)) {
                 $("#width_tester").css({"width": "500px"})
-                $("#width_tester").text(d[columns[cell].group.title]);
+                $("#width_tester").text(dataItem[columns[cell].group.title]);
             }
-            else if (d.groups || d.__group == true){
+            //
+            else if (dataItem.groups || dataItem.__group == true){
                 $("#width_tester").css({"width": "500px"})
-                $("#width_tester").text(d.title);
+                $("#width_tester").text(dataItem.title);
             }
             else {
-                $("#width_tester").text(d[columns[cell].ColumnHeader]);
+                $("#width_tester").css({"width": "500px"})
+                $("#width_tester").text(dataItem[columns[cell].ColumnHeader]);
             }
+            // default to option value set in report service
+            var rowHeight = Number(options.rowHeight);
 
-            var rowHeight = $("#width_tester").height() + 5;
-
+            if ($("#width_tester").text(dataItem[columns[cell].ColumnHeader]).length <= colWidth){
+                // set to default height
+                rowHeight = Number(options.rowHeight);
+            }
+            else {
+                rowHeight = ($("#width_tester").height() * 1.05);
+            }
             if (rowHeight < Number(options.rowHeight)){
                 rowHeight = Number(options.rowHeight);
             }
@@ -1662,6 +1679,7 @@ if (typeof Slick === "undefined") {
                 setRowHeight(row, rowHeight);
             }
             else if (Number(rowHeight) > Number(cellCache.height)) {
+
                 cellCache.height = Number(rowHeight);
                 setRowHeight(row, rowHeight);
             }
@@ -3080,6 +3098,13 @@ if (typeof Slick === "undefined") {
       }
     }
 
+    function refreshRowHeights(){
+        rowHeights = [];
+        rowTops = [];
+        initializeRowHeights()
+        refreshRowTops()
+    }
+
     function clearCache(){
         rowHeights = [];
         rowTops = [];
@@ -3776,7 +3801,8 @@ if (typeof Slick === "undefined") {
       "calculateAdjustedRowTop": calculateAdjustedRowTop,
       "initGridRows": initGridRows,
       "applyColumnHeaderWidths": applyColumnHeaderWidths,
-      "updateCanvasWidth": updateCanvasWidth
+      "updateCanvasWidth": updateCanvasWidth,
+      "refreshRowHeights": refreshRowHeights
     });
 
     init();
