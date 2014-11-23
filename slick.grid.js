@@ -2391,6 +2391,8 @@ if (typeof Slick === "undefined") {
      *                                        manually call resizeCanvas.
      */
     function setColumns(newColumnDefinitions, resizeOptions) {
+	  getEditorLock().cancelCurrentEdit();
+	
       parseColumns(newColumnDefinitions);
       resizeOptions = resizeOptions || {};
       updateColumnCaches();
