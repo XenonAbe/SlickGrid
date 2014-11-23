@@ -1490,7 +1490,7 @@ if (typeof Slick === "undefined") {
         return;
       }
 
-      function onColumnResizeDragInit(e, dd, aciveColumnIndex) {
+      function onColumnResizeDragInit(e, dd, activeColumnIndex) {
         var j, c;
         if (!getEditorLock().commitCurrentEdit()) {
           return false;
@@ -1499,7 +1499,7 @@ if (typeof Slick === "undefined") {
         //e.stopPropagation();
       }
 
-      function onColumnResizeDragStart(e, dd, aciveColumnIndex) {
+      function onColumnResizeDragStart(e, dd, activeColumnIndex) {
         var j, c;
         if (!getEditorLock().commitCurrentEdit()) {
           return false;
@@ -1509,8 +1509,8 @@ if (typeof Slick === "undefined") {
         $(this).parent().addClass("slick-header-column-active");
 
         // Get the dragged column object and set a flag on it
-        assert(aciveColumnIndex >= 0);
-        columns[aciveColumnIndex].manuallySized = true;
+        assert(activeColumnIndex >= 0);
+        columns[activeColumnIndex].manuallySized = true;
         
         var shrinkLeewayOnRight = null, stretchLeewayOnRight = null;
         // calculate & cache all invariants to speed up the process:
@@ -1527,7 +1527,7 @@ if (typeof Slick === "undefined") {
           shrinkLeewayOnRight = 0;
           stretchLeewayOnRight = 0;
           // columns on right affect maxPageX/minPageX
-          for (j = aciveColumnIndex + 1; j < columnCount; j++) {
+          for (j = activeColumnIndex + 1; j < columnCount; j++) {
             c = columns[j];
             assert(c);
             if (c.resizable) {
@@ -1543,7 +1543,7 @@ if (typeof Slick === "undefined") {
           }
         }
         var shrinkLeewayOnLeft = 0, stretchLeewayOnLeft = 0;
-        for (j = 0; j <= aciveColumnIndex; j++) {
+        for (j = 0; j <= activeColumnIndex; j++) {
           // columns on left only affect minPageX
           c = columns[j];
           assert(c);
@@ -1581,7 +1581,7 @@ if (typeof Slick === "undefined") {
         //e.stopPropagation();
       }
 
-      function onColumnResizeDrag(e, dd, aciveColumnIndex) {
+      function onColumnResizeDrag(e, dd, activeColumnIndex) {
         var actualMinWidth, 
             d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX, 
             x;
@@ -1590,10 +1590,10 @@ if (typeof Slick === "undefined") {
         if (d < 0) { // shrink column
           x = d;
           if (options.resizeOnlyDraggedColumn) {
-            c = columns[aciveColumnIndex];
+            c = columns[activeColumnIndex];
             c.width = Math.max(c.previousWidth + x, c.__columnResizeInfo.absMinWidth); // apply shrinkage to this column only.
           } else {
-            for (j = aciveColumnIndex; j >= 0; j--) {
+            for (j = activeColumnIndex; j >= 0; j--) {
               c = columns[j];
               assert(c);
               if (c.resizable) {
@@ -1611,7 +1611,7 @@ if (typeof Slick === "undefined") {
 
           if (options.forceFitColumns) {
             x = -d;
-            for (j = aciveColumnIndex + 1; j < columnCount; j++) {
+            for (j = activeColumnIndex + 1; j < columnCount; j++) {
               c = columns[j];
               assert(c);
               if (c.resizable) {
@@ -1628,13 +1628,13 @@ if (typeof Slick === "undefined") {
         } else { // stretch column
           x = d;
           if (options.resizeOnlyDraggedColumn) {
-            c = columns[aciveColumnIndex];
+            c = columns[activeColumnIndex];
             c.width = c.previousWidth + x;
             if (x && c.maxWidth && c.maxWidth < c.width) {
               c.width = c.maxWidth;
             }
           } else {
-            for (j = aciveColumnIndex; j >= 0; j--) {
+            for (j = activeColumnIndex; j >= 0; j--) {
               c = columns[j];
               assert(c);
               if (c.resizable) {
@@ -1651,7 +1651,7 @@ if (typeof Slick === "undefined") {
 
           if (options.forceFitColumns) {
             x = -d;
-            for (j = aciveColumnIndex + 1; j < columnCount; j++) {
+            for (j = activeColumnIndex + 1; j < columnCount; j++) {
               c = columns[j];
               assert(c);
               if (c.resizable) {
