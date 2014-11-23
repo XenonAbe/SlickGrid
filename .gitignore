@@ -12,3 +12,7 @@ node_modules/
 # Editor backup files
 *~
 *.bak
+
+# utility forks analyze script caches
+__forks.info__/
+__forks__.bulk_dump
