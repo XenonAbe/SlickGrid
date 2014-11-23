@@ -1969,11 +1969,16 @@ if (typeof Slick === "undefined") {
       assert(sheet.ownerNode);
     }
 
+    function getStyleSheetOwner(sheet) {
+      return sheet && (sheet.ownerNode || sheet.owningElement);
+    }
+
     // Fix for Google Chrome
     function getStyleSheet() {
       for (var style in document.styleSheets) {
-        var sheet = document.styleSheets[style];
-        if (sheet && sheet.ownerNode && sheet.ownerNode.id === "slickgrid_stylesheet_" + uid) {
+        var sheets = document.styleSheets;
+        var ownerNode = getStyleSheetOwner(sheet);
+        if (ownerNode && ownerNode.id === "slickgrid_stylesheet_" + uid) {
           return sheet;
         }
       }
