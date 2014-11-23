@@ -1934,7 +1934,7 @@ if (typeof Slick === "undefined") {
         });
       } else {
         throw new Error("run-time generated slickgrid rules could not be set up");
-      }
+        }
     }
 
     function addCSSRule(sheet, selector, rules, index) {
