@@ -1,50 +1,54 @@
 // the following three function originate from mozilla's mdn
-  if (!Array.prototype.map) {
-    Array.prototype.map = function(callback, thisArg) {
-      var T, A, k;
-      if (this == null) {
-        throw new TypeError(" this is null or not defined");
+if (!Array.prototype.map) {
+  Array.prototype.map = function (callback, thisArg) {
+    var T, A, k;
+    if (this == null) {
+      throw new TypeError(" this is null or not defined");
+    }
+    var O = Object(this);
+    var len = O.length >>> 0;
+    if ({}.toString.call(callback) !== "[object Function]") {
+      throw new TypeError(callback + " is not a function");
+    }
+    if (thisArg) {
+      T = thisArg;
+    }
+    A = new Array(len);
+    k = 0;
+    while (k < len) {
+      var kValue, mappedValue;
+      if (k in O) {
+        kValue = O[k];
+        A[k] = mappedValue;
       }
-      var O = Object(this);
-      var len = O.length >>> 0;
-      if ({}.toString.call(callback) != "[object Function]") {
-        throw new TypeError(callback + " is not a function");
-      }
-      if (thisArg) {
-        T = thisArg;
-      }
-      A = new Array(len);
-      k = 0;
-      while(k < len) {
-        var kValue, mappedValue;
-        if (k in O) {
-          kValue = O[ k ];
-          A[ k ] = mappedValue;
-        }
-        k++;
-      }
-      return A;
-    };
-  }
+      k++;
+    }
+    return A;
+  };
+}
 
 if (!Array.prototype.reduce) {
-  Array.prototype.reduce = function reduce(accumulator){
-    if (this===null || this===undefined) throw new TypeError("Object is null or undefined");
+  Array.prototype.reduce = function reduce(accumulator) {
+    if (this === null || this === undefined) throw new TypeError("Object is null or undefined");
     var i = 0, l = this.length >> 0, curr;
 
-    if(typeof accumulator !== "function") // ES5 : "If IsCallable(callbackfn) is false, throw a TypeError exception."
+    if (typeof accumulator !== "function") {
+      // ES5 : "If IsCallable(callbackfn) is false, throw a TypeError exception."
       throw new TypeError("First argument is not callable");
+    }
 
-    if(arguments.length < 2) {
+    if (arguments.length < 2) {
       if (l === 0) throw new TypeError("Array length is 0 and no second argument");
       curr = this[0];
       i = 1; // start accumulating at the second element
-    }
-    else
+    } else {
       curr = arguments[1];
+    }
 
     while (i < l) {
-      if(i in this) curr = accumulator.call(undefined, curr, this[i], i, this);
+      if (i in this) {
+        curr = accumulator.call(undefined, curr, this[i], i, this);
+      }
       ++i;
     }
 
@@ -53,26 +57,27 @@ if (!Array.prototype.reduce) {
 }
 
 if (!Array.prototype.filter) {
-  Array.prototype.filter = function(fun /*, thisp */)  {
+  Array.prototype.filter = function (fun /*, thisp */)  {
     "use strict";
 
-    if (this == null)
+    if (this == null) {
       throw new TypeError();
+    }
 
     var t = Object(this);
     var len = t.length >>> 0;
-    if (typeof fun != "function")
+    if (typeof fun !== "function") {
       throw new TypeError();
+    }
 
     var res = [];
     var thisp = arguments[1];
-    for (var i = 0; i < len; i++)
-    {
-      if (i in t)
-      {
+    for (var i = 0; i < len; i++) {
+      if (i in t) {
         var val = t[i]; // in case fun mutates this
-        if (fun.call(thisp, val, i, t))
+        if (fun.call(thisp, val, i, t)) {
           res.push(val);
+        }
       }
     }
 
@@ -83,11 +88,11 @@ if (!Array.prototype.filter) {
 
 (function($) {
   $.extend(true, window, {
-    'Slick': {
-      'Editors': {
-        'Formula': FormulaEditor
+    Slick: {
+      Editors: {
+        Formula: FormulaEditor
       },
-      'FormulaCalculator': FormulaCalculator
+      FormulaCalculator: FormulaCalculator
     }
   });
 
@@ -104,10 +109,10 @@ if (!Array.prototype.filter) {
   }
 
   FormulaManager.prototype = {
-    set: function(ref, str) {
+    set: function (ref, str) {
       this.h[refKey(ref)] = str;
     },
-    get: function(ref) {
+    get: function (ref) {
       return this.h[refKey(ref)];
     }
   };
@@ -118,79 +123,84 @@ if (!Array.prototype.filter) {
   }
 
   RefManager.prototype = {
-    clear: function(ref) {
+    clear: function (ref) {
       var k = refKey(ref);
-      for(var r in this.getDependentRefs(ref)) {
+      for (var r in this.getDependentRefs(ref)) {
         delete this.uh[r];
       }
       this.dh[k] = {};
     },
     //val depends on key
-    set: function(k, v) {
+    set: function (k, v) {
       k = refKey(k);
       v = refKey(v);
       this.uh[k] = this.uh[k] || {};
       this.dh[v] = this.dh[v] || {};
-      if(!this.uh[k][v]) {
+      if (!this.uh[k][v]) {
         this.uh[k][v] = 1;
       }
-      if(!this.dh[v][k]) {
+      if (!this.dh[v][k]) {
         this.dh[v][k] = 1;
       }
     },
-    checkCircle: function(ref, dependentRef) {
+    checkCircle: function (ref, dependentRef) {
       return this.checkCircleHelper(refKey(ref), refKey(dependentRef));
     },
-    checkCircleHelper: function(k, dk) {
+    checkCircleHelper: function (k, dk) {
       var children;
-      if(k == dk) {
+      if (k == dk) {
         return true;
       }
       children = this.dh[dk] || [];
-      if(children[k]) {
+      if (children[k]) {
         return true;
       } else {
-        for(var r in children[k]) {
-          if(this.checkCircleHelper(k, r)) {
+        for (var r in children[k]) {
+          if (this.checkCircleHelper(k, r)) {
             return true;
           }
         }
       }
       return false;
     },
-    getUpdateRefs: function(ref) {
+    getUpdateRefs: function (ref) {
       return this.getHashRefs(this.uh, ref);
     },
-    getDependentRefs: function(ref) {
+    getDependentRefs: function (ref) {
       return this.getHashRefs(this.dh, ref);
     },
-    getHashRefs: function(hash, ref) {
+    getHashRefs: function (hash, ref) {
       var k = refKey(ref), acc = [];
       hash[k] = hash[k] || {};
-      for(var i in hash[k]) {
+      for (var i in hash[k]) {
         acc.push(this.getRefFromString(i));
       }
       return acc;
     },
-    getRefFromString: function(str) {
+    getRefFromString: function (str) {
       var coords = str.split(',').map(parseInt10);
-      return {row: coords[0], col: coords[1]};
+      return {
+        row: coords[0], 
+        col: coords[1]
+      };
     },
-    refValue: function(ref, grid) {
+    refValue: function (ref, grid) {
       return grid.getDataItem(ref.row)[ref.col];
     },
-    getRowAndCol: function(cell) {
-      return {row: parseInt(cell.split(/\D/)[1]),
-              col: this.getColIndex(cell.split(/\d/)[0])};
+    getRowAndCol: function (cell) {
+      return {
+        row: parseInt(cell.split(/\D/)[1]),
+        col: this.getColIndex(cell.split(/\d/)[0])
+      };
     },
-    getColIndex: function(col) {
+    getColIndex: function (col) {
       var c = 0, left = 'a'.charCodeAt(0);
-      for(var i = 0; i < col.length; i += 1) {
+      for (var i = 0; i < col.length; i += 1) {
         c += col.charCodeAt(i) - left;
       }
       return c;
     },
-    refDependentRefs: function(ref) {
+    refDependentRefs: function (ref) {
       ref = ref.toLowerCase().replace('$', '');
       var splitted = ref.split(':'), refs;
       var from = splitted[0], to = splitted[1];
@@ -198,23 +208,35 @@ if (!Array.prototype.filter) {
       if (to) {
         to = this.getRowAndCol(to);
         refs = [];
-        if(from.col == to.col) {
-          for(var r = 0; r <= to.row - from.row; r += 1) {
-            refs.push({row: from.row + r, col: from.col});
+        if (from.col == to.col) {
+          for (var r = 0; r <= to.row - from.row; r += 1) {
+            refs.push({
+              row: from.row + r, 
+              col: from.col
+            });
           }
         } else {
           var c;
-          for(c = from.col; c <= to.col; c += 1) {
-            refs.push({row: from.row, col: c});
+          for (c = from.col; c <= to.col; c += 1) {
+            refs.push({
+              row: from.row, 
+              col: c
+            });
           }
-          if(from.row !== to.row) {
-            for(var r = from.row + 1; r < to.row; r += 1) {
+          if (from.row !== to.row) {
+            for (var r = from.row + 1; r < to.row; r += 1) {
               for (c = 0; c <= to.col; c += 1) {
-                refs.push({row: r, col: c})
+                refs.push({
+                  row: r, 
+                  col: c
+                });
               }
             }
-            for(c = 0; c <= to.col; c += 1) {
-              refs.push({row: to.row, col: c});
+            for (c = 0; c <= to.col; c += 1) {
+              refs.push({
+                row: to.row, 
+                col: c
+              });
             }
           }
         }
@@ -223,24 +245,24 @@ if (!Array.prototype.filter) {
         return [from];
       }
     },
-    evaluateRef: function(ref, grid) {
+    evaluateRef: function (ref, grid) {
       ref = ref.toLowerCase().replace('$', '');
       var self = this;
       var values = this.refDependentRefs(ref).map(function(r) {
         return self.refValue(r, grid);
-      }).filter(function(r) {
-        return typeof r != "undefined";
+      }).filter(function (r) {
+        return typeof r !== "undefined";
       });
-      return values.length == 1 ? values[0] : values;
+      return values.length === 1 ? values[0] : values;
     }
   };
 
   function traverseTree(node, fn) {
     fn(node);
-    if(node.left) {
+    if (node.left) {
       traverseTree(node.left, fn);
     }
-    if(node.right) {
+    if (node.right) {
       traverseTree(node.right, fn);
     }
   }
@@ -248,7 +270,7 @@ if (!Array.prototype.filter) {
   var formulaCalculators = {};
 
   function getFormulaCalculator(grid) {
-    var key = grid.getOptions()['containerId'];
+    var key = grid.getOptions().containerId;
     formulaCalculators[key] = formulaCalculators[key] || new FormulaCalculator(grid);
     return formulaCalculators[key];
   }
@@ -260,33 +282,33 @@ if (!Array.prototype.filter) {
   }
 
   FormulaCalculator.prototype = {
-    updateRefs: function(ref) {
+    updateRefs: function (ref) {
       var refs;
       refs = this.refManager.getUpdateRefs(ref);
-      for(var i = 0; i < refs.length; i +=1){
+      for (var i = 0; i < refs.length; i +=1) {
         this.evalRefAndDependentRefs(ref);
       }
     },
-    evalRefAndDependentRefs: function(ref) {
+    evalRefAndDependentRefs: function (ref) {
       var row = ref.row, col = ref.col, item = this.grid.getDataItem(row);
       item[col] = evaluate(this.formulaManager.get(ref), this);
       this.updateRefs(ref);
     },
-    evaluateRef: function(ref) {
+    evaluateRef: function (ref) {
       return this.refManager.evaluateRef(ref, this.grid);
     },
-    evaluateCell: function(ref, value) {
+    evaluateCell: function (ref, value) {
       var refs, tree, result, old = this.formulaManager.get(ref), scope = this;
-      if(old) {
+      if (old) {
         this.refManager.clear(old);
       }
       this.formulaManager.set(ref, value);
       tree = parse(value);
-      traverseTree(tree, function(node) {
-        if(node.type == 'ref') {
+      traverseTree(tree, function (node) {
+        if (node.type === 'ref') {
           refs = scope.refManager.refDependentRefs(node.value);
-          for(var i = 0; i < refs.length; i += 1) {
-            if(!scope.refManager.checkCircle(ref, refs[i])) {
+          for (var i = 0; i < refs.length; i += 1) {
+            if (!scope.refManager.checkCircle(ref, refs[i])) {
               scope.refManager.set(refs[i], ref);
             } else {
               result = 'circular reference';
@@ -295,7 +317,7 @@ if (!Array.prototype.filter) {
           }
         }
       });
-      if(!result) {
+      if (!result) {
         result = evaluate(value, this);
       }
       return result;
@@ -304,30 +326,30 @@ if (!Array.prototype.filter) {
 
   function lex(str) {
     var pos = 0, length = str.length, tokens = [];
-    return (function() {
+    return (function () {
       var type, name, startPos;
-      while(!ended()) {
+      while (!ended()) {
         ignoreSpaces();
         startPos = pos;
-        if(isLetter(current()) || current() == '_') {
+        if (isLetter(current()) || current() == '_') {
           type = 'name';
           value = parseName();
-        } else if(isDigit(current())) {
+        } else if (isDigit(current())) {
           type = 'number';
           value = parseNumber();
-        } else if(isOp(current())) {
+        } else if (isOp(current())) {
           type = 'operator';
           value = current();
           step();
-        } else if(current() == '(') {
+        } else if (current() == '(') {
           type = 'lparen';
           value = '(';
           step();
-        } else if(current() == ')') {
+        } else if (current() == ')') {
           type = 'rparen';
           value = ')';
           step();
-        } else if(current() == ':') {
+        } else if (current() == ':') {
           type = 'colon';
           value = ':';
           step();
@@ -344,11 +366,18 @@ if (!Array.prototype.filter) {
           value = current();
           step();
         }
-        tokens.push({type: type, value: value, pos: startPos});
+        tokens.push({
+          type: type, 
+          value: value, 
+          pos: startPos
+        });
         ignoreSpaces();
-
       }
-      tokens.push({type: 'eof', value: 'eof', pos: length});
+      tokens.push({
+        type: 'eof', 
+        value: 'eof', 
+        pos: length
+      });
       return tokens;
     })();
 
@@ -387,14 +416,14 @@ if (!Array.prototype.filter) {
     }
 
     function ignoreSpaces() {
-      while(!ended() && isWhiteSpace(current())) {
+      while (!ended() && isWhiteSpace(current())) {
         step();
       }
     }
 
     function parseDigitSequence() {
       var acc = '';
-      while(!ended() && isDigit(current())) {
+      while (!ended() && isDigit(current())) {
         acc += current();
         step();
       }
@@ -403,7 +432,7 @@ if (!Array.prototype.filter) {
 
     function parseNumber() {
       var acc = parseDigitSequence();
-      if(current() == '.') {
+      if (current() == '.') {
         step();
         acc += '.' + parseDigitSequence();
       }
@@ -412,7 +441,7 @@ if (!Array.prototype.filter) {
 
     function parseName() {
       var acc = '';
-      while(!ended() && isAlpha(current())) {
+      while (!ended() && isAlpha(current())) {
         acc += current();
         step();
       }
@@ -427,7 +456,10 @@ if (!Array.prototype.filter) {
 
 
     function syntaxError(msg) {
-      return {name: 'syntax error', message: msg};
+      return {
+        name: 'syntax error', 
+        message: msg
+      };
     }
 
     function peek(n) {
@@ -441,7 +473,7 @@ if (!Array.prototype.filter) {
     }
 
     function expect(value) {
-      if(!next.value == value) {
+      if (next.value !== value) {
         throw syntaxError('expected ' + next.value);
       }
       consume();
@@ -449,29 +481,44 @@ if (!Array.prototype.filter) {
 
     function expr() {
       var t = term();
-      while(next.value == '+' || next.value == '-') {
+      while (next.value === '+' || next.value === '-') {
         op = next.value;
         consume();
-        t = {type: 'binary', op:op, left: t, right: term()};
+        t = {
+          type: 'binary', 
+          op: op, 
+          left: t, 
+          right: term()
+        };
       }
       return t;
     }
 
     function term() {
       var t = factor();
-      while(next.value == '*' || next.value == '/') {
+      while (next.value === '*' || next.value === '/') {
         op = next.value;
         consume();
-        t = {type: 'binary', op: op, left:  t, right:  factor()};
+        t = {
+          type: 'binary', 
+          op: op, 
+          left: t, 
+          right: factor()
+        };
       }
       return t;
     }
 
     function factor() {
       var t = primary();
-      if(next.value == '^') {
+      if (next.value === '^') {
         consume();
-        return {type: 'binary', op: '^', left: t, right: factor()};
+        return {
+          type: 'binary', 
+          op: '^', 
+          left: t, 
+          right: factor()
+        };
       } else {
         return t;
       }
@@ -479,56 +526,71 @@ if (!Array.prototype.filter) {
 
     function primary() {
       var t;
-      if(next.type == 'number') {
-        t = {type: 'numeric', value: next.value};
+      if (next.type === 'number') {
+        t = {
+          type: 'numeric', 
+          value: next.value
+        };
         consume();
         return t;
-      } else if(next.type == 'dollar' || next.type == 'name') {
+      } else if (next.type === 'dollar' || next.type === 'name') {
         return name();
-      } else if(next.type == 'lparen') {
+      } else if (next.type === 'lparen') {
         consume();
         t = expr();
         expect(')');
         return t;
-      } else if(next.value == '-') {
+      } else if (next.value === '-') {
         consume();
-        return {type: 'unary', op: '-', right: factor()};
-      }
-      else {
+        return {
+          type: 'unary', 
+          op: '-', 
+          right: factor()
+        };
+      } else {
         throw syntaxError('invalid syntax near ' + next.value);
       }
     }
 
     function name() {
-      if(next.value.charAt(0) == '_') {
-        var t = {type: 'variable', value: next.value};
+      if (next.value.charAt(0) === '_') {
+        var t = {
+          type: 'variable', 
+          value: next.value
+        };
         consume();
         return t;
-      } else if (peek(2).type == 'lparen') {
+      } else if (peek(2).type === 'lparen') {
         return func();
-      } else if(next.type == 'dollar' || next.type == 'name' ) {
+      } else if (next.type === 'dollar' || next.type === 'name') {
         var value = cellRef();
-        if(next.type == 'colon') {
+        if (next.type === 'colon') {
           consume();
           value += ':' + cellRef();
         }
-        return {type: 'ref', value: value};
-      }
-      else {
+        return {
+          type: 'ref', 
+          value: value
+        };
+      } else {
         throw syntaxError('invalid syntax near ' + next.value);
       }
     }
 
     function func() {
-      var t = {type: 'func', value: next.value, args: []};
+      var t = {
+        type: 'func', 
+        value: next.value, 
+        args: []
+      };
       consume();
       expect('(');
-      if(next.type == 'rparen') {
+      if (next.type === 'rparen') {
         consume();
         return t;
       } else {
         t.args.push(expr());
-        while(next.type == 'comma') {
+        while (next.type === 'comma') {
           consume();
           t.args.push(expr());
         }
@@ -539,35 +601,35 @@ if (!Array.prototype.filter) {
 
     function cellRef() {
       var value = '';
-      if(next.type == 'dollar') {
+      if (next.type === 'dollar') {
         value += '$';
         consume();
       }
       value += next.value;
       consume();
-      if(next.type == 'dollar') {
+      if (next.type === 'dollar') {
         value += '$';
         consume();
-        value += next.value
+        value += next.value;
       }
       return value;
     }
   }
 
   var _ops = {
-    '+' : function(a, b) {
+    '+' : function (a, b) {
       return parseFloat(a) + parseFloat(b);
     },
-    '-' : function(a, b) {
+    '-' : function (a, b) {
       return a - b;
     },
-    'unary-': function(a) {
+    'unary-': function (a) {
       return -a;
     },
-    '*' : function(a, b) {
+    '*' : function (a, b) {
       return a * b;
     },
-    '/' : function(a, b) {
+    '/' : function (a, b) {
       return a / b;
     },
     '^' : Math.pow
@@ -583,38 +645,38 @@ if (!Array.prototype.filter) {
     abs : Math.abs,
     ceiling: Math.ceil,
     floor: Math.floor,
-    mod: function(a, b) {
+    mod: function (a, b) {
       return a - (b * Math.floor(a / b));
     },
-    round: function(n, d) {
+    round: function (n, d) {
       d = d || 0;
       return Math.round(n * Math.pow(10, d)) / Math.pow(10, d);
     },
-    trunc: function(n, d) {
+    trunc: function (n, d) {
       d = d || 0;
       return Math.floor(n * Math.pow(10, d)) / Math.pow(10, d);
     },
     sqrt: Math.sqrt,
-    max: function() {
+    max: function () {
       return Math.max.apply(null, getArrayParams(arguments));
     },
-    min: function() {
+    min: function () {
       return Math.min.apply(null, getArrayParams(arguments));
     },
-    sum: function() {
+    sum: function () {
       return getArrayParams(arguments)
              .map(parseFloat)
-             .reduce(function(a, b) {
+             .reduce(function (a, b) {
                return a + b;
              });
     },
-    product: function() {
+    product: function () {
       return getArrayParams(arguments)
-             .reduce(function(a, b) {
+             .reduce(function (a, b) {
                return a * b;
              });
     },
-    average: function() {
+    average: function () {
       var args = getArrayParams(arguments);
       return _funcs.sum(args) / args.length;
     }
@@ -625,14 +687,14 @@ if (!Array.prototype.filter) {
   }
 
   function getArrayParams(args) {
-    return args.length == 1 && $.isArray(args[0]) ?
+    return args.length === 1 && $.isArray(args[0]) ?
       args[0] :
       getArgs(args);
   }
 
   function getVar(name) {
     name = name.toLowerCase();
-    if(_vars[name]) {
+    if (_vars[name]) {
       return _vars[name];
     } else {
       throw evaluationError('undefined variable ' + name);
@@ -641,7 +703,7 @@ if (!Array.prototype.filter) {
 
   function getFunc(name) {
     name = name.toLowerCase();
-    if(_funcs[name]) {
+    if (_funcs[name]) {
       return _funcs[name];
     } else {
       throw evaluationError('call to undefined function ' + name);
@@ -649,31 +711,34 @@ if (!Array.prototype.filter) {
   }
 
   function evaluationError(msg) {
-    return {name: 'evaluation error', message: msg};
+    return {
+      name: 'evaluation error', 
+      message: msg
+    };
   }
 
   function evaluate(param, formulaCalculator) {
     try {
-      if (typeof param == 'string') {
+      if (typeof param === 'string') {
         return ev(parse(param));
       }
       return ev(param);
-    } catch(e) {
+    } catch (e) {
       return e.message;
     }
 
     function ev(expr) {
-      if(expr.type == 'binary') {
+      if (expr.type === 'binary') {
         return _ops[expr.op](ev(expr.left), ev(expr.right));
-      } else if(expr.type == 'unary') {
+      } else if (expr.type === 'unary') {
         return _ops['unary' + expr.op](ev(expr.right));
-      } else if(expr.type == 'numeric') {
+      } else if (expr.type === 'numeric') {
         return parseFloat(expr.value);
-      } else if(expr.type == 'variable') {
+      } else if (expr.type === 'variable') {
         return getVar(expr.value);
-      } else if(expr.type == 'func') {
+      } else if (expr.type === 'func') {
         return getFunc(expr.value).apply(null, expr.args.map(ev));
-      } else if(expr.type == 'ref') {
+      } else if (expr.type === 'ref') {
         return formulaCalculator.evaluateRef(expr.value);
       } else {
         return '';
@@ -717,7 +782,10 @@ if (!Array.prototype.filter) {
 
     this.loadValue = function (item) {
       var cell = args.grid.getActiveCell();
-      var ref = {row: cell.row, col: cell.cell - 1};
+      var ref = {
+        row: cell.row, 
+        col: cell.cell - 1
+      };
       var f = getFormulaCalculator(args.grid).formulaManager.get(ref);
       f = f ? '=' + f : '';
       defaultValue = f || item[args.column.field] || "";
@@ -728,8 +796,11 @@ if (!Array.prototype.filter) {
 
     this.serializeValue = function () {
       var ref, val = $input.val(), cell = args.grid.getActiveCell();
-      ref = {row: cell.row, col: cell.cell - 1};
-      if(val.charAt(0) == '=' && val.length > 1) {
+      ref = {
+        row: cell.row, 
+        col: cell.cell - 1
+      };
+      if (val.charAt(0) === '=' && val.length > 1) {
         return getFormulaCalculator(args.grid).evaluateCell(ref, val.substring(1));
       } else {
         return val;
@@ -741,7 +812,7 @@ if (!Array.prototype.filter) {
     };
 
     this.isValueChanged = function () {
-      return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
+      return (!($input.val() === "" && defaultValue == null)) && ($input.val() != defaultValue);
     };
 
     this.validate = function () {

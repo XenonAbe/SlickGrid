@@ -132,7 +132,7 @@
         }
 
         function handleActiveCellChange(e, data) {
-            if (data.cell == 0) {
+            if (data.cell === 0) {
                 // we are in row select mode
                 if (_options.selectActiveRow) {
                     setSelectedRanges([new Slick.Range(data.row, 0, data.row, _grid.getColumns().length - 1)]);

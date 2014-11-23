@@ -1,0 +1,567 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>Test click / doubleclick / etc. relative delays</title>
+        <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css" media="screen" charset="utf-8" />
+        <link rel="stylesheet" href="../slick.grid.css" type="text/css" media="screen" charset="utf-8" />
+        <link rel="stylesheet" href="../slick-editors.css" type="text/css" media="screen" charset="utf-8" />
+        <link rel="stylesheet" href="../examples/examples.css" type="text/css" media="screen" charset="utf-8" />
+        <style>
+          html
+          {
+            border: 3px solid red;
+            padding: 3em;
+          }
+
+          body
+          {
+            border: 2px solid green;
+            padding: 1em;
+            margin: 0;
+          }
+        </style>
+    </head>
+    <body>
+        <script src="../lib/firebugx.js"></script>
+        <script src="../lib/jquery.js"></script>
+        <script src="../lib/jquery-fixclick.js"></script>
+        <script src="../lib/jquery-ui.js"></script>
+        <script src="../lib/_/jquery.event.drag.js"></script>
+        <script src="../lib/detect_browser.js"></script>
+        <script src="../lib/assert.js"></script>
+
+        <script src="../slick.core.js"></script>
+        <script src="../slick.grid.js"></script>
+        <script src="../slick.formatters.js"></script>
+
+        <h1>Test click / doubleclick / etc. relative delays</h1>
+
+        <p>
+        This page is used to test browser-internal delays between doubleclick and the accompanying click event:
+        we want to find out how much time, if any, sits between a doubleclick and click when you doubleclick. The
+        browser of course first recognizes the click event, but does it have countermeasures to prevent click
+        when you doubleclick? Can we find out browser-internal delays between mousedown (the start of the 'click')
+        and the click? ... and the doubleclick?
+        </p>
+
+        <p>
+        Time to find out...
+        </p>
+
+        <hr/>
+
+        <p>
+        By the way: you may click <em>anywhere</em> in this page: we listen to mouse events at the BODY tag level.
+        </p>
+
+        <p style="border: 1px solid grey; background: white; padding: 3em; margin: 1em;">
+        Oh, and another thing: events are, of course, not captured by the BODY listener for viewport surface 
+        <em>outside</em> the HTML page itself (i.e. outside the RED BORDER),
+        but those touch events ARE captured inside the BODY area (GREEN BORDER), like, for instance, in this paragraph right here!
+        </p>
+
+        <button>Doubleclick if you dare</button>
+
+        <button id="clearlog">Clear the log below</button>
+
+        <hr/>
+
+        <div id="log"></div>
+
+        <script>
+$(function () {
+  // MDN source: all events -- extracted raw 
+  var raw_events_list = [
+"animationend, animationiteration, animationstart, beginEvent, endEvent, repeatEvent",
+"",
+"chargingchange chargingtimechange, dischargingtimechange levelchange",
+"",
+"alerting, busy, callschanged cfstatechange, connected, connecting, dialing, disconnected, disconnecting, error, held, holding, incoming, resuming, statechange,voicechange",
+"",
+"CssRuleViewRefreshed, CssRuleViewChanged, CssRuleViewCSSLinkClicked, transitionend",
+"",
+"abort, blocked, complete, error (link), success, upgradeneeded, versionchange",
+"",
+"DOMLinkAdded, DOMLinkRemoved, DOMMetaAdded, DOMMetaRemoved, DOMWillOpenModalDialog, DOMModalDialogClosed, unload",
+"",
+"DOMAttributeNameChanged, DOMAttrModified, DOMCharacterDataModified, DOMContentLoaded, DOMElementNameChanged, DOMNodeInserted, DOMNodeInsertedIntoDocument, ","DOMNodeRemoved, DOMNodeRemovedFromDocument, DOMSubtreeModified",
+"",
+"drag, dragdrop, dragend, dragenter, dragexit, draggesture, dragleave, dragover, dragstart, drop",
+"",
+"invalid, overflow, underflow, DOMAutoComplete, command, commandupdate",
+"",
+"blur, change, DOMFocusIn, DOMFocusOut, focus, focusin, focusout",
+"",
+"reset, submit",
+"",
+"mozbrowserclose, mozbrowsercontextmenu, mozbrowsererror, mozbrowsericonchange, mozbrowserlocationchange, mozbrowserloadend, mozbrowserloadstart, ","mozbrowseropenwindow, mozbrowsersecuritychange, mozbrowsershowmodalprompt (link), mozbrowsertitlechange, DOMFrameContentLoaded",
+"",
+"click, contextmenu, DOMMouseScroll, dblclick, gamepadconnected, gamepaddisconnected, keydown, keypress, keyup, MozGamepadButtonDown, MozGamepadButtonUp, ","mousedown, mouseenter, mouseleave, mousemove, mouseout, mouseover, mouseup, mousewheel, MozMousePixelScroll, pointerlockchange, pointerlockerror,wheel",
+"",
+"audioprocess, canplay, canplaythrough, durationchange, emptied, ended, ended, loadeddata, loadedmetadata, MozAudioAvailable, pause, play, playing, ratechange, ","seeked, seeking, stalled, suspend, timeupdate, volumechange, waiting, complete",
+"",
+"DOMMenuItemActive, DOMMenuItemInactive",
+"",
+"datachange, dataerror, disabled, enabled, offline, online, statuschange, connectionInfoUpdate,",
+"",
+"AlertActive, AlertClose",
+"",
+"popuphidden, popuphiding, popupshowing, popupshown, DOMPopupBlocked",
+"",
+"afterprint, beforeprint",
+"",
+"abort, error, load, loadend, loadstart, progress, progress, timeout, uploadprogress",
+"",
+"abort, cached, error, load",
+"",
+"afterscriptexecute, beforescriptexecute",
+"",
+"compassneedscalibration, devicelight, devicemotion, deviceorientation, deviceproximity, MozOrientation, orientationchange, userproximity",
+"",
+"pagehide, pageshow, popstate",
+"",
+"icccardlockerror, iccinfochange, smartcard-insert, smartcard-remove, stkcommand, stksessionend, cardstatechange",
+"",
+"delivered, received, sent, ussdreceived",
+"",
+"change, storage",
+"",
+"SVGAbort, SVGError, SVGLoad, SVGResize, SVGScroll, SVGUnload, SVGZoom",
+"",
+"tabviewsearchenabled, tabviewsearchdisabled, tabviewframeinitialized, tabviewshown, tabviewhidden, TabOpen, TabClose, TabSelect, TabShow, TabHide, TabPinned, ","TabUnpinned, SSTabClosing, SSTabRestoring, SSTabRestored, visibilitychange",
+"",
+"compositionend, compositionstart, compositionupdate, copy, cut, paste, select, text",
+"",
+"MozEdgeUIGesture, MozMagnifyGesture, MozMagnifyGestureStart, MozMagnifyGestureUpdate, MozPressTapGesture, MozRotateGesture, MozRotateGestureStart, ","MozRotateGestureUpdate, MozSwipeGesture, MozTapGesture, MozTouchDown, MozTouchMove, MozTouchUp, touchcancel, touchend, touchenter, touchleave, touchmove, ","touchstart",
+"",
+"checking, downloading, error, noupdate, obsolete, updateready",
+"",
+"broadcast, CheckboxStateChange, hashchange, input, RadioStateChange, readystatechange, ValueChange",
+"",
+"fullscreen, fullscreenchange, fullscreenerror, MozEnteredDomFullscreen, MozScrolledAreaChanged, resize, scroll, sizemodechange",
+"",
+"close, error, message, open",
+"",
+"DOMWindowCreated, DOMWindowClose, DOMTitleChanged, MozBeforeResize , SSWindowClosing, SSWindowStateReady, SSWindowStateBusy, close",
+"",
+"beforeunload, localized, message, message, message, MozAfterPaint, moztimechange, open, show",
+"",
+"",
+"abort",
+"afterprint",
+"afterscriptexecute",
+"AlertActive",
+"AlertClose",
+"alerting",
+"Animation",
+"animationend",
+"animationiteration",
+"animationstart",
+"audioprocess",
+"beforeprint",
+"beforescriptexecute",
+"beforeunload",
+"beginEvent",
+"blocked",
+"blur",
+"broadcast",
+"busy",
+"cached",
+"callschanged",
+"canplay",
+"canplaythrough",
+"cardstatechange",
+"Categories",
+"cfstatechange",
+"change",
+"chargingchange",
+"chargingtimechange",
+"CheckboxStateChange",
+"checking",
+"click",
+"close",
+"command",
+"commandupdate",
+"compassneedscalibration",
+"complete",
+"compositionend",
+"compositionstart",
+"compositionupdate",
+"connecting",
+"connectionInfoUpdate",
+"contextmenu",
+"copy",
+"CssRuleViewChanged",
+"CssRuleViewCSSLinkClicked",
+"CssRuleViewRefreshed",
+"cut",
+"datachange",
+"dataerror",
+"dblclick",
+"delivered",
+"Developer",
+"devicelight",
+"devicemotion",
+"deviceorientation",
+"deviceproximity",
+"dialing",
+"disabled",
+"dischargingtimechange",
+"disconnected",
+"disconnecting",
+"DOMActivate",
+"DOMAttributeNameChanged",
+"DOMAttrModified",
+"DOMAutoComplete",
+"DOMCharacterDataModified",
+"DOMContentLoaded",
+"DOMElementNameChanged",
+"DOMFocusIn",
+"DOMFocusOut",
+"DOMFrameContentLoaded",
+"DOMLinkAdded",
+"DOMLinkRemoved",
+"DOMMenuItemActive",
+"DOMMenuItemInactive",
+"DOMMetaAdded",
+"DOMMetaRemoved",
+"DOMModalDialogClosed",
+"DOMMouseScroll",
+"DOMNodeInserted",
+"DOMNodeInsertedIntoDocument",
+"DOMNodeRemoved",
+"DOMNodeRemovedFromDocument",
+"DOMPopupBlocked",
+"DOMSubtreeModified",
+"DOMTitleChanged",
+"DOMWillOpenModalDialog",
+"DOMWindowClose",
+"DOMWindowCreated",
+"downloading",
+"drag",
+"dragdrop",
+"dragend",
+"dragenter",
+"dragexit",
+"draggesture",
+"dragleave",
+"dragover",
+"dragstart",
+"drop",
+"durationchange",
+"emptied",
+"enabled",
+"ended",
+"endEvent",
+"error",
+"focus",
+"focusinUnimplemented",
+"focusoutUnimplemented",
+"fullscreen",
+"fullscreenchange",
+"fullscreenerror",
+"gamepadconnected",
+"gamepaddisconnected",
+"hashchange",
+"held",
+"holding",
+"icccardlockerror",
+"iccinfochange",
+"incoming",
+"input",
+"invalid",
+"keydown",
+"keypress",
+"keyup",
+"languagechange",
+"levelchange",
+"load",
+"loadeddata",
+"loadedmetadata",
+"loadend",
+"loadstart",
+"localized",
+"message",
+"mousedown",
+"mouseenter",
+"mouseleave",
+"mousemove",
+"mouseout",
+"mouseover",
+"mouseup",
+"mousewheel",
+"MozAfterPaint",
+"MozAudioAvailable",
+"MozBeforeResize",
+"mozbrowserclose",
+"mozbrowsercontextmenu",
+"mozbrowsererror",
+"mozbrowsericonchange",
+"mozbrowserloadend",
+"mozbrowserloadstart",
+"mozbrowserlocationchange",
+"mozbrowseropenwindow",
+"mozbrowsersecuritychange",
+"mozbrowsershowmodalprompt",
+"mozbrowsertitlechange",
+"MozEdgeUIGesture",
+"MozEnteredDomFullscreen",
+"MozGamepadButtonDown",
+"MozGamepadButtonUp",
+"Mozilla-specific",
+"MozMagnifyGesture",
+"MozMagnifyGestureStart",
+"MozMagnifyGestureUpdate",
+"MozMousePixelScroll",
+"MozOrientation",
+"MozPressTapGesture",
+"MozRotateGesture",
+"MozRotateGestureStart",
+"MozRotateGestureUpdate",
+"MozScrolledAreaChanged",
+"MozSwipeGesture",
+"MozTapGesture",
+"moztimechange",
+"MozTouchDown",
+"MozTouchMove",
+"MozTouchUp",
+"noupdate",
+"obsolete",
+"offline",
+"onconnected",
+"online",
+"open",
+"orientationchange",
+"overflow",
+"pagehide",
+"pageshow",
+"paste",
+"pause",
+"play",
+"playing",
+"pointerlockchange",
+"pointerlockerror",
+"popstate",
+"popuphidden",
+"popuphiding",
+"popupshowing",
+"popupshown",
+"progress",
+"RadioStateChange",
+"ratechange",
+"readystatechange",
+"received",
+"repeatEvent",
+"reset",
+"resize",
+"resuming",
+"scroll",
+"seeked",
+"seeking",
+"select",
+"sent",
+"show",
+"sizemodechange",
+"smartcard-insert",
+"smartcard-remove",
+"SSTabClosing",
+"SSTabRestored",
+"SSTabRestoring",
+"SSWindowClosing",
+"SSWindowStateBusy",
+"SSWindowStateReady",
+"stalled",
+"statechange",
+"statuschange",
+"stkcommand",
+"stksessionend",
+"storage",
+"submit",
+"success",
+"suspend",
+"SVGAbort",
+"SVGError",
+"SVGLoad",
+"SVGResize",
+"SVGScroll",
+"SVGUnload",
+"SVGZoom",
+"TabClose",
+"TabHide",
+"TabOpen",
+"TabPinned",
+"TabSelect",
+"TabShow",
+"TabUnpinned",
+"tabviewframeinitialized",
+"tabviewhidden",
+"tabviewsearchdisabled",
+"tabviewsearchenabled",
+"tabviewshown",
+"text",
+"timeout",
+"timeupdate",
+"touchcancel",
+"touchend",
+"touchenter",
+"touchleave",
+"touchmove",
+"touchstart",
+"transitionend",
+"underflow",
+"unload",
+"updateready",
+"upgradeneeded",
+"uploadprogress",
+"userproximity",
+"ussdreceived",
+"ValueChange",
+"versionchange",
+"visibilitychange",
+"voicechange",
+"volumechange",
+"waiting",
+"wheel",
+"XUL",
+  ];
+  var evts = raw_events_list.join(",");
+  evts = evts.replace(/\s+/g, "").split(",").filter(function (d) {
+    return d !== "";
+  });
+  evts.sort();
+  var prev_evt;
+  evts = evts.filter(function f_uniq(d) {
+    if (d === prev_evt) {
+      return false;
+    }
+    prev_evt = d;
+    return true;
+  });
+
+  // remove events which will crash the browser thanks to run-away event firing:
+  evts = evts.filter(function f_danger_killer(d) {
+    switch (d) {
+    default:
+      return true;
+
+    case "DOMNodeInserted":
+    case "DOMNodeRemoved":
+    case "DOMSubtreeModified":
+      return false;
+
+    // and get rid of the many mouse events we're not really interested in:
+    case "mouseover":
+    case "mouseenter":
+    case "mouseout":
+    case "mouseleave":
+    case "mousemove":
+      return false;
+    }
+  });
+  
+  evts = evts.join(" ");
+
+  console.log("cleaned up list of events: ", evts);
+
+  // -------------------------------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------------
+
+  // create a timer:
+  var ti = Slick.PerformanceTimer();
+
+  var $el = $(document.body);
+  var $log = $("#log");
+
+  var msgs = [];
+
+  ti.start();
+
+  var evt_counter = 0;
+
+  var h = null;
+
+  // add marker in log when user doesn't act for a second or so: separate the tests better, visually:
+  function reset_waiter() {
+    hm = false;
+    clearTimeout(h);
+
+    function mark() {
+      h = null;
+
+      ti.reset_mark("__action_start__");
+
+      evt_counter = 0;
+
+      msgs.push("<hr style='border: 0; height: 10px; background: rgb(108, 105, 105);' />");
+    }
+
+    h = setTimeout(mark, 2000);
+  }
+
+  if (0) {
+    evts = "mousedown mouseup click dblclick doubleclick tap doubletap drag draginit dragstart dragend touchstart touchend touchcancel touchleave touchmove keydown keyup keypress change input submit";
+  }
+
+  $el.on(evts, function (e) {
+    console.log("Event: ", e.type);
+
+    ++evt_counter;
+
+    var type = e.type;
+
+    var event_delta = ti.mark_delta("__event__");
+    var action_delta = ti.mark_sample_and_hold("__action_start__");
+
+    var click_delta = ti.mark(null, "click");
+    var down_delta = ti.mark(null, "mousedown");
+
+    var delta = ti.mark_delta(e.type);
+
+    reset_waiter();
+
+    msgs.push([
+      "<hr/>",
+      "<p>#" + evt_counter  + " Event: " + type + "</p>",
+      "<ul>",
+        "<li>",
+          "Time since start of activity: " + action_delta,
+        "</li>",
+        "<li>",
+          "Time since last event: " + event_delta,
+        "</li>",
+        "<li>",
+          "Time since last mousedown: " + down_delta,
+        "</li>",
+        "<li>",
+          "Time since last click: " + click_delta,
+        "</li>",
+        "<li>",
+          "Time since last " + type + ": " + delta,
+        "</li>",
+      "</ul>"
+    ].join("\n"));
+
+    $log.html(msgs.slice(0).reverse().join("\n"));
+  });
+
+  $("#clearlog").on("click", function () {
+    setTimeout(function () {
+      clearTimeout(h);
+      h = null;
+
+      evt_counter = 0;
+
+      ti.reset_mark("__action_start__");
+    
+      msgs = [];
+
+      $log.html("");
+    }, 100);
+  });
+  
+});
+        </script>
+    </body>
+</html>

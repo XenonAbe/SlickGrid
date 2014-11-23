@@ -8,9 +8,9 @@
     });
 
     /*
-    Based on SlickGrid Header Menu Plugin (https://github.com/mleibman/SlickGrid/blob/master/plugins/slick.headermenu.js)
-
-    (Can't be used at the same time as the header menu plugin as it implements the dropdown in the same way)
+     * Based on SlickGrid Header Menu Plugin (https://github.com/mleibman/SlickGrid/blob/master/plugins/slick.headermenu.js)
+     *
+     * (Can't be used at the same time as the header menu plugin as it implements the dropdown in the same way)
     */
 
     function HeaderFilter(options) {
@@ -47,7 +47,7 @@
                    .subscribe(grid.onClick, handleBodyMouseDown)
                    .subscribe(grid.onColumnsResized, columnsResized);
 
-            grid.setColumns(grid.getColumns());
+            //grid.setColumns(grid.getColumns());
 
             $(document.body).bind("mousedown", handleBodyMouseDown);
         }
@@ -58,11 +58,11 @@
         }
 
         function isValue(val) {
-            return typeof val !== 'undefined' && val !== null && val !== '';
+            return typeof val !== "undefined" && val !== null && val !== "";
         }
 
         function handleBodyMouseDown(e) {
-            if ($menu && $menu[0] != e.target && !$.contains($menu[0], e.target)) {
+            if ($menu && $menu[0] !== e.target && !$.contains($menu[0], e.target)) {
                 hideMenu();
             }
         }
@@ -117,11 +117,11 @@
         function addTextFilter(menu, columnDef, value) {
             var $li = $("<div class='textfilter'>");
 
-            $('<label>').text(options.messages.textFilter).appendTo($li);
+            $("<label>").text(options.messages.textFilter).appendTo($li);
 
-            $('<input type="text">')
+            $("<input type='text'>")
                 .val(value)
-                .on('change', function(e) {
+                .on("change", function(e) {
                     var value = $(e.target).val();
                     columnDef.textFilterValue = isValue(value) ? value : null;
                 })
@@ -160,8 +160,8 @@
             $menu.empty();
 
             if (options.sortMenuitems) {
-                addMenuItem($menu, columnDef, options.messages.sortAsc, 'sort-asc', options.sortAscImage);
-                addMenuItem($menu, columnDef, options.messages.sortDesc, 'sort-desc', options.sortDescImage);
+                addMenuItem($menu, columnDef, options.messages.sortAsc, "sort-asc", options.sortAscImage);
+                addMenuItem($menu, columnDef, options.messages.sortDesc, "sort-desc", options.sortDescImage);
             }
 
             if (columnDef.textFilter) {
@@ -183,28 +183,28 @@
                            .append($(filterOptions))
                            .appendTo($menu);
 
-            $('<button>' + options.messages.ok + '</button>')
+            $("<button>" + options.messages.ok + "</button>")
                 .appendTo($menu)
-                .bind('click', function (ev) {
+                .bind("click", function (ev) {
                     columnDef.filterValues = workingFilters.splice(0);
                     setButtonImage($menuButton, columnDef.filterValues.length > 0 || isValue(columnDef.textFilterValue));
                     handleApply(ev, columnDef);
                 });
 
-            $('<button>' + options.messages.clear + '</button>')
+            $("<button>" + options.messages.clear + "</button>")
                 .appendTo($menu)
-                .bind('click', function (ev) {
+                .bind("click", function (ev) {
                     columnDef.filterValues.length = 0;
                     columnDef.textFilterValue = null;
                     setButtonImage($menuButton, false);
                     handleApply(ev, columnDef);
                 });
 
-            $('<button>' + options.messages.cancel + '</button>')
+            $("<button>" + options.messages.cancel + "</button>")
                 .appendTo($menu)
-                .bind('click', hideMenu);
+                .bind("click", hideMenu);
 
-            $(':checkbox', $filter).bind('click', function () {
+            $(":checkbox", $filter).bind("click", function () {
                 workingFilters = changeWorkingFilter(filterItems, workingFilters, $(this));
             });
 
@@ -225,17 +225,17 @@
 
             if ($checkbox.val() < 0) {
                 // Select All
-                if ($checkbox.prop('checked')) {
-                    $(':checkbox', $filter).prop('checked', true);
+                if ($checkbox.prop("checked")) {
+                    $(":checkbox", $filter).prop("checked", true);
                     workingFilters = _.pluck(filterItems.slice(0), "value");
                 } else {
-                    $(':checkbox', $filter).prop('checked', false);
+                    $(":checkbox", $filter).prop("checked", false);
                     workingFilters.length = 0;
                 }
             } else {
                 var index = _.indexOf(workingFilters, filterItems[value].value);
 
-                if ($checkbox.prop('checked') && index < 0) {
+                if ($checkbox.prop("checked") && index < 0) {
                     workingFilters.push(filterItems[value].value);
                 } else if (index > -1) {
                     workingFilters.splice(index, 1);
@@ -265,7 +265,7 @@
 
         function sanitizeFilterValue(value, columnDef) {
             var title = value;
-            if (typeof value === 'undefined' || value === null || value === '') {
+            if (typeof value === "undefined" || value === null || value === "") {
                 title = options.messages.empty;
             }
             else if (value === false) {
@@ -274,7 +274,7 @@
             else if (value === true) {
                 title = options.messages.trueDesc;
             }
-            else if (columnDef.formatterName === 'sentenceToWords' || columnDef.formatterName === 'date' ) {
+            else if (columnDef.formatterName === "sentenceToWords" || columnDef.formatterName === "date" ) {
                 // formatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo)
                 title = columnDef.formatter(null, null, value, null, null, {
                     cellCss: [], // ["slick-cell", "l" + cell, "r" + (cell + colspan - 1)],

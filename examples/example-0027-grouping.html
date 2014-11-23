@@ -128,8 +128,8 @@ var columns = [
   {id: "title", name: "Title", field: "title", width: 70, minWidth: 50, cssClass: "cell-title", sortable: true, editor: Slick.Editors.Text},
   {id: "duration", name: "Duration", field: "duration", width: 70, sortable: true, groupTotalsFormatter: sumTotalsFormatter},
   {id: "%", name: "% Complete", field: "percentComplete", width: 80, formatter: Slick.Formatters.PercentCompleteBar, sortable: true, groupTotalsFormatter: avgTotalsFormatter},
-  {id: "start", name: "Start", field: "start", minWidth: 60, sortable: true, formatter:Slick.Formatters.Date},
-  {id: "finish", name: "Finish", field: "finish", minWidth: 60, sortable: true, formatter:Slick.Formatters.Date},
+  {id: "start", name: "Start", field: "start", minWidth: 60, sortable: true, formatter: Slick.Formatters.Date},
+  {id: "finish", name: "Finish", field: "finish", minWidth: 60, sortable: true, formatter: Slick.Formatters.Date},
   {id: "cost", name: "Cost", field: "cost", width: 90, sortable: true, groupTotalsFormatter: sumTotalsFormatter},
   {id: "daysOfWork", name:"Days Worked", field:"daysOfWork", minWidth:120, sortable: true, groupTotalsFormatter: weightedAverageTotalsFormatter},
   {id: "effort-driven", name: "Effort Driven", width: 80, minWidth: 20, maxWidth: 80, cssClass: "cell-effort-driven", field: "effortDriven", formatter: Slick.Formatters.Checkmark, sortable: true}
@@ -160,15 +160,15 @@ function sumTotalsFormatter(totals, columnDef) {
 }
 
 function weightedAverageTotalsFormatter(totals, columnDef) {
-  var weightedAverage = totals.weightedAverage && totals.weightedAverage["cost"];
-  if(weightedAverage != null) {
-    return "wavg cost/day: " + ((Math.round(parseFloat(weightedAverage)*100)/100));
+  var weightedAverage = totals.weightedAverage && totals.weightedAverage.cost;
+  if (weightedAverage != null) {
+    return "w.avg cost/day: " + ((Math.round(parseFloat(weightedAverage) * 100) / 100));
   }
   return "";
 }
 
 function myFilter(item, args) {
-  return item["percentComplete"] >= args.percentComplete;
+  return item.percentComplete >= args.percentComplete;
 }
 
 function groupByDuration() {
@@ -176,10 +176,12 @@ function groupByDuration() {
     getter: "duration",
     formatter: function (g) {
       var uniqueDriver = "";
-      if(g.totals.unique.title) {
+      // Check for `g.totals.initialized` to prevent crashes due to lazy aggregation (`options.lazyTotalsCalculation`) 
+      assert(g.totals.initialized);
+      if (g.totals.unique.title) {
         uniqueDriver = " Sole Driver: " + g.totals.unique.title;
       }
-      return "Duration:  " + g.value + "  <span style='color:green'>(" + g.count + " items)" + uniqueDriver + "</span>";
+      return "Duration: " + g.value + " <span style='color:green'>(" + g.count + " items)" + uniqueDriver + "</span>";
     },
     aggregators: [
       new Slick.Data.Aggregators.Avg("percentComplete"),
@@ -197,7 +199,9 @@ function groupByDurationOrderByCount(aggregateCollapsed) {
     getter: "duration",
     formatter: function (g) {
       var uniqueDriver = "";
-      if(g.totals.unique.title) {
+      // Check for `g.totals.initialized` to prevent crashes due to lazy aggregation (`options.lazyTotalsCalculation`) 
+      assert(g.totals.initialized);
+      if (g.totals.unique.title) {
         uniqueDriver = " Sole Driver: " + g.totals.unique.title;
       }
       return "Duration:  " + g.value + "  <span style='color:green'>(" + g.count + " items)" + uniqueDriver + "</span>";
@@ -221,7 +225,9 @@ function groupByDurationEffortDriven() {
       getter: "duration",
       formatter: function (g) {
         var uniqueDriver = "";
-        if(g.totals.unique.title) {
+        // Check for `g.totals.initialized` to prevent crashes due to lazy aggregation (`options.lazyTotalsCalculation`) 
+        assert(g.totals.initialized);
+        if (g.totals.unique.title) {
           uniqueDriver = " Sole Driver: " + g.totals.unique.title;
         }
         return "Duration:  " + g.value + "  <span style='color:green'>(" + g.count + " items)" + uniqueDriver + "</span>";
@@ -256,7 +262,9 @@ function groupByDurationEffortDrivenPercent() {
       getter: "duration",
       formatter: function (g) {
         var uniqueDriver = "";
-        if(g.totals.unique.title) {
+        // Check for `g.totals.initialized` to prevent crashes due to lazy aggregation (`options.lazyTotalsCalculation`) 
+        assert(g.totals.initialized);
+        if (g.totals.unique.title) {
           uniqueDriver = " Sole Driver: " + g.totals.unique.title;
         }
         return "Duration:  " + g.value + "  <span style='color:green'>(" + g.count + " items)" + uniqueDriver + "</span>";
@@ -298,7 +306,7 @@ function groupByDurationEffortDrivenPercent() {
 
 function loadData(count) {
   var dateGenerator = function() {
-    return new Date(new Date() - Math.random() * 2*365*24*60*60*1000); // generates some day in the last two years
+    return new Date(new Date() - Math.random() * 2 * 365 * 24 * 60 * 60 * 1000); // generates some day in the last two years
   };
 
   data = [];
@@ -309,21 +317,21 @@ function loadData(count) {
     var firstDate = dateGenerator();
     var secondDate = dateGenerator();
 
-    d["id"] = "id_" + i;
-    d["num"] = i;
-    d["title"] = "Task " + i;
-    d["duration"] = Math.round(Math.random() * 30);
-    d["percentComplete"] = Math.round(Math.random() * 100);
+    d.id = "id_" + i;
+    d.num = i;
+    d.title = "Task " + i;
+    d.duration = Math.round(Math.random() * 30);
+    d.percentComplete = Math.round(Math.random() * 100);
     if(firstDate < secondDate) {
-      d["start"] = firstDate;
-      d["finish"] = secondDate;
+      d.start = firstDate;
+      d.finish = secondDate;
     } else {
-      d["start"] = secondDate;
-      d["finish"] = firstDate;
+      d.start = secondDate;
+      d.finish = firstDate;
     }
-    d["cost"] = Math.round(Math.random() * 10000) / 100;
-    d["daysOfWork"] = Math.floor((d["finish"] - d["start"])/ (24*60*60*1000));
-    d["effortDriven"] = (i % 5 == 0);
+    d.cost = Math.round(Math.random() * 10000) / 100;
+    d.daysOfWork = Math.floor((d.finish - d.start) / (24 * 60 * 60 * 1000));
+    d.effortDriven = (i % 5 === 0);
   }
   dataView.setItems(data);
 }
@@ -385,8 +393,8 @@ $(function () {
 
   // wire up the slider to apply the filter to the model
   $("#pcSlider,#pcSlider2").slider({
-    "range": "min",
-    "slide": function (event, ui) {
+    range: "min",
+    slide: function (event, ui) {
       Slick.GlobalEditorLock.cancelCurrentEdit();
 
       if (percentCompleteThreshold != ui.value) {
@@ -401,14 +409,16 @@ $(function () {
   function filterAndUpdate() {
     var isNarrowing = percentCompleteThreshold > prevPercentCompleteThreshold;
     var isExpanding = percentCompleteThreshold < prevPercentCompleteThreshold;
-    var renderedRange = grid.getRenderedRange();
+    var cachedRangeInfo = grid.getCachedRowRangeInfo();
 
     dataView.setFilterArgs({
       percentComplete: percentCompleteThreshold
     });
     dataView.setRefreshHints({
-      ignoreDiffsBefore: renderedRange.top,
-      ignoreDiffsAfter: renderedRange.bottom + 1,
+      // WARING: do NOT simply use `cachedRangeInfo.top/bottom` here as the span cache 
+      // can be much larger and needs to be cleared entirely too:
+      ignoreDiffsBefore: Math.max(cachedRangeInfo.spanCacheTop, cachedRangeInfo.top),
+      ignoreDiffsAfter: Math.max(cachedRangeInfo.spanCacheBottom, cachedRangeInfo.bottom),   
       isFilterNarrowing: isNarrowing,
       isFilterExpanding: isExpanding
     });

@@ -251,7 +251,10 @@
       o = $(_canvas).offset();
       x = dd.pageX - o.left;
       y = dd.pageY - o.top;
-      var start = _grid.getCellFromPoint(x, y);
+      var start = _grid.getCellFromPoint(x, y, {
+        clipToValidRange: true
+      });
+      assert(start);
 
       var combinationMode = 'replace';
       if (e.shiftKey) {
@@ -261,7 +264,10 @@
         combinationMode = 'xor';
       }
 
-      dd.range = {start: start, end: {}};
+      dd.range = {
+        start: start, 
+        end: {}
+      };
       dd.alreadySelectedRows = rangesToRows(_ranges);
       dd.combinationMode = combinationMode;
     }
@@ -276,7 +282,10 @@
       o = $(_canvas).offset();
       x = e.pageX - o.left;
       y = e.pageY - o.top;
-      var end = _grid.getCellFromPoint(x, y);
+      var end = _grid.getCellFromPoint(x, y, {
+        clipToValidRange: true
+      });
+      assert(end);
 
       if (!_grid.canCellBeSelected(end.row, end.cell)) {
         return;

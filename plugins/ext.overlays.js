@@ -43,16 +43,16 @@
         function destroy() {
             handler.unsubscribeAll();
             selectionOverlay.$handle.unbind("dragstart", handleOverlayDragStart)
-                                    .unbind('drag', handleOverlayDrag)
-                                    .unbind('dragend', handleOverlayDragEnd);
+                                    .unbind("drag", handleOverlayDrag)
+                                    .unbind("dragend", handleOverlayDragEnd);
         }
 
         function createRowHeaderOverlay(zIndex) {
-            return $('<div>')
+            return $("<div>")
                     .addClass("header-overlay")
                     .css("position", "absolute")
                     .css("z-index", zIndex)
-                    .appendTo('body');
+                    .appendTo("body");
         }
 
         function createSelectionOverlay() {
@@ -60,9 +60,9 @@
             var overlay = new Overlay(canvas);
 
             overlay.$handle
-              .bind('dragstart', handleOverlayDragStart)
-              .bind('drag', handleOverlayDrag)
-              .bind('dragend', handleOverlayDragEnd);
+              .bind("dragstart", handleOverlayDragStart)
+              .bind("drag", handleOverlayDrag)
+              .bind("dragend", handleOverlayDragEnd);
 
             return overlay;
         }
@@ -85,7 +85,7 @@
         }
 
         function moveHeaderRowOverlays(e, args) {
-            if (typeof args.cell != 'undefined') {
+            if (typeof args.cell != "undefined") {
                 currentColumn = args.cell;
             } else {
                 if (!currentColumn) {
@@ -105,10 +105,10 @@
             $(".slick-header > div > div")
                 .removeClass("selected-header");
 
-            $('[id$=' + column.id + ']', '.slick-header')
-                .addClass('selected-header');
+            $("[id$=" + column.id + "]", ".slick-header")
+                .addClass("selected-header");
 
-            var headerHeight = $('.slick-header').height();
+            var headerHeight = $(".slick-header").height();
             var cellPosition = grid.getActiveCellPosition();
             var gridPosition = grid.getGridPosition();
 
@@ -145,7 +145,7 @@
             selectionOverlay.toggle(true);
 
             // Only show the handle if the cell is editable
-            selectionOverlay.$handle.toggle(typeof (column.editor) !== 'undefined');
+            selectionOverlay.$handle.toggle(typeof (column.editor) !== "undefined");
 
             var position = grid.getCellNodeBox(activeCell.row, activeCell.cell);
 
@@ -226,7 +226,9 @@
             o = $(canvas).offset();
             x = e.pageX - o.left;
             y = e.pageY - o.top;
-            var end = grid.getCellFromPoint(x, y);
+            var end = grid.getCellFromPoint(x, y, {
+                clipToValidRange: true
+            });
 
             if (!grid.canCellBeSelected(end.row, end.cell)) {
                 return;
@@ -264,29 +266,29 @@
         }
 
         function Overlay(target, prefix) {
-            var className = (prefix || '') + 'cell-overlay';
+            var className = (prefix || "") + "cell-overlay";
 
-            this.$left = $('<div>')
+            this.$left = $("<div>")
                 .addClass(className)
-                .addClass('left')
+                .addClass("left")
                 .appendTo(target);
 
-            this.$right = $('<div>')
+            this.$right = $("<div>")
                 .addClass(className)
-                .addClass('right')
+                .addClass("right")
                 .appendTo(target);
 
-            this.$top = $('<div>')
+            this.$top = $("<div>")
                 .addClass(className)
-                .addClass('top')
+                .addClass("top")
                 .appendTo(target);
 
-            this.$bottom = $('<div>')
+            this.$bottom = $("<div>")
                 .addClass(className)
-                .addClass('bottom')
+                .addClass("bottom")
                 .appendTo(target);
 
-            this.$handle = $('<div>')
+            this.$handle = $("<div>")
                 .addClass("handle-overlay")
                 .appendTo(target);
 
@@ -306,7 +308,7 @@
             function show(range) {
                 r = range;
                 if (!decorator) {
-                    decorator = new Overlay(grid.getCanvasNode(), 'selection-');
+                    decorator = new Overlay(grid.getCanvasNode(), "selection-");
                 }
 
                 var from = targetGrid.getCellNodeBox(range.fromRow, range.fromCell);

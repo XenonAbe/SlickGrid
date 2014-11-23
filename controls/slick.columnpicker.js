@@ -9,7 +9,6 @@
     var defaults = {
       fadeSpeed: 250,
       forceFitColumnsText: "Force fit columns",
-      syncColumnCellResizeText: "Synchronous resize"
     };
 
     function updateColumnLookupTable(list) {
@@ -50,7 +49,7 @@
         // - have an empty 'name' field in their column definition (they would show up as a checkbox for 'nothing' anyway)
         // - are marked as hidden by having an ID which starts with an underscore, e.g. "_checkbox_selector"
         var colName = columns[i].name; 
-        if (typeof colName !== 'string' && !colName) continue;
+        if (typeof colName !== "string" && !colName) continue;
         if (colName === '') continue;
         if (/^_./.test(columns[i].id)) continue;
 
@@ -79,16 +78,6 @@
         $input.attr("checked", "checked");
       }
 
-      $li = $("<li />").appendTo($menu);
-      $input = $("<input type='checkbox' />").data("option", "syncresize");
-      $("<label />")
-          .text(options.syncColumnCellResizeText)
-          .prepend($input)
-          .appendTo($li);
-      if (grid.getOptions().syncColumnCellResize) {
-        $input.attr("checked", "checked");
-      }
-
       $menu
           .css("top", Math.min(e.pageY, $(window).height() - $menu.height()) - 10)
           .css("left", Math.min(e.pageX, $(window).width() - $menu.width()) - 10)
@@ -104,10 +93,11 @@
       // of the current column sort.
       var current = grid.getColumns().slice(0);
       var ordered = new Array(columns.length);
-      for (var i = 0; i < ordered.length; i++) {
-        if (grid.getColumnIndex(columns[i].id) != null) {
+      for (var i = 0; i < columns.length; i++) {
+        var idx = grid.getColumnIndex(columns[i].id);
+        if (idx == null) {
           // If the column doesn't return a value from getColumnIndex,
-          // it is hidden. Leave it in this position.
+          // it is not visible. Inject it in its original position.
           ordered[i] = columns[i];
         } else {
           // Otherwise, grab the next visible column.
@@ -132,21 +122,12 @@
         return;
       }
 
-      if ($(e.target).data("option") === "syncresize") {
-        if (e.target.checked) {
-          grid.setOptions({syncColumnCellResize: true});
-        } else {
-          grid.setOptions({syncColumnCellResize: false});
-        }
-        return;
-      }
-
       if ($(e.target).is(":checkbox")) {
         var visibleColumns = [];
         var invisibleColumns = [];
 
         $.each(columnCheckboxes, function (i, e) {
-          var columnID = $(e).data('column-id');
+          var columnID = $(e).data("column-id");
           if (columnID != null && columnsLookup[columnID]) {
             if ($(this).is(":checked")) {
               visibleColumns.push( columnsLookup[columnID] );
@@ -171,6 +152,11 @@
         });
 
         grid.setColumns(newColumnSet);
+        
+        if (grid.getSelectedRows().length > 0) {
+          grid.setSelectedRows(grid.getSelectedRows());
+        }
+
         var evd = new Slick.EventData();
         evd.hiddenColumns = invisibleColumns;
         evd.visibleColumns = visibleColumns;

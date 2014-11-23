@@ -101,7 +101,10 @@
       //e.preventDefault();
       //e.stopPropagation();
       grid.recentEvent = e;  // no way to detect e.target in editor, so save it
-      grid.gotoCell(args.row, args.cell, true);
+      grid.gotoCell(args.row, args.cell, {
+        forceEdit: true,
+        takeFocus: false
+      });
     })
   })
 </script>

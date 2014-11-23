@@ -29,33 +29,43 @@
       dataView.setRefreshHints({
         isFilterUnchanged: true
       });
-      dataView.setPagingOptions({pageSize: n});
+      dataView.setPagingOptions({
+        pageSize: n
+      });
     }
 
     function gotoFirst() {
       if (getNavState().canGotoFirst) {
-        dataView.setPagingOptions({pageNum: 0});
+        dataView.setPagingOptions({
+          pageNum: 0
+        });
       }
     }
 
     function gotoLast() {
       var state = getNavState();
       if (state.canGotoLast) {
-        dataView.setPagingOptions({pageNum: state.pagingInfo.totalPages - 1});
+        dataView.setPagingOptions({
+          pageNum: state.pagingInfo.totalPages - 1
+        });
       }
     }
 
     function gotoPrev() {
       var state = getNavState();
       if (state.canGotoPrev) {
-        dataView.setPagingOptions({pageNum: state.pagingInfo.pageNum - 1});
+        dataView.setPagingOptions({
+          pageNum: state.pagingInfo.pageNum - 1
+        });
       }
     }
 
     function gotoNext() {
       var state = getNavState();
       if (state.canGotoNext) {
-        dataView.setPagingOptions({pageNum: state.pagingInfo.pageNum + 1});
+        dataView.setPagingOptions({
+          pageNum: state.pagingInfo.pageNum + 1
+        });
       }
     }
 

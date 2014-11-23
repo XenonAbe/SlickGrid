@@ -32,10 +32,12 @@
         errorMessage = validationResult.msg,
         $node = $(args.cellNode);
 
-      var ts = $node.data('tooltipsy');
-      if (ts) { ts.destroy(); }
+      var ts = $node.data('tooltipster');
+      if (ts) { 
+        ts.destroy(); 
+      }
 
-      $node.tooltipsy({
+      $node.tooltipster({
         alignTo: "element",
         offset: [0, 8],
         content: errorMessage,
@@ -43,11 +45,11 @@
         hideEvent: null,
         className: options.className
       });
-      $node.data('tooltipsy').show();
+      $node.data('tooltipster').show();
     }
 
     function handleBeforeCellEditDestroy(e, args) {
-      var ts = $(args.grid.getActiveCellNode()).data('tooltipsy');
+      var ts = $(_grid.getActiveCellNode()).data('tooltipster');
       if (ts) {
         ts.destroy();
       }

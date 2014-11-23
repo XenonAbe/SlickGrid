@@ -560,7 +560,10 @@
             //$focus.attr('tabIndex', '-1');
             //$focus.focus();
             //$focus.removeAttr('tabIndex');
-            _grid.setActiveCell(activeCell.row, activeCell.cell, true);
+            _grid.setActiveCell(activeCell.row, activeCell.cell, {
+              forceEdit: false,
+              takeFocus: true
+            });
           }
         }, _externalCopyActionWrapupDelay);
 

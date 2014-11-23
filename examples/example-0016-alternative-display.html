@@ -133,14 +133,14 @@
             "with(obj){p.push('" +
 
             // Convert the template into pure JavaScript
-              str
-                  .replace(/[\r\t\n]/g, " ")
-                  .split("<%").join("\t")
-                  .replace(/((^|%>)[^\t]*)'/g, "$1\r")
-                  .replace(/\t=(.*?)%>/g, "',$1,'")
-                  .split("\t").join("');")
-                  .split("%>").join("p.push('")
-                  .split("\r").join("\\'") + "');}return p.join('');");
+            str
+                .replace(/[\r\t\n]/g, " ")
+                .split("<%").join("\t")
+                .replace(/((^|%>)[^\t]*)'/g, "$1\r")
+                .replace(/\t=(.*?)%>/g, "',$1,'")
+                .split("\t").join("');")
+                .split("%>").join("p.push('")
+                .split("\r").join("\\'") + "');}return p.join('');");
 
       // Provide some basic currying to the user
       return data ? fn(data) : fn;
@@ -150,7 +150,13 @@
   var grid;
   var data = [];
   var columns = [
-    {id: "contact-card", name: "Contacts", formatter: renderCell, width: 500, cssClass: "contact-card-cell"}
+    {
+      id: "contact-card", 
+      name: "Contacts", 
+      formatter: renderCell, 
+      width: 500, 
+      cssClass: "contact-card-cell"
+    }
   ];
 
   var options = {
@@ -171,10 +177,10 @@
     for (var i = 0; i < 100; i++) {
       var d = (data[i] = {});
 
-      d["name"] = "User " + i;
-      d["email"] = "test.user@nospam.org";
-      d["title"] = "Regional sales manager";
-      d["phone"] = "206-000-0000";
+      d.name = "User " + i;
+      d.email = "test.user" + i + "@nospam.org";
+      d.title = "Regional sales manager";
+      d.phone = "206-000-" + ("0000" + (i * 10)).match(/\d{4}$/)[0];
     }
 
     grid = new Slick.Grid("#myGrid", data, columns, options);

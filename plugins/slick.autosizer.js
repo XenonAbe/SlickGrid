@@ -15,7 +15,7 @@
       _isDestroyed,
       _options = $.extend(true, defaults, options),
       $container = $(_options.container),
-      h, ch;
+      h, ch, to;
 
     if ($container.length !== 1) {
       throw new Error('missing argument: container');
@@ -27,6 +27,11 @@
 
     function destroy() {
       _isDestroyed = true;
+      _options = null;
+      $container = null;
+
+      clearTimeout(to);
+      to = null;
     }
 
     function pollSizeChanged() {
@@ -38,7 +43,7 @@
         $container.trigger('resize.slickgrid');
       }
 
-      setTimeout(pollSizeChanged, _options.pollInterval);
+      to = setTimeout(pollSizeChanged, _options.pollInterval);
     }
 
     $.extend(this, {

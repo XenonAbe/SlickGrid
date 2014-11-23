@@ -65,7 +65,10 @@
       o = $canvas.offset();
       x = e.pageX - o.left;
       y = e.pageY - o.top;
-      var nodeInfo = grid.getCellFromPoint(x, y);
+      var nodeInfo = grid.getCellFromPoint(x, y, {
+        clipToValidRange: true
+      });
+      assert(nodeInfo);
       nodeInfo.innerEvent = e;
       return nodeInfo;
     }

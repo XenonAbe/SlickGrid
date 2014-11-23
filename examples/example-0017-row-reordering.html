@@ -183,7 +183,7 @@ $(function () {
   moveRowsPlugin.onBeforeMoveRows.subscribe(function (e, data) {
     for (var i = 0; i < data.rows.length; i++) {
       // no point in moving before or after itself
-      if (data.rows[i] == data.insertBefore || data.rows[i] == data.insertBefore - 1) {
+      if (data.rows[i] === data.insertBefore || data.rows[i] === data.insertBefore - 1) {
         e.stopPropagation();
         return false;
       }
@@ -198,7 +198,9 @@ $(function () {
     left = data.slice(0, insertBefore);
     right = data.slice(insertBefore, data.length);
 
-    rows.sort(function(a,b) { return a - b; });
+    rows.sort(function (a, b) { 
+      return a - b; 
+    });
 
     for (var i = 0; i < rows.length; i++) {
       extractedRows.push(data[rows[i]]);
@@ -284,30 +286,35 @@ $(function () {
   });
 
   grid.onDrag.subscribe(function (e, dd) {
-    if (dd.mode != "recycle") {
+    if (dd.mode !== "recycle") {
       return;
     }
-    dd.helper.css({top: e.pageY + 5, left: e.pageX + 5});
+    dd.helper.css({
+      top: e.pageY + 5, 
+      left: e.pageX + 5
+    });
   });
 
   grid.onDragEnd.subscribe(function (e, dd) {
-    if (dd.mode != "recycle") {
+    if (dd.mode !== "recycle") {
       return;
     }
     dd.helper.remove();
     $(dd.available).css("background", "beige");
   });
 
-  $.drop({mode: "intersect"});
+  $.drop({
+    mode: "intersect"
+  });
   $("#dropzone")
       .bind("dropstart", function (e, dd) {
-        if (dd.mode != "recycle") {
+        if (dd.mode !== "recycle") {
           return;
         }
         $(this).css("background", "yellow");
       })
       .bind("dropend", function (e, dd) {
-        if (dd.mode != "recycle") {
+        if (dd.mode !== "recycle") {
           return;
         }
         $(dd.available).css("background", "pink");
@@ -326,7 +333,10 @@ $(function () {
 
 
   grid.onAddNewRow.subscribe(function (e, args) {
-    var item = {name: "New task", complete: false};
+    var item = {
+      name: "New task", 
+      complete: false
+    };
     $.extend(item, args.item);
     data.push(item);
     grid.invalidateRows([data.length - 1]);

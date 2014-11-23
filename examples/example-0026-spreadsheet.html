@@ -119,7 +119,7 @@
 
     for (var i = 0; i < 100; i++) {
       var d = (data[i] = {});
-      d["num"] = i;
+      d.num = i;
       for (var j = 0; j < 100; j++) {
         d[j] = n2s(j + 1) + "." + n2s(i + 1);
       }
@@ -164,7 +164,8 @@
 
     grid.onAddNewRow.subscribe(function (e, args) {
       var item = args.item;
-      var column = args.column;
+      // set row # column value for the new row:
+      item.num = args.row;
       grid.invalidateRow(data.length);
       data.push(item);
       grid.updateRowCount();

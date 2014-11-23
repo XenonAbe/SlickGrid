@@ -154,13 +154,16 @@ $(function () {
         } else {
             cell.rowspan = 5;
             cell.colspan = 1;
-        }
-        grid.invalidateRow(3);
+        }   
+		// Invalidate the entire area that's impacted by this change:
+        grid.invalidateCell(3, 1);
         grid.render();
     });
 
     $('#toggleHeight').click(function (e) {
         metadata[6].height = metadata[6].height === rowHeights[0] ? rowHeights[1] : rowHeights[0];
+		// When you change a row height, this impacts that row AND all rows below it,
+        // but this particular situation is detected inside invalidateRow()...
         grid.invalidateRow(6);
         grid.render();
     });

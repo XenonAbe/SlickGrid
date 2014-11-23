@@ -157,7 +157,6 @@ register_remote lib/TinyColor                                                 lo
 register_remote lib/TinyColor                                                 local-dep-spectrum-original              ../spectrum/lib/TinyColor/                                                       $# $@
 register_remote lib/TinyColor                                                 pgooch                                   git@github.com:pgooch/TinyColor.git                                              $# $@
 register_remote lib/TinyColor                                                 piercus                                  git@github.com:piercus/TinyColor.git                                             $# $@
-register_remote lib/TinyColor                                                 slickgrid-dep-original                   ../slickgrid/lib/TinyColor/                                                      $# $@
 register_remote lib/TinyColor                                                 spectrum-dep-original                    ../spectrum/lib/TinyColor/                                                       $# $@
 register_remote lib/TinyColor                                                 tylerl                                   git@github.com:tylerl/TinyColor.git                                              $# $@
 register_remote lib/hammer                                                    EightMedia                               git@github.com:EightMedia/hammer.js.git                                          $# $@
@@ -212,6 +211,7 @@ register_remote lib/hammer                                                    tj
 register_remote lib/hammer                                                    visionmedia                              git@github.com:visionmedia/hammer.js.git                                         $# $@
 register_remote lib/hammer                                                    vladgurovich                             git@github.com:vladgurovich/hammer.js.git                                        $# $@
 register_remote lib/hammer                                                    wilson1315                               git@github.com:wilson1315/hammer.js.git                                          $# $@
+register_remote lib/jquery-fixclick                                           GerHobbelt-original                      git@github.com:GerHobbelt/jquery-fixclick.git                                    $# $@
 register_remote lib/jquery-iCheck                                             0x0all                                   git@github.com:0x0all/iCheck.git                                                 $# $@
 register_remote lib/jquery-iCheck                                             AustinTsai                               git@github.com:AustinTsai/iCheck.git                                             $# $@
 register_remote lib/jquery-iCheck                                             applepicke                               git@github.com:applepicke/iCheck.git                                             $# $@
@@ -238,6 +238,17 @@ register_remote lib/jquery-iCheck                                             ve
 register_remote lib/jquery-iCheck                                             wefiy                                    git@github.com:wefiy/iCheck.git                                                  $# $@
 register_remote lib/jquery-iCheck                                             yc2164708                                git@github.com:yc2164708/iCheck.git                                              $# $@
 register_remote lib/jquery-iCheck                                             ziscloud                                 git@github.com:ziscloud/iCheck.git                                               $# $@
+register_remote lib/jquery-jsonp                                              ZeeD                                     git@github.com:ZeeD/jquery-jsonp.git                                             $# $@
+register_remote lib/jquery-jsonp                                              basos9                                   git@github.com:basos9/jquery-jsonp.git                                           $# $@
+register_remote lib/jquery-jsonp                                              calebclark                               git@github.com:calebclark/jquery-jsonp.git                                       $# $@
+register_remote lib/jquery-jsonp                                              collinanderson                           git@github.com:collinanderson/jquery-jsonp.git                                   $# $@
+register_remote lib/jquery-jsonp                                              fivetanley                               git@github.com:fivetanley/jquery-jsonp.git                                       $# $@
+register_remote lib/jquery-jsonp                                              hanguyenst                               git@github.com:hanguyenst/jquery-jsonp.git                                       $# $@
+register_remote lib/jquery-jsonp                                              hull                                     git@github.com:hull/jquery-jsonp.git                                             $# $@
+register_remote lib/jquery-jsonp                                              jaubourg                                 git@github.com:jaubourg/jquery-jsonp.git                                         $# $@
+register_remote lib/jquery-jsonp                                              jaubourg-original                        git@github.com:jaubourg/jquery-jsonp.git                                         $# $@
+register_remote lib/jquery-jsonp                                              timtucker                                git@github.com:timtucker/jquery-jsonp.git                                        $# $@
+register_remote lib/jquery-jsonp                                              zamesnonet                               git@github.com:zamesnonet/jquery-jsonp.git                                       $# $@
 register_remote lib/jquery-multiselect                                        0plus1                                   git@github.com:0plus1/jquery-ui-multiselect-widget.git                           $# $@
 register_remote lib/jquery-multiselect                                        AquaSwami                                git@github.com:AquaSwami/jquery-ui-multiselect-widget.git                        $# $@
 register_remote lib/jquery-multiselect                                        BangBoy                                  git@github.com:BangBoy/jquery-ui-multiselect-widget.git                          $# $@
@@ -252,6 +263,7 @@ register_remote lib/jquery-multiselect                                        El
 register_remote lib/jquery-multiselect                                        GerHobbelt                               git@github.com:GerHobbelt/jquery-multiselect.git                                 $# $@
 register_remote lib/jquery-multiselect                                        GerHobbelt-UI                            git@github.com:GerHobbelt/jquery-ui-multiselect-widget.git                       $# $@
 register_remote lib/jquery-multiselect                                        KarneAsada                               git@github.com:KarneAsada/jquery-ui-multiselect-widget.git                       $# $@
+register_remote lib/jquery-multiselect                                        MateuszKuriata                           git@github.com:MateuszKuriata/jquery-ui-multiselect-widget.git                   $# $@
 register_remote lib/jquery-multiselect                                        NationalResearchCorporation              git@github.com:NationalResearchCorporation/jquery-ui-multiselect-widget.git      $# $@
 register_remote lib/jquery-multiselect                                        Nextt                                    git@github.com:Nextt/jquery-ui-multiselect-widget.git                            $# $@
 register_remote lib/jquery-multiselect                                        PieroWbmstr                              git@github.com:PieroWbmstr/jquery-ui-multiselect-widget.git                      $# $@
@@ -260,6 +272,7 @@ register_remote lib/jquery-multiselect                                        Ro
 register_remote lib/jquery-multiselect                                        RuthElia                                 git@github.com:RuthElia/jquery-ui-multiselect-widget.git                         $# $@
 register_remote lib/jquery-multiselect                                        TerryMooreII                             git@github.com:TerryMooreII/jquery-ui-multiselect-widget.git                     $# $@
 register_remote lib/jquery-multiselect                                        TheBosZ                                  git@github.com:TheBosZ/jquery-ui-multiselect-widget.git                          $# $@
+register_remote lib/jquery-multiselect                                        TrainingPeaks                            git@github.com:TrainingPeaks/jquery-ui-multiselect-widget.git                    $# $@
 register_remote lib/jquery-multiselect                                        adamli                                   git@github.com:adamli/jquery-multiselect.git                                     $# $@
 register_remote lib/jquery-multiselect                                        aerichmond                               git@github.com:aerichmond/jquery-ui-multiselect-widget.git                       $# $@
 register_remote lib/jquery-multiselect                                        aetchegoyen                              git@github.com:aetchegoyen/jquery-ui-multiselect-widget.git                      $# $@
@@ -269,6 +282,7 @@ register_remote lib/jquery-multiselect                                        ap
 register_remote lib/jquery-multiselect                                        apuratepp                                git@github.com:apuratepp/jquery-ui-multiselect-widget.git                        $# $@
 register_remote lib/jquery-multiselect                                        benikov                                  git@github.com:benikov/jquery-ui-multiselect-widget.git                          $# $@
 register_remote lib/jquery-multiselect                                        bwlang                                   git@github.com:bwlang/jquery-ui-multiselect-widget.git                           $# $@
+register_remote lib/jquery-multiselect                                        c41                                      git@github.com:c41/jquery-ui-multiselect-widget.git                              $# $@
 register_remote lib/jquery-multiselect                                        cedriclombardot                          git@github.com:cedriclombardot/jquery-ui-multiselect-widget.git                  $# $@
 register_remote lib/jquery-multiselect                                        coke                                     git@github.com:coke/jquery-ui-multiselect-widget.git                             $# $@
 register_remote lib/jquery-multiselect                                        cstewart87                               git@github.com:cstewart87/jquery-ui-multiselect-widget.git                       $# $@
@@ -293,6 +307,8 @@ register_remote lib/jquery-multiselect                                        is
 register_remote lib/jquery-multiselect                                        jgeurts                                  git@github.com:jgeurts/jquery-ui-multiselect-widget.git                          $# $@
 register_remote lib/jquery-multiselect                                        jiangxianfu                              git@github.com:jiangxianfu/jquery-ui-multiselect-widget.git                      $# $@
 register_remote lib/jquery-multiselect                                        jons                                     git@github.com:jons/jquery-ui-multiselect-widget.git                             $# $@
+register_remote lib/jquery-multiselect                                        joshdance                                git@github.com:joshdance/jquery-ui-multiselect-widget.git                        $# $@
+register_remote lib/jquery-multiselect                                        jpofl                                    git@github.com:jpofl/jquery-ui-multiselect-widget.git                            $# $@
 register_remote lib/jquery-multiselect                                        julesbravo                               git@github.com:julesbravo/jquery-ui-multiselect-widget.git                       $# $@
 register_remote lib/jquery-multiselect                                        justjohn                                 git@github.com:justjohn/jquery-ui-multiselect-widget.git                         $# $@
 register_remote lib/jquery-multiselect                                        kccarter                                 git@github.com:kccarter/jquery-ui-multiselect-widget.git                         $# $@
@@ -319,16 +335,17 @@ register_remote lib/jquery-multiselect                                        pe
 register_remote lib/jquery-multiselect                                        peytons                                  git@github.com:peytons/jquery-ui-multiselect-widget.git                          $# $@
 register_remote lib/jquery-multiselect                                        pinnymz                                  git@github.com:pinnymz/jquery-ui-multiselect-widget.git                          $# $@
 register_remote lib/jquery-multiselect                                        poquelicot                               git@github.com:poquelicot/jquery-ui-multiselect-widget.git                       $# $@
+register_remote lib/jquery-multiselect                                        ppanthony                                git@github.com:ppanthony/jquery-ui-multiselect-widget.git                        $# $@
 register_remote lib/jquery-multiselect                                        r4j4h                                    git@github.com:r4j4h/jquery-ui-multiselect-widget.git                            $# $@
 register_remote lib/jquery-multiselect                                        richard-ive-m4                           git@github.com:richard-ive-m4/jquery-ui-multiselect-widget.git                   $# $@
 register_remote lib/jquery-multiselect                                        rigobcastro                              git@github.com:rigobcastro/jquery-ui-multiselect-widget.git                      $# $@
 register_remote lib/jquery-multiselect                                        rrusnak1                                 git@github.com:rrusnak1/jquery-ui-multiselect-widget.git                         $# $@
 register_remote lib/jquery-multiselect                                        saggim                                   git@github.com:saggim/jquery-ui-multiselect-widget.git                           $# $@
 register_remote lib/jquery-multiselect                                        seferov                                  git@github.com:seferov/jquery-ui-multiselect-widget.git                          $# $@
+register_remote lib/jquery-multiselect                                        sgonzalez3884                            git@github.com:sgonzalez3884/jquery-ui-multiselect-widget.git                    $# $@
 register_remote lib/jquery-multiselect                                        shakirshakiel                            git@github.com:shakirshakiel/jquery-ui-multiselect-widget.git                    $# $@
 register_remote lib/jquery-multiselect                                        simauria                                 git@github.com:simauria/jquery-ui-multiselect-widget.git                         $# $@
 register_remote lib/jquery-multiselect                                        sleimbro                                 git@github.com:sleimbro/jquery-ui-multiselect-widget.git                         $# $@
-register_remote lib/jquery-multiselect                                        slickgrid-local-original                 ../slickgrid/lib/jquery-multiselect/                                             $# $@
 register_remote lib/jquery-multiselect                                        spidasoftware                            git@github.com:spidasoftware/jquery-ui-multiselect-widget.git                    $# $@
 register_remote lib/jquery-multiselect                                        supermarcos                              git@github.com:supermarcos/jquery-ui-multiselect-widget.git                      $# $@
 register_remote lib/jquery-multiselect                                        tapmantwo                                git@github.com:tapmantwo/jquery-ui-multiselect-widget.git                        $# $@
@@ -337,6 +354,7 @@ register_remote lib/jquery-multiselect                                        te
 register_remote lib/jquery-multiselect                                        thelinuxlich                             git@github.com:thelinuxlich/jquery-ui-multiselect-widget.git                     $# $@
 register_remote lib/jquery-multiselect                                        vergil                                   git@github.com:vergil/jquery-ui-multiselect-widget.git                           $# $@
 register_remote lib/jquery-multiselect                                        viict                                    git@github.com:viict/jquery-ui-multiselect-widget.git                            $# $@
+register_remote lib/jquery-multiselect                                        vmtco                                    git@github.com:vmtco/jquery-ui-multiselect-widget.git                            $# $@
 register_remote lib/jquery-multiselect                                        wulis8                                   git@github.com:wulis8/jquery-ui-multiselect-widget.git                           $# $@
 register_remote lib/jquery-multiselect                                        zlamma                                   git@github.com:zlamma/jquery-ui-multiselect-widget.git                           $# $@
 register_remote lib/jquery-simulate                                           GerHobbelt                               git@github.com:GerHobbelt/jquery-simulate.git                                    $# $@

@@ -550,67 +550,63 @@
    * Provide a generic performance timer, which strives to produce highest possible accuracy time measurements.
    * 
    * methods:
-   * - start() (re)starts the timer. .start() also CLEARS ALL .mark_delta() timers!
-   * - mark() calculates the elapsed time for the current timer in MILLISECONDS (floating point).
-   * - mark_delta(ID) is identical to .mark() except that the time elapsed since the last call 
-   *   to .mark_delta() with the same ID is returned in MILLISECONDS (floating point).
+   * 
+   * - `start()` (re)starts the timer and 'marks' the current time for ID="start". 
+   *   `.start()` also CLEARS ALL .mark_delta() timers!
+   *
+   * - `mark(ID)` calculates the elapsed time for the current timer in MILLISECONDS (floating point) 
+   *   since `.start()`. `.mark_delta()` then updates the 'start/mark time' for the given ID.
+   *
+   *   ID *may* be NULL, in which case `.mark()` will not update any 'start/mark time'.
+   *    
+   * - `mark_delta(ID, START_ID)` calculates the elapsed time for the current timer in MILLISECONDS (floating point) since 
+   *   the last call to `.mark_delta()` or `.mark()` with the same ID. `.mark_delta()` then updates the 
+   *   'start/mark time' for the given ID.
+   *
+   *   When the optional START_ID is specified, the delta is calculated against the last marked time 
+   *   for that START_ID.
+   *
+   *   When the ID is NULL or not specified, then the default ID of "start" will be assumed.
+   *   
+   *   This results in consecutive calls to `.mark_delta()` with the same ID to produce 
+   *   each of the time intervals between the calls, while consecutive calls to
+   *   `.mark()` with he same ID would produce an increase each time instead as the time 
+   *   between the `.mark()` call and the original `.start()` increases.
    * 
    * Notes:
    * 
-   * - when you invoke .mark() without having called .start() before, then the timer is started at the mark.
-   * - you are responsible to keep the IDs for .mark_delta() unique. The ID MUST NOT be "start" 
-   *   (as ID = "start" identifies the .start() timer)
+   * - when you invoke `.mark()` or `.mark_delta()` without having called .start() before, 
+   *   then the timer is started at the mark.
+   * 
+   * - `.start()` will erase all stored 'start/mark times' which may have been
+   *   set by `.mark()` or `.mark_delta()` before -- you may call `.start()` multiple times for
+   *   the same timer instance, after all.
+   * 
+   * - you are responsible to manage the IDs for `.mark()` and `.mark_delta()`. The ID MUST NOT be "start" 
+   *   as ID = "start" identifies the .start() timer.
    * 
    * References for the internal implementation:
-   *     http://updates.html5rocks.com/2012/08/When-milliseconds-are-not-enough-performance-now
-   *     http://ejohn.org/blog/accuracy-of-javascript-time/
+   * 
+   *    - http://updates.html5rocks.com/2012/08/When-milliseconds-are-not-enough-performance-now
+   *    - http://ejohn.org/blog/accuracy-of-javascript-time/
    */
   function PerformanceTimer() {
-    /* private */ var start_time = false;
+    /* @private */ var start_time = false;
     var obj = {
     };
     // feature detect:
-    var p = window.performance;
+    /* @private */ var f;
+    /* @private */ var p = window.performance;
     if (p && p.timing.navigationStart && p.now) {
-      obj.start = function () {
-        start_time = {
-          start: p.now()
-        };
-      };
-      obj.mark = function () {
-        if (start_time === false) this.start();
-        var end_time = p.now();
-        return end_time - start_time.start;
-      };
-      obj.mark_delta = function (id) {
-        id = id || "start";
-        if (start_time === false) this.start();
-        var end_time = p.now();
-        var rv = end_time - start_time[id];
-        start_time[id] = end_time;
-        return rv;
+      f = function () {
+        return p.now();
       };
     } else if (p && p.webkitNow) {
-      obj.start = function () {
-        start_time = {
-          start: p.webkitNow()
-        };
-      };
-      obj.mark = function () {
-        if (start_time === false) this.start();
-        var end_time = p.webkitNow();
-        return end_time - start_time.start;
-      };
-      obj.mark_delta = function (id) {
-        id = id || "start";
-        if (start_time === false) this.start();
-        var end_time = p.webkitNow();
-        var rv = end_time - start_time[id];
-        start_time[id] = end_time;
-        return rv;
+      f = function () {
+        return p.webkitNow();
       };
     } else {
-      var f = function () {
+      f = function () {
         return Date.now();
       };
       try {
@@ -620,24 +616,66 @@
           return +new Date();
         };
       }
-      obj.start = function () {
-        start_time = {
-          start: f()
-        };
-      };
-      obj.mark = function () {
-        if (start_time === false) this.start();
-        return f() - start_time.start;
-      };
-      obj.mark_delta = function (id) {
-        id = id || "start";
-        if (start_time === false) this.start();
-        var end_time = f();
-        var rv = end_time - start_time[id];
-        start_time[id] = end_time;
-        return rv;
-      };
     }
+
+    obj.start = function () {
+      start_time = {
+        start: f()
+      };
+    };
+    
+    obj.mark = function (id, start_id) {
+      if (start_time === false) this.start();
+      var end_time = f();
+      var begin_time = start_time[start_id || "start"];
+      if (!begin_time) {
+        begin_time = end_time;
+      }
+      var rv = end_time - begin_time;
+      if (id) {
+        start_time[id] = end_time;
+      }
+      return rv;
+    };
+    
+    obj.mark_delta = function (id) {
+      if (start_time === false) this.start();
+      id = id || "start";
+      var end_time = f();
+      var begin_time = start_time[id];
+      if (!begin_time) {
+        begin_time = end_time;
+      }
+      var rv = end_time - begin_time;
+      start_time[id] = end_time;
+      return rv;
+    };
+    
+    obj.reset_mark = function (id) {
+      id = id || "start";
+      start_time[id] = null;
+      return obj;
+    };
+
+    obj.get_mark = function (id) {
+      id = id || "start";
+      return start_time[id];
+    };
+
+    obj.mark_sample_and_hold = function (id) {
+      if (start_time === false) this.start();
+      id = id || "start";
+      // sample ...
+      var end_time = f();
+      var begin_time = start_time[id];
+      if (!begin_time) {
+        begin_time = end_time;
+        // ... and hold
+        start_time[id] = begin_time;
+      }
+      var rv = end_time - begin_time;
+      return rv;
+    };
 
     return obj;
   }
