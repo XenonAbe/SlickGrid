@@ -1,8 +1,7 @@
 # SlickGrid - A lightning fast JavaScript grid/spreadsheet
 
-
 ## Welcome to SlickGrid
- 
+
 Find documentation and examples in [the original wiki](https://github.com/mleibman/SlickGrid/wiki) and [this clone's wiki](https://github.com/GerHobbelt/SlickGrid/wiki).
 This is a fork of SlickGrid maintained by Ger Hobbelt / Visyond Inc. The new features that have been added / mixed in:
 
@@ -16,6 +15,14 @@ This is a fork of SlickGrid maintained by Ger Hobbelt / Visyond Inc. The new fea
 * Formatters and Editors adapted for the above
 * Internal and external Copy/Cut/Paste through the usual keyboard shortcuts
 * Mouse & Touch support
+* `grid.updateColumnWidths()` API: very significant performance improvement; pull request with notes [here](https://github.com/mleibman/SlickGrid/pull/897)
+* `grid.getId()` lets you get the uid of the grid instance
+* Triggers existing event `onColumnsResized` when you change the column widths
+* Triggers a new event `onColumnsChanged` when you set the columns
+* Exposes the existing method `grid.setupColumnResize()`, which allows you to re-enable column resizing if you're manually screwing around with the headers.
+* Some new options on `setColumns` and `resizeCanvas` let you prevent some of the expensive calculations, useful if you're doing them yourself externally.
+
+
 
 This fork adds the following method:
 
@@ -29,7 +36,7 @@ Also exposes the existing method `grid.setupColumnResize`, which allows you to r
 
 
 
-
+### Message by Michael Leibman (@mleibman)
 
 **UPDATE:  March 5th, 2014 - I have too many things going on in my life right now to really give SlickGrid support and development the time and attention it deserves.  I am not stopping it, but I will most likely be unresponsive for some time.  Sorry.**
 
@@ -57,9 +64,11 @@ Some highlights:
 
 * extend the set of unit tests for DataView to help test grouping behaviour (which currently has bugs) and indirect access
 * extend set of examples, including external keyboard driver (e.g. keymaster.js)
+* 'pace' the new delayed render activity, etc. using an external 'clock': now everything is running on individual setTimeout()s and userland code needs more control over when these fire exactly.
 * enable Copy/Cut/Paste via externally triggered event or API call (so you can execute those commands from external controls)
-* integrate the fixed-row/column work by JLynch7; that merge branch is currently botched
+* integrate the fixed-row/column work by JLynch7; that merge branch is currently botched -- EDIT: do not do this; see https://github.com/mleibman/SlickGrid/issues/1033 (#1033)
 * unify Formatters and Editors' API in terms of info passed
-* using jsperf and tests/*.html performance measurements to check current performance and possibly improve it
+* using jsperf and tests/*.html performance measurements to check current performance and possibly improve it -- EDIT: already did a lot in the render code
 * update wiki with API changes re Formatters and Editors
 * run script / tool to extract/update contributor/author list
+

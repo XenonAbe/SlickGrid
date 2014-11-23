@@ -128,6 +128,8 @@ if (typeof Slick === "undefined") {
    *      enableTextSelectionOnCells:
    *                          {Boolean}   Should text selection be allowed in cells? (This is MSIE specific; other browsers always assume `true`)
    *      forceFitColumns:    {Boolean}   Should column widths be automatically resized to fit?
+   *      resizeOnlyDraggedColumn
+   *                          {Boolean}   Only resize the column being resized, instead of resizing any preceding columns as well when the user drags far left 
    *      dataItemColumnValueExtractor(item, columnDef, rowMetadata, columnMetadata):
    *                          {Function}  If present, will be called to retrieve a data value from the
    *                                      specified item for the corresponding column.
@@ -199,6 +201,7 @@ if (typeof Slick === "undefined") {
       asyncEditorLoading: false,
       asyncEditorLoadDelay: 100,
       forceFitColumns: false,
+      resizeOnlyDraggedColumn: false,
       enableAsyncPostRender: false,
       asyncPostRenderDelay: 50,
       asyncPostRenderSlice: 50,
@@ -499,7 +502,7 @@ if (typeof Slick === "undefined") {
       }
 
       assert(!initialized);
-      viewportW = getViewportWidth();
+      setViewportWidth();
       var rv = updateCanvasWidth();    // note that this call MUST NOT fire the onCanvasChanged event!
 
       $focusSink2 = $focusSink.clone().appendTo($container);
@@ -534,7 +537,7 @@ if (typeof Slick === "undefined") {
       if (initialized < 2) {
         initialized = 1;
 
-        viewportW = getViewportWidth();
+        setViewportWidth();
 
         // header columns and cells may have different padding/border skewing width calculations (box-sizing, hello?)
         // calculate the diff so we can set consistent sizes
@@ -1487,7 +1490,7 @@ if (typeof Slick === "undefined") {
         return;
       }
 
-      function onColumnResizeDragInit(e, dd, aciveColumnIndex) {
+      function onColumnResizeDragInit(e, dd, activeColumnIndex) {
         var j, c;
         if (!getEditorLock().commitCurrentEdit()) {
           return false;
@@ -1496,7 +1499,7 @@ if (typeof Slick === "undefined") {
         //e.stopPropagation();
       }
 
-      function onColumnResizeDragStart(e, dd, aciveColumnIndex) {
+      function onColumnResizeDragStart(e, dd, activeColumnIndex) {
         var j, c;
         if (!getEditorLock().commitCurrentEdit()) {
           return false;
@@ -1504,6 +1507,11 @@ if (typeof Slick === "undefined") {
         var columnCount = columns.length;
         pageX = e.pageX;
         $(this).parent().addClass("slick-header-column-active");
+
+        // Get the dragged column object and set a flag on it
+        assert(activeColumnIndex >= 0);
+        columns[activeColumnIndex].manuallySized = true;
+        
         var shrinkLeewayOnRight = null, stretchLeewayOnRight = null;
         // calculate & cache all invariants to speed up the process:
         for (var i = 0, len = columnCount; i < len; i++) {
@@ -1519,7 +1527,7 @@ if (typeof Slick === "undefined") {
           shrinkLeewayOnRight = 0;
           stretchLeewayOnRight = 0;
           // columns on right affect maxPageX/minPageX
-          for (j = aciveColumnIndex + 1; j < columnCount; j++) {
+          for (j = activeColumnIndex + 1; j < columnCount; j++) {
             c = columns[j];
             assert(c);
             if (c.resizable) {
@@ -1535,7 +1543,7 @@ if (typeof Slick === "undefined") {
           }
         }
         var shrinkLeewayOnLeft = 0, stretchLeewayOnLeft = 0;
-        for (j = 0; j <= aciveColumnIndex; j++) {
+        for (j = 0; j <= activeColumnIndex; j++) {
           // columns on left only affect minPageX
           c = columns[j];
           assert(c);
@@ -1573,7 +1581,7 @@ if (typeof Slick === "undefined") {
         //e.stopPropagation();
       }
 
-      function onColumnResizeDrag(e, dd, aciveColumnIndex) {
+      function onColumnResizeDrag(e, dd, activeColumnIndex) {
         var actualMinWidth, 
             d = Math.min(maxPageX, Math.max(minPageX, e.pageX)) - pageX, 
             x;
@@ -1581,24 +1589,29 @@ if (typeof Slick === "undefined") {
         var columnCount = columns.length;
         if (d < 0) { // shrink column
           x = d;
-          for (j = aciveColumnIndex; j >= 0; j--) {
-            c = columns[j];
-            assert(c);
-            if (c.resizable) {
-              actualMinWidth = c.__columnResizeInfo.absMinWidth;
-              if (x && c.__columnResizeInfo.previousWidth + x < actualMinWidth) {
-                x += c.__columnResizeInfo.previousWidth - actualMinWidth;
-                c.width = actualMinWidth;
-              } else {
-                c.width = c.__columnResizeInfo.previousWidth + x;
-                x = 0;
+          if (options.resizeOnlyDraggedColumn) {
+            c = columns[activeColumnIndex];
+            c.width = Math.max(c.previousWidth + x, c.__columnResizeInfo.absMinWidth); // apply shrinkage to this column only.
+          } else {
+            for (j = activeColumnIndex; j >= 0; j--) {
+              c = columns[j];
+              assert(c);
+              if (c.resizable) {
+                actualMinWidth = c.__columnResizeInfo.absMinWidth;
+                if (x && c.__columnResizeInfo.previousWidth + x < actualMinWidth) {
+                  x += c.__columnResizeInfo.previousWidth - actualMinWidth;
+                  c.width = actualMinWidth;
+                } else {
+                  c.width = c.__columnResizeInfo.previousWidth + x;
+                  x = 0;
+                }
               }
             }
           }
 
           if (options.forceFitColumns) {
             x = -d;
-            for (j = aciveColumnIndex + 1; j < columnCount; j++) {
+            for (j = activeColumnIndex + 1; j < columnCount; j++) {
               c = columns[j];
               assert(c);
               if (c.resizable) {
@@ -1614,23 +1627,31 @@ if (typeof Slick === "undefined") {
           }
         } else { // stretch column
           x = d;
-          for (j = aciveColumnIndex; j >= 0; j--) {
-            c = columns[j];
-            assert(c);
-            if (c.resizable) {
-              if (x && c.maxWidth && (c.maxWidth - c.__columnResizeInfo.previousWidth < x)) {
-                x -= c.maxWidth - c.__columnResizeInfo.previousWidth;
-                c.width = c.maxWidth;
-              } else {
-                c.width = c.__columnResizeInfo.previousWidth + x;
-                x = 0;
+          if (options.resizeOnlyDraggedColumn) {
+            c = columns[activeColumnIndex];
+            c.width = c.previousWidth + x;
+            if (x && c.maxWidth && c.maxWidth < c.width) {
+              c.width = c.maxWidth;
+            }
+          } else {
+            for (j = activeColumnIndex; j >= 0; j--) {
+              c = columns[j];
+              assert(c);
+              if (c.resizable) {
+                if (x && c.maxWidth && (c.maxWidth - c.__columnResizeInfo.previousWidth < x)) {
+                  x -= c.maxWidth - c.__columnResizeInfo.previousWidth;
+                  c.width = c.maxWidth;
+                } else {
+                  c.width = c.__columnResizeInfo.previousWidth + x;
+                  x = 0;
+                }
               }
             }
           }
 
           if (options.forceFitColumns) {
             x = -d;
-            for (j = aciveColumnIndex + 1; j < columnCount; j++) {
+            for (j = activeColumnIndex + 1; j < columnCount; j++) {
               c = columns[j];
               assert(c);
               if (c.resizable) {
@@ -1679,7 +1700,8 @@ if (typeof Slick === "undefined") {
         //render();
         trigger(self.onColumnsResized, { 
           adjustedColumns: adjustedColumns, 
-          dd: dd 
+          dd: dd,
+          success: rv 
         }, e);
         e.preventDefault();
         e.stopPropagation();
@@ -1732,9 +1754,10 @@ if (typeof Slick === "undefined") {
         assert(rv === true);
         //render();
         trigger(self.onColumnsResized, {
+          adjustedColumns: [columnDef],
           cell: cell, 
           column: columnDef,
-          adjustedColumns: [columnDef] 
+          success: rv 
         }, e);
         e.preventDefault();
         e.stopPropagation();
@@ -1796,38 +1819,38 @@ if (typeof Slick === "undefined") {
     }
 
     function calculateWordDimensions(text, escape) {
-        if (escape === undefined) {
-          escape = true;
-        }
+      if (escape === undefined) {
+        escape = true;
+      }
 
-        var div = document.createElement("div");
-        $(div).css({
-            "position": "absolute",
-            "visibility": "hidden",
-            "height": "auto",
-            "width": "auto",
-            "white-space": "nowrap",
-            "font-family": "Verdana, Arial, sans-serif",
-            "font-size": "13px",
-            "border": "1px solid transparent",
-            "padding": "1px 4px 2px"
-        });
-        if (escape) {
-          $(div).text(text);
-        } else {
-          div.innerHTML = text;
-        }
+      var div = document.createElement("div");
+      $(div).css({
+          "position": "absolute",
+          "visibility": "hidden",
+          "height": "auto",
+          "width": "auto",
+          "white-space": "nowrap",
+          "font-family": "Verdana, Arial, sans-serif",
+          "font-size": "13px",
+          "border": "1px solid transparent",
+          "padding": "1px 4px 2px"
+      });
+      if (escape) {
+        $(div).text(text);
+      } else {
+        div.innerHTML = text;
+      }
 
-        document.body.appendChild(div);
+      document.body.appendChild(div);
 
-        var dimensions = {
-          width: jQuery(div).outerWidth() + 30,
-          height: jQuery(div).outerHeight()
-        };
+      var dimensions = {
+        width: jQuery(div).outerWidth() + 30,
+        height: jQuery(div).outerHeight()
+      };
 
-        div.parentNode.removeChild(div);
+      div.parentNode.removeChild(div);
 
-        return dimensions;
+      return dimensions;
     }
 
     function getVBoxDelta($el) {
@@ -1934,7 +1957,7 @@ if (typeof Slick === "undefined") {
         });
       } else {
         throw new Error("run-time generated slickgrid rules could not be set up");
-      }
+        }
     }
 
     function addCSSRule(sheet, selector, rules, index) {
@@ -2295,13 +2318,15 @@ if (typeof Slick === "undefined") {
     function handleSelectedRangesChanged(e, ranges) {
       selectedRows = [];
       var hash = {};
+      var maxRow = getDataLength() - 1;                                             
+      var maxCell = columns.length - 1;
       for (var i = 0, len = ranges.length; i < len; i++) {
-        for (var j = ranges[i].fromRow; j <= ranges[i].toRow; j++) {
+        for (var j = Math.max(0, ranges[i].fromRow), jlen = Math.min(ranges[i].toRow, maxRow); j <= jlen; j++) {
           if (!hash[j]) {  // prevent duplicates
             selectedRows.push(j);
             hash[j] = {};
           }
-          for (var k = ranges[i].fromCell; k <= ranges[i].toCell; k++) {
+          for (var k = Math.max(0, ranges[i].fromCell), klen = Math.min(ranges[i].toCell, maxCell); k <= klen; k++) {
             if (canCellBeSelected(j, k)) {
               hash[j][columns[k].id] = options.selectedCellCssClass;
             }
@@ -2357,8 +2382,17 @@ if (typeof Slick === "undefined") {
       columnPosLeft[i] = x;
     }
 
-    function setColumns(newColumnDefinitions) {
+    /**
+     * Set or re-set the columns in the grid
+     * @param {array}     columnDefinitions   columns to set
+     * @param {object}    opts                mixed in with the `onColumnsChanged` data sent to event handlers
+     *                                        resizeOptions.skipResizeCanvas let's you skip that step. 
+     *                                        This boosts performance if you don't need it because you're planning to 
+     *                                        manually call resizeCanvas.
+     */
+    function setColumns(newColumnDefinitions, resizeOptions) {
       parseColumns(newColumnDefinitions);
+      resizeOptions = resizeOptions || {};
       updateColumnCaches();
       if (initialized) {
         // Kill the active cell when it sits in the column range which doesn't exist any more in the new column definitions / data set.
@@ -2370,11 +2404,17 @@ if (typeof Slick === "undefined") {
         createColumnHeaders();
         removeCssRules();
         createCssRules();
-        resizeCanvas();
+        if (!resizeOptions.skipResizeCanvas) {
+          resizeCanvas(resizeOptions);
+        }
         // Warning: the next call would break as the run-time created style in createCssRules() 
         // may not have been parsed by the browser yet! (At least in Chrome/MAC)
         var rv = applyColumnWidths();   
         handleScroll();
+        trigger(self.onColumnsChanged, {
+          resizeOptions: resizeOptions,
+          success: rv
+        });
         return rv;
       }
       return false;
@@ -2382,12 +2422,41 @@ if (typeof Slick === "undefined") {
 
     // Given a column definition object, do all the steps required to react to a change in the widths of any of the columns
     function updateColumnWidths(newColumnDefinitions) {
+      // cache the old column widths so we can see which ones changed:
+      var columnCount = columns.length;
+      var oldColumnWidths = new Array(columnCount);
+      var j, c;
+      for (j = 0; j < columnCount; j++) {
+        c = columns[j];
+        assert(c);
+        oldColumnWidths[j] = c.width;
+      }
+
       parseColumns(newColumnDefinitions);
       updateColumnCaches();
+      
+      // compare the new column set against the old one:
+      assert(columns.length === columnCount);
+      var adjustedColumns = [];
+      for (j = 0; j < columnCount; j++) {
+        c = columns[j];
+        assert(c);
+        if (oldColumnWidths[j] !== c.width) {
+          adjustedColumns.push(c);
+          if (c.rerenderOnResize) {
+            invalidateColumn(j);
+          }
+        }
+      }
       if (initialized) {
         // Surgically update all cell widths, including header cells:
         //applyColumnWidths(); -- happens already inside the next statement: updateCanvasWidth()
-        return updateCanvasWidth();
+        var rv = updateCanvasWidth();
+        trigger(self.onColumnsResized, { 
+          adjustedColumns: adjustedColumns, 
+          success: rv 
+        });
+        return rv;
       }
       return false;
     }
@@ -3856,6 +3925,7 @@ if (typeof Slick === "undefined") {
     function invalidate() {
       invalidateAllRows();
       updateRowCount();
+      trigger(self.onInvalidate);
       render();
     }
 
@@ -4454,35 +4524,41 @@ if (typeof Slick === "undefined") {
       };
     }
 
-    function resizeCanvas() {
+    // If you pass resizeOptions.width, the viewport width calculation can be skipped. 
+    // This saves 15ms or so.
+    function resizeCanvas(resizeOptions) {
       if (!initialized) { return; }
 
       var estimateH = MAX_INT;
-      if (options.autoHeight) {
-        estimateH = getRowBottom(getDataLengthIncludingAddNew());
-      } else {
-        estimateH = getViewportHeight();
-      }
-      estimateH = Math.max(options.minHeight || 0, Math.min(options.maxHeight || MAX_INT, estimateH));
-      var setHeight = (estimateH !== viewportH || options.minHeight === estimateH || options.maxHeight === estimateH);
+      resizeOptions = resizeOptions || {};
 
-      if (setHeight) {
-        $viewport.height(estimateH);
-        
-        // Trouble is now we need to detect if we've been limited by any user styles on the *container*:
-        var containerH = getContainerHeight();
-        var actualViewportH = getViewportHeight();
-        var viewportToContainerDeltaH = containerH - actualViewportH;
+      if (!resizeOptions.skipHeight) {
+        if (options.autoHeight) {
+          estimateH = getRowBottom(getDataLengthIncludingAddNew());
+        } else {
+          estimateH = getViewportHeight();
+        }
+        estimateH = Math.max(options.minHeight || 0, Math.min(options.maxHeight || MAX_INT, estimateH));
+        var setHeight = (estimateH !== viewportH || options.minHeight === estimateH || options.maxHeight === estimateH);
 
-        if (viewportH !== actualViewportH) {
-          // user CSS rules are apparently kicking in (min-height, max-height); compensate.
-          viewportH = actualViewportH;
-    
-          $viewport.height(viewportH);
+        if (setHeight) {
+          $viewport.height(estimateH);
+          
+          // Trouble is now we need to detect if we've been limited by any user styles on the *container*:
+          var containerH = getContainerHeight();
+          var actualViewportH = getViewportHeight();
+          var viewportToContainerDeltaH = containerH - actualViewportH;
+
+          if (viewportH !== actualViewportH) {
+            // user CSS rules are apparently kicking in (min-height, max-height); compensate.
+            viewportH = actualViewportH;
+      
+            $viewport.height(viewportH);
+          }
         }
       }
 
-      viewportW = getViewportWidth();
+      setViewportWidth(resizeOptions.width);
 
       //$viewport.css("overflow-y", (options.autoHeight && !clippedAutoSize) ? "auto" : "auto");
 
@@ -4496,6 +4572,15 @@ if (typeof Slick === "undefined") {
       // Since the width has changed, force the render() to re-evaluate virtually rendered cells.
       lastRenderedScrollLeft = -1;
       render();
+    }
+
+    // If you pass it a width, that width is used as the viewport width. 
+    // If you do not, it is calculated as normal.
+    //
+    // This is more performant if the canvas size is changed externally: 
+    // then the width is already known so we can pass it in instead of recalculating.
+    function setViewportWidth(width) {
+      viewportW = width || getViewportWidth();
     }
 
     function updateRowCount() {
@@ -8479,6 +8564,7 @@ if (0) {
       "onKeyDown": new Slick.Event(),
       "onAddNewRow": new Slick.Event(),
       "onValidationError": new Slick.Event(),
+      "onInvalidate": new Slick.Event(),
       "onCanvasWidthChanged": new Slick.Event(),
       "onViewportChanged": new Slick.Event(),
       "onColumnsStartReorder": new Slick.Event(),
@@ -8488,6 +8574,7 @@ if (0) {
       "onColumnsResizing": new Slick.Event(),
       "onColumnsResized": new Slick.Event(),
       "onColumnCalcWidth": new Slick.Event(),
+      "onColumnsChanged": new Slick.Event(),
       "onCellChange": new Slick.Event(),
       "onBeforeEditCell": new Slick.Event(),
       "onBeforeCellEditorDestroy": new Slick.Event(),
