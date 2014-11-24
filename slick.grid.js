@@ -1976,7 +1976,7 @@ if (typeof Slick === "undefined") {
     // Fix for Google Chrome
     function getStyleSheet() {
       for (var style in document.styleSheets) {
-        var sheets = document.styleSheets;
+        var sheet = document.styleSheets[style];
         var ownerNode = getStyleSheetOwner(sheet);
         if (ownerNode && ownerNode.id === "slickgrid_stylesheet_" + uid) {
           return sheet;
