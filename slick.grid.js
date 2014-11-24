@@ -3884,9 +3884,11 @@ if (typeof Slick === "undefined") {
           for (var cell = cacheEntry.cellNodesByColumnStart, len = Math.min(cellCache.length, columns.length); cell < len; cell += colspan) {
             colspan = 1;
             var spans = getSpans(row, cell);
+            var spanRow = row;
             if (spans) {
-              assert(row === spans.row);
+              assert(row >= spans.row);
               assert(cell === spans.cell);
+              spanRow = spans.row;
               colspan = spans.colspan;
             }
             if (columnPosLeft[cell + colspan] > rangeToUpdate.leftPx) {
@@ -3895,9 +3897,31 @@ if (typeof Slick === "undefined") {
                 break;
               }
             }
-            if (cellCache[cell] && dirtyFlags[cell]) {
+            if (spanRow === row && cellCache[cell] && dirtyFlags[cell]) {
               updateCellInternal(row, cell, cacheEntry, cellCache[cell]);
               assert(!dirtyFlags[cell]);
+            } else if (spanRow < row) {
+              // We're looking at a rowspanning cell which starts at a row above us 
+              var cacheEntry2 = rowsCache[spanRow];
+              if (cacheEntry2) {
+                // flush any pending row render queue to cache first:
+                if (cacheEntry2.cellRenderQueue.length) {
+                  assert(0, "should not be necessary any more");
+                  ensureCellNodesInRowsCache(spanRow);
+                }
+                var cellCache2 = cacheEntry2.cellNodesByColumnIdx;
+                var dirtyFlags2 = cacheEntry2.dirtyCellNodes;
+
+                if (cellCache2[cell] && dirtyFlags2[cell]) {
+                  // Before we update any dirty cells in the row, update the row itself!
+                  if (cacheEntry2.isDirty) {
+                    updateRowInternal(spanRow, dataLength);
+                  }
+
+                  updateCellInternal(spanRow, cell, cacheEntry2, cellCache2[cell]);
+                  assert(!dirtyFlags2[cell]);
+                }
+              }
             }
           }
 
