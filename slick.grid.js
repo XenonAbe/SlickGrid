@@ -986,7 +986,7 @@ if (typeof Slick === "undefined") {
       assert(columnDef.headerRow === (hasNestedColumns ? nestedColumns.length - columnDef.headerRowSpan : 0));
       var elId = mkSaneId(columnDef, idx, "headerrow" + columnDef.headerRow);
       var $header = $headerRow.find("#" + elId); // Do not write this as `$("#" + elId)` because the headers may not yet be included in the page DOM! 
-      assert($headerRow.length ? $.contains($headerRow[0], $header[0]) : true);
+      assert(($headerRow.length && $header.length) ? $.contains($headerRow[0], $header[0]) : true);
       return $header && $header[0];
     }
 
