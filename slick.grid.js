@@ -206,7 +206,7 @@ if (typeof Slick === "undefined") {
       columnDefaults.width = options.defaultColumnWidth;
 
       columnsById = {};
-      for (var i = 0; i < columns.length; i++) {
+      for (var i = 0, len = columns.length; i < len; i++) {
         var m = columns[i] = $.extend({}, columnDefaults, columns[i]);
         columnsById[m.id] = i;
         if (m.minWidth && m.width < m.minWidth) {
@@ -727,7 +727,6 @@ if (typeof Slick === "undefined") {
                 width = cellWidth;
             }
         }
-        //width = Math.max(width, headerWidth);
         return Math.min( width, maxWidth);
     }
 
@@ -1391,20 +1390,13 @@ if (typeof Slick === "undefined") {
 
     }
 
+    function setRowHeight(rowNum, height) {
+        var oldHeight = getRowHeight(rowNum);
+        var adjustment = Number(height - oldHeight);
+        rowHeights[rowNum] = Number(height);
 
-    function setRowHeight(rowNum, height){
-      var oldHeight = rowHeights[rowNum];
-      /*
-        if (oldHeight == undefined){
-          rowHeights[rowNum] = height;
-          updateRowTops(rowNum, 0, height)
-      }
-      */
-
-      if (oldHeight == undefined || height > oldHeight) {
-          rowHeights[rowNum] = height;
-          updateRowTops(rowNum, oldHeight, height)
-      }
+        // the height of this row grew, so need to update the following row tops.
+        updateRowTops(rowNum+1, adjustment);
     }
 
     function getRowHeight(rowNum){
@@ -1419,12 +1411,10 @@ if (typeof Slick === "undefined") {
         rowTops[rowNum] = top;
     }
 
-    function updateRowTops(row, oldHeight, newHeight){
-        var adjustment = 0;
-        adjustment = Number(newHeight - oldHeight);
-
-        for (var i = row+1; i < rowTops.length; i++) {
-            rowTops[i] = Number(rowTops[i]) + adjustment;
+    function updateRowTops(rowNum, os){
+        // start with the specified row, update the top value by the offset
+        for (var i = rowNum; i < rowTops.length; i++) {
+            setRowTop(i,  Number( getAdjustedRowTop(i) + os))
         }
 
     }
@@ -1438,15 +1428,9 @@ if (typeof Slick === "undefined") {
     }
 
     function calculateAdjustedRowTop(){
-        // loop through each rowHeight
-        var currTop = 0;
-        for (var i = 0; i < rowHeights.length; i++ ){
-             if (i == 0){
-                 //rowTops[i] = Number(rowHeights[i]);
-                 rowTops[i] = 0;
-             }else {
-                 rowTops[i] = Number(rowTops[i - 1]) + Number(rowHeights[i]);
-             }
+        rowTops[0] = 0;
+        for (var i = 1; i < rowHeights.length; i++ ){
+            rowTops[i] = Number(rowTops[i - 1]) + Number(rowHeights[i]);
         }
     }
 
@@ -1520,7 +1504,7 @@ if (typeof Slick === "undefined") {
       }
 
         if( !options.enableWrap){
-            stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px; height: " + options.rowHeight + "px'>");
+            stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px; height: " + options.rowHeight + "px'>" + row);
         }
 
       var colspan, m;
@@ -1550,6 +1534,7 @@ if (typeof Slick === "undefined") {
 
           if(options.enableWrap) {
               cellStringArray = [];
+
               appendCellHtml(cellStringArray, row, i, colspan, d);
               var cellHeight = cellStringArray[0].match("height:(.*)px;")
 
@@ -1570,8 +1555,8 @@ if (typeof Slick === "undefined") {
         }
       }
       if(options.enableWrap){
-          stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (getRowTop(row) - offset) +  "px; min-height: " + tallest + "px'>");
-          for (var i = 0; i < cellStringsToAppend.length; i++){
+          stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (getRowTop(row) - offset) +  "px; min-height: " + tallest + "px'>" + row);
+          for (var i = 0, j = cellStringsToAppend.length; i < j; i++){
               stringArray.push(cellStringsToAppend[i]);
 
           }
@@ -1585,29 +1570,32 @@ if (typeof Slick === "undefined") {
     function appendCellHtml(stringArray, row, cell, colspan, item) {
         if(options.enableWrap ) {
             // first row
-
-            if (!cellCache["row"] == undefined) {
+            if (cellCache["row"] == undefined) {
+                console.log("calling initiz", rowHeights)
+                initializeRowHeights();
                 cellCache = {
                     "row": row,
-                    "cell": cell
+                    "cell": cell,
+                    "height": options.rowHeight
                 }
             }
             else if (cellCache["row"] != row) {
+                // moved on to a new row
+                if (row > 0) {
+                    setRowHeight(row - 1, cellCache.height);
+                }
                 var h = cellCache["row"];
                 cellCache = {
                     "row": row,
-                    "cell": cell
+                    "cell": cell,
+                    "height": options.rowHeight
                 };
+            } else {
+                cellCache.cell = cell;
             }
+
         } else { cellCache = {}}
-
       var dataItem = getDataItem(row);
-
-      if (options.enableWrap) {
-          if (!sumSizesInitialized) {
-              initializeRowHeights();
-          }
-      }
 
       var m = columns[cell];
       var cellCss = "slick-cell l" + cell + " r" + Math.min(columns.length - 1, cell + colspan - 1) +
@@ -1622,68 +1610,51 @@ if (typeof Slick === "undefined") {
           cellCss += (" " + cellCssClasses[key][row][m.id]);
         }
       }
-        var colWidth = 75;
 
         if(options.enableWrap ){
+
+           var colWidth = $($(".slick-header-column")[cell]).css("width");
            $("#width_tester").css({"width": '', "white-space": '', "word-wrap": ''});
 
-           if (!dataItem["__group"]) {
-               colWidth = $($(".slick-header-column")[cell]).css("width")
-               if (colWidth == undefined){
-
-               }
+           if (dataItem["__group"] || dataItem["group"] || dataItem["groups"]) {
+               colWidth = "500px";
            }
 
             // determine the height
             $("#width_tester").css({"width": colWidth, "white-space": "normal", "word-wrap": "break-word"});
-            $("#width_tester").addClass("ui-widget")
+            $("#width_tester").addClass("ui-widget");
 
-            // is this a visible field, or a group column
-            if (/\S/.test(columns[cell].name) && !(dataItem.group)){
-                $("#width_tester").text(dataItem[columns[cell].ColumnHeader]);
+            var formattedText = "";
+
             // group footer message
-            } else if (dataItem.group && !(dataItem.group.sum || dataItem.group.avg)){
-                $("#width_tester").css({"width": "500px"})
-                $("#width_tester").text("Totals for " + dataItem.group.value);
+            if (dataItem.group && !(dataItem.group.sum || dataItem.group.avg)){
+                formattedText = "Totals for " + dataItem.group.value;
             }
             // group aggregate
             else if (dataItem.group && (dataItem.group.sum || dataItem.group.avg)) {
-                $("#width_tester").css({"width": "500px"})
-                $("#width_tester").text(dataItem[columns[cell].group.title]);
+                formattedText = dataItem[columns[cell].group.title];
             }
-            //
+            // group header message
             else if (dataItem.groups || dataItem.__group == true){
-                $("#width_tester").css({"width": "500px"})
-                $("#width_tester").text(dataItem.title);
+                formattedText = dataItem.title;
             }
             else {
-                $("#width_tester").css({"width": "500px"})
-                $("#width_tester").text(dataItem[columns[cell].ColumnHeader]);
+                formattedText = getFormatter(row, m)(row, cell,getDataItemValueForColumn(item, m),m,item);
             }
+
             // default to option value set in report service
             var rowHeight = Number(options.rowHeight);
 
-            if ($("#width_tester").text(dataItem[columns[cell].ColumnHeader]).length <= colWidth){
-                // set to default height
-                rowHeight = Number(options.rowHeight);
-            }
-            else {
-                rowHeight = ($("#width_tester").height() * 1.05);
-            }
-            if (rowHeight < Number(options.rowHeight)){
-                rowHeight = Number(options.rowHeight);
+            $("#width_tester").text(formattedText);
+            var cssWidth = $("#width_tester").css("width");
+
+            rowHeight = ($("#width_tester").height()+5);
+
+            if (rowHeight > cellCache.height) {
+                cellCache.height = rowHeight;
             }
 
-            if (cellCache["height"] == undefined){
-                cellCache["height"] = rowHeight;
-                setRowHeight(row, rowHeight);
-            }
-            else if (Number(rowHeight) > Number(cellCache.height)) {
-
-                cellCache.height = Number(rowHeight);
-                setRowHeight(row, rowHeight);
-            }
-            stringArray.push("<span class='" + cellCss + "' style='white-space:normal;word-wrap:break-word;height:" + rowHeight + "px;'>");
+            stringArray.push("<span class='" + cellCss + "' style='white-space:normal;word-wrap:break-word;height:" + cellCache.height + "px;'>");
         }
         else{
             stringArray.push("<span class='" + cellCss + "'>");
@@ -1828,8 +1799,6 @@ if (typeof Slick === "undefined") {
 
     function resizeCanvas() {
         if (!initialized) { return; }
-
-        refreshRowTops();
 
         var visibleRange = getVisibleRange();
         if (options.autoHeight) {
@@ -2158,8 +2127,6 @@ if (typeof Slick === "undefined") {
     }
 
     function renderRows(range) {
-
-
       var parentNode = $canvas[0],
           stringArray = [],
           rows = [],
@@ -3082,28 +3049,29 @@ if (typeof Slick === "undefined") {
 
      //cb: maintaining for dynamic row sizes
     function initializeRowHeights(){
-      rowHeights = [];
+      rowHeights = new Array(data.getLength());
+      rowTops = new Array(data.getLength());
       var len = getDataLength();
-
       if ( len > 0) {
           for (var i = 0; i < len; i++) {
-              setRowHeight(i, Number(options.rowHeight));
+              rowHeights[i] = Number(options.rowHeight);
           }
-
-          if (len > 0) {
-              calculateAdjustedRowTop();
-          }
-          sumSizesInitialized = true;
-          //updateRowCount();
       }
     }
 
-    function refreshRowHeights(){
-        rowHeights = [];
-        rowTops = [];
-        initializeRowHeights()
-        refreshRowTops()
-    }
+      //cb: maintaining for dynamic row sizes
+      function initDynamicRowHeight(){
+
+          var len = getDataLength();
+          rowHeights = new Array(len);
+          rowTops = new Array(len);
+
+          if ( len > 0) {
+              for (var i = 0; i < len; i++) {
+                  rowHeights[i] = Number(options.rowHeight);
+              }
+          }
+      }
 
     function clearCache(){
         rowHeights = [];
@@ -3113,8 +3081,11 @@ if (typeof Slick === "undefined") {
         rowsCache = [];
     }
 
-    function initGridRows(){
-        sumSizesInitialized = false;
+    function initAutoHeightRows(){
+        rowHeights = new Array(data.getLength());
+        rowTops = new Array(data.getLength());
+        initDynamicRowHeight();
+        refreshRowTops();
     }
 
     function scrollRowToTop(row) {
@@ -3629,7 +3600,7 @@ if (typeof Slick === "undefined") {
     function rowsToRanges(rows) {
       var ranges = [];
       var lastCell = columns.length - 1;
-      for (var i = 0; i < rows.length; i++) {
+      for (var i = 0, len = row.length; i < len; i++) {
         ranges.push(new Slick.Range(rows[i], 0, rows[i], lastCell));
       }
       return ranges;
@@ -3796,13 +3767,9 @@ if (typeof Slick === "undefined") {
       // IEditor implementation
       "getEditorLock": getEditorLock,
       "getEditController": getEditController,
-      "refreshRowTops": refreshRowTops,
-      "initializeRowHeights": initializeRowHeights,
-      "calculateAdjustedRowTop": calculateAdjustedRowTop,
-      "initGridRows": initGridRows,
+      "initAutoHeightRows": initAutoHeightRows,
       "applyColumnHeaderWidths": applyColumnHeaderWidths,
-      "updateCanvasWidth": updateCanvasWidth,
-      "refreshRowHeights": refreshRowHeights
+      "updateCanvasWidth": updateCanvasWidth
     });
 
     init();
