@@ -1504,7 +1504,7 @@ if (typeof Slick === "undefined") {
       }
 
         if( !options.enableWrap){
-            stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px; height: " + options.rowHeight + "px'>" + row);
+            stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px; height: " + options.rowHeight + "px'>");
         }
 
       var colspan, m;
@@ -1555,7 +1555,7 @@ if (typeof Slick === "undefined") {
         }
       }
       if(options.enableWrap){
-          stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (getRowTop(row) - offset) +  "px; min-height: " + tallest + "px'>" + row);
+          stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (getRowTop(row) - offset) +  "px; min-height: " + tallest + "px'>");
           for (var i = 0, j = cellStringsToAppend.length; i < j; i++){
               stringArray.push(cellStringsToAppend[i]);
 
