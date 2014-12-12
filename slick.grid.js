@@ -1571,7 +1571,6 @@ if (typeof Slick === "undefined") {
         if(options.enableWrap ) {
             // first row
             if (cellCache["row"] == undefined) {
-                console.log("calling initiz", rowHeights)
                 initializeRowHeights();
                 cellCache = {
                     "row": row,
