@@ -561,7 +561,7 @@
             //$focus.focus();
             //$focus.removeAttr('tabIndex');
             _grid.setActiveCell(activeCell.row, activeCell.cell, {
-              forceEdit: false,
+              forceEditMode: false,
               takeFocus: true
             });
           }
