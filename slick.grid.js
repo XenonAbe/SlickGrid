@@ -2411,6 +2411,8 @@ if (typeof Slick === "undefined") {
             if (canCellBeSelected(j, k)) {
               hash[j][columns[k].id] = options.selectedCellCssClass;
             }
+          }
+        }
       }
 
       setCellCssStyles(options.selectedCellCssClass, hash);
