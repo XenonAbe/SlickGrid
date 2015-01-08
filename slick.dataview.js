@@ -53,7 +53,9 @@
     var groupingInfoDefaults = {
       getter: null,
       formatter: null,
-      comparer: function(a, b) { return a.value > b.value ? 1 : -1; },
+      comparer: function(a, b) { 
+        return a.value == b.value ? 0 : a.value > b.value ? 1 : -1; 
+      },
       predefinedValues: [],
       aggregators: [],
       aggregateEmpty: false,
