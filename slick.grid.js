@@ -811,21 +811,21 @@ if (typeof Slick === "undefined") {
 
       var cached = false;
       if (canvasWidth !== oldCanvasWidth) {
-        $canvas.width(canvasWidth);
+        $canvas.outerWidth(canvasWidth);
         cached = true;
       }
       if (oldTotalColumnsWidth !== totalColumnsWidth) {
-        $topPanel.width(totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION);
-        $headerRow.width(totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION);
-        $footerRow.width(totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION);
-        $headers.width(totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION);
+        $topPanel.outerWidth(totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION);
+        $headerRow.outerWidth(totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION);
+        $footerRow.outerWidth(totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION);
+        $headers.outerWidth(totalColumnsWidth + HEADER_ROW_WIDTH_CORRECTION);
         cached = true;
       }
       if (oldViewportW !== viewportW) {
-        $topPanelScroller.width(viewportW);
-        $headerRowScroller.width(viewportW);
-        $footerRowScroller.width(viewportW);
-        $headerScroller.width(viewportW);
+        $topPanelScroller.outerWidth(viewportW);
+        $headerRowScroller.outerWidth(viewportW);
+        $footerRowScroller.outerWidth(viewportW);
+        $headerScroller.outerWidth(viewportW);
         cached = true;
       }
 
@@ -1418,7 +1418,7 @@ if (typeof Slick === "undefined") {
         placeholder: "slick-sortable-placeholder ui-state-default slick-header-column",
         items: ".slick-header-reorderable",
         start: function (e, ui) {
-          ui.placeholder.width(ui.helper.width());
+          ui.placeholder.outerWidth(ui.helper.outerWidth());
           trigger(self.onColumnsStartReorder, {
             ui: ui
           }, e);
@@ -4568,7 +4568,7 @@ if (typeof Slick === "undefined") {
       var rv = 0;
       if ($container.is(":visible")) {
         rv = parseFloat($.css($container[0], "width", true /* jQuery: Make numeric if forced or a qualifier was provided and val looks numeric */ ));
-        assert(rv === $container.width());
+        assert(rv === $container.outerWidth());
       }
       return rv;
     }
@@ -4605,11 +4605,11 @@ if (typeof Slick === "undefined") {
 
     // Returns the size of the content area
     function getContentSize() {
-      var canvasWidth = $canvas.width(),
+      var canvasWidth = $canvas.outerWidth(),
           canvasHeight = $canvas.height(),
           hasVScroll = canvasHeight > $viewport.height(),
           contentWidth = canvasWidth + (hasVScroll ? scrollbarDimensions.width : 0),
-          hasHScroll = contentWidth > $viewport.width(),
+          hasHScroll = contentWidth > $viewport.outerWidth(),
           contentHeight = canvasHeight + (hasHScroll ? scrollbarDimensions.height : 0);
       return { 
         width: contentWidth, 
@@ -4619,9 +4619,9 @@ if (typeof Slick === "undefined") {
 
     // Returns the size of the visible area, i.e. between the scroll bars
     function getVisibleSize() {
-      var width = $viewport.width(),
+      var width = $viewport.outerWidth(),
           height = $viewport.height(),
-          hasHScroll = $canvas.width() > width - scrollbarDimensions.width,
+          hasHScroll = $canvas.outerWidth() > width - scrollbarDimensions.width,
           hasVScroll = $canvas.height() > height - scrollbarDimensions.height;
       width -= hasVScroll ? scrollbarDimensions.width : 0;
       height -= hasHScroll ? scrollbarDimensions.height : 0;
