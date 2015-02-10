@@ -3354,8 +3354,9 @@ if (typeof Slick === "undefined") {
       trigger(self.onBeforeCellEditorDestroy, {
         editor: currentEditor
       });
-      currentEditor.destroy();
+      var hold = currentEditor;
       currentEditor = null;
+      hold.destroy();
       getEditorLock().deactivate(editController);
 
       // active node can change while data is fetched
