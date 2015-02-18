@@ -6,6 +6,9 @@
   "readmeFilename": "README.md",
   "repository": "pandell/SlickGrid",
   "author": "Michael Leibman <michael.leibman@gmail.com>",
+  "dependencies": {
+    "node.extend": "^1.1"
+  },
   "directories": {
     "example": "examples",
     "test": "tests"
