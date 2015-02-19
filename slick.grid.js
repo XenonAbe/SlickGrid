@@ -3014,7 +3014,7 @@ if (typeof Slick === "undefined") {
         row: cell.row,
         cell: cell.cell
       }, e);
-      if (e.isImmediatePropagationStopped()) {
+      if (e.isImmediatePropagationStopped() || e.isDefaultPrevented()) {
         return;
       }
 
