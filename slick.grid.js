@@ -1457,6 +1457,8 @@ if (typeof Slick === "undefined") {
         function appendRowHtml(stringArray, row, range, dataLength) {
 
             var d = getDataItem(row);
+            //if(typeof d == 'undefined') return;
+
             var dataLoading = row < dataLength && !d;
             var rowCss = "slick-row" +
                 (dataLoading ? " loading" : "") +
@@ -1624,7 +1626,14 @@ if (typeof Slick === "undefined") {
                     formattedText = dataItem.title;
                 }
                 else {
-                    formattedText = getFormatter(row, m)(row, cell,getDataItemValueForColumn(item, m),m,item);
+                    formattedText = getFormatter(row, m)(row, cell, getDataItemValueForColumn(item, m),m,item);
+                }
+
+                // account for injected html, and extract only the texgt
+                var domElem = jQuery.parseHTML(formattedText);
+
+                if (jQuery(domElem).text()){
+                    formattedText = jQuery(domElem).text()
                 }
 
                 // default to option value set in report service
@@ -1647,6 +1656,8 @@ if (typeof Slick === "undefined") {
             else{
                 stringArray.push("<span class='" + cellCss + "'>");
             }
+
+
 
 
             // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
@@ -2183,6 +2194,7 @@ if (typeof Slick === "undefined") {
 
             for (var i = 0, ii = rows.length; i < ii; i++) {
                 rowsCache[rows[i]].rowNode = parentNode.appendChild(x.firstChild);
+
             }
 
             if (needToReselectCell) {
