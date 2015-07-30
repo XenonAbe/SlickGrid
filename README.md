@@ -25,3 +25,6 @@ Find detailed [documentation here] (https://github.com/mleibman/SlickGrid/wiki).
 ## How to install
 
 `bower mslickgrid`
+
+
+## Note: If your looking for more features, Angularjs support as well (IE9+, modern browser) I recommend [angulargrid] (http://angulargrid.com/). Its rewritten SlickGrid to support Angular (with/without)
