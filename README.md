@@ -20,3 +20,8 @@ Find detailed [documentation here] (https://github.com/mleibman/SlickGrid/wiki).
 
 5. Added `minimumContainerHeight` grid option. This is particularly useful when the grid element (container) reveal/show/appear on click (or pragmatically). 
     - Example: carousel in bootstrap where the slides are hidden (have zero height?).
+    
+    
+## How to install
+
+`bower mslickgrid`
