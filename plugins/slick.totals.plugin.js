@@ -32,13 +32,13 @@
             _grid = grid;
             _dataView = grid.getData();
             _rowHeight = grid.getOptions().rowHeight;
-            var viewport = $(grid.getCanvasNode()).closest('.ui-widget')[0],
+            var viewport = grid.getCanvasNode().parentElement,
                 width = viewport.offsetWidth;
 
             if (viewport.scrollHeight > viewport.offsetHeight) {
                 width -= _scrollbarWidth;
             }
-            _$totalsViewport = $('<div class="slick-viewport totals-viewport">').css({bottom: scrollbarSize.height, width: 'auto'});
+            _$totalsViewport = $('<div class="slick-viewport totals-viewport">').css({bottom: scrollbarSize.height, width: width});
             _$totalsViewport.insertAfter(viewport);
 
             _columns = _grid.getColumns();
@@ -124,7 +124,7 @@
         function appendTotalsRows(ev, args) {
             var width = (args ? args.grid : _grid).getCanvasNode().offsetWidth;
 
-            var $totalsRow = $('<div class="ui-widget-content slick-row totals"></div>').css({position: 'relative', width: 'auto'});
+            var $totalsRow = $('<div class="ui-widget-content slick-row totals"></div>').css({position: 'relative', width: width});
             var $cell;
 
             for (var i = 0, l = _columns.length; i < l; i++) {
@@ -160,7 +160,6 @@
         }
 
         function getBrowserScrollSize() {
-
             var css = {
                 border: 'none',
                 height: '200px',
