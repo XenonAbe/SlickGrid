@@ -35,8 +35,8 @@
         HOME: 36,
         INSERT: 45,
         LEFT: 37,
-        PAGE_DOWN: 34,
-        PAGE_UP: 33,
+        PAGEDOWN: 34,
+        PAGEUP: 33,
         RIGHT: 39,
         TAB: 9,
         UP: 38
