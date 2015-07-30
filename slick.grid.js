@@ -2132,7 +2132,7 @@ if (typeof Slick === "undefined") {
             lastRenderedScrollLeft = scrollLeft;
             h_render = null;
 
-            trigger(this.finishedRendering, {grid: this, lastRenderedScrollTop: scrollTop, lastRenderedScrollLeft: scrollLeft});
+            trigger(self.finishedRendering, {grid: this, lastRenderedScrollTop: scrollTop, lastRenderedScrollLeft: scrollLeft});
         }
 
         function handleHeaderRowScroll() {
