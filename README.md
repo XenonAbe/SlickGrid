@@ -1,30 +1,22 @@
-## This is the 6pac slickgrid repo
+Find detailed [documentation here] (https://github.com/mleibman/SlickGrid/wiki).
 
-I am maintaining this branch as a separate 'alternative master'. Check [my wiki](https://github.com/6pac/SlickGrid/wiki) for details.
+## This repo made following changes
 
-Original mleibman README follows:
+1. Column configuration have new property `preventClearOnEdit`.
+    - This basically prevent the cell content get clear on editor get activate.
+    - Helpful in case's like [here](https://github.com/6pac/SlickGrid/issues/11).
 
---------------------------------------------------------------------------------------------------------------------
+2. Now the editor will receive event as second parameter when available.
 
-Find documentation and examples in [the wiki](https://github.com/mleibman/SlickGrid/wiki).
+3. Two new events are added `finishedInitialization' and `finishedRendering'.
+    - `finishedInitialization` will be get called when the actual init is finished (in case of lazy init enable it get called after that).
+    - `finishedRendering` will be called after the `render' completes.
+    
+4. Exposed following 4 methods:
+    - `getHeaderWidth` to get the header width.
+    - `getCanvasWidth` return the canvas width.
+    - `getViewportHeight` return viewport height.
+    - `getUID` return the grid ID.
 
-# Welcome to SlickGrid
-
-## SlickGrid is an advanced JavaScript grid/spreadsheet component
-
-Some highlights:
-
-* Adaptive virtual scrolling (handle hundreds of thousands of rows with extreme responsiveness)
-* Extremely fast rendering speed
-* Supports jQuery UI Themes
-* Background post-rendering for richer cells
-* Configurable & customizable
-* Full keyboard navigation
-* Column resize/reorder/show/hide
-* Column autosizing & force-fit
-* Pluggable cell formatters & editors
-* Support for editing and creating new rows.
-* Grouping, filtering, custom aggregators, and more!
-* Advanced detached & multi-field editors with undo/redo support.
-* “GlobalEditorLock” to manage concurrent edits in cases where multiple Views on a page can edit the same data.
-* Support for [millions of rows](http://stackoverflow.com/a/2569488/1269037)
+5. Added `minimumContainerHeight` grid option. This is particularly useful when the grid element (container) reveal/show/appear on click (or pragmatically). 
+    - Example: carousel in bootstrap where the slides are hidden (have zero height?).

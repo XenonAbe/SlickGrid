@@ -358,6 +358,10 @@ if (typeof Slick === "undefined") {
             }
         }
 
+        function getUID() {
+            return uid;
+        }
+
         function cacheCssForHiddenInit() {
             // handle display:none on container or container parents
             $hiddenParents = $container.parents().andSelf().not(':visible');
@@ -3636,9 +3640,10 @@ if (typeof Slick === "undefined") {
 
 
             //Few additional methods exposed
-            "getHeaderWidth": getHeadersWidth(),
-            "getCanvasWidth": getCanvasWidth(),
-            "getViewportHeight": getViewportHeight()
+            "getHeaderWidth": getHeadersWidth,
+            "getCanvasWidth": getCanvasWidth,
+            "getViewportHeight": getViewportHeight,
+            "getUID": getUID
         });
 
         init();
