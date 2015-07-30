@@ -213,7 +213,7 @@ if (typeof Slick === "undefined") {
 
             options = $.extend({}, defaults, options);
 
-            if(options.minimumContainerHeight && ($container.height() === 0 || $container.height() < options.minimumContainerHeight)) {
+            if (options.minimumContainerHeight && ($container.height() === 0 || $container.height() < options.minimumContainerHeight)) {
                 $container.height(options.minimumContainerHeight)
             }
 
