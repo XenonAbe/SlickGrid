@@ -27,8 +27,7 @@
         "jquery-simulate": "https://github.com/jquery/jquery-simulate.git#master",
         "jquery.sparkline": "https://github.com/gwatts/jquery.sparkline.git#master",
         "jquery-jsonp": "https://github.com/jaubourg/jquery-jsonp.git#master",
-        "handlebars": "~2.0.0",
-        "qunit": "~1.0.0"
+        "handlebars": "~2.0.0"
     },
     "devDependencies": {
     }
