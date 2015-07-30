@@ -1,5 +1,7 @@
 Find detailed [documentation here] (https://github.com/mleibman/SlickGrid/wiki).
 
+###Extension of 6pac repo
+
 ## This repo made following changes
 
 1. Column configuration have new property `preventClearOnEdit`.
