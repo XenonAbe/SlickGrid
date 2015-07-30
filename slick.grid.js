@@ -3643,7 +3643,7 @@ if (typeof Slick === "undefined") {
             "getHeaderWidth": getHeadersWidth,
             "getCanvasWidth": getCanvasWidth,
             "getViewportHeight": getViewportHeight,
-            "getUID": getUID
+            "getUID": getUID 
         });
 
         init();
