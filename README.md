@@ -24,7 +24,7 @@ Find detailed [documentation here] (https://github.com/mleibman/SlickGrid/wiki).
     - Example: carousel in bootstrap where the slides are hidden (have zero height?).
     
     
-## How to install
+## How to install this package
 
 `bower mslickgrid`
 
