@@ -2,7 +2,7 @@ Find detailed [documentation here] (https://github.com/mleibman/SlickGrid/wiki).
 
 ###Extension of 6pac repo
 
-## This repo made following changes
+#### This repo made following changes
 
 1. Column configuration have new property `preventClearOnEdit`.
     - This basically prevent the cell content get clear on editor get activate.
@@ -24,7 +24,7 @@ Find detailed [documentation here] (https://github.com/mleibman/SlickGrid/wiki).
     - Example: carousel in bootstrap where the slides are hidden (have zero height?).
     
     
-## How to install this package
+#### How to install this package
 
 `bower mslickgrid`
 
