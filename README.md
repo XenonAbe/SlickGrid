@@ -10,9 +10,9 @@ Find detailed [documentation here] (https://github.com/mleibman/SlickGrid/wiki).
 
 2. Now the editor will receive event as second parameter when available.
 
-3. Two new events are added `finishedInitialization' and `finishedRendering'.
-    - `finishedInitialization` will be get called when the actual init is finished (in case of lazy init enable it get called after that).
-    - `finishedRendering` will be called after the `render' completes.
+3. Two new events are added `onInitialize` and `onRendered`.
+    - `onInitialize` will be get called when the actual init is finished (in case of lazy init enable it get called after that).
+    - `onRendered` will be called after the `render' completes.
     
 4. Exposed following 4 methods:
     - `getHeaderWidth` to get the header width.

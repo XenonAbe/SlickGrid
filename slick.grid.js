@@ -354,7 +354,7 @@ if (typeof Slick === "undefined") {
                 }
                 restoreCssFromHiddenInit();
 
-                trigger(self.finishedInitialization, this);
+                trigger(self.onInitialize, this);
             }
         }
 
@@ -2132,7 +2132,7 @@ if (typeof Slick === "undefined") {
             lastRenderedScrollLeft = scrollLeft;
             h_render = null;
 
-            trigger(self.finishedRendering, {grid: this, lastRenderedScrollTop: scrollTop, lastRenderedScrollLeft: scrollLeft});
+            trigger(self.onRendered, {grid: this, lastRenderedScrollTop: scrollTop, lastRenderedScrollLeft: scrollLeft});
         }
 
         function handleHeaderRowScroll() {
@@ -3555,8 +3555,8 @@ if (typeof Slick === "undefined") {
             "onDragEnd": new Slick.Event(),
             "onSelectedRowsChanged": new Slick.Event(),
             "onCellCssStylesChanged": new Slick.Event(),
-            "finishedInitialization": new Slick.Event(),
-            "finishedRendering": new Slick.Event(),
+            "onInitialize": new Slick.Event(),
+            "onRendered": new Slick.Event(),
             // Methods
             "registerPlugin": registerPlugin,
             "unregisterPlugin": unregisterPlugin,
