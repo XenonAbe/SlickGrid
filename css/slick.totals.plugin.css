@@ -10,3 +10,8 @@
 .slick-viewport .slick-row.totals {
     position: relative;
 }
+
+.slick-viewport .slick-row.totals .slick-header-columns {
+    border-bottom: none;
+    border-top: 1px solid silver;
+}

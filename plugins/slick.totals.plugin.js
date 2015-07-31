@@ -38,12 +38,14 @@
             if (viewport.scrollHeight > viewport.offsetHeight) {
                 width -= _scrollbarWidth;
             }
-            _$totalsViewport = $('<div class="slick-viewport totals-viewport">').css({bottom: scrollbarSize.height, width: width});
+            _$totalsViewport = $('<div class="slick-viewport totals-viewport">').css({bottom: scrollbarSize.height + 8, width: '98.75%'});
             _$totalsViewport.insertAfter(viewport);
 
             _columns = _grid.getColumns();
 
-            appendTotalsRows();
+            grid.onInitialize.subscribe(function (ev, args) {
+                appendTotalsRows(ev, args);
+            });
 
             grid.onColumnsResized.subscribe(function (ev, args) {
                 handleColumnsResized(ev, args);
@@ -130,7 +132,7 @@
             for (var i = 0, l = _columns.length; i < l; i++) {
                 var column = _columns[i],
                     value = column.aggregator ? column.aggregator(_summaryData[column.id], column, ev, args) : '\u00A0';
-                $cell = $('<div class="slick-cell"></div>').addClass('l' + i + ' r' + i);
+                $cell = $('<div class="slick-cell slick-header-columns"></div>').addClass('l' + i + ' r' + i);
                 $cell.text(value);
                 $totalsRow.append($cell);
             }
@@ -156,6 +158,8 @@
             if (_scrollOffset != args.scrollLeft) {
                 _scrollOffset = args.scrollLeft;
                 _$totalsRow.css('left', _scrollOffset * -1);
+            } else {
+                !_$totalsRow || _$totalsRow.css('left', _scrollOffset * -1);
             }
         }
 
