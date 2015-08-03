@@ -618,7 +618,7 @@ if (typeof Slick === "undefined") {
 
                 var header = $("<div class='ui-state-default slick-header-column' />")
                     .html("<span class='slick-column-name'>" + m.name + "</span>")
-                    .width(m.width - headerColumnWidthDiff)
+                    .outerWidth(m.width - headerColumnWidthDiff)
                     .attr("id", "" + uid + m.id)
                     .attr("title", m.toolTip || "")
                     .data("column", m)
@@ -958,7 +958,7 @@ if (typeof Slick === "undefined") {
 
             el = $("<div class='ui-state-default slick-header-column' style='visibility:hidden'>-</div>").appendTo($headers);
             headerColumnWidthDiff = headerColumnHeightDiff = 0;
-            if ((el.css("box-sizing") != "border-box" && el.css("-moz-box-sizing") != "border-box" && el.css("-webkit-box-sizing") != "border-box") || navigator.userAgent.indexOf("Firefox") != -1) {
+            if (el.css("box-sizing") != "border-box" && el.css("-moz-box-sizing") != "border-box" && el.css("-webkit-box-sizing") != "border-box") {
                 $.each(h, function (n, val) {
                     headerColumnWidthDiff += parseFloat(el.css(val)) || 0;
                 });
