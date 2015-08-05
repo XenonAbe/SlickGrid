@@ -1,3 +1,5 @@
+/*jslint Slick*/
+'use strict';
 (function ($) {
     // register namespace
     $.extend(true, window, {
@@ -21,23 +23,21 @@
         _aggrLevel; //In case of tree grid some cases need to aggrigate only to some level as each node might be
     // an aggrigation (server side) of its child nodes
 
-    function TotalsPlugin(level) {
+    function TotalsPlugin(options) {
         var scrollbarSize = getBrowserScrollSize();
         _scrollbarWidth = scrollbarSize.width;
-        _aggrLevel = (level !== null && !isNaN(level * 1)) ? level : null; //only number else null
+        _aggrLevel = (options.level !== null && !isNaN(options.level * 1)) ? options.level : null; //only number else null
 
         var self = this;
 
         function init(grid) {
+            var viewport = grid.getCanvasNode().parentElement;
+
             _grid = grid;
             _dataView = grid.getData();
             _rowHeight = grid.getOptions().rowHeight;
-            var viewport = grid.getCanvasNode().parentElement,
-                width = viewport.offsetWidth;
 
-            if (viewport.scrollHeight > viewport.offsetHeight) {
-                width -= _scrollbarWidth;
-            }
+
             _$totalsViewport = $('<div class="slick-viewport totals-viewport">').css({bottom: scrollbarSize.height + 8, width: '98.75%'});
             _$totalsViewport.insertAfter(viewport);
 
@@ -53,11 +53,11 @@
 
             grid.onColumnsReordered.subscribe(function (ev, args) {
                 _columns = _grid.getColumns();
-                handleColumnsReordered(ev, args)
+                handleColumnsReordered(ev, args);
             });
 
             grid.onScroll.subscribe(function (ev, args) {
-                handleScroll(ev, args)
+                handleScroll(ev, args);
             });
 
             _dataView.onRowCountChanged.subscribe(function (e, args) {
@@ -86,7 +86,7 @@
         function updateSummaryData() {
             _summaryData = {}; //Clean up previous data first
 
-            var it = 0, len = _items.length, i = 0, colen = _columns.length;
+            var it = 0, len = _items.length, i = 0, colen = _columns.length, value;
             for (; it < len; it++) {
                 var row = _items[it],
                     column;
@@ -94,7 +94,7 @@
                     if(row.level === _aggrLevel) {
                         for (i = 0; i < colen; i++) {
                             column = _columns[i];
-                            var value = row[column.field];
+                            value = row[column.field];
 
                             if (value !== '' && value !== null && !isNaN(value * 1)) {
                                 if (typeof _summaryData[column.id] === 'undefined') {
@@ -108,7 +108,7 @@
                 } else {
                     for (i = 0; i < colen; i++) {
                         column = _columns[i];
-                        var value = row[column.field];
+                        value = row[column.field];
 
                         if (value !== '' && value !== null && !isNaN(value * 1)) {
                             if (typeof _summaryData[column.id] === 'undefined') {
@@ -124,22 +124,38 @@
         }
 
         function appendTotalsRows(ev, args) {
-            var width = (args ? args.grid : _grid).getCanvasNode().offsetWidth;
+            var width = (args ? args.grid : _grid).getCanvasNode().offsetWidth,
+                mergeCols = options.mergeColumns;
 
             var $totalsRow = $('<div class="ui-widget-content slick-row totals"></div>').css({position: 'relative', width: width});
-            var $cell;
+            var $cell, column, value;
 
             for (var i = 0, l = _columns.length; i < l; i++) {
-                var column = _columns[i],
-                    value = column.aggregator ? column.aggregator(_summaryData[column.id], column, ev, args) : '\u00A0';
-                $cell = $('<div class="slick-cell slick-header-columns"></div>').addClass('l' + i + ' r' + i);
+                column = _columns[i];
+                value = column.aggregator ? column.aggregator(_summaryData[column.id], column, ev, args) : '\u00A0';
+                $cell = $('<div class="slick-cell slick-header-columns"></div>').addClass('l' + i + ' r' + i + ' f-' + column.id);
                 $cell.text(value);
                 $totalsRow.append($cell);
             }
 
             _$totalsViewport.empty().append($totalsRow);
             _$totalsRow = $totalsRow;
+
             self.onTotalsRowRendered.notify(_$totalsViewport, ev, args);
+
+            if(mergeCols && mergeCols.length > 0) {
+                var from, to;
+                for(var i = 0; i < mergeCols.length; i++) {
+                    from = $totalsRow.find('.f-' + mergeCols[i].from);
+                    to = $totalsRow.find('.f-' + mergeCols[i].to);
+                    if(from.length > 0 && to.length > 0) {
+                        to.css({left: from.css('left')}).addClass(mergeCols[i].cssClass || '');
+                        if(mergeCols[i].html) {
+                            to.html(mergeCols[i].html);
+                        }
+                    }
+                }
+            }
         }
 
         function handleColumnsResized(ev, args) {
@@ -147,7 +163,7 @@
             var viewport = canvas.parentElement;
             var top = (viewport.scrollWidth > viewport.offsetWidth) ? _rowHeight + _scrollbarWidth : _rowHeight;
             _$totalsRow.width(canvas.scrollWidth);
-            _$totalsViewport.css('top', top * -1 + 'px')
+            _$totalsViewport.css('top', top * -1 + 'px');
         }
 
         function handleColumnsReordered(ev, args) {
@@ -155,11 +171,11 @@
         }
 
         function handleScroll(ev, args) {
-            if (_scrollOffset != args.scrollLeft) {
+            if (_scrollOffset !== args.scrollLeft) {
                 _scrollOffset = args.scrollLeft;
                 _$totalsRow.css('left', _scrollOffset * -1);
-            } else {
-                !_$totalsRow || _$totalsRow.css('left', _scrollOffset * -1);
+            } else if(_$totalsRow) {
+                _$totalsRow.css('left', _scrollOffset * -1);
             }
         }
 
