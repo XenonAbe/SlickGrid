@@ -45,12 +45,12 @@ classes should alter those!
 }
 
 .slick-sort-indicator {
-    display: inline-block;
-    width: 8px;
+    display: block;
+    float: right;
     height: 5px;
-    margin-left: 4px;
-    margin-top: 6px;
-    float: left;
+    margin-top: -8px;
+    position: relative;
+    width: 8px;
 }
 
 .slick-sort-indicator-desc {
