@@ -40,7 +40,8 @@
                 RIGHT: 39,
                 TAB: 9,
                 UP: 38
-            }
+            },
+            'supportedSpecialEvents': getSpecialEvents
         }
     });
 
@@ -480,6 +481,8 @@
         };
     }
 
+    var SpecialEvents = [];
+
     /**
      * An "outside" event is triggered on an element when its corresponding
      * "originating" event is triggered on an element outside the element in
@@ -498,7 +501,7 @@
         // The "originating" event, namespaced for easy unbinding.
             eventNameSpaced = eventName + '.' + outsideEventName + '-slick-special-event';
 
-        $.event.special[outsideEventName] || ($.event.special[outsideEventName] = {
+        $.event.special[outsideEventName] || (SpecialEvents.push(outsideEventName), $.event.special[outsideEventName] = {
             // Called only when the first "outside" event callback is bound per
             // element.
             setup: function () {
@@ -565,6 +568,10 @@
                 };
             }
         });
+    }
+
+    function getSpecialEvents() {
+        return SpecialEvents;
     }
 
     (function() {
