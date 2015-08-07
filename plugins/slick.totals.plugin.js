@@ -37,8 +37,7 @@
             _dataView = grid.getData();
             _rowHeight = grid.getOptions().rowHeight;
 
-
-            _$totalsViewport = $('<div class="slick-viewport totals-viewport">').css({bottom: scrollbarSize.height + 8, width: '98.75%'});
+            _$totalsViewport = $('<div class="slick-viewport totals-viewport">').css({bottom: scrollbarSize.height + 8, width: '100%'});
             _$totalsViewport.insertAfter(viewport);
 
             _columns = _grid.getColumns();
@@ -62,10 +61,12 @@
 
             _dataView.onRowCountChanged.subscribe(function (e, args) {
                 handleDataChange();
+                updateSummaryData();
             });
 
             _dataView.onRowsChanged.subscribe(function (e, args) {
                 handleDataChange();
+                updateSummaryData();
             });
 
             grid.onViewportChanged.subscribe(function (ev, args) {
@@ -80,7 +81,6 @@
                 rows.push(_dataView.getItem(i));
             }
             _items = rows;
-            updateSummaryData();
         }
 
         function updateSummaryData() {
@@ -119,8 +119,8 @@
                         }
                     }
                 }
-
             }
+            resize();
         }
 
         function appendTotalsRows(ev, args) {
@@ -156,8 +156,12 @@
                     }
                 }
             }
+            resize();
         }
 
+        function isVerticalScrollOn(element) {
+            return element.scrollHeight > element.clientHeight;
+        }
         function handleColumnsResized(ev, args) {
             var canvas = args.grid.getCanvasNode();
             var viewport = canvas.parentElement;
@@ -217,6 +221,16 @@
 
         function destroy() {
             _$totalsViewport.remove();
+        }
+
+        function resize() {
+            var contHeight = parseFloat(_grid.getContainerNode().style.height);
+            if(contHeight) {
+                _$totalsViewport.css({bottom: (contHeight - _grid.getViewportHeight() + scrollbarSize.height)});
+            }
+            if(isVerticalScrollOn(_grid.getContainerNode())) {
+                _$totalsViewport.css({width: '98.85%'});
+            }
         }
 
         function refresh(ev, args) {
