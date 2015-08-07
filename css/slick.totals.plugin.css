@@ -3,7 +3,7 @@
 }
 
 .slick-viewport.totals-viewport {
-    position: relative;
+    position: absolute;
     overflow: hidden;
 }
 

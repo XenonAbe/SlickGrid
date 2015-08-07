@@ -37,13 +37,13 @@
             _dataView = grid.getData();
             _rowHeight = grid.getOptions().rowHeight;
 
-            _$totalsViewport = $('<div class="slick-viewport totals-viewport">').css({bottom: scrollbarSize.height + 8, width: '100%'});
+            _$totalsViewport = $('<div class="slick-viewport totals-viewport">').css({bottom: 16, width: '98.85%'});
             _$totalsViewport.insertAfter(viewport);
 
             _columns = _grid.getColumns();
 
             grid.onInitialize.subscribe(function (ev, args) {
-                appendTotalsRows(ev, args);
+                handleDataChange(ev, args);
             });
 
             grid.onColumnsResized.subscribe(function (ev, args) {
@@ -59,14 +59,12 @@
                 handleScroll(ev, args);
             });
 
-            _dataView.onRowCountChanged.subscribe(function (e, args) {
-                handleDataChange();
-                updateSummaryData();
+            _dataView.onRowCountChanged.subscribe(function (ev, args) {
+                handleDataChange(ev, args);
             });
 
-            _dataView.onRowsChanged.subscribe(function (e, args) {
-                handleDataChange();
-                updateSummaryData();
+            _dataView.onRowsChanged.subscribe(function (ev, args) {
+                handleDataChange(ev, args);
             });
 
             grid.onViewportChanged.subscribe(function (ev, args) {
@@ -75,23 +73,24 @@
             });
         }
 
-        function handleDataChange() {
+        function handleDataChange(ev, args) {
             var rows = [], len = _dataView.getLength();
             for (var i = 0; i < len; i++) {
                 rows.push(_dataView.getItem(i));
             }
             _items = rows;
+            updateSummaryData(ev, args);
         }
 
-        function updateSummaryData() {
+        function updateSummaryData(ev, args) {
             _summaryData = {}; //Clean up previous data first
 
             var it = 0, len = _items.length, i = 0, colen = _columns.length, value;
             for (; it < len; it++) {
                 var row = _items[it],
                     column;
-                if(_aggrLevel !== null) {
-                    if(row.level === _aggrLevel) {
+                if (_aggrLevel !== null) {
+                    if (row.level === _aggrLevel) {
                         for (i = 0; i < colen; i++) {
                             column = _columns[i];
                             value = row[column.field];
@@ -120,11 +119,11 @@
                     }
                 }
             }
-            resize();
+            appendTotalsRows(ev, args);
         }
 
         function appendTotalsRows(ev, args) {
-            var width = (args ? args.grid : _grid).getCanvasNode().offsetWidth,
+            var width = (args && args.grid ? args.grid : _grid).getCanvasNode().offsetWidth,
                 mergeCols = options.mergeColumns;
 
             var $totalsRow = $('<div class="ui-widget-content slick-row totals"></div>').css({position: 'relative', width: width});
@@ -143,25 +142,26 @@
 
             self.onTotalsRowRendered.notify(_$totalsViewport, ev, args);
 
-            if(mergeCols && mergeCols.length > 0) {
+            if (mergeCols && mergeCols.length > 0) {
                 var from, to;
-                for(var i = 0; i < mergeCols.length; i++) {
+                for (var i = 0; i < mergeCols.length; i++) {
                     from = $totalsRow.find('.f-' + mergeCols[i].from);
                     to = $totalsRow.find('.f-' + mergeCols[i].to);
-                    if(from.length > 0 && to.length > 0) {
+                    if (from.length > 0 && to.length > 0) {
                         to.css({left: from.css('left')}).addClass(mergeCols[i].cssClass || '');
-                        if(mergeCols[i].html) {
+                        if (mergeCols[i].html) {
                             to.html(mergeCols[i].html);
                         }
                     }
                 }
             }
-            resize();
+            //resize();
         }
 
         function isVerticalScrollOn(element) {
             return element.scrollHeight > element.clientHeight;
         }
+
         function handleColumnsResized(ev, args) {
             var canvas = args.grid.getCanvasNode();
             var viewport = canvas.parentElement;
@@ -178,7 +178,7 @@
             if (_scrollOffset !== args.scrollLeft) {
                 _scrollOffset = args.scrollLeft;
                 _$totalsRow.css('left', _scrollOffset * -1);
-            } else if(_$totalsRow) {
+            } else if (_$totalsRow) {
                 _$totalsRow.css('left', _scrollOffset * -1);
             }
         }
@@ -212,7 +212,7 @@
         }
 
         function toggleTotalsRow(show) {
-            if(show) {
+            if (show) {
                 _$totalsViewport.show();
             } else {
                 _$totalsViewport.hide();
@@ -225,12 +225,16 @@
 
         function resize() {
             var contHeight = parseFloat(_grid.getContainerNode().style.height);
-            if(contHeight) {
+            if (contHeight) {
                 _$totalsViewport.css({bottom: (contHeight - _grid.getViewportHeight() + scrollbarSize.height)});
             }
-            if(isVerticalScrollOn(_grid.getContainerNode())) {
+            if (isVerticalScrollOn(_grid.getContainerNode())) {
                 _$totalsViewport.css({width: '98.85%'});
             }
+        }
+
+        function getNode() {
+            return _$totalsViewport;
         }
 
         function refresh(ev, args) {
@@ -243,7 +247,8 @@
             destroy: destroy,
             onTotalsRowRendered: new Slick.Event(),
             toggleTotalsRow: toggleTotalsRow,
-            refresh: refresh
+            refresh: refresh,
+            getNode: getNode
         });
     }
 })(jQuery);

@@ -354,7 +354,7 @@ if (typeof Slick === "undefined") {
                 }
                 restoreCssFromHiddenInit();
 
-                trigger(self.onInitialize, this);
+                trigger(self.onInitialize, {grid: self});
             }
         }
 
@@ -1078,7 +1078,7 @@ if (typeof Slick === "undefined") {
         function trigger(evt, args, e) {
             e = e || new Slick.EventData();
             args = args || {};
-            args.grid = self;
+            args.grid || (args.grid = self);
             return evt.notify(args, e, self);
         }
 
