@@ -353,7 +353,6 @@ if (typeof Slick === "undefined") {
                     $canvas.bind("mousewheel", handleMouseWheel);
                 }
                 restoreCssFromHiddenInit();
-
                 trigger(self.onInitialize, {grid: self});
             }
         }
