@@ -2934,6 +2934,8 @@ if (typeof Slick === "undefined") {
                 cancelChanges: cancelEditAndSetFocus
             }, e);
 
+            e.stopPropagation(); //We have to prevent the propogation
+
             if (item) {
                 currentEditor.loadValue(item);
             }
