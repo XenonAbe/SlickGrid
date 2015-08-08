@@ -16,7 +16,6 @@
             "Group": Group,
             "GroupTotals": GroupTotals,
             "EditorLock": EditorLock,
-            "AddOutsideEvent": AddOutsideEvent,
             /***
              * A global singleton editor lock.
              * @class GlobalEditorLock
@@ -40,8 +39,7 @@
                 RIGHT: 39,
                 TAB: 9,
                 UP: 38
-            },
-            'supportedSpecialEvents': getSpecialEvents
+            }
         }
     });
 
@@ -480,108 +478,4 @@
             return (activeEditController ? activeEditController.cancelCurrentEdit() : true);
         };
     }
-
-    var SpecialEvents = [];
-
-    /**
-     * An "outside" event is triggered on an element when its corresponding
-     * "originating" event is triggered on an element outside the element in
-     * question. See the <Default "outside" events> list for more information.
-     * @param eventName
-     * @param outsideEventName
-     * @constructor
-     */
-    function AddOutsideEvent(eventName, outsideEventName) {
-        // The "outside" event name.
-        outsideEventName = outsideEventName || eventName + 'outside';
-
-        // A jQuery object containing all elements to which the "outside" event is
-        // bound.
-        var elements = $(),
-        // The "originating" event, namespaced for easy unbinding.
-            eventNameSpaced = eventName + '.' + outsideEventName + '-slick-special-event';
-
-        $.event.special[outsideEventName] || (SpecialEvents.push(outsideEventName), $.event.special[outsideEventName] = {
-            // Called only when the first "outside" event callback is bound per
-            // element.
-            setup: function () {
-
-                // Add this element to the list of elements to which this "outside"
-                // event is bound.
-                elements = elements.add(this);
-
-                // If this is the first element getting the event bound, bind a handler
-                // to document to catch all corresponding "originating" events.
-                if (elements.length === 1) {
-                    $(document).bind(eventNameSpaced, function(ev) {
-                        // Iterate over all elements to which this "outside" event is bound.
-                        $(elements).each(function () {
-                            var elem = $(this);
-
-                            // If this element isn't the element on which the event was triggered,
-                            // and this element doesn't contain said element, then said element is
-                            // considered to be outside, and the "outside" event will be triggered!
-                            if (this !== ev.target && !elem.has(ev.target).length) {
-
-                                // Use triggerHandler instead of trigger so that the "outside" event
-                                // doesn't bubble. Pass in the "originating" event's .target so that
-                                // the "outside" event.target can be overridden with something more
-                                // meaningful.
-                                elem.triggerHandler(outsideEventName, [ev.target]);
-                            }
-                        });
-                    });
-                }
-            },
-
-            // Called only when the last "outside" event callback is unbound per
-            // element.
-            teardown: function () {
-
-                // Remove this element from the list of elements to which this
-                // "outside" event is bound.
-                elements = elements.not(this);
-
-                // If this is the last element removed, remove the "originating" event
-                // handler on document that powers this "outside" event.
-                if (elements.length === 0) {
-                    $(document).unbind(eventNameSpaced);
-                }
-            },
-
-            // Called every time a "outside" event callback is bound to an element.
-            add: function (handleObj) {
-                var old_handler = handleObj.handler;
-
-                // This function is executed every time the event is triggered. This is
-                // used to override the default event.target reference with one that is
-                // more useful.
-                handleObj.handler = function (event, elem) {
-
-                    // Set the event object's .target property to the element that the
-                    // user interacted with, not the element that the "outside" event was
-                    // was triggered on.
-                    event.target = elem;
-
-                    // Execute the actual bound handler.
-                    old_handler.apply(this, arguments);
-                };
-            }
-        });
-    }
-
-    function getSpecialEvents() {
-        return SpecialEvents;
-    }
-
-    (function() {
-        $.map(
-            // All these events will get an "outside" event counterpart by default.
-            'click dblclick mousemove mousedown mouseup mouseover mouseout change select submit keydown keypress keyup'.split(' '),
-            function (event_name) {
-                AddOutsideEvent(event_name);
-            }
-        );
-    })();
-
 })(jQuery);

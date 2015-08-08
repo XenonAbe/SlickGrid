@@ -28,7 +28,6 @@ if (typeof Slick === "undefined") {
 }
 
 
-
 (function ($) {
     // Slick.Grid
     $.extend(true, window, {
@@ -90,9 +89,7 @@ if (typeof Slick === "undefined") {
             defaultFormatter: defaultFormatter,
             forceSyncScrolling: false,
             addNewRowCssClass: "new-row",
-            minimumContainerHeight: null,
-            enableSpecialEvents: false,
-            specialEvents: []
+            minimumContainerHeight: null
         };
 
         var columnDefaults = {
@@ -198,6 +195,7 @@ if (typeof Slick === "undefined") {
         var cssShow = { position: 'absolute', visibility: 'hidden', display: 'block' };
         var $hiddenParents;
         var oldProps = [];
+        var isOutsideEventFired = true;
 
         //////////////////////////////////////////////////////////////////////////////////////////////
         // Initialization
@@ -207,6 +205,7 @@ if (typeof Slick === "undefined") {
             if ($container.length < 1) {
                 throw new Error("SlickGrid requires a valid container, " + container + " does not exist in the DOM.");
             }
+
 
             cacheCssForHiddenInit();
 
@@ -325,16 +324,18 @@ if (typeof Slick === "undefined") {
                 bindAncestorScrollEvents();
 
                 $container
-                    .bind("resize.slickgrid", resizeCanvas);
-
-                if(options.enableSpecialEvents && options.specialEvents.length > 0) {
-                    var supportedEvents = Slick.supportedSpecialEvents();
-                    $.map(options.specialEvents, function(event) {
-                        if($.inArray(event, supportedEvents) !== -1) {
-                            $container.bind(event, specialEvent);
-                        }
+                    .bind("resize.slickgrid", resizeCanvas)
+                    .bind("click", function () {
+                        isOutsideEventFired = false;
                     });
-                }
+
+                //In case the click is outside the grid
+
+                $(document).on('click touchstart', function (ev) {
+                    if (!$container.is(ev.target) && $container.has(ev.target).length === 0 && !isOutsideEventFired) {
+                        outsideClickHandler(ev);
+                    }
+                });
 
                 $viewport
                     //.bind("click", handleClick)
@@ -372,6 +373,86 @@ if (typeof Slick === "undefined") {
 
         function getUID() {
             return uid;
+        }
+
+        /**
+         * All custom jquery events will have "slick:" prefix
+         * @param eventName
+         */
+        function addCustomEvent(eventName) {
+
+            // A jQuery object containing all elements to which the "outside" event is
+            // bound.
+            var elements = $(),
+            // The "originating" event, namespaced for easy unbinding.
+                eventNameSpaced = 'slick:' + eventName + '-custom-event-' + getUID();
+
+            $.event.special[eventName] = {
+                // Called only when the first "outside" event callback is bound per
+                // element.
+                namespace: eventNameSpaced,
+                setup: function () {
+                    // Add this element to the list of elements to which this "outside"
+                    // event is bound.
+                    elements = elements.add(this);
+                    // If this is the first element getting the event bound, bind a handler
+                    // to document to catch all corresponding "originating" events.
+                    if (elements.length === 1) {
+                        $(document).bind(eventNameSpaced, function (ev) {
+                            // Iterate over all elements to which this "outside" event is bound.
+                            $(elements).each(function () {
+                                var elem = $(this);
+                                // If this element isn't the element on which the event was triggered,
+                                // and this element doesn't contain said element, then said element is
+                                // considered to be outside, and the "outside" event will be triggered!
+                                if (this !== ev.target && !elem.has(ev.target).length) {
+                                    // Use triggerHandler instead of trigger so that the "outside" event
+                                    // doesn't bubble. Pass in the "originating" event's .target so that
+                                    // the "outside" event.target can be overridden with something more
+                                    // meaningful.
+                                    debugger;
+                                    elem.triggerHandler(eventName, [ev.target]);
+                                }
+                            });
+                        });
+                    }
+                },
+
+                // Called only when the last "outside" event callback is unbound per
+                // element.
+                teardown: function () {
+
+                    // Remove this element from the list of elements to which this
+                    // "outside" event is bound.
+                    elements = elements.not(this);
+
+                    // If this is the last element removed, remove the "originating" event
+                    // handler on document that powers this "outside" event.
+                    if (elements.length === 0) {
+                        $(document).unbind(eventNameSpaced);
+                    }
+                },
+
+                // Called every time a "outside" event callback is bound to an element.
+                add: function (handleObj) {
+                    var old_handler = handleObj.handler;
+
+                    // This function is executed every time the event is triggered. This is
+                    // used to override the default event.target reference with one that is
+                    // more useful.
+                    handleObj.handler = function (event, elem) {
+
+                        // Set the event object's .target property to the element that the
+                        // user interacted with, not the element that the "outside" event was
+                        // was triggered on.
+                        event.target = elem;
+
+                        // Execute the actual bound handler.
+                        old_handler.apply(this, arguments);
+                    };
+                }
+            }
+            return eventName;
         }
 
         function cacheCssForHiddenInit() {
@@ -1080,6 +1161,9 @@ if (typeof Slick === "undefined") {
             removeCssRules();
 
             $canvas.unbind("draginit dragstart dragend drag");
+            if (options.enableCustomEvent) {
+                $container.unbind(options.customEvents.join(' '));
+            }
             $container.empty().removeClass(uid);
         }
 
@@ -2515,8 +2599,9 @@ if (typeof Slick === "undefined") {
         }
 
 
-        function specialEvent(ev) {
-            trigger(self.onSpecialEvent, {event: ev, grid: self, EditorLock: getEditorLock()});
+        function outsideClickHandler(ev) {
+            isOutsideEventFired = true;
+            trigger(self.onOutsideGridClick, {grid: self, EditorLock: getEditorLock()}, ev);
         }
 
         function handleContextMenu(e) {
@@ -3574,7 +3659,7 @@ if (typeof Slick === "undefined") {
             "onCellCssStylesChanged": new Slick.Event(),
             "onInitialize": new Slick.Event(),
             "onRendered": new Slick.Event(),
-            "onSpecialEvent": new Slick.Event(),
+            "onOutsideGridClick": new Slick.Event(),
             // Methods
             "registerPlugin": registerPlugin,
             "unregisterPlugin": unregisterPlugin,
