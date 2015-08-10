@@ -215,7 +215,7 @@ if (typeof Slick === "undefined") {
 
             options = $.extend({}, defaults, options);
 
-            if (options.minimumContainerHeight && ($container.height() === 0 || $container.height() < options.minimumContainerHeight)) {
+            if (options.minimumContainerHeight && $container.height() < options.minimumContainerHeight) {
                 $container.height(options.minimumContainerHeight)
             }
 
@@ -3594,6 +3594,9 @@ if (typeof Slick === "undefined") {
             selectionModel.setSelectedRanges(rowsToRanges(rows));
         }
 
+        function isInitialized() {
+            return initialized;
+        }
 
         //////////////////////////////////////////////////////////////////////////////////////////////
         // Debug
@@ -3748,7 +3751,8 @@ if (typeof Slick === "undefined") {
             "getHeaderWidth": getHeadersWidth,
             "getCanvasWidth": getCanvasWidth,
             "getViewportHeight": getViewportHeight,
-            "getUID": getUID
+            "getUID": getUID,
+            "isInitialized": isInitialized
         });
 
         init();
