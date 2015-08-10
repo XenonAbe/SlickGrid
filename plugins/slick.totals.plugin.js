@@ -37,7 +37,16 @@
             _dataView = grid.getData();
             _rowHeight = grid.getOptions().rowHeight;
 
-            _$totalsViewport = $('<div class="slick-viewport totals-viewport">').css({bottom: 16, width: '98.85%'});
+            var width = viewport.offsetWidth;
+            if (viewport.scrollHeight > viewport.offsetHeight) {
+                width -= _scrollbarWidth;
+            }
+
+            if(width < 100) {
+                width = '98.85%';
+            }
+
+            _$totalsViewport = $('<div class="slick-viewport totals-viewport">').css({bottom: 16, width: width || '98.85%'});
             _$totalsViewport.insertAfter(viewport);
 
             _columns = _grid.getColumns();
@@ -164,9 +173,7 @@
         function handleColumnsResized(ev, args) {
             var canvas = args.grid.getCanvasNode();
             var viewport = canvas.parentElement;
-            var top = (viewport.scrollWidth > viewport.offsetWidth) ? _rowHeight + _scrollbarWidth : _rowHeight;
             _$totalsRow.width(canvas.scrollWidth);
-            _$totalsViewport.css('top', top * -1 + 'px');
         }
 
         function handleColumnsReordered(ev, args) {
