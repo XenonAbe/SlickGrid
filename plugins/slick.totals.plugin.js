@@ -69,7 +69,7 @@
 
             _dataView.onRowCountChanged.subscribe(function (ev, args) {
                 handleDataChange(ev, args);
-                updateWidth();
+                setTimeout(updateWidth, 1000);
             });
 
             grid.onViewportChanged.subscribe(function (ev, args) {
@@ -232,8 +232,10 @@
             var viewport = _grid.getCanvasNode().parentElement;
             if (viewport.scrollHeight > viewport.offsetHeight) {
                 _$totalsViewport.css({'bottom': (options.bottom || 16) - _scrollbarSize.height + 1});
+            } else {
+                _$totalsViewport.css({'bottom': options.bottom || 16});
             }
-            updateWidth();
+            setTimeout(updateWidth, 1000);
 
             appendTotalsRows(ev, args);
         }
