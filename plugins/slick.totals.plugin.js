@@ -20,12 +20,13 @@
         _items = [],
         _summaryData = {},
         _columns,
+        _scrollbarSize,
         _aggrLevel; //In case of tree grid some cases need to aggrigate only to some level as each node might be
     // an aggrigation (server side) of its child nodes
 
     function TotalsPlugin(options) {
-        var scrollbarSize = getBrowserScrollSize();
-        _scrollbarWidth = scrollbarSize.width;
+        _scrollbarSize = getBrowserScrollSize();
+        _scrollbarWidth = _scrollbarSize.width;
         _aggrLevel = (options.level !== null && !isNaN(options.level * 1)) ? options.level : null; //only number else null
 
         var self = this;
@@ -68,11 +69,8 @@
 
             _dataView.onRowCountChanged.subscribe(function (ev, args) {
                 handleDataChange(ev, args);
+                updateWidth();
             });
-
-            /*_dataView.onRowsChanged.subscribe(function (ev, args) {
-             handleDataChange(ev, args);
-             });*/
 
             grid.onViewportChanged.subscribe(function (ev, args) {
                 _columns = _grid.getColumns();
@@ -96,8 +94,8 @@
             for (; it < len; it++) {
                 var row = _items[it],
                     column;
-                if(_aggrLevel !== null) {
-                    if(row.level === _aggrLevel) {
+                if (_aggrLevel !== null) {
+                    if (row.level === _aggrLevel) {
                         for (i = 0; i < colen; i++) {
                             column = _columns[i];
                             value = row[column.field];
@@ -130,7 +128,7 @@
         }
 
         function appendTotalsRows(ev, args) {
-            var viewport = (args && args.grid? args.grid : _grid).getCanvasNode(),
+            var viewport = (args && args.grid ? args.grid : _grid).getCanvasNode(),
                 width = viewport.offsetWidth,
                 mergeCols = options.mergeColumns;
 
@@ -150,25 +148,22 @@
 
             self.onTotalsRowRendered.notify(_$totalsViewport, ev, args);
 
-            if(mergeCols && mergeCols.length > 0) {
+            if (mergeCols && mergeCols.length > 0) {
                 var from, to;
-                for(var i = 0; i < mergeCols.length; i++) {
+                for (var i = 0; i < mergeCols.length; i++) {
                     from = $totalsRow.find('.f-' + mergeCols[i].from);
                     to = $totalsRow.find('.f-' + mergeCols[i].to);
-                    if(from.length > 0 && to.length > 0) {
+                    if (from.length > 0 && to.length > 0) {
                         to.css({left: from.css('left')}).addClass(mergeCols[i].cssClass || '');
-                        if(mergeCols[i].html) {
+                        if (mergeCols[i].html) {
                             to.html(mergeCols[i].html);
                         }
                     }
                 }
             }
-            //resize();
         }
 
-        function isVerticalScrollOn(element) {
-            return element.scrollHeight > element.clientHeight;
-        }
+
         function handleColumnsResized(ev, args) {
             var canvas = args.grid.getCanvasNode();
             _$totalsRow.width(canvas.scrollWidth);
@@ -182,7 +177,7 @@
             if (_scrollOffset !== args.scrollLeft) {
                 _scrollOffset = args.scrollLeft;
                 _$totalsRow.css('left', _scrollOffset * -1);
-            } else if(_$totalsRow) {
+            } else if (_$totalsRow) {
                 _$totalsRow.css('left', _scrollOffset * -1);
             }
         }
@@ -216,7 +211,7 @@
         }
 
         function toggleTotalsRow(show) {
-            if(show) {
+            if (show) {
                 _$totalsViewport.show();
             } else {
                 _$totalsViewport.hide();
@@ -227,27 +222,29 @@
             _$totalsViewport.remove();
         }
 
-        function resize() {
-            var viewport = _grid.getContainerNode(),
-                contHeight = parseFloat(viewport.style.height);
-            if(contHeight) {
-                _$totalsViewport.css({bottom: options.bottom || (contHeight - _grid.getViewportHeight() + scrollbarSize.height)});
-            }
-
-            var width = viewport.parentElement.offsetWidth;
-            if (viewport.parentElement.scrollHeight > viewport.parentElement.offsetHeight) {
-                width -= _scrollbarWidth;
-            }
-
-            _$totalsViewport.width(width);
-        }
 
         function getNode() {
             return _$totalsViewport;
         }
+
         function refresh(ev, args) {
             _columns = (args ? args.grid.getData() : _grid).getColumns();
+            var viewport = _grid.getCanvasNode().parentElement;
+            if (viewport.scrollHeight > viewport.offsetHeight) {
+                _$totalsViewport.css({'bottom': (options.bottom || 16) - _scrollbarSize.height + 1});
+            }
+            updateWidth();
+
             appendTotalsRows(ev, args);
+        }
+
+        function updateWidth() {
+            var viewport = _grid.getCanvasNode().parentElement;
+            var width = viewport.offsetWidth;
+            if (viewport.scrollWidth > width) {
+                width -= _scrollbarSize.width;
+            }
+            _$totalsViewport.width(width);
         }
 
         $.extend(this, {
