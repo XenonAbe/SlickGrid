@@ -36,22 +36,20 @@
             _grid = grid;
             _dataView = grid.getData();
             _rowHeight = grid.getOptions().rowHeight;
-
-            var width = viewport.offsetWidth;
-            if (viewport.scrollHeight > viewport.offsetHeight) {
-                width -= _scrollbarWidth;
-            }
-
-            if(width < 100) {
-                width = '98.85%';
-            }
-
-            _$totalsViewport = $('<div class="slick-viewport totals-viewport">').css({bottom: 16, width: width || '98.85%'});
-            _$totalsViewport.insertAfter(viewport);
-
             _columns = _grid.getColumns();
 
+
+            _$totalsViewport = $('<div class="slick-viewport totals-viewport">');
+            _$totalsViewport.insertAfter(viewport);
+
             grid.onInitialize.subscribe(function (ev, args) {
+                var width = viewport.offsetWidth;
+                if (viewport.scrollHeight > viewport.offsetHeight) {
+                    width -= _scrollbarWidth;
+                }
+
+                _$totalsViewport.css({width: width, bottom: options.bottom || 16});
+
                 handleDataChange(ev, args);
             });
 
@@ -132,7 +130,8 @@
         }
 
         function appendTotalsRows(ev, args) {
-            var width = (args && args.grid? args.grid : _grid).getCanvasNode().offsetWidth,
+            var viewport = (args && args.grid? args.grid : _grid).getCanvasNode(),
+                width = viewport.offsetWidth,
                 mergeCols = options.mergeColumns;
 
             var $totalsRow = $('<div class="ui-widget-content slick-row totals"></div>').css({position: 'relative', width: width});
@@ -172,7 +171,6 @@
         }
         function handleColumnsResized(ev, args) {
             var canvas = args.grid.getCanvasNode();
-            var viewport = canvas.parentElement;
             _$totalsRow.width(canvas.scrollWidth);
         }
 
@@ -230,13 +228,18 @@
         }
 
         function resize() {
-            var contHeight = parseFloat(_grid.getContainerNode().style.height);
+            var viewport = _grid.getContainerNode(),
+                contHeight = parseFloat(viewport.style.height);
             if(contHeight) {
-                _$totalsViewport.css({bottom: (contHeight - _grid.getViewportHeight() + scrollbarSize.height)});
+                _$totalsViewport.css({bottom: options.bottom || (contHeight - _grid.getViewportHeight() + scrollbarSize.height)});
             }
-            if(isVerticalScrollOn(_grid.getContainerNode())) {
-                _$totalsViewport.css({width: '98.85%'});
+
+            var width = viewport.parentElement.offsetWidth;
+            if (viewport.parentElement.scrollHeight > viewport.parentElement.offsetHeight) {
+                width -= _scrollbarWidth;
             }
+
+            _$totalsViewport.width(width);
         }
 
         function getNode() {
