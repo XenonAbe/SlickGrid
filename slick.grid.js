@@ -3488,7 +3488,6 @@ if (typeof Slick === "undefined") {
         function commitCurrentEdit() {
             var item = getDataItem(activeRow);
             var column = columns[activeCell];
-
             if (currentEditor) {
                 if (currentEditor.isValueChanged()) {
                     var validationResults = currentEditor.validate();
@@ -3553,7 +3552,9 @@ if (typeof Slick === "undefined") {
                             row: activeRow,
                             cell: activeCell,
                             column: column,
-                            grid: self
+                            grid: self,
+                            isOutsideClicked: isOutsideEventFired,
+                            EditorLock: getEditorLock()
                         });
 
                         currentEditor.focus();
@@ -3757,6 +3758,5 @@ if (typeof Slick === "undefined") {
 
         init();
     }
-
 
 }(jQuery));
