@@ -29,7 +29,8 @@
         _scrollbarWidth = _scrollbarSize.width;
         _aggrLevel = (options.level !== null && !isNaN(options.level * 1)) ? options.level : null; //only number else null
 
-        var self = this;
+        var self = this,
+            _top = 0;
 
         function init(grid) {
             var viewport = grid.getCanvasNode().parentElement;
@@ -44,18 +45,12 @@
             _$totalsViewport.insertAfter(viewport);
 
             grid.onInitialize.subscribe(function (ev, args) {
-                var width = viewport.offsetWidth;
-                if (viewport.scrollHeight > viewport.offsetHeight) {
-                    width -= _scrollbarWidth;
-                }
-
-                _$totalsViewport.css({width: width, bottom: options.bottom || 16});
-
+                _top = viewport.offsetHeight + $(viewport).position().top - (_rowHeight + _scrollbarSize.height);
                 handleDataChange(ev, args);
             });
 
             grid.onColumnsResized.subscribe(function (ev, args) {
-                handleColumnsResized(ev, args);
+                appendTotalsRows(ev, args);
             });
 
             grid.onColumnsReordered.subscribe(function (ev, args) {
@@ -69,7 +64,10 @@
 
             _dataView.onRowCountChanged.subscribe(function (ev, args) {
                 handleDataChange(ev, args);
-                setTimeout(updateWidth, 1000);
+            });
+
+            _dataView.onDataviewRefreshed.subscribe(function (ev, args) {
+                handleResize(ev, args);
             });
 
             grid.onViewportChanged.subscribe(function (ev, args) {
@@ -161,13 +159,9 @@
                     }
                 }
             }
+            handleResize(ev, args);
         }
 
-
-        function handleColumnsResized(ev, args) {
-            var canvas = args.grid.getCanvasNode();
-            _$totalsRow.width(canvas.scrollWidth);
-        }
 
         function handleColumnsReordered(ev, args) {
             appendTotalsRows(ev, args);
@@ -222,31 +216,34 @@
             _$totalsViewport.remove();
         }
 
-
-        function getNode() {
-            return _$totalsViewport;
-        }
-
         function refresh(ev, args) {
-            _columns = (args ? args.grid.getData() : _grid).getColumns();
-            var viewport = _grid.getCanvasNode().parentElement;
-            if (viewport.scrollHeight > viewport.offsetHeight) {
-                _$totalsViewport.css({'bottom': (options.bottom || 16) - _scrollbarSize.height + 1});
-            } else {
-                _$totalsViewport.css({'bottom': options.bottom || 16});
-            }
-            setTimeout(updateWidth, 1000);
-
             appendTotalsRows(ev, args);
         }
 
-        function updateWidth() {
+        function handleResize() {
             var viewport = _grid.getCanvasNode().parentElement;
             var width = viewport.offsetWidth;
             if (viewport.scrollWidth > width) {
                 width -= _scrollbarSize.width;
             }
-            _$totalsViewport.width(width);
+
+            var top = 0;
+            if(vScrollShown() && !hScrollShown()) {
+                top = _top + _scrollbarSize.height;
+            } else {
+                top = _top;
+            }
+            _$totalsViewport.css({width: width, top: top});
+        }
+
+        function vScrollShown() {
+            var vp = _grid.getCanvasNode().parentElement;
+            return vp.scrollHeight > vp.offsetHeight;
+        }
+
+        function hScrollShown() {
+            var vp = _grid.getCanvasNode().parentElement;
+            return vp.scrollWidth > vp.offsetWidth;
         }
 
         $.extend(this, {
@@ -254,8 +251,7 @@
             destroy: destroy,
             onTotalsRowRendered: new Slick.Event(),
             toggleTotalsRow: toggleTotalsRow,
-            refresh: refresh,
-            getNode: getNode
+            refresh: refresh
         });
     }
 })(jQuery);
