@@ -3560,7 +3560,7 @@ if (typeof Slick === "undefined") {
                         if(getEditorLock().isActive()) {
                             currentEditor.focus();
                         }
-                                                
+
                         return false;
                     }
                 }
