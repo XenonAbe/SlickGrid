@@ -67,6 +67,7 @@
             });
 
             _dataView.onDataviewRefreshed.subscribe(function (ev, args) {
+                _top = viewport.offsetHeight + $(viewport).position().top - (_rowHeight + _scrollbarSize.height);
                 handleResize(ev, args);
             });
 
