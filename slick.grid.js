@@ -7,7 +7,7 @@
  * Distributed under MIT license.
  * All rights reserved.
  *
- * SlickGrid v2.2
+ * SlickGrid v2.2.2
  *
  * NOTES:
  *     Cell/row DOM manipulations are done directly bypassing jQuery's DOM manipulation methods.
@@ -397,6 +397,10 @@ if (typeof Slick === "undefined") {
     var rowNodeFromLastMouseWheelEvent;  // this node must not be deleted while inertial scrolling
     var zombieRowNodeFromLastMouseWheelEvent;  // node that was hidden instead of getting deleted
 
+    // store css attributes if display:none is active in container or parent
+    var cssShow = { position: 'absolute', visibility: 'hidden', display: 'block' };
+    var $hiddenParents;
+    var oldProps = [];
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Constants: lookup tables
@@ -457,6 +461,8 @@ if (typeof Slick === "undefined") {
         isBrowser.safari605 = isBrowser.safari && /6\.0/.test(isBrowser.version);
         isBrowser.msie      = /msie/i.test(isBrowser.browser);
       }
+
+      cacheCssForHiddenInit();
 
       // calculate these only once and share between grid instances
       maxSupportedCssHeight = maxSupportedCssHeight || getMaxSupportedCssHeight();
@@ -741,6 +747,7 @@ if (typeof Slick === "undefined") {
       // Only fire the onAfterInit event when we really have done it all:
       if (stylesheet && initialized === 2) {
         initialized = 3;
+        restoreCssFromHiddenInit();
         trigger(self.onAfterInit, {});
       }
 
@@ -750,6 +757,30 @@ if (typeof Slick === "undefined") {
 
     function isInitialized() {
       return initialized;
+    }
+
+    function cacheCssForHiddenInit() {
+      // handle display:none on container or container parents
+      $hiddenParents = $container.parents().andSelf().not(':visible');
+      $hiddenParents.each(function() {
+        var old = {};
+        for ( var name in cssShow ) {
+          old[ name ] = this.style[ name ];
+          this.style[ name ] = cssShow[ name ];
+        }
+        oldProps.push(old);
+      });
+    }
+
+    function restoreCssFromHiddenInit() {
+      // finish handle display:none on container or container parents
+      // - put values back the way they were
+      $hiddenParents.each(function(i) {
+        var old = oldProps[i];
+        for ( var name in cssShow ) {
+          this.style[ name ] = old[ name ];
+        }
+      });
     }
 
     function registerPlugin(plugin) {
@@ -2312,7 +2343,7 @@ if (typeof Slick === "undefined") {
             growSize = Math.min(Math.floor(growProportion * currentWidth) - currentWidth, (c.maxWidth ? c.maxWidth - currentWidth : 0) || 1000000) || 1;
           }
           total += growSize;
-          widths[i] += growSize;
+          widths[i] += (total <= availWidth ? growSize : 0);
         }
         if (prevTotal >= total) {  // avoid infinite loop
           break;
@@ -8587,7 +8618,7 @@ if (0) {
     // Public API
 
     __extend(this, {
-      "slickGridVersion": "2.2",
+      "slickGridVersion": "2.2.2",
 
       // Events
       "onScroll": new Slick.Event(),

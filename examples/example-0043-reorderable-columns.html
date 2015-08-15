@@ -51,7 +51,8 @@ grid = new Slick.Grid("#myGrid", data, columns, options);
   ];
 
   var options = {
-    enableCellNavigation: true
+    enableCellNavigation: true,
+    enableColumnReorder: true
   };
 
   $(function () {
@@ -68,6 +69,7 @@ grid = new Slick.Grid("#myGrid", data, columns, options);
     }
 
     grid = new Slick.Grid("#myGrid", data, columns, options);
+    grid.registerPlugin( new Slick.AutoTooltips({ enableForHeaderCells: true }) );
     grid.render();
   })
 </script>

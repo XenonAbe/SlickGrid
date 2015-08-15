@@ -930,7 +930,7 @@
         // make sure all the subgroups are calculated
         var i = group.groups.length;
         while (i--) {
-          if (!group.groups[i].initialized) {
+          if (!group.groups[i].totals.initialized) {
             calculateTotals(group.groups[i].totals);
           }
         }
@@ -1047,16 +1047,21 @@
               accumulatorInfo.body +
           "}"
       );
-      fn.displayName = fn.name = "compiledAccumulatorLoop";
+      // fn.displayName = fn.name = "compiledAccumulatorLoop";   <-- disabled due to issue #1032
       return fn;
     }
 
     function compileFilter() {
       var filterInfo = getFunctionInfo(filter);
 
+      var filterPath1 = "{ continue _coreloop; }$1";
+      var filterPath2 = "{ _retval[_idx++] = $item$; continue _coreloop; }$1";
+      // make some allowances for minification - there's only so far we can go with RegEx
       var filterBody = filterInfo.body
-          .replace(/return false\s*([;}]|$)/gi, "{ continue _coreloop; }$1")
-          .replace(/return true\s*([;}]|$)/gi, "{ _retval[_idx++] = $item$; continue _coreloop; }$1")
+          .replace(/return false\s*([;}]|\}|$)/gi, filterPath1)
+          .replace(/return!1([;}]|\}|$)/gi, filterPath1)
+          .replace(/return true\s*([;}]|\}|$)/gi, filterPath2)
+          .replace(/return!0([;}]|\}|$)/gi, filterPath2)
           .replace(/return ([^;}]+?)\s*([;}]|$)/gi,
           "{ if ($1) { _retval[_idx++] = $item$; }; continue _coreloop; }$2");
 
@@ -1079,16 +1084,21 @@
       tpl = tpl.replace(/\$args\$/gi, filterInfo.params[1]);
 
       var fn = new Function("_items,_args", tpl);
-      fn.displayName = fn.name = "compiledFilter";
+      // fn.displayName = fn.name = "compiledFilter";   <-- disabled due to issue #1032
       return fn;
     }
 
     function compileFilterWithCaching() {
       var filterInfo = getFunctionInfo(filter);
 
+      var filterPath1 = "{ continue _coreloop; }$1";
+      var filterPath2 = "{ _cache[_i] = true;_retval[_idx++] = $item$; continue _coreloop; }$1";
+      // make some allowances for minification - there's only so far we can go with RegEx
       var filterBody = filterInfo.body
-          .replace(/return false\s*([;}]|$)/gi, "{ continue _coreloop; }$1")
-          .replace(/return true\s*([;}]|$)/gi, "{ _cache[_i] = true;_retval[_idx++] = $item$; continue _coreloop; }$1")
+          .replace(/return false\s*([;}]|\}|$)/gi, filterPath1)
+          .replace(/return!1([;}]|\}|$)/gi, filterPath1)
+          .replace(/return true\s*([;}]|\}|$)/gi, filterPath2)
+          .replace(/return!0([;}]|\}|$)/gi, filterPath2)
           .replace(/return ([^;}]+?)\s*([;}]|$)/gi,
           "{ if ((_cache[_i] = $1)) { _retval[_idx++] = $item$; }; continue _coreloop; }$2");
 
@@ -1115,7 +1125,7 @@
       tpl = tpl.replace(/\$args\$/gi, filterInfo.params[1]);
 
       var fn = new Function("_items,_args,_cache", tpl);
-      fn.displayName = fn.name = "compiledFilterWithCaching";
+      //fn.displayName = fn.name = "compiledFilterWithCaching";   <-- disabled due to issue #1032
       return fn;
     }
 

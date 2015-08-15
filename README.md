@@ -7,6 +7,7 @@ This is a fork of SlickGrid maintained by Ger Hobbelt / Visyond Inc. The new fea
 
 ## This Fork's Features
 
+* This is synced with the 6pac slickgrid repo: @6pac is maintaining his own clone as a separate 'alternative master'. Check [his wiki](https://github.com/6pac/SlickGrid/wiki) for details.
 * Cells spanning arbitrary numbers of rows and/or columns (colspan / rowspan)
 * A footer row that mimics the behavior of the header row, with similar options and controls.
 * Enhanced info feed to/from Formatters and Editors

@@ -62,3 +62,6 @@
 [submodule "lib/jquery-fixclick"]
 	path = lib/jquery-fixclick
 	url = git@github.com:GerHobbelt/jquery-fixclick.git
+[submodule "lib/jquery-migrate"]
+	path = lib/jquery-migrate
+	url = git@github.com:GerHobbelt/jquery-migrate.git
