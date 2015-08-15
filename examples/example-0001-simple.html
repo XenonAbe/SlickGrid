@@ -60,7 +60,7 @@
     enableColumnReorder: false
   };
 
-  $(function () {
+  function CreateData() {
     var data = [];
     for (var i = 0; i < 500; i++) {
       data[i] = {
@@ -72,9 +72,14 @@
         effortDriven: (i % 5 == 0)
       };
     }
+	return data;
+  }
+  
+$(function() {
+    var data = CreateData();
 
     grid = new Slick.Grid("#myGrid", data, columns, options);
-  });
+});
 </script>
 </body>
 </html>

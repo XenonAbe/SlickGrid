@@ -1,10 +1,11 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <title>SlickGrid example 10: Async post render</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example: Async post render: Using background post-rendering to add graphs</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.11.3.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-title {
@@ -14,65 +15,72 @@
     .cell-effort-driven {
       text-align: center;
     }
-
-    .description * {
-      font-size: 11pt;
-    }
   </style>
 </head>
 <body>
-<div style="width:600px;float:left;">
-  <div class="grid-header" style="width:100%">
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div class="grid-header">
     <label>Scores:</label>
+    </div>
+    <div id="myGrid" class="grid-inner-wrapper"></div>
   </div>
-  <div id="myGrid" style="width:100%;height:500px;"></div>
-</div>
 
-<div style="margin-left:650px;margin-top:40px;" class="description">
-  <h2>Demonstrates:</h2>
+  <div class="options-panel">
+    <h2>Demonstrates</h2>
 
-  <p>
-    With SlickGrid, you can still have rich, complex cells rendered against the actual DOM nodes while still preserving
-    the speed and responsiveness.
-    This is achieved through async background post-rendering.
-    SlickGrid exposes a <u>asyncPostRender</u> property on a column which you can use to set your own function that will
-    manipulate the cell DOM node directly.
-    The event is fired one by one for all visible rows in the viewport on a timer so it doesn't impact the UI
-    responsiveness.
-    You should still make sure that post-processing one row doesn't take too long though.
-    SlickGrid will figure out what and when needs to be updated for you.
-  </p>
+    <p>
+      With SlickGrid, you can still have rich, complex cells rendered against the actual DOM nodes while still preserving
+      the speed and responsiveness.
+      This is achieved through async background post-rendering.
+      SlickGrid exposes a <u>asyncPostRender</u> property on a column which you can use to set your own function that will
+      manipulate the cell DOM node directly.
+      The event is fired one by one for all visible rows in the viewport on a timer so it doesn't impact the UI
+      responsiveness.
+      You should still make sure that post-processing one row doesn't take too long though.
+      SlickGrid will figure out what and when needs to be updated for you.
+    </p>
 
-  <p>
-    The example below is a list of 500 rows with a title and 5 integer cells followed by graphical representation of
-    these integers.
-    The graph is drawn using a CANVAS element in the background.
-    The grid is editable, so you can edit the numbers and see the changes reflected (almost) immediately in the graph.
-    The graph cell behaves just like an ordinary cell and can be resized/reordered.
-    The graphs themselves are created using the excellent <a href="http://www.omnipotent.net/jquery.sparkline/"
-                                                             target="_blank">jQuery Sparklines</a> library.<br/><br/>
-nb: sparkline 2.x will <a href="https://github.com/mleibman/SlickGrid/issues/855">cause a memory leak</a> in the current architecture, so we use sparkline 1.x and jquery-migrate for now.
-  </p>
+    <p>
+      The example below is a list of 500 rows with a title and 5 integer cells followed by graphical representation of
+      these integers.
+      The graph is drawn using a CANVAS element in the background.
+      The grid is editable, so you can edit the numbers and see the changes reflected (almost) immediately in the graph.
+      The graph cell behaves just like an ordinary cell and can be resized/reordered.
+      The graphs themselves are created using the excellent <a href="http://www.omnipotent.net/jquery.sparkline/"
+                                                             target="_blank">jQuery Sparklines</a> library.
+	  <br/>
+	  <br/>
+NB: sparkline 2.x will <a href="https://github.com/mleibman/SlickGrid/issues/855">cause a memory leak</a> in the current architecture, so we use sparkline 1.x and jquery-migrate for now.
+    </p>
+
     <h2>View Source:</h2>
-    <ul>
-        <li><A href="https://github.com/6pac/SlickGrid/blob/master/examples/example10-async-post-render.html" target="_sourcewindow"> View the source for this example on Github</a></li>
-    </ul>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+      </ul>
+      <div id="displaycode"></div>
+  </div>
 </div>
 
 <script src="../lib/firebugx.js"></script>
 
-<script src="../lib/jquery-1.11.2.min.js"></script>
-<script src="../lib/jquery-ui-1.11.3.min.js"></script>
-<script src="../lib/jquery-migrate-1.2.1.min.js"></script>
-<script src="../lib/jquery.event.drag-2.2.js"></script>
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
+<script src="../lib/jquery-ui.js"></script>
+<script src="../lib/_/jquery.event.drag.js"></script>
 <!-- nb: sparkline 2.x will cause a memory leak in the current architecture, so we use sparkline 1.x and jquery-migrate -->
-<script src="../lib/jquery.sparkline.min.js"></script>
+<script src="../lib/_/jquery.sparkline.js"></script>
+<script src="../lib/detect_browser.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.editors.js"></script>
 <script src="../slick.grid.js"></script>
 
-<script>
+
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
   function requiredFieldValidator(value) {
     if (value == null || value == undefined || !value.length) {
       return {valid: false, msg: "This is a required field"};
@@ -85,7 +93,7 @@ nb: sparkline 2.x will <a href="https://github.com/mleibman/SlickGrid/issues/855
     return "wait...";
   }
 
-  function renderSparkline(cellNode, row, dataContext, colDef) {
+  function renderSparkline(cellNode, row, cell, dataContext, colDef) {
     var vals = [
       dataContext["n1"],
       dataContext["n2"],
@@ -131,7 +139,7 @@ nb: sparkline 2.x will <a href="https://github.com/mleibman/SlickGrid/issues/855
     }
 
     grid = new Slick.Grid("#myGrid", data, columns, options);
-  })
+  });
 </script>
 </body>
 </html>

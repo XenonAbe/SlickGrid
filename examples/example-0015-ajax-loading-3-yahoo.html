@@ -1,10 +1,11 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <title>SlickGrid example 6: AJAX Load</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>SlickGrid example 6: AJAX-loading data with search</title>
+  <link rel="stylesheet" href="../css/smoothness/jquery-ui.custom.css" type="text/css"/>
   <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
-  <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.11.3.custom.css" type="text/css"/>
+  <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
     .cell-story {
@@ -35,15 +36,21 @@
   </style>
 </head>
 <body>
-<div style="width:700px;float:left;">
-  <div class="grid-header" style="width:100%">
+<div style="position:relative">
+  <div class="grid-outer-wrapper">
+    <div class="grid-header">
     <label>Yahoo Latest News stories</label>
+        <span style="float:right;display:inline-block;">
+          Search:
+          <input type="text" id="txtSearch" value="github">
+        </span>
+    </div>
+    <div id="myGrid" class="grid-inner-wrapper"></div>
+    <div id="pager" class="grid-pager"></div>
   </div>
-  <div id="myGrid" style="width:100%;height:600px;"></div>
-  <div id="pager" style="width:100%;height:20px;"></div>
-</div>
-<div style="margin-left:750px;margin-top:40px;;">
-  <h2>Demonstrates:</h2>
+
+  <div class="options-panel">
+  <h2>Demonstrates</h2>
   <ul>
     <li>loading data through AJAX</li>
     <li>custom row height</li>
@@ -58,23 +65,33 @@
   </ul>
 
     <h2>View Source:</h2>
-    <ul>
-        <li><A href="https://github.com/6pac/SlickGrid/blob/master/examples/example6-ajax-loading.html" target="_sourcewindow"> View the source for this example on Github</a></li>
-    </ul>
+      <ul>
+          <li id="viewsource">View Source Code</li>
+      </ul>
+      <div id="displaycode"></div>
+  </div>
 </div>
 
 <script src="../lib/firebugx.js"></script>
 
-<script src="../lib/jquery-1.11.2.min.js"></script>
-<script src="../lib/jquery-ui-1.11.3.min.js"></script>
-<script src="../lib/jquery.event.drag-2.2.js"></script>
-<script src="../lib/jquery.jsonp-2.4.min.js"></script>
+<script src="../lib/jquery.js"></script>
+<script src="../lib/jquery-fixclick.js"></script>
+<script src="../lib/jquery-ui.js"></script>
+<script src="../lib/_/jquery.event.drag.js"></script>
+<script src="../lib/jquery.jsonp.js"></script>
+<script src="../lib/moment.js"></script>
+<script src="../lib/detect_browser.js"></script>
+<script src="../lib/assert.js"></script>
 
 <script src="../slick.core.js"></script>
 <script src="../slick.remotemodel-yahoo.js"></script>
 <script src="../slick.grid.js"></script>
+<script src="../slick.formatters.js"></script>
 
-<script>
+
+<script src="examples.showcode.js"></script>
+
+<script id="script_tag_example" type="text/javascript">
   var grid;
   var loader = new Slick.Data.RemoteModel();
 
@@ -91,7 +108,6 @@
   var dateFormatter = function (row, cell, value, columnDef, dataContext) {
     return (value.getMonth()+1) + "/" + value.getDate() + "/" + value.getFullYear();
   };
-
 
   var columns = [
     {id: "num", name: "#", field: "index", width: 40},
@@ -158,7 +174,7 @@
 
     // load the first page
     grid.onViewportChanged.notify();
-  })
+  });
 </script>
 </body>
 </html>

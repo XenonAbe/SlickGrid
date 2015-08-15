@@ -39,7 +39,7 @@
 <div style="position:relative">
   <div class="grid-outer-wrapper">
     <div class="grid-header">
-    <label>Hackernews stories</label>
+      <label>Hackernews stories</label>
         <span style="float:right;display:inline-block;">
           Search:
           <input type="text" id="txtSearch" value="github">
@@ -158,8 +158,8 @@
     });
 
     loader.setQuery($("#txtSearch").val());
-    // loader.setSort("create_ts", -1);
-    // grid.setSortColumn("date", false);
+    loader.setSort("create_ts", -1);
+    grid.setSortColumn("date", false);
 
     // load the first page
     grid.onViewportChanged.notify();
