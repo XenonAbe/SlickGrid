@@ -1,0 +1,135 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Example</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <link rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+    <link rel="stylesheet" href="../slick.grid.css" type="text/css"/>
+    <link rel="stylesheet" href="examples.css" type="text/css"/>
+    <style>     
+    .slick-headerrow-column > ul {
+            margin:0;
+            padding:0;
+    }
+    .slick-headerrow-column > ul > li > label {
+            font-weight: bold;
+            margin-right: 5px;
+            min-width: 25px;
+            display: inline-block;
+    }
+    .slick-headerrow-column > ul > li > span {
+
+    }
+    </style>
+</head>
+<body>
+<div style="position:relative">
+  <div style="width:600px;">
+    <div id="myGrid" style="width:100%;height:500px;"></div>
+  </div>
+
+  <div class="options-panel">
+    <h2>Demonstrates:</h2>
+    <ul>
+      <li>Using a fixed header row to implement column-level filters</li>
+      <li>Type numbers in textboxes to filter grid data</li>
+    </ul>
+  </div>
+</div>
+
+<script src="../lib/firebugx.js"></script>
+
+<script src="../lib/jquery-1.7.min.js"></script>
+<script src="../lib/jquery-ui-1.8.16.custom.min.js"></script>
+<script src="../lib/jquery.event.drag-2.2.js"></script>
+
+<script src="../slick.core.js"></script>
+<script src="../slick.dataview.js"></script>
+<script src="../slick.grid.js"></script>
+<script src="../plugins/slick.headerrowsummary.js"></script>
+
+<script>
+  var dataView;
+  var grid;
+  var data = [];
+  var options = {
+    enableCellNavigation: true,
+    showHeaderRow: true,
+    headerRowHeight: 70,
+    explicitInitialization: true
+  };
+  var columns = [];
+  var columnFilters = {};
+
+  for (var i = 0; i < 10; i++) {
+    columns.push({
+        id: i,
+        name: String.fromCharCode("A".charCodeAt(0) + i),
+        field: i,
+        width: 120,
+        formatter: function (row, cell, value) {
+            if (value == null || value == '') {
+                return '';
+            }
+            if (typeof value === 'number') {
+                return value.toFixed(2);
+            }
+            return value;
+        },
+        summaries: ['min','max','avg','count','sum']
+    });
+  }
+
+
+  function filter(item) {
+    for (var columnId in columnFilters) {
+      if (columnId !== undefined && columnFilters[columnId] !== "") {
+        var c = grid.getColumns()[grid.getColumnIndex(columnId)];
+        if (item[c.field] != columnFilters[columnId]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  $(function () {
+    for (var i = 0; i < 100000; i++) {
+      var d = (data[i] = {});
+      d["id"] = i;
+      for (var j = 0; j < columns.length; j++) {          
+          d[j] = Math.random() * 10;
+          if (d[j] > 2 && d[j] < 3) {
+              d[j] = null;
+          }
+      }
+    }
+
+    dataView = new Slick.Data.DataView();
+    grid = new Slick.Grid("#myGrid", dataView, columns, options);
+
+
+    dataView.onRowCountChanged.subscribe(function (e, args) {
+      grid.updateRowCount();
+      grid.render();
+    });
+
+    dataView.onRowsChanged.subscribe(function (e, args) {
+      grid.invalidateRows(args.rows);
+      grid.render();
+    });
+
+    var summaryRow = new Slick.Plugins.HeaderRowSummary(dataView);
+
+    grid.registerPlugin(summaryRow);
+
+    grid.init();
+
+    dataView.beginUpdate();
+    dataView.setItems(data);
+    dataView.setFilter(filter);
+    dataView.endUpdate();
+  })
+</script>
+</body>
+</html>
