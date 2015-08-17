@@ -330,6 +330,10 @@
             return ids;
         }
 
+        function getIdProperty() {
+            return idProperty[0];
+        }
+
         function updateItem(id, item) {
             if (idxById[id] === undefined || id !== item[idProperty]) {
                 throw "Invalid or non-matching id";
@@ -942,6 +946,7 @@
 
         $.extend(this, {
             // methods
+            getIdProperty: getIdProperty,
             "beginUpdate": beginUpdate,
             "endUpdate": endUpdate,
             "setPagingOptions": setPagingOptions,
