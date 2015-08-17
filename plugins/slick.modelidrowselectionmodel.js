@@ -139,7 +139,6 @@
         }
 
         function updateSelection() {
-            console.log('To alter the selection of the grid, use setSelectedUniqueIds(selectedModelIds)');
             setSelectedUniqueIds(_selectedUniqueIds);
         }
 
@@ -212,7 +211,7 @@
             var idx = $.inArray(cell.row, selection);
 
             if (!e.ctrlKey && !e.shiftKey && !e.metaKey) {
-                return false;
+                selection = [cell.row];
             }
             else if (_grid.getOptions().multiSelect) {
                 if (idx === -1 && (e.ctrlKey || e.metaKey)) {
