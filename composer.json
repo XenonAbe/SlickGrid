@@ -1,0 +1,17 @@
+{
+    "name": "mleibman/SlickGrid",
+    "description": "SlickGrid is an advanced JavaScript grid/spreadsheet component",
+    "keywords": ["slickgrid"],
+    "homepage": "https://github.com/mleibman/SlickGrid",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Michael Leibman",
+            "email": "michael.leibman@gmail.com",
+            "homepage": "https://github.com/mleibman"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0"
+    }
+}
