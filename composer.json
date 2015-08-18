@@ -1,8 +1,8 @@
 {
-    "name": "mleibman/SlickGrid",
+    "name": "codexp/SlickGrid",
     "description": "SlickGrid is an advanced JavaScript grid/spreadsheet component",
     "keywords": ["slickgrid"],
-    "homepage": "https://github.com/mleibman/SlickGrid",
+    "homepage": "https://github.com/codexp/SlickGrid",
     "type": "library",
     "authors": [
         {
