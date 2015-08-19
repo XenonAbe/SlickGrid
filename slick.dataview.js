@@ -7,7 +7,8 @@
                     Avg: AvgAggregator,
                     Min: MinAggregator,
                     Max: MaxAggregator,
-                    Sum: SumAggregator
+                    Sum: SumAggregator,
+                    UniqueString: UniqueStringAggregator
                 }
             }
         }
@@ -992,6 +993,43 @@
             "onRowsChanged": onRowsChanged,
             "onPagingInfoChanged": onPagingInfoChanged
         });
+    }
+
+    function UniqueStringAggregator(field) {
+        this.field_ = field;
+
+        this.init = init;
+        this.accumulate = accumulate;
+        this.storeResult = storeResult;
+
+        function init() {
+            this.stringField_ = null;
+            this.shortCircuit_ = false;
+        }
+
+        function accumulate(item) {
+            if (this.shortCircuit_) {
+                return;
+            }
+
+            var value = item[this.field_];
+            if (value !== null && value !== undefined) {
+                if (!this.stringField_) {
+                    this.stringField_ = value;
+                }
+
+                if (this.stringField_ !== value) {
+                    this.stringField_ = '';
+                    this.shortCircuit_ = true;
+                    return;
+                }
+            }
+        }
+
+        function storeResult(groupTotals) {
+            groupTotals.uniqueString = groupTotals.uniqueString || {};
+            groupTotals.uniqueString[this.field_] = this.stringField_;
+        }
     }
 
     function AvgAggregator(field) {
