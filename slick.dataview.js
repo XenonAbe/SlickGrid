@@ -148,6 +148,10 @@
       refreshHints = hints;
     }
 
+    function getRefreshHints() {
+      return refreshHints;
+    }
+
     function getFilterArgs() {
       return filterArgs;
     }
@@ -561,10 +565,14 @@
     function setFilter(filterFn) {
       filter = filterFn;
       if (options.inlineFilters) {
-        compiledFilter = compileFilter();
-        compiledFilterWithCaching = compileFilterWithCaching();
+        compiledFilter = compileFilter(filter);
+        compiledFilterWithCaching = compileFilterWithCaching(filter);
       }
       refresh();
+    }
+
+    function getFilter() {
+      return filter;
     }
 
     function getGrouping() {
@@ -838,19 +846,18 @@
     }
 
     /**
-     * @param varArgs Either a Slick.Group's "groupingKey" property, or a
+     * @param groupingValue {vararg} Either a Slick.Group's "groupingKey" property, or a
      *     variable argument list of grouping values denoting a unique path to the row.
      *     For example, calling isGroupCollapsed('high', '10%') will return whether the
      *     '10%' subgroup of the 'high' setGrouping is collapsed.
      */
     function isGroupCollapsed(groupingValue) {
       var args = Array.prototype.slice.call(arguments);
-      var arg0 = args[0];
       var level;
       var groupingKey;
-      if (args.length === 1 && arg0.indexOf(groupingDelimiter) !== -1) {
-        level = arg0.split(groupingDelimiter).length - 1;
-        groupingKey = arg0;
+      if (args.length === 1 && groupingValue.indexOf(groupingDelimiter) !== -1) {
+        level = groupingValue.split(groupingDelimiter).length - 1;
+        groupingKey = groupingValue;
       } else {
         level = args.length - 1;
         groupingKey = args.join(groupingDelimiter);
@@ -859,16 +866,15 @@
     }
 
     /**
-     * @param varArgs Either a Slick.Group's "groupingKey" property, or a
+     * @param groupingValue {vararg} Either a Slick.Group's "groupingKey" property, or a
      *     variable argument list of grouping values denoting a unique path to the row.  For
      *     example, calling collapseGroup('high', '10%') will collapse the '10%' subgroup of
      *     the 'high' group.
      */
-    function collapseGroup(varArgs) {
+    function collapseGroup(groupingValue) {
       var args = Array.prototype.slice.call(arguments);
-      var arg0 = args[0];
-      if (args.length === 1 && arg0.indexOf(groupingDelimiter) !== -1) {
-        expandCollapseGroup(arg0.split(groupingDelimiter).length - 1, arg0, true);
+      if (args.length === 1 && groupingValue.indexOf(groupingDelimiter) !== -1) {
+        expandCollapseGroup(groupingValue.split(groupingDelimiter).length - 1, groupingValue, true);
       } else {
         expandCollapseGroup(args.length - 1, args.join(groupingDelimiter), true);
       }
@@ -1070,17 +1076,17 @@
       var accumulatorInfo = getFunctionInfo(aggregator.accumulate);
       var fn = new Function(
           "_items",
-          "for (var " + accumulatorInfo.params[0] + ", _i=0, _il=_items.length; _i<_il; _i++) {" +
-              accumulatorInfo.params[0] + " = _items[_i]; " +
-              accumulatorInfo.body +
-          "}"
+          ["for (var " + accumulatorInfo.params[0] + ", _i = 0, _il = _items.length; _i < _il; _i++) {",
+              accumulatorInfo.params[0] + " = _items[_i];",
+              accumulatorInfo.body,
+          "}"].join("\n")
       );
       // fn.displayName = fn.name = "compiledAccumulatorLoop";   <-- disabled due to issue #1032
       return fn;
     }
 
-    function compileFilter() {
-      var filterInfo = getFunctionInfo(filter);
+    function compileFilter(filterFn) {
+      var filterInfo = getFunctionInfo(filterFn);
 
       var filterPath1 = "{ continue _coreloop; }$1";
       var filterPath2 = "{ _retval[_idx++] = $item$; continue _coreloop; }$1";
@@ -1096,17 +1102,17 @@
       // This preserves the function template code after JS compression,
       // so that replace() commands still work as expected.
       var tpl = [
-        //"function(_items, _args) { ",
-        "var _retval = [], _idx = 0; ",
-        "var $item$, $args$ = _args; ",
-        "_coreloop: ",
-        "for (var _i = 0, _il = _items.length; _i < _il; _i++) { ",
-        "$item$ = _items[_i]; ",
-        "$filter$; ",
-        "} ",
-        "return _retval; "
+        //"function(_items, _args) {",
+        "var _retval = [], _idx = 0;",
+        "var $item$, $args$ = _args;",
+        "_coreloop:",
+        "for (var _i = 0, _il = _items.length; _i < _il; _i++) {",
+        "  $item$ = _items[_i];",
+        "  $filter$;",
+        "}",
+        "return _retval;"
         //"}"
-      ].join("");
+      ].join("\n");
       tpl = tpl.replace(/\$filter\$/gi, filterBody);
       tpl = tpl.replace(/\$item\$/gi, filterInfo.params[0]);
       tpl = tpl.replace(/\$args\$/gi, filterInfo.params[1]);
@@ -1116,8 +1122,8 @@
       return fn;
     }
 
-    function compileFilterWithCaching() {
-      var filterInfo = getFunctionInfo(filter);
+    function compileFilterWithCaching(filterFn) {
+      var filterInfo = getFunctionInfo(filterFn);
 
       var filterPath1 = "{ continue _coreloop; }$1";
       var filterPath2 = "{ _cache[_i] = true;_retval[_idx++] = $item$; continue _coreloop; }$1";
@@ -1133,21 +1139,21 @@
       // This preserves the function template code after JS compression,
       // so that replace() commands still work as expected.
       var tpl = [
-        //"function(_items, _args, _cache) { ",
-        "var _retval = [], _idx = 0; ",
-        "var $item$, $args$ = _args; ",
-        "_coreloop: ",
-        "for (var _i = 0, _il = _items.length; _i < _il; _i++) { ",
-        "$item$ = _items[_i]; ",
-        "if (_cache[_i]) { ",
-        "_retval[_idx++] = $item$; ",
-        "continue _coreloop; ",
-        "} ",
-        "$filter$; ",
-        "} ",
-        "return _retval; "
+        //"function(_items, _args, _cache) {",
+        "var _retval = [], _idx = 0;",
+        "var $item$, $args$ = _args;",
+        "_coreloop:",
+        "for (var _i = 0, _il = _items.length; _i < _il; _i++) {",
+        "  $item$ = _items[_i];",
+        "  if (_cache[_i]) {",
+        "    _retval[_idx++] = $item$;",
+        "    continue _coreloop;",
+        "  }",
+        "  $filter$;",
+        "}",
+        "return _retval;"
         //"}"
-      ].join("");
+      ].join("\n");
       tpl = tpl.replace(/\$filter\$/gi, filterBody);
       tpl = tpl.replace(/\$item\$/gi, filterInfo.params[0]);
       tpl = tpl.replace(/\$args\$/gi, filterInfo.params[1]);
@@ -1185,7 +1191,7 @@
       return retval;
     }
 
-    function getFilteredAndPagedItems(items) {
+    function getFilteredAndPagedItems() {
       if (filter) {
         var batchFilter = options.inlineFilters ? compiledFilter : uncompiledFilter;
         var batchFilterWithCaching = options.inlineFilters ? compiledFilterWithCaching : uncompiledFilterWithCaching;
@@ -1217,7 +1223,9 @@
 
       return {
         totalRows: filteredItems.length, 
-        rows: paged
+        rows: paged,
+        filteredRows: filteredItems
+        pagedRows: paged,
       };
     }
 
@@ -1260,7 +1268,7 @@
       return diff;
     }
 
-    function recalc(_items) {
+    function recalc() {
       rowsById = null;
 
       if (refreshHints.isFilterNarrowing != prevRefreshHints.isFilterNarrowing ||
@@ -1268,7 +1276,7 @@
         filterCache = [];
       }
 
-      var filteredItems = getFilteredAndPagedItems(_items);
+      var filteredItems = getFilteredAndPagedItems();
       totalRows = filteredItems.totalRows;
       var newRows = filteredItems.rows;
 
@@ -1296,13 +1304,13 @@
       var countBefore = rows.length;
       var totalRowsBefore = totalRows;
 
-      var diff = recalc(items); // pass as direct refs to avoid closure perf hit
+      var diff = recalc(); // pass as direct refs to avoid closure perf hit
 
       // If the current page is no longer valid, go to last page and recalc.
       // We suffer a performance penalty here, but the main loop (recalc) remains highly optimized.
       if (pagesize && pagenum && totalRows < pagenum * pagesize) {
         pagenum = Math.max(0, Math.ceil(totalRows / pagesize) - 1);
-        diff = recalc(items);
+        diff = recalc();
       }
 
       updated = null;
@@ -1454,8 +1462,10 @@
       "setPagingOptions": setPagingOptions,
       "getPagingInfo": getPagingInfo,
       "getItems": getItems,
+      "getFilteredAndPagedItems": getFilteredAndPagedItems,
       "setItems": setItems,
       "setFilter": setFilter,
+      "getFilter": getFilter,
       "getDefaultSortComparator": getDefaultSortComparator,
       "getOptions": getOptions,
       "sort": sort,
@@ -1477,6 +1487,7 @@
       "mapRowsToIds": mapRowsToIds,
       "mapIdsToRows": mapIdsToRows,
       "setRefreshHints": setRefreshHints,
+      "getRefreshHints": getRefreshHints,
       "getFilterArgs": getFilterArgs,
       "setFilterArgs": setFilterArgs,
       "refresh": refresh,
