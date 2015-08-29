@@ -677,10 +677,38 @@
     }
 
     function updateItem(id, item) {
-      if (idxById[id] === undefined || id !== item[idProperty]) {
-        throw new Error("Invalid or non-matching id");
+      // see also https://github.com/mleibman/SlickGrid/issues/1082
+      if (idxById[id] === undefined) {
+        throw new Error("Invalid id");
+      }
+      // What if the specified item also has an updated idProperty?
+      // Then we'll have to update the index as well, and possibly
+      // the `updated` cache too.
+      if (id !== item[idProperty]) {
+        // make sure the new id is unique:
+        var newId = item[idProperty];
+        if (newId == null) {
+          throw new Error("Cannot update item to associate with a null id");
+        }
+        if (idxById[newId] !== undefined) {
+          throw new Error("Cannot update item to associate with a non-unique id");
+        }
+        idxById[newId] = idxById[id];
+        delete idxById[id];
+
+        // Also update the `updated` hashtable/markercache? Yes, `recalc()` inside `refresh()` needs that one!
+        if (updated && updated[id]) {
+          delete updated[id];
+        }
+
+        // Also update the row indexes? Nah, `refresh()` blows away the `rowsById[]` cache!
+
+        id = newId;
       }
       items[idxById[id]] = item;
+
+      // Also update the rows? Nah, `refresh()` blows away the `rows[]` cache and recalculates it via `recalc()`!
+
       if (!updated) {
         updated = {};
       }
