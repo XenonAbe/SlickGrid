@@ -263,7 +263,8 @@ if (typeof Slick === "undefined") {
       addNewRowCssClass: "new-row",
       editCommandHandler: null,
       clearCellBeforeEdit: true,
-      createCssRulesCallback: null
+      createCssRulesCallback: null,
+      skipPaging: false                 // Reveal one hidden row at a time instead of an entirely new page on keypress
     };
 
     var columnDefaults = {
@@ -535,7 +536,7 @@ if (typeof Slick === "undefined") {
       setViewportWidth();
       var rv = updateCanvasWidth();    // note that this call MUST NOT fire the onCanvasChanged event!
 
-      $focusSink2 = $focusSink.clone().appendTo($container);
+      $focusSink2 = $focusSink.clone().appendTo($container); // after the grid, in tab index order.
 
       if (!options.explicitInitialization) {
         rv &= finishInitializationUntilDone();
@@ -595,6 +596,7 @@ if (typeof Slick === "undefined") {
         createCssRules();
         cacheRowPositions();
         resizeCanvas();
+        updateAntiscroll();
         bindAncestorScrollEvents();
 
         $container
@@ -1908,6 +1910,7 @@ if (typeof Slick === "undefined") {
       return dimensions;
     }
 
+    // Given an element, return the sum of vertical paddings and borders on that element.
     function getVBoxDelta($el) {
       var h = $el.height();         // jQuery: content only
       var oh = $el.outerHeight();   // jQuery: content + padding + border, excluding margin
@@ -2204,6 +2207,7 @@ if (typeof Slick === "undefined") {
       removeCssRules();
 
       $canvas.unbind();
+
       $container
           .empty()
           .removeClass("slickgrid-container ui-widget " + uid)
@@ -2216,7 +2220,7 @@ if (typeof Slick === "undefined") {
       $footerRowScroller.unbind();
       $focusSink.unbind();
       $focusSink2.unbind();
-
+      $container.empty();
       $headerScroller = undefined;
       $headers = undefined;
       $headerRowScroller = undefined;
@@ -2286,6 +2290,20 @@ if (typeof Slick === "undefined") {
 
     function getColumnIndex(id) {
       return columnsById[id];
+    }
+
+    // Given an x and a y coord, return the index of the column
+    function getColumnIndexFromEvent(evt) {
+      var nearestEl = document.elementFromPoint(evt.clientX, evt.clientY);
+      var headerEl = $(nearestEl).closest('.cell');
+      if (!headerEl.length) {
+        return null;
+      }
+      return getCellFromNode(headerEl[0]);
+    }
+
+    function getColumnFromEvent(evt) {
+      return columns[getColumnIndexFromEvent(evt)];
     }
 
     function autosizeColumns() {
@@ -6739,8 +6757,8 @@ out:
       };
     }
 
+    // Given a cell element, read column number from .l<columnNumber> CSS class
     function getCellFromNode(cellNode) {
-      // read column number from .l<columnNumber> CSS class
       var cls = / l(\d+) /.exec(" " + cellNode.className + " ");
       if (!cls) {
         assert(0, "getCellFromNode: cannot get cell - " + cellNode.className);
@@ -6749,6 +6767,7 @@ out:
       return +cls[1];
     }
 
+    // Given a dom element for a row, find out which row index it belongs to
     function getRowFromNode(rowNode) {
       assert(rowNode);
       var rws = / slick-row-(\d+) /.exec(" " + rowNode.className + " ");
@@ -8285,7 +8304,7 @@ if (0) {
         activePosY = pos.posY;
         activePosX = pos.posX;
         var isAddNewRow = (pos.row === getDataLength());
-        scrollCellIntoView(pos.row, pos.cell, !isAddNewRow);
+        scrollCellIntoView(pos.row, pos.cell, (options.skipPaging ? false : !isAddNewRow));
         node = getCellNode(pos.row, pos.cell, true);
         assert(node);
         setActiveCellInternal(node, {
@@ -8576,9 +8595,43 @@ if (0) {
       }
     }
 
+    function isGroupNode(row, cell) {
+      return $(getCellNode(row, cell))
+        .parents('.slick-group')
+        .length > 0;
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Debug
+
+    this.getStateInfo = function () { 
+        return {
+          rowsCache: rowsCache, // Super important object, responsible for the present rendered dom of the rows
+          uiRegions: {
+            topViewport: topViewport,
+            topCanvas: topCanvas,
+            header: header,
+            subHeader: subHeader,
+            contentViewportWrap: contentViewportWrap,
+            contentViewport: contentViewport,
+            contentCanvas: contentCanvas,
+            rows: rows
+          },
+          colInfo: {
+            columnPosLeft:  columnPosLeft,
+            columnPosRight: columnPosRight
+          },
+          scrollInfo: {
+            visibleRange:  getVisibleRange(),
+            renderedRange: getRenderedRange(),
+            offset: offset,
+            scrollTop: scrollTop,
+            lastRenderedScrollTop: lastRenderedScrollTop,
+            lastRenderedScrollLeft: lastRenderedScrollLeft,
+            numVisibleRows: numVisibleRows
+          }
+        } 
+    };
 
     //
     // --STRIP-THIS-CODE--START--
@@ -8685,6 +8738,8 @@ if (0) {
       "getId": getId,
       "getColumnsInfo": getColumnsInfo,
       "getColumns": getColumns,
+      "getColumnIndexFromEvent": getColumnIndexFromEvent,
+      "getColumnFromEvent": getColumnFromEvent,
       "setColumns": setColumns,
       "updateColumnWidths": updateColumnWidths,
       "getLeafColumns": getLeafColumns,

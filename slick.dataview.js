@@ -166,7 +166,7 @@
       for (var i = startingIndex, l = items.length; i < l; i++) {
         id = items[i][idProperty];
         if (id === undefined) {
-          throw new Error("Each data element must implement a unique 'id' property");
+          throw new Error("Each data element must implement a unique 'id' property, it can't be undefined.");
         }
         idxById[id] = i;
       }
@@ -177,7 +177,7 @@
       for (var i = 0, l = items.length; i < l; i++) {
         id = items[i][idProperty];
         if (id === undefined || idxById[id] !== i) {
-          throw new Error("Each data element must implement a unique 'id' property");
+          throw new Error("Each data element must implement a unique 'id' property. `"+ id +"` is not unique.");
         }
       }
     }
@@ -1454,6 +1454,10 @@
       return options;
     }
 
+    function getFilteredItems () {
+      return filteredItems;
+    }
+
     $.extend(this, {
       // methods
       "beginUpdate": beginUpdate,
@@ -1463,6 +1467,7 @@
       "getPagingInfo": getPagingInfo,
       "getItems": getItems,
       "getFilteredAndPagedItems": getFilteredAndPagedItems,
+      "getFilteredItems": getFilteredItems,
       "setItems": setItems,
       "setFilter": setFilter,
       "getFilter": getFilter,
