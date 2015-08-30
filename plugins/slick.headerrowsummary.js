@@ -1,9 +1,9 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "Plugins": {
-        "HeaderRowSummary": HeaderRowSummary
+    Slick: {
+      Plugins: {
+        HeaderRowSummary: HeaderRowSummary
       }
     }
   });

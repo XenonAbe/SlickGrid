@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "ClipboardCopyManager": ClipboardCopyManager
+    Slick: {
+      ClipboardCopyManager: ClipboardCopyManager
     }
   });
 

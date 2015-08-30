@@ -1,8 +1,8 @@
 (function ($) {
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "CellExternalCopyManager": CellExternalCopyManager
+    Slick: {
+      CellExternalCopyManager: CellExternalCopyManager
     }
   });
 
@@ -14,7 +14,7 @@
 
       Since it is not possible to access directly the clipboard in javascript, the plugin uses
       a trick to do it's job. After detecting the keystroke, we dynamically create a textarea
-      where the browser copies/pastes the serialized data. 
+      where the browser copies/pastes the serialized data.
 
       options:
         copiedCellStyle : sets the css className used for copied cells. default : "copy-manager"
@@ -57,7 +57,7 @@
     }
 
 
-    function _createTextBox(innerText){
+    function _createTextBox(innerText) {
       var ta = document.createElement('textarea');
       ta.style.position = 'absolute';
       ta.style.left = '-1000px';
@@ -69,35 +69,40 @@
 
       return ta;
     }
-    function _decodeTabularData(_grid, ta){
+
+    function _decodeTabularData(_grid, ta) {
       var columns = _grid.getColumns();
       var clipText = ta.value;
       var clipRows = clipText.split("\r\n"); 
-     var clippeds = [];
+      var clippeds = [];
 
       document.body.removeChild(ta);
 
-      for (var i=0; i<clipRows.length; i++) {
-        if (clipRows[i]!="") // get rid of the last ""
+      for (var i = 0; i < clipRows.length; i++) {
+        if (clipRows[i] != "") {    
+          // get rid of the last ""
           clippeds[i] = clipRows[i].split(String.fromCharCode(9)); //  "\t" 
+        }
       }
 
       var selectedCell = _grid.getActiveCell();
-      var activeRow = selectedCell.row + pageSize*pageNum;// getActiveCell.row starts from 0  for each page.
+      var activeRow = selectedCell.row + pageSize * pageNum;     // getActiveCell.row starts from 0 for each page.
       var activeCell = selectedCell.cell;
       var desty = activeRow;
       var destx = activeCell;
 
       var data = _grid.getData().getItems();  
 
-      for (var y = 0; y < clippeds.length; y++){
-        for (var x = 0; x < clippeds[y].length; x++){
-            var desty = activeRow + y;
+      for (var y = 0; y < clippeds.length; y++) {
+        for (var x = 0; x < clippeds[y].length; x++) {
+          var desty = activeRow + y;
           var destx = activeCell + x;
-            if (desty < data.length && destx < grid.getColumns().length ) { 
-                data[desty][columns[destx].field] = clippeds[y][x];
-            if ( data[desty].hasOwnProperty('id')) 
-              changedIds.push(data[desty].id);// record changed id used by saving function
+
+          if (desty < data.length && destx < grid.getColumns().length) { 
+            data[desty][columns[destx].field] = clippeds[y][x];
+            if (data[desty].hasOwnProperty('id')) {
+              changedIds.push(data[desty].id);      // record changed id used by saving function
+            }
           }
         }
       }
@@ -129,27 +134,27 @@
             _self.onCopyCells.notify({ranges: ranges});
 
             var columns = _grid.getColumns();
-            var clipText = "" ;
-            for (var rg = 0; rg < ranges.length; rg++){
-                var range = ranges[rg];
-                for (var i=range.fromRow; i< range.toRow+1 ; i++){
-                    var dt = _grid.getDataItem(i);
-                    for (var j=range.fromCell; j< range.toCell+1 ; j++){
-                          if (j==range.fromCell) 
-                            clipText = clipText.concat(getDataItemValueForColumn(dt, columns[j]));
-                          else 
-                          clipText = clipText.concat("\t",getDataItemValueForColumn(dt, columns[j]));
-                    }
-                    clipText = clipText.concat("\r\n");
+            var clipText = "";
+            for (var rg = 0; rg < ranges.length; rg++) {
+              var range = ranges[rg];
+              for (var i = range.fromRow; i < range.toRow + 1; i++) {
+                var dt = _grid.getDataItem(i);
+                for (var j = range.fromCell; j < range.toCell + 1; j++) {
+                  if (j == range.fromCell) {
+                    clipText = clipText.concat(getDataItemValueForColumn(dt, columns[j]));
+                  } else {
+                    clipText = clipText.concat("\t", getDataItemValueForColumn(dt, columns[j]));
+                  }
                 }
+                clipText = clipText.concat("\r\n");
+              }
             }
 
             var ta = _createTextBox(clipText);
 
-
             $(ta).select();
-            setTimeout(function(){
-                document.body.removeChild(ta);
+            setTimeout(function () {
+              document.body.removeChild(ta);
             }, 100);
 
             return false;
@@ -157,13 +162,13 @@
         }
 
         if (e.which == keyCodes.V && (e.ctrlKey || e.metaKey)) {    // CTRL + V
-            var ta = _createTextBox(''); 
+          var ta = _createTextBox(''); 
 
-            setTimeout(function(){ 
-                _decodeTabularData(_grid, ta);
-            }, 100);
+          setTimeout(function () { 
+            _decodeTabularData(_grid, ta);
+          }, 100);
 
-            return false;
+          return false;
         }
       }
     }

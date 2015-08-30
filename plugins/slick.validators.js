@@ -61,8 +61,8 @@
 
   // register namespace
   $.extend(true, window, {
-    "Slick": {
-      "Validators": $.extend(true, regexExports, {
+    Slick: {
+      Validators: $.extend(true, regexExports, {
         "defaults": defaults,
         "RequiredValidator": RequiredValidator,
         "required": required,
