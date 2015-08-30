@@ -1,3 +1,15 @@
+/**
+ * @license
+ * (c) 2009-2015 Michael Leibman
+ * michael{dot}leibman{at}gmail{dot}com
+ * http://github.com/mleibman/slickgrid
+ *
+ * Distributed under MIT license.
+ * All rights reserved.
+ *
+ * SlickGrid v2.3.15
+ */
+
 (function ($) {
   $.extend(true, window, {
     Slick: {

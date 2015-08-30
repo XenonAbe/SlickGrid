@@ -1,11 +1,10 @@
 {
   "name": "SlickGrid",
-  "version": "2.3.2",
-  "homepage": "https://github.com/SimpleAsCouldBe/SlickGrid",
+  "homepage": "https://github.com/GerHobbelt/SlickGrid",
   "authors": [
     "Eric Miller <eric@simpleascouldbe.com>"
   ],
-  "description": "Slickgrid with an extra method for fast, surgical column sizing.",
+  "description": "Slickgrid with various enhancements.",
   "moduleType": [
     "globals"
   ],
