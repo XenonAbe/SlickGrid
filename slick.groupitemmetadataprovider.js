@@ -79,7 +79,6 @@
       info.attributes["data-group-level"] = level;
     }
 
-
     function init(grid) {
       _grid = grid;
       _grid.onClick.subscribe(handleGridClick);
@@ -96,7 +95,6 @@
     function getOptions() {
       return options;
     }
-
 
     function handleGridClick(e, args) {
       var item = this.getDataItem(args.row);
