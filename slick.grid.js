@@ -7,7 +7,7 @@
  * Distributed under MIT license.
  * All rights reserved.
  *
- * SlickGrid v2.3.15
+ * SlickGrid v2.3.18-alpha.1009
  *
  * NOTES:
  *     Cell/row DOM manipulations are done directly bypassing jQuery's DOM manipulation methods.
@@ -85,7 +85,7 @@ if (typeof Slick === "undefined") {
    * @param {Array}             columns     An array of column definitions.
    * @param {Object}            options     Grid options.
    *
-   * [KCPT] SlickGrid 2.1
+   *
    *  data: Array of data items or an object which implements the data-access functions
    *    {Array} of data items, each item has the following:
    *      id:                 {String}    A unique ID for the item
@@ -204,7 +204,7 @@ if (typeof Slick === "undefined") {
    *                                      deferring rendering until default scroll thresholds are met (asyncRenderDelay).
    *      asyncRenderDelay:   {Number}    Delay passed to setTimeout in milliseconds before view update is actually rendered.
    *      addNewRowCssClass:  {String}    specifies CSS class for the extra bottom row: "add new row"
-   * [/KCPT]
+   *
    **/
   function SlickGrid(container, data, columnDefinitions, options) {
     // settings
@@ -8671,7 +8671,7 @@ if (0) {
     // Public API
 
     __extend(this, {
-      "slickGridVersion": "2.2.2",
+      "slickGridVersion": "2.3.18-alpha.1009",
 
       // Events
       "onScroll": new Slick.Event(),

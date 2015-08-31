@@ -1,6 +1,6 @@
 {
   "name": "SlickGrid",
-  "version": "2.3.15",
+  "version": "2.3.18-alpha.1010",
   "homepage": "https://github.com/GerHobbelt/SlickGrid",
   "authors": [
     "Eric Miller <eric@simpleascouldbe.com>"
@@ -39,6 +39,7 @@
     "grunt-jsdoc": "^0.6.7",
     "grunt-rewrite": "^1.0.1",
     "grunt-sed": ">=0.1.1",
+    "grunt-version-bump": "^1.0.5",
     "load-grunt-tasks": ">=3.2.0"
   }
 }

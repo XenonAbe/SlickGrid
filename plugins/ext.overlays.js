@@ -1,4 +1,4 @@
-﻿(function ($) {
+(function ($) {
     $.extend(true, window, {
         Ext: {
             Plugins: {

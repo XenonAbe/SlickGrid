@@ -7,7 +7,7 @@
  * Distributed under MIT license.
  * All rights reserved.
  *
- * SlickGrid v2.3.15
+ * SlickGrid v2.3.18-alpha.1009
  */
 
 (function ($) {

@@ -39,6 +39,24 @@ module.exports = function (grunt) {
       dist: 'dist'
     },
 
+    version_bump: {
+      files: ['package.json']
+    },
+
+    rewrite: {
+      JS: {
+        src: ['*.js', 'controls/*.js', 'plugins/*.js'],
+        editor: function (contents, filePath) {
+          var v = grunt.config.get('pkg.version');
+          //console.log('rewrite in place: ', filePath, v);
+          var rv = contents
+          .replace(/(slickGridVersion[^\d]+)([\d]+\.[\d.]+(?:[-.][a-zA-Z\d]+)*)/g, '$1' + v)
+          .replace(/(SlickGrid)\s+v?([\d]+\.[\d.]+(?:[-.][a-zA-Z\d]+)*)/g, '$1 v' + v);
+          return rv;
+        }
+      }
+    },
+
     jshint: {
       options: {
         jshintrc: '.jshintrc'
@@ -221,6 +239,8 @@ module.exports = function (grunt) {
   require('load-grunt-tasks')(grunt, {scope: 'devDependencies'});
   grunt.loadNpmTasks('assemble-less');
   grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-version-bump');
+  grunt.loadNpmTasks('grunt-rewrite');
 
   // Preparation task: synchronize the libraries (lib/*) from the submodules.
   grunt.registerTask('libsync', ['copy:libsync']);
@@ -239,6 +259,9 @@ module.exports = function (grunt) {
 
   // Full distribution task.
   grunt.registerTask('dist', ['dist-css']);
+
+  // Bump the version and update all files accordingly.
+  grunt.registerTask('bump', ['version_bump', 'rewrite']);
 
   // Default task.
   grunt.registerTask('default', ['test', 'dist']);
