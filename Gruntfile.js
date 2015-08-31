@@ -28,14 +28,16 @@ module.exports = function (grunt) {
               ' *\n' + 
               ' * Distributed under <%= pkg.license %> license.\n' + 
               ' * All rights reserved.\n' + 
-              ' */\n',
+              ' */\n' +
+              '\n',
     bannerDocs: '/*!\n' +
               ' * slickGrid Docs (<%= pkg.homepage %>)\n' +
               ' * Copyright 2009-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' +
               ' *\n' + 
               ' * Distributed under <%= pkg.license %> license.\n' + 
               ' * All rights reserved.\n' + 
-              ' */\n',
+              ' */\n' +
+              '\n',
     jqueryCheck: 'if (typeof jQuery === \'undefined\') { throw new Error(\'slickGrid requires jQuery\') }\n\n',
 
     // Task configuration.
@@ -45,6 +47,28 @@ module.exports = function (grunt) {
 
     version_bump: {
       files: ['package.json']
+    },
+  
+    concat: {
+      options: {
+        stripBanners: false,
+        banner: '<%= banner %>\n\n',
+        // Replace all 'use strict' statements in the code with a single one at the top (in the prelude)
+        process: function(src, filepath) {
+          return '//! Source: ' + filepath + '\n\n' +
+            (!filepath.match(/\.prelude$/) ?
+              src.replace(/(^|\n)[ \t]*('use strict'|"use strict");?[ \t]*/g, '$1') :
+              src);
+        },
+      },
+      formatters: {
+        src: ['formatters/*.js.prelude', 'formatters/*.js', 'formatters/*.js.postlude'],
+        dest: 'slick.formatters.js',
+      },
+      editors: {
+        src: ['editors/*.js.prelude', 'editors/*.js', 'editors/*.js.postlude'],
+        dest: 'slick.editors.js',
+      },
     },
 
     rewrite: {
@@ -171,7 +195,7 @@ module.exports = function (grunt) {
         files: {
           src: [
             'slick.grid.css',
-            'slick-default-theme.css'
+            'slick-default-theme.css',
           ]
         }
       }
@@ -243,6 +267,7 @@ module.exports = function (grunt) {
   require('load-grunt-tasks')(grunt, {scope: 'devDependencies'});
   grunt.loadNpmTasks('assemble-less');
   grunt.loadNpmTasks('grunt-contrib-copy');
+  grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-version-bump');
   grunt.loadNpmTasks('grunt-rewrite');
 

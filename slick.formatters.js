@@ -1,4 +1,15 @@
-/*jshint -W041*/  // Use '===' to compare with 'null'. (W041)
+/*!
+ * @license
+ * slickGrid v2.3.18-alpha.1010 (https://github.com/GerHobbelt/SlickGrid)
+ * Copyright 2009-2015 Michael Leibman <michael{dot}leibman{at}gmail{dot}com>
+ *
+ * Distributed under MIT license.
+ * All rights reserved.
+ */
+
+
+
+//! Source: formatters/slick.formatters.js.prelude
 
 /***
  * Contains basic SlickGrid formatters.
@@ -10,27 +21,24 @@
  * @namespace Slick
  */
 
+(function (window, $) {
+  "use strict";
 
-(function ($) {
   // register namespace
   $.extend(true, window, {
     Slick: {
       Formatters: {
-        Text: TextFormatter,
-        PercentComplete: PercentCompleteFormatter,
-        PercentCompleteBar: PercentCompleteBarFormatter,
-        YesNo: YesNoFormatter,
-        Checkmark: CheckmarkFormatter,
-        Color: ColorFormatter,
-        BackColor: BackColorFormatter,
-        Chain: Chain,
-        Concatenator: Concatenator,
-        ReferenceValue: ReferenceValueFormatter,
-        Link: LinkFormatter,
-        Date: DateFormatter
       }
     }
   });
+
+  var Slick = window.Slick;
+
+
+//! Source: formatters/slick.formatters.001.PercentComplete.js
+
+  // register namespace
+  Slick.Formatters.PercentComplete = PercentCompleteFormatter;
 
   function PercentCompleteFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
     assert(cellMetaInfo);
@@ -50,6 +58,11 @@
       return "<span style='color:green'>" + value + "%</span>";
     }
   }
+
+//! Source: formatters/slick.formatters.002.PercentCompleteBar.js
+
+  // register namespace
+  Slick.Formatters.PercentCompleteBar = PercentCompleteBarFormatter;
 
   function PercentCompleteBarFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
     if (value == null || value === "") {
@@ -74,6 +87,11 @@
     return "<span class='percent-complete-bar' style='background:" + color + ";width:" + value + "%'></span>";
   }
 
+//! Source: formatters/slick.formatters.003.YesNo.js
+
+  // register namespace
+  Slick.Formatters.YesNo = YesNoFormatter;
+
   function YesNoFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
     assert(cellMetaInfo);
     if (cellMetaInfo.outputPlainText) {
@@ -82,6 +100,12 @@
 
     return value ? "Yes" : "No";
   }
+
+
+//! Source: formatters/slick.formatters.004.Checkmark.js
+
+  // register namespace
+  Slick.Formatters.Checkmark = CheckmarkFormatter;
 
   function CheckmarkFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
     assert(cellMetaInfo);
@@ -92,6 +116,12 @@
     return value ? "<img src='../images/tick.png'>" : "";
   }
 
+
+//! Source: formatters/slick.formatters.005.Color.js
+
+  // register namespace
+  Slick.Formatters.Color = ColorFormatter;
+
   function ColorFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
     assert(cellMetaInfo);
     if (cellMetaInfo.outputPlainText) {
@@ -100,6 +130,12 @@
 
     return "<span style='color:" + value  + "'>" + value + "</span>";
   }
+
+
+//! Source: formatters/slick.formatters.006.BackColor.js
+
+  // register namespace
+  Slick.Formatters.BackColor = BackColorFormatter;
 
   function BackColorFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
     assert(cellMetaInfo);
@@ -111,6 +147,12 @@
     cellMetaInfo.cellStyles.push("background:" + value);
     return "<span style='color:black; padding-left: 1px; padding-right: 1px; background-color: rgba(255, 255, 255, 0.4); text-shadow: 1px 1px 3px white; -webkit-box-shadow: 0px 0px 3px 1px rgba(255, 255, 255, 0.4); box-shadow: 0px 0px 3px 1px rgba(255, 255, 255, 0.4);'>" + value + "</span>";
   }
+
+
+//! Source: formatters/slick.formatters.007.Text.js
+
+  // register namespace
+  Slick.Formatters.Text = TextFormatter;
 
   // identical to the SlickGrid internal defaultFormatter except this one wraps the value in a SPAN tag.
   function TextFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
@@ -126,6 +168,12 @@
       return "<span>" + value + "</span>";
     }
   }
+
+
+//! Source: formatters/slick.formatters.008.ReferenceValue.js
+
+  // register namespace
+  Slick.Formatters.ReferenceValue = ReferenceValueFormatter;
 
   function ReferenceValueFormatter(row, cell, value, columnDef, rowDataItem, cellMetaInfo) {
     assert(cellMetaInfo);
@@ -154,6 +202,12 @@
     }
     return value;
   }
+
+
+//! Source: formatters/slick.formatters.009.Date.js
+
+  // register namespace
+  Slick.Formatters.Date = DateFormatter;
 
   /*
    *  depends on Moment.js
@@ -186,6 +240,12 @@
     }
   }
 
+
+//! Source: formatters/slick.formatters.010.Chain.js
+
+  // register namespace
+  Slick.Formatters.Chain = Chain;
+
   /*
    *  utility for chaining formatters
    */
@@ -200,6 +260,12 @@
       return val;
     };
   }
+
+
+//! Source: formatters/slick.formatters.011.Link.js
+
+  // register namespace
+  Slick.Formatters.Link = LinkFormatter;
 
   /*
    * Presents data as href by substituting
@@ -229,6 +295,12 @@
     };
   }
 
+
+//! Source: formatters/slick.formatters.012.Concatenator.js
+
+  // register namespace
+  Slick.Formatters.Concatenator = Concatenator;
+
   function Concatenator(fields, separator) {
     if (typeof separator === 'undefined') {
       separator = ' ';
@@ -251,4 +323,7 @@
     };
   }
 
-})(jQuery);
+
+//! Source: formatters/slick.formatters.js.postlude
+
+})(window, jQuery);

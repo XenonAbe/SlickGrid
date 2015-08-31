@@ -1,9 +1,24 @@
-/*jshint -W041*/  // Use '===' to compare with 'null'. (W041)
+/*!
+ * @license
+ * slickGrid v2.3.18-alpha.1010 (https://github.com/GerHobbelt/SlickGrid)
+ * Copyright 2009-2015 Michael Leibman <michael{dot}leibman{at}gmail{dot}com>
+ *
+ * Distributed under MIT license.
+ * All rights reserved.
+ */
+
+
+
+//! Source: editors/slick.editors.js.prelude
 
 /***
  * Contains basic SlickGrid editors.
+ *
  * @module Editors
  * @namespace Slick
+ *
+ * NOTE:  These are merely examples.  You will most likely need to implement something more
+ *        robust/extensible/localizable/etc. for your use!
  *
  * Editor API:
  *
@@ -25,30 +40,24 @@
  * position(position)
  */
 
-(function ($) {
+(function (window, $) {
+  "use strict";
+
   // register namespace
   $.extend(true, window, {
     Slick: {
       Editors: {
-        Text: TextEditor,
-        Integer: IntegerEditor,
-        Date: DateEditor,
-        YesNoSelect: YesNoSelectEditor,
-        Checkbox: CheckboxEditor,
-        PercentComplete: PercentCompleteEditor,
-        LongText: LongTextEditor,
-        Float: FloatEditor,
-        Percentage: PercentageEditor,
-        RowMulti: RowEditor,
-        ReadOnly: ReadOnlyEditor,
-        Combo: SelectCellEditor,
-        Color: ColorEditor,
-        SelectCell: SelectCellEditor
       }
     }
   });
 
+  var Slick = window.Slick;
 
+
+//! Source: editors/slick.editors.001.Row.js
+
+  // register namespace
+  Slick.Editors.RowMulti = RowEditor;
 
   function RowEditor(args) {
      var theEditor;
@@ -118,6 +127,12 @@
   }
 
 
+
+
+//! Source: editors/slick.editors.002.Text.js
+
+  // register namespace
+  Slick.Editors.Text = TextEditor;
 
   function TextEditor(args) {
     var $input;
@@ -207,6 +222,12 @@
 
 
 
+
+//! Source: editors/slick.editors.003.ReadOnly.js
+
+  // register namespace
+  Slick.Editors.ReadOnly = ReadOnlyEditor;
+
   function ReadOnlyEditor(args) {
     var $input;
     var defaultValue;
@@ -276,46 +297,55 @@
     this.init();
   }
 
-function applyModifier(val, mod) {
-  var m = isValidModifier(mod);
-  if (!m)
-    return mod;
-  var dv = parseFloat(val);
-  switch (m.operator) {
-  case "+":
-    return m.isPercent ? dv * (1 + m.value) : dv + m.value;
 
-  case "-":
-    return m.isPercent ? dv * (1 - m.value) : dv - m.value;
+//! Source: editors/slick.editors.004.__numeric_support.js
 
-  case "*":
-    return dv * m.value;
+  function applyModifier(val, mod) {
+    var m = isValidModifier(mod);
+    if (!m)
+      return mod;
+    var dv = parseFloat(val);
+    switch (m.operator) {
+    case "+":
+      return m.isPercent ? dv * (1 + m.value) : dv + m.value;
 
-  case "/":
-    return dv / m.value;
+    case "-":
+      return m.isPercent ? dv * (1 - m.value) : dv - m.value;
+
+    case "*":
+      return dv * m.value;
+
+    case "/":
+      return dv / m.value;
+    }
+    assert(0); // should never get here
   }
-  assert(0); // should never get here
-}
 
-function isValidModifier(v) {
-  var sv = v.toString().trim();
-  var ope = sv.charAt(0);
-  if ("+-*/".indexOf(ope) < 0) return false;  // no good if it does not start with an operation
-  sv = sv.substr(1);    //remove first char
-  if (sv.indexOf('+') >= 0 || sv.indexOf('-') >= 0 || sv.indexOf('*') >= 0 || sv.indexOf('/') >= 0) return false;  // no more signs please.
-  var pct = false;
-  if (sv.charAt(sv.length - 1) === '%') {
-    pct = true;
-    sv = sv.slice(0, -1);    // remove also the % char if it is there
+  function isValidModifier(v) {
+    var sv = v.toString().trim();
+    var ope = sv.charAt(0);
+    if ("+-*/".indexOf(ope) < 0) return false;  // no good if it does not start with an operation
+    sv = sv.substr(1);    //remove first char
+    if (sv.indexOf('+') >= 0 || sv.indexOf('-') >= 0 || sv.indexOf('*') >= 0 || sv.indexOf('/') >= 0) return false;  // no more signs please.
+    var pct = false;
+    if (sv.charAt(sv.length - 1) === '%') {
+      pct = true;
+      sv = sv.slice(0, -1);    // remove also the % char if it is there
+    }
+    // what remains must be a number
+    if (isNaN(sv)) return false;
+    return {
+      operator: ope,
+      isPercent: pct,
+      value: parseFloat(sv) / (pct ? 1 : 100)         // when it is a percentage, produce the equivalent perunage
+    };
   }
-  // what remains must be a number
-  if (isNaN(sv)) return false;
-  return {
-    operator: ope,
-    isPercent: pct,
-    value: parseFloat(sv) / (pct ? 1 : 100)         // when it is a percentage, produce the equivalent perunage
-  };
-}
+
+
+//! Source: editors/slick.editors.005.Integer.js
+
+  // register namespace
+  Slick.Editors.Integer = IntegerEditor;
 
   function IntegerEditor(args) {
     var $input;
@@ -400,20 +430,20 @@ function isValidModifier(v) {
           msg: "Please enter a valid integer"
         };
       }
-	  
-		if (args.editorConfig && !isNaN(args.editorConfig.minValue) && val < args.editorConfig.minValue) {
-			return {
-				valid: false,
-				msg: 'Please enter a value no less than ' + args.editorConfig.minValue
-			};
-		}
-		
-		if (args.editorConfig && !isNaN(args.editorConfig.maxValue) && val > args.editorConfig.maxValue) {
-			return {
-				valid: false,
-				msg: 'Please enter a value no greater than ' + args.editorConfig.maxValue
-			};
-		}
+    
+    if (args.editorConfig && !isNaN(args.editorConfig.minValue) && val < args.editorConfig.minValue) {
+      return {
+        valid: false,
+        msg: 'Please enter a value no less than ' + args.editorConfig.minValue
+      };
+    }
+    
+    if (args.editorConfig && !isNaN(args.editorConfig.maxValue) && val > args.editorConfig.maxValue) {
+      return {
+        valid: false,
+        msg: 'Please enter a value no greater than ' + args.editorConfig.maxValue
+      };
+    }
 
       return {
         valid: true,
@@ -423,6 +453,12 @@ function isValidModifier(v) {
 
     this.init();
   }
+
+
+//! Source: editors/slick.editors.006.Float.js
+
+  // register namespace
+  Slick.Editors.Float = FloatEditor;
 
   function FloatEditor(args) {
     var $input;
@@ -517,6 +553,12 @@ function isValidModifier(v) {
     this.init();
   }
 
+
+
+//! Source: editors/slick.editors.007.Percentage.js
+
+  // register namespace
+  Slick.Editors.Percentage = PercentageEditor;
 
   function PercentageEditor(args) {
     var $input;
@@ -632,6 +674,12 @@ function isValidModifier(v) {
     this.init();
   }
 
+
+
+//! Source: editors/slick.editors.008.Date.js
+
+  // register namespace
+  Slick.Editors.Date = DateEditor;
 
   function DateEditor(args) {
     var $input;
@@ -813,6 +861,12 @@ function isValidModifier(v) {
   }
 
 
+
+//! Source: editors/slick.editors.009.YesNoSelect.js
+
+  // register namespace
+  Slick.Editors.YesNoSelect = YesNoSelectEditor;
+
   function YesNoSelectEditor(args) {
     var $select;
     var defaultValue;
@@ -886,6 +940,12 @@ function isValidModifier(v) {
 
     this.init();
   }
+
+
+//! Source: editors/slick.editors.010.Checkbox.js
+
+  // register namespace
+  Slick.Editors.Checkbox = CheckboxEditor;
 
   function CheckboxEditor(args) {
     var $select;
@@ -963,6 +1023,12 @@ function isValidModifier(v) {
     this.init();
   }
 
+
+//! Source: editors/slick.editors.011.PercentageComplete.js
+
+  // register namespace
+  Slick.Editors.PercentageComplete = PercentageCompleteEditor;
+
   function PercentCompleteEditor(args) {
     var $input, $picker, $helper;
     var defaultValue;
@@ -988,21 +1054,21 @@ function isValidModifier(v) {
       var $body = $("body");
 
       $helper = $("\
-      	<div class='editor-percentcomplete-helper'>\
-      	  <div class='editor-percentcomplete-wrapper'>\
-      	    <div class='editor-percentcomplete-slider'>\
-      	    </div>\
-      	    <div class='editor-percentcomplete-buttons'>\
-      	    </div>\
-      	  </div>\
-      	</div>").appendTo($body);
+        <div class='editor-percentcomplete-helper'>\
+          <div class='editor-percentcomplete-wrapper'>\
+            <div class='editor-percentcomplete-slider'>\
+            </div>\
+            <div class='editor-percentcomplete-buttons'>\
+            </div>\
+          </div>\
+        </div>").appendTo($body);
 
       $helper.find(".editor-percentcomplete-buttons")
       .append("<button val='0'>Not started</button>\
-      	<br/>\
-      	<button val='50'>In Progress</button>\
-      	<br/>\
-      	<button val='100'>Complete</button>");
+        <br/>\
+        <button val='50'>In Progress</button>\
+        <br/>\
+        <button val='100'>Complete</button>");
 
       $helper.find(".editor-percentcomplete-slider").slider({
         orientation: "vertical",
@@ -1112,6 +1178,12 @@ function isValidModifier(v) {
 
     this.init();
   }
+
+
+//! Source: editors/slick.editors.012.LongText.js
+
+  // register namespace
+  Slick.Editors.LongText = LongTextEditor;
 
   /*
    * An example of a "detached" editor.
@@ -1298,6 +1370,12 @@ function isValidModifier(v) {
 
 
 
+
+//! Source: editors/slick.editors.013.Color.js
+
+  // register namespace
+  Slick.Editors.Color = ColorEditor;
+
   function ColorEditor(args) {
     var $input;
     var defaultValue;
@@ -1416,6 +1494,13 @@ function isValidModifier(v) {
 
 
 
+
+//! Source: editors/slick.editors.014.SelectCell.js
+
+  // register namespace
+  Slick.Editors.Combo = SelectCellEditor;
+  Slick.Editors.SelectCell = SelectCellEditor;
+
   function SelectCellEditor(args) {
     var $select;
     var defaultValue;
@@ -1444,29 +1529,29 @@ function isValidModifier(v) {
       opt = typeof opt === 'function' ? opt.call(args.column) : opt;
       assert(opt);
 
-        option_str = [];
-        for (i in opt) {
-          v = opt[i];
-          option_str.push("<OPTION value='" + (v.key == null ? v.id : v.key) + "'>" + (v.value == null ? v.label : v.value) + "</OPTION>");
-        }
-        $select = $("<SELECT tabIndex='0' class='editor-select'>" + option_str.join('') + "</SELECT>")
-         .appendTo(args.container)
-         .focus()
-         .select();
+      option_str = [];
+      for (i in opt) {
+        v = opt[i];
+        option_str.push("<OPTION value='" + (v.key == null ? v.id : v.key) + "'>" + (v.value == null ? v.label : v.value) + "</OPTION>");
+      }
+      $select = $("<SELECT tabIndex='0' class='editor-select'>" + option_str.join('') + "</SELECT>")
+       .appendTo(args.container)
+       .focus()
+       .select();
 
-        // this expects the multiselect widget (http://www.erichynds.com/jquery/jquery-ui-multiselect-widget/) to be loaded
-        $select.multiselect({
-          autoOpen: true,
-          minWidth: $(args.container).innerWidth() - 5,
-          multiple: false,
-          header: false,
-          noneSelectedText: "...",
-          classes: "editor-multiselect",
-          selectedList: 1,
-          close: function(event, ui) {
-            //args.grid.getEditorLock().commitCurrentEdit();
-          }
-        });
+      // this expects the multiselect widget (http://www.erichynds.com/jquery/jquery-ui-multiselect-widget/) to be loaded
+      $select.multiselect({
+        autoOpen: true,
+        minWidth: $(args.container).innerWidth() - 5,
+        multiple: false,
+        header: false,
+        noneSelectedText: "...",
+        classes: "editor-multiselect",
+        selectedList: 1,
+        close: function(event, ui) {
+          //args.grid.getEditorLock().commitCurrentEdit();
+        }
+      });
     };
 
     this.destroy = function() {
@@ -1534,4 +1619,7 @@ function isValidModifier(v) {
     this.init();
   }
 
-})(jQuery);
+
+//! Source: editors/slick.editors.js.postlude
+
+})(window, jQuery);

@@ -1,0 +1,42 @@
+/***
+ * Contains basic SlickGrid editors.
+ *
+ * @module Editors
+ * @namespace Slick
+ *
+ * NOTE:  These are merely examples.  You will most likely need to implement something more
+ *        robust/extensible/localizable/etc. for your use!
+ *
+ * Editor API:
+ *
+ * init()
+ * destroy()
+ * focus()
+ * setDirectValue(val)
+ * loadValue(item)
+ * serializeValue()
+ * applyValue(item, state)
+ * isValueChanged()
+ * validate()
+ *
+ * save()
+ * cancel()
+ * 
+ * hide()
+ * show()
+ * position(position)
+ */
+
+(function (window, $) {
+  "use strict";
+
+  // register namespace
+  $.extend(true, window, {
+    Slick: {
+      Editors: {
+      }
+    }
+  });
+
+  var Slick = window.Slick;
+
