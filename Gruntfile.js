@@ -22,15 +22,19 @@ module.exports = function (grunt) {
     // Metadata.
     pkg: grunt.file.readJSON('package.json'),
     banner: '/*!\n' +
+              ' * @license\n' +
               ' * slickGrid v<%= pkg.version %> (<%= pkg.homepage %>)\n' +
-              ' * Copyright 2011-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' +
-              ' * <%= _.pluck(pkg.licenses, "type") %> (<%= _.pluck(pkg.licenses, "url") %>)\n' +
+              ' * Copyright 2009-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' +
+              ' *\n' + 
+              ' * Distributed under <%= pkg.license %> license.\n' + 
+              ' * All rights reserved.\n' + 
               ' */\n',
     bannerDocs: '/*!\n' +
               ' * slickGrid Docs (<%= pkg.homepage %>)\n' +
-              ' * Copyright 2011-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' +
-              ' * <%= _.pluck(pkg.licenses, "type") %> (<%= _.pluck(pkg.licenses, "url") %>)\n' +
-              ' * NDA applies, etc.etc.etc.\n' +
+              ' * Copyright 2009-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' +
+              ' *\n' + 
+              ' * Distributed under <%= pkg.license %> license.\n' + 
+              ' * All rights reserved.\n' + 
               ' */\n',
     jqueryCheck: 'if (typeof jQuery === \'undefined\') { throw new Error(\'slickGrid requires jQuery\') }\n\n',
 
@@ -44,8 +48,8 @@ module.exports = function (grunt) {
     },
 
     rewrite: {
-      JS: {
-        src: ['*.js', 'controls/*.js', 'plugins/*.js'],
+      src: {
+        src: ['*.js', 'controls/*.js', 'plugins/*.js', '*.css', '*.less', '*.scss'],
         editor: function (contents, filePath) {
           var v = grunt.config.get('pkg.version');
           //console.log('rewrite in place: ', filePath, v);
@@ -255,7 +259,7 @@ module.exports = function (grunt) {
   grunt.registerTask('test', ['compile', 'lint', 'qunit']);
 
   // CSS distribution task.
-  grunt.registerTask('dist-css', ['compile', 'cssmin', 'csscomb', 'usebanner']);
+  grunt.registerTask('dist-css', ['compile', 'csscomb', 'usebanner']);
 
   // Full distribution task.
   grunt.registerTask('dist', ['dist-css']);

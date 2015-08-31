@@ -2,8 +2,10 @@
   "name": "SlickGrid",
   "version": "2.3.18-alpha.1010",
   "homepage": "https://github.com/GerHobbelt/SlickGrid",
-  "authors": [
-    "Eric Miller <eric@simpleascouldbe.com>"
+  "author": "Michael Leibman <michael{dot}leibman{at}gmail{dot}com>",
+  "contributors": [
+    "Eric Miller <eric@simpleascouldbe.com>",
+    "Ger Hobbelt <ger@hobbelt.com>"
   ],
   "description": "Slickgrid with various enhancements.",
   "repository": {
