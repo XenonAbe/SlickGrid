@@ -1,6 +1,7 @@
 /*jslint Slick*/
 'use strict';
 (function ($) {
+    // register namespace
     $.extend(true, window, {
         "Slick": {
             "Plugins": {
@@ -12,8 +13,7 @@
 
     function TotalsPlugin(options) {
 
-        var scrollBarDims = getBrowserScrollSize(),
-            _grid,
+        var _grid,
             $totalContainer = $('<div class="totals-container"></div>'),
             $totalRow = $('<div class="slick-header-columns"></div>').appendTo($totalContainer),
             _canvas,
@@ -61,7 +61,6 @@
                 args = args.grid ? args : {grid: _grid, dataView: args};
                 handleDataChange(ev, args);
             });
-
         }
 
         function handleDataChange(ev, args) {
@@ -83,7 +82,7 @@
 
             for (; row = items[i++];) {
                 column = null;
-                if ((row.level && options.level) ? row.level == options.level : true) {
+                if (($.isNumeric(row.level) && $.isNumeric(options.level)) ? row.level == options.level : true) {
                     for (; column = columns[col++];) {
                         value = row[column.field];
                         if (value !== 0 && value !== null && !isNaN(value * 1)) { //0 is false so we need to test this
@@ -161,33 +160,5 @@
             hide: hide,
             refresh: refresh
         });
-    }
-
-    function getBrowserScrollSize() {
-        var css = {
-            border: 'none',
-            height: '200px',
-            margin: '0',
-            padding: '0',
-            width: '200px'
-        };
-
-        var inner = $('<div>').css($.extend({}, css));
-        var outer = $('<div>').css($.extend({
-            left: '-1000px',
-            overflow: 'scroll',
-            position: 'absolute',
-            top: '-1000px'
-        }, css)).append(inner).appendTo('body')
-            .scrollLeft(1000)
-            .scrollTop(1000);
-
-        var scrollBarDims = {
-            height: (outer.offset().top - inner.offset().top) || 0,
-            width: (outer.offset().left - inner.offset().left) || 0
-        };
-
-        outer.remove();
-        return scrollBarDims;
     }
 })(jQuery);
