@@ -1,6 +1,6 @@
 {
     "name": "SlickGrid",
-    "version": "2.3.8",
+    "version": "2.3.10",
     "homepage": "https://github.com/manju-reddys/SlickGrid",
     "description": "SlickGrid forked",
     "main": "slick.grid.js, slick.core.js, slick.dataview.js",
