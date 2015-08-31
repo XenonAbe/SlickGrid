@@ -1236,8 +1236,8 @@
       return {
         totalRows: filteredItems.length, 
         rows: paged,
-        filteredRows: filteredItems
-        pagedRows: paged,
+        filteredRows: filteredItems,
+        pagedRows: paged
       };
     }
 

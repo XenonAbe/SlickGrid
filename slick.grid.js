@@ -596,7 +596,7 @@ if (typeof Slick === "undefined") {
         createCssRules();
         cacheRowPositions();
         resizeCanvas();
-        updateAntiscroll();
+        //updateAntiscroll();
         bindAncestorScrollEvents();
 
         $container
@@ -2129,9 +2129,9 @@ if (typeof Slick === "undefined") {
       if (!stylesheet) {
         stylesheet = getStyleSheet();
         if (!stylesheet) {
-          console.log("########### Cannot find stylesheet.");
+          console.log("########### Cannot find stylesheet. <STYLE ID>:", "slickgrid_stylesheet_" + uid);
           return false;
-          //throw new Error("Cannot find stylesheet.");
+          //throw new Error("Cannot find stylesheet. <STYLE ID>:" + "slickgrid_stylesheet_" + uid);
         }
 
         // find and cache column CSS rules
@@ -2361,7 +2361,7 @@ if (typeof Slick === "undefined") {
             growSize = Math.min(Math.floor(growProportion * currentWidth) - currentWidth, (c.maxWidth ? c.maxWidth - currentWidth : 0) || 1000000) || 1;
           }
           total += growSize;
-          widths[i] += (total <= availWidth ? growSize : 0);
+          widths[i] += (total <= availableWidth ? growSize : 0);
         }
         if (prevTotal >= total) {  // avoid infinite loop
           break;
