@@ -1,7 +1,6 @@
 /*jslint Slick*/
 'use strict';
 (function ($) {
-    // register namespace
     $.extend(true, window, {
         "Slick": {
             "Plugins": {
@@ -10,249 +9,185 @@
         }
     });
 
-    var _scrollOffset = 0,
-        _scrollbarWidth = 16,
-        _rowHeight = 0,
-        _$totalsViewport = null,
-        _$totalsRow = null,
-        _grid = null,
-        _dataView = null,
-        _items = [],
-        _summaryData = {},
-        _columns,
-        _scrollbarSize,
-        _aggrLevel; //In case of tree grid some cases need to aggrigate only to some level as each node might be
-    // an aggrigation (server side) of its child nodes
 
     function TotalsPlugin(options) {
-        _scrollbarSize = getBrowserScrollSize();
-        _scrollbarWidth = _scrollbarSize.width;
-        _aggrLevel = (options.level !== null && !isNaN(options.level * 1)) ? options.level : null; //only number else null
 
-        var self = this,
-            _top = 0;
+        var scrollBarDims = getBrowserScrollSize(),
+            _grid,
+            $totalContainer = $('<div class="totals-container"></div>'),
+            $totalRow = $('<div class="slick-header-columns"></div>').appendTo($totalContainer),
+            _canvas,
+            items = [],
+            summaryData = {}, columns = [], self = this;
 
         function init(grid) {
-            var viewport = grid.getCanvasNode().parentElement;
 
+            columns = grid.getColumns();
             _grid = grid;
-            _dataView = grid.getData();
-            _rowHeight = grid.getOptions().rowHeight;
-            _columns = _grid.getColumns();
+            _canvas = grid.getCanvasNode();
 
-
-            _$totalsViewport = $('<div class="slick-viewport totals-viewport">');
-            _$totalsViewport.insertAfter(viewport);
+            if (_canvas) {
+                $totalContainer
+                    .appendTo(_canvas.parentElement)
+                    .height(grid.getOptions().rowHeight);
+            }
 
             grid.onInitialize.subscribe(function (ev, args) {
-                _top = viewport.offsetHeight + $(viewport).position().top - (_rowHeight + _scrollbarSize.height);
+
+                if(!_grid) {
+                    _grid = args.grid;
+                    _canvas = args.grid.getCanvasNode();
+                    $totalContainer.appendTo(_canvas.parentElement);
+                    columns = grid.getColumns();
+                }
                 handleDataChange(ev, args);
             });
 
             grid.onColumnsResized.subscribe(function (ev, args) {
-                appendTotalsRows(ev, args);
+                columns = _grid.getColumns();
+                updateSummaryData(ev, args);
             });
 
             grid.onColumnsReordered.subscribe(function (ev, args) {
-                _columns = _grid.getColumns();
-                handleColumnsReordered(ev, args);
+                columns = _grid.getColumns();
+                updateSummaryData(ev, args);
             });
 
             grid.onScroll.subscribe(function (ev, args) {
-                handleScroll(ev, args);
+                $totalContainer.css({bottom: args.scrollTop * -1});
             });
 
-            _dataView.onRowCountChanged.subscribe(function (ev, args) {
+            grid.getData().onDataviewRefreshed.subscribe(function (ev, args) {
+                args = args.grid ? args : {grid: _grid, dataView: args};
                 handleDataChange(ev, args);
             });
 
-            _dataView.onDataviewRefreshed.subscribe(function (ev, args) {
-                _top = viewport.offsetHeight + $(viewport).position().top - (_rowHeight + _scrollbarSize.height);
-                handleResize(ev, args);
-            });
-
-            grid.onViewportChanged.subscribe(function (ev, args) {
-                _columns = _grid.getColumns();
-                appendTotalsRows(ev, args);
-            });
         }
 
         function handleDataChange(ev, args) {
-            var rows = [], len = _dataView.getLength();
-            for (var i = 0; i < len; i++) {
-                rows.push(_dataView.getItem(i));
+            var dv = args.grid.getData(),
+                len = dv.getLength(), i = 0;
+
+            items = [];
+            for (; i < len; i++) {
+                items.push(dv.getItem(i));
             }
-            _items = rows;
+
             updateSummaryData(ev, args);
         }
 
         function updateSummaryData(ev, args) {
-            _summaryData = {}; //Clean up previous data first
+            summaryData = {}; //Clean up previous data;
 
-            var it = 0, len = _items.length, i = 0, colen = _columns.length, value;
-            for (; it < len; it++) {
-                var row = _items[it],
-                    column;
-                if (_aggrLevel !== null) {
-                    if (row.level === _aggrLevel) {
-                        for (i = 0; i < colen; i++) {
-                            column = _columns[i];
-                            value = row[column.field];
+            var i = 0, value, row, column, col = 0, entry;
 
-                            if (value !== '' && value !== null && !isNaN(value * 1)) {
-                                if (typeof _summaryData[column.id] === 'undefined') {
-                                    _summaryData[column.id] = {sum: 0, values: []};
-                                }
-                                _summaryData[column.id].sum += (value * 1);
-                                _summaryData[column.id].values.push(value * 1);
-                            }
-                        }
-                    }
-                } else {
-                    for (i = 0; i < colen; i++) {
-                        column = _columns[i];
+            for (; row = items[i++];) {
+                column = null;
+                if ((row.level && options.level) ? row.level == options.level : true) {
+                    for (; column = columns[col++];) {
                         value = row[column.field];
-
-                        if (value !== '' && value !== null && !isNaN(value * 1)) {
-                            if (typeof _summaryData[column.id] === 'undefined') {
-                                _summaryData[column.id] = {sum: 0, values: []};
-                            }
-                            _summaryData[column.id].sum += (value * 1);
-                            _summaryData[column.id].values.push(value * 1);
+                        if (value !== 0 && value !== null && !isNaN(value * 1)) { //0 is false so we need to test this
+                            entry = (summaryData[column.id] || {sum: 0, values: []});
+                            entry.sum += value * 1;
+                            entry.values.push(value * 1);
+                            summaryData[column.id] = entry;
                         }
                     }
                 }
             }
-            appendTotalsRows(ev, args);
+
+            appendColumns(ev, args);
         }
 
-        function appendTotalsRows(ev, args) {
-            var viewport = (args && args.grid ? args.grid : _grid).getCanvasNode(),
-                width = viewport.offsetWidth,
-                mergeCols = options.mergeColumns;
+        function appendColumns(ev, args) {
+            var width = _canvas.offsetWidth,
+                mergeCols = options.columnsToMerge,
+                $cell, column, value, i = 0;
 
-            var $totalsRow = $('<div class="ui-widget-content slick-row totals"></div>').css({position: 'relative', width: width});
-            var $cell, column, value;
+            $totalRow.css({position: 'relative', width: width}).empty();
 
-            for (var i = 0, l = _columns.length; i < l; i++) {
-                column = _columns[i];
-                value = column.aggregator ? column.aggregator(_summaryData[column.id], column, ev, args) : '\u00A0';
-                $cell = $('<div class="slick-cell slick-header-columns"></div>').addClass('l' + i + ' r' + i + ' f-' + column.id);
-                $cell.text(value);
-                $totalsRow.append($cell);
+            for (; column = columns[i];) {
+                value = column.aggregator ? column.aggregator(summaryData[column.id], column, ev, args) : '\u00A0';
+                $('<div class="slick-cell slick-header-column"></div>')
+                    .addClass('l' + i + ' r' + i + ' total-' + column.id)
+                    .html('<span class="slick-column-name">' + value + '</span>')
+                    .appendTo($totalRow);
+                i++;
             }
 
-            _$totalsViewport.empty().append($totalsRow);
-            _$totalsRow = $totalsRow;
+            self.onRendered.notify($totalContainer, ev, args);
 
-            self.onTotalsRowRendered.notify(_$totalsViewport, ev, args);
+            if (mergeCols && mergeCols.length) {
+                var from, to, col, i = 0;
 
-            if (mergeCols && mergeCols.length > 0) {
-                var from, to;
-                for (var i = 0; i < mergeCols.length; i++) {
-                    from = $totalsRow.find('.f-' + mergeCols[i].from);
-                    to = $totalsRow.find('.f-' + mergeCols[i].to);
-                    if (from.length > 0 && to.length > 0) {
-                        to.css({left: from.css('left')}).addClass(mergeCols[i].cssClass || '');
-                        if (mergeCols[i].html) {
-                            to.html(mergeCols[i].html);
-                        }
+                for (; col = mergeCols[i++];) {
+                    from = $totalRow.find('.total-' + col.from);
+                    to = $totalRow.find('.total-' + col.to);
+                    if (from.length && to.length) {
+                        to.css({left: parseInt(from.css('left'), 10)})
+                            .addClass(col.cssClass || '')
+                            .html(col.content.text || '\u00A0');
+                    } else if(to.length > 0) {
+                        to.html(col.content.text || '\u00A0');
                     }
                 }
-            }
-            handleResize(ev, args);
-        }
-
-
-        function handleColumnsReordered(ev, args) {
-            appendTotalsRows(ev, args);
-        }
-
-        function handleScroll(ev, args) {
-            if (_scrollOffset !== args.scrollLeft) {
-                _scrollOffset = args.scrollLeft;
-                _$totalsRow.css('left', _scrollOffset * -1);
-            } else if (_$totalsRow) {
-                _$totalsRow.css('left', _scrollOffset * -1);
-            }
-        }
-
-        function getBrowserScrollSize() {
-            var css = {
-                border: 'none',
-                height: '200px',
-                margin: '0',
-                padding: '0',
-                width: '200px'
-            };
-
-            var inner = $('<div>').css($.extend({}, css));
-            var outer = $('<div>').css($.extend({
-                left: '-1000px',
-                overflow: 'scroll',
-                position: 'absolute',
-                top: '-1000px'
-            }, css)).append(inner).appendTo('body')
-                .scrollLeft(1000)
-                .scrollTop(1000);
-
-            var scrollSize = {
-                height: (outer.offset().top - inner.offset().top) || 0,
-                width: (outer.offset().left - inner.offset().left) || 0
-            };
-
-            outer.remove();
-            return scrollSize;
-        }
-
-        function toggleTotalsRow(show) {
-            if (show) {
-                _$totalsViewport.show();
-            } else {
-                _$totalsViewport.hide();
             }
         }
 
         function destroy() {
-            _$totalsViewport.remove();
+            $totalContainer.off('**').empty().remove();
+            $totalContainer = null;
+        }
+
+        function show() {
+            $totalContainer.show();
+        }
+
+        function hide() {
+            $totalContainer.hide();
         }
 
         function refresh(ev, args) {
-            appendTotalsRows(ev, args);
-        }
-
-        function handleResize() {
-            var viewport = _grid.getCanvasNode().parentElement;
-            var width = viewport.offsetWidth;
-            if (viewport.scrollWidth > width) {
-                width -= _scrollbarSize.width;
-            }
-
-            var top = 0;
-            if(vScrollShown() && !hScrollShown()) {
-                top = _top + _scrollbarSize.height;
-            } else {
-                top = _top;
-            }
-            _$totalsViewport.css({width: width, top: top});
-        }
-
-        function vScrollShown() {
-            var vp = _grid.getCanvasNode().parentElement;
-            return vp.scrollHeight > vp.offsetHeight;
-        }
-
-        function hScrollShown() {
-            var vp = _grid.getCanvasNode().parentElement;
-            return vp.scrollWidth > vp.offsetWidth;
+            columns = _grid.getColumns();
+            args = args || {grid: _grid};
+            handleDataChange(ev, args);
         }
 
         $.extend(this, {
             init: init,
             destroy: destroy,
-            onTotalsRowRendered: new Slick.Event(),
-            toggleTotalsRow: toggleTotalsRow,
+            onRendered: new Slick.Event(),
+            show: show,
+            hide: hide,
             refresh: refresh
         });
+    }
+
+    function getBrowserScrollSize() {
+        var css = {
+            border: 'none',
+            height: '200px',
+            margin: '0',
+            padding: '0',
+            width: '200px'
+        };
+
+        var inner = $('<div>').css($.extend({}, css));
+        var outer = $('<div>').css($.extend({
+            left: '-1000px',
+            overflow: 'scroll',
+            position: 'absolute',
+            top: '-1000px'
+        }, css)).append(inner).appendTo('body')
+            .scrollLeft(1000)
+            .scrollTop(1000);
+
+        var scrollBarDims = {
+            height: (outer.offset().top - inner.offset().top) || 0,
+            width: (outer.offset().left - inner.offset().left) || 0
+        };
+
+        outer.remove();
+        return scrollBarDims;
     }
 })(jQuery);

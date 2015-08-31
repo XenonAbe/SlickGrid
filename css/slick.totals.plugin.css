@@ -2,17 +2,17 @@
     visibility: hidden;
 }
 
-.slick-viewport.totals-viewport {
+.totals-container {
     position: absolute;
     overflow: hidden;
-
+    bottom: 0;
 }
 
-.slick-viewport .slick-row.totals {
-    position: relative;
-}
-
-.slick-viewport .slick-row.totals .slick-header-columns {
+.totals-container .slick-header-columns {
     border-bottom: none;
     border-top: 1px solid silver;
+}
+
+.slick-total-cell {
+    position: absolute;
 }
