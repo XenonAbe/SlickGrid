@@ -8,11 +8,13 @@
   <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    .cell-title {
+    .cell-title 
+    {
       font-weight: bold;
     }
 
-    #contextMenu {
+    #contextMenu 
+    {
       background: #e1efc7;
       border: 1px solid gray;
       padding: 2px;
@@ -23,14 +25,16 @@
       z-index: 99999;
     }
 
-    #contextMenu li {
+    #contextMenu li 
+    {
       padding: 4px 4px 4px 14px;
       list-style: none;
       cursor: pointer;
       background: url("../images/arrow_right_peppermint.png") no-repeat center left;
     }
 
-    #contextMenu li:hover {
+    #contextMenu li:hover 
+    {
       background-color: white;
     }
   </style>
@@ -83,72 +87,77 @@
 <script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
-  var grid;
+var grid;
+var columns = [
+  {id: "title", name: "Title", field: "title", width: 200, cssClass: "cell-title", editor: Slick.Editors.Text},
+  {id: "priority", name: "Priority", field: "priority", width: 80, selectable: false, resizable: false}
+];
+
+var options = {
+  editable: true,
+  enableAddRow: false,
+  enableCellNavigation: true,
+  asyncEditorLoading: false,
+  rowHeight: 30
+};
+
+function CreateData() {
   var data = [];
-  var columns = [
-    {id: "title", name: "Title", field: "title", width: 200, cssClass: "cell-title", editor: Slick.Editors.Text},
-    {id: "priority", name: "Priority", field: "priority", width: 80, selectable: false, resizable: false}
-  ];
+  for (var i = 0; i < 100; i++) {
+    var d = data[i] = {
+      title: "Task " + i,
+      priority: "Medium"
+    };
+  }
+  return data;
+}
 
-  var options = {
-    editable: true,
-    enableAddRow: false,
-    enableCellNavigation: true,
-    asyncEditorLoading: false,
-    rowHeight: 30
-  };
+$(function() {
+  var data = CreateData();
 
-  $(function () {
-    for (var i = 0; i < 100; i++) {
-      var d = data[i] = {
-        title: "Task " + i,
-        priority: "Medium"
-      };
-    }
+  grid = new Slick.Grid("#myGrid", data, columns, options);
 
-    grid = new Slick.Grid("#myGrid", data, columns, options);
+  grid.onContextMenu.subscribe(function (e, cellInfo) {
+    e.preventDefault();
+    //var cellInfo = grid.getCellFromEvent(e);
+    $("#contextMenu")
+        .data("row", cellInfo.row)
+        .css("top", e.pageY)
+        .css("left", e.pageX)
+        .show();
 
-    grid.onContextMenu.subscribe(function (e, cellInfo) {
-      e.preventDefault();
-      //var cellInfo = grid.getCellFromEvent(e);
-      $("#contextMenu")
-          .data("row", cellInfo.row)
-          .css("top", e.pageY)
-          .css("left", e.pageX)
-          .show();
-
-      $("body").one("click", function () {
-        $("#contextMenu").hide();
-      });
+    $("body").one("click", function () {
+      $("#contextMenu").hide();
     });
+  });
 
-    grid.onClick.subscribe(function (e, cellInfo) {
-      //var cellInfo = grid.getCellFromEvent(e);
-      if (grid.getColumns()[cellInfo.cell].id === "priority") {
-        if (!grid.getEditorLock().commitCurrentEdit()) {
-          return;
-        }
-
-        var states = { "Low": "Medium", "Medium": "High", "High": "Low" };
-        data[cellInfo.row].priority = states[data[cellInfo.row].priority];
-        grid.updateRow(cellInfo.row);
-        
-        e.stopPropagation();
+  grid.onClick.subscribe(function (e, cellInfo) {
+    //var cellInfo = grid.getCellFromEvent(e);
+    if (grid.getColumns()[cellInfo.cell].id === "priority") {
+      if (!grid.getEditorLock().commitCurrentEdit()) {
+        return;
       }
-    });
-  });
 
-  $("#contextMenu").click(function (e) {
-    if (!$(e.target).is("li")) {
-      return;
+      var states = { "Low": "Medium", "Medium": "High", "High": "Low" };
+      data[cellInfo.row].priority = states[data[cellInfo.row].priority];
+      grid.updateRow(cellInfo.row);
+      
+      e.stopPropagation();
     }
-    if (!grid.getEditorLock().commitCurrentEdit()) {
-      return;
-    }
-    var row = $(this).data("row");
-    data[row].priority = $(e.target).attr("data");
-    grid.updateRow(row);
   });
+});
+
+$("#contextMenu").click(function (e) {
+  if (!$(e.target).is("li")) {
+    return;
+  }
+  if (!grid.getEditorLock().commitCurrentEdit()) {
+    return;
+  }
+  var row = $(this).data("row");
+  data[row].priority = $(e.target).attr("data");
+  grid.updateRow(row);
+});
 </script>
 </body>
 </html>

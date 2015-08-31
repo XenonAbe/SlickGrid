@@ -8,7 +8,8 @@
   <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    .slick-headerrow-column {
+    .slick-headerrow-column 
+    {
       background: #87ceeb;
       text-overflow: clip;
       -moz-box-sizing: border-box;
@@ -16,7 +17,8 @@
       box-sizing: border-box;
     }
 
-    .slick-headerrow-column input {
+    .slick-headerrow-column input 
+    {
       margin: 0;
       padding: 0;
       width: 100%;
@@ -26,14 +28,17 @@
       box-sizing: border-box;
     }
 
-    .grid-inner-wrapper .editable {
+    .grid-inner-wrapper .editable 
+    {
       background-color: rgb(255, 0, 0);
     }
-    .grid-inner-wrapper .odd .editable {
+    .grid-inner-wrapper .odd .editable 
+    {
       background-color: rgb(204, 0, 0);
     }
 
-    #clear-debug-output {
+    #clear-debug-output 
+    {
       float: right;
       margin: 6px 0;
       padding: 3px 1em;
@@ -96,7 +101,7 @@
   debug.log("hello world!");
 
   // Keep this in mind: http://www.quirksmode.org/js/introevents.html
-  document.querySelector("#clear-debug-output").onclick = function() {
+  document.querySelector("#clear-debug-output").onclick = function () {
     document.querySelector("#debug-output").innerHTML = "";
   };
 
@@ -187,28 +192,28 @@
     };
 
     grid.onHeaderRowCellRendered.subscribe(function(e, args) {
-        $(args.node).empty();
+      $(args.node).empty();
 
-        $("<input type='text'>")
-           .data("columnId", args.column.id)
-           .val(columnFilters[args.column.id])
-           .appendTo(args.node)
-           .focus(function() {
-              debug.log("header cell edit focus: ", this, arguments, e, args);
-              var lock = grid.getEditorLock();
-              if (!lock.isActive(gridEditController) && lock.commitCurrentEdit()) {
-                lock.activate(gridEditController);
-              }
-              // else: jump back to previously focussed element... but we don't know what it is so this is all we can do now...
-           })
-           .focusout(function() {
-              debug.log("header cell edit LOST FOCUS = autoCOMMIT: ", this, arguments, e, args);
-              var lock = grid.getEditorLock();
-              if (!lock.commitCurrentEdit()) {
-                // commit failed, jump back to edited field so user can edit it and make sure it passes the next time through
-                $(this).focus();
-              }
-           });
+      $("<input type='text'>")
+      .data("columnId", args.column.id)
+      .val(columnFilters[args.column.id])
+      .appendTo(args.node)
+      .focus(function() {
+        debug.log("header cell edit focus: ", this, arguments, e, args);
+        var lock = grid.getEditorLock();
+        if (!lock.isActive(gridEditController) && lock.commitCurrentEdit()) {
+          lock.activate(gridEditController);
+        }
+        // else: jump back to previously focussed element... but we don't know what it is so this is all we can do now...
+      })
+      .focusout(function() {
+        debug.log("header cell edit LOST FOCUS = autoCOMMIT: ", this, arguments, e, args);
+        var lock = grid.getEditorLock();
+        if (!lock.commitCurrentEdit()) {
+          // commit failed, jump back to edited field so user can edit it and make sure it passes the next time through
+          $(this).focus();
+        }
+      });
     });
 
     grid.init();

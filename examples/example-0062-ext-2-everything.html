@@ -8,7 +8,8 @@
         <link rel="stylesheet" href="../plugins-common.css" type="text/css" />
         <link rel="stylesheet" href="../plugins-gdoc-style.css" type="text/css" />
         <style>
-            #status {
+            #status 
+            {
                 position: absolute;
                 bottom: 0;
                 background-color: #F5F5F5;
@@ -17,7 +18,8 @@
                 width: 100%;
             }
 
-            .excel-grid {
+            .excel-grid 
+            {
                 position: absolute;
                 top: 55px;
                 left: 0;
@@ -25,7 +27,8 @@
                 bottom: 26px;
             }
 
-            #status-label {
+            #status-label 
+            {
                 margin: 4px;
             }
         </style>
@@ -44,13 +47,13 @@
     </div>
     <script type="text/javascript" src="../scripts/jquery-1.10.1.js"></script>
     <script type="text/javascript" src="../scripts/jquery.event.drag.js"></script>
-    <script type="text/javascript" src="../scripts/SlickGrid/slick.core.js"></script>
-    <script type="text/javascript" src="../scripts/SlickGrid/slick.grid.js"></script>
-    <script type="text/javascript" src="../scripts/SlickGrid/slick.dataview.js"></script>
-    <script type="text/javascript" src="../scripts/SlickGrid/slick.editors.js"></script>
-    <script type="text/javascript" src="../scripts/SlickGrid/Plugins/slick.cellrangeselector.js"></script>
-    <script type="text/javascript" src="../scripts/SlickGrid/Plugins/slick.cellselectionmodel.js"></script>
-    <script type="text/javascript" src="../scripts/SlickGrid/Plugins/slick.cellrangedecorator.js"></script>
+    <script type="text/javascript" src="../slick.core.js"></script>
+    <script type="text/javascript" src="../slick.grid.js"></script>
+    <script type="text/javascript" src="../slick.dataview.js"></script>
+    <script type="text/javascript" src="../slick.editors.js"></script>
+    <script type="text/javascript" src="../Plugins/slick.cellrangeselector.js"></script>
+    <script type="text/javascript" src="../Plugins/slick.cellselectionmodel.js"></script>
+    <script type="text/javascript" src="../Plugins/slick.cellrangedecorator.js"></script>
     <script type="text/javascript" src="../scripts/underscore.js"></script>
     <script type="text/javascript" src="../ext.headerfilter.js"></script>
     <script type="text/javascript" src="../ext.overlays.js"></script>
@@ -83,7 +86,7 @@
                     percentComplete: Math.round(Math.random() * 100),
                     start: "01/01/2009",
                     finish: "01/05/2009",
-                    effortDriven: (i % 5 == 0)
+                    effortDriven: (i % 5 === 0)
                 };
             }
 

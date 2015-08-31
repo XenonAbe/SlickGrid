@@ -8,11 +8,13 @@
   <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    .cell-title {
+    .cell-title 
+    {
       font-weight: bold;
     }
 
-    .cell-effort-driven {
+    .cell-effort-driven 
+    {
       text-align: center;
     }
   </style>
@@ -34,13 +36,12 @@
     </ul>
 
     <h2>Options:</h2>
-    <button onclick="grid.setOptions({autoEdit:true})">Auto-edit ON</button>
-    &nbsp;
-    <button onclick="grid.setOptions({autoEdit:false})">Auto-edit OFF</button>
+    <button onclick="grid.setOptions({autoEdit:true});">Auto-edit ON</button>
+    <button onclick="grid.setOptions({autoEdit:false});">Auto-edit OFF</button>
 
     <h2>View Source:</h2>
       <ul>
-          <li id="viewsource">View Source Code</li>
+        <li id="viewsource">View Source Code</li>
       </ul>
       <div id="displaycode"></div>
   </div>
@@ -67,59 +68,59 @@
 <script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
-  function requiredFieldValidator(value) {
-    if (value == null || value == undefined || !value.length) {
-      return {valid: false, msg: "This is a required field"};
-    } else {
-      return {valid: true, msg: null};
-    }
+function requiredFieldValidator(value) {
+  if (value === null || value === undefined || !value.length) {
+    return {valid: false, msg: "This is a required field"};
+  } else {
+    return {valid: true, msg: null};
+  }
+}
+
+var grid;
+var columns = [
+  {id: "title", name: "Title", field: "title", width: 80, cssClass: "cell-title", editor: Slick.Editors.Text, validator: requiredFieldValidator},
+  {id: "desc", name: "Description", field: "description", width: 100, editor: Slick.Editors.LongText},
+  {id: "duration", name: "Duration", field: "duration", editor: Slick.Editors.Text},
+  {id: "%", name: "% Complete", field: "percentComplete", width: 80, resizable: false, formatter: Slick.Formatters.PercentCompleteBar, editor: Slick.Editors.PercentComplete},
+  {id: "start", name: "Start", field: "start", minWidth: 60, editor: Slick.Editors.Date},
+  {id: "finish", name: "Finish", field: "finish", minWidth: 60, editor: Slick.Editors.Date},
+  {id: "effort-driven", name: "Effort Driven", width: 80, minWidth: 20, maxWidth: 80, cssClass: "cell-effort-driven", field: "effortDriven", formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox}
+];
+
+var options = {
+  editable: true,
+  enableAddRow: true,
+  enableCellNavigation: true,
+  asyncEditorLoading: false,
+  autoEdit: false
+};
+
+$(function () {
+  var data = [];
+  for (var i = 0; i < 500; i++) {
+    data[i] = {
+      title: "Task " + i,
+      description: "This is a sample task description.\n  It can be multiline",
+      duration: "5 days",
+      percentComplete: Math.min(100, Math.round(Math.random() * 110)),
+      start: "01/01/2009",
+      finish: "01/05/2009",
+      effortDriven: (i % 5 === 0)
+    };
   }
 
-  var grid;
-  var columns = [
-    {id: "title", name: "Title", field: "title", width: 80, cssClass: "cell-title", editor: Slick.Editors.Text, validator: requiredFieldValidator},
-    {id: "desc", name: "Description", field: "description", width: 100, editor: Slick.Editors.LongText},
-    {id: "duration", name: "Duration", field: "duration", editor: Slick.Editors.Text},
-    {id: "%", name: "% Complete", field: "percentComplete", width: 80, resizable: false, formatter: Slick.Formatters.PercentCompleteBar, editor: Slick.Editors.PercentComplete},
-    {id: "start", name: "Start", field: "start", minWidth: 60, editor: Slick.Editors.Date},
-    {id: "finish", name: "Finish", field: "finish", minWidth: 60, editor: Slick.Editors.Date},
-    {id: "effort-driven", name: "Effort Driven", width: 80, minWidth: 20, maxWidth: 80, cssClass: "cell-effort-driven", field: "effortDriven", formatter: Slick.Formatters.Checkmark, editor: Slick.Editors.Checkbox}
-  ];
+  grid = new Slick.Grid("#myGrid", data, columns, options);
 
-  var options = {
-    editable: true,
-    enableAddRow: true,
-    enableCellNavigation: true,
-    asyncEditorLoading: false,
-    autoEdit: false
-  };
+  grid.setSelectionModel(new Slick.CellSelectionModel());
 
-  $(function () {
-    var data = [];
-    for (var i = 0; i < 500; i++) {
-      data[i] = {
-        title: "Task " + i,
-        description: "This is a sample task description.\n  It can be multiline",
-        duration: "5 days",
-        percentComplete: Math.min(100, Math.round(Math.random() * 110)),
-        start: "01/01/2009",
-        finish: "01/05/2009",
-        effortDriven: (i % 5 == 0)
-      };
-    }
-
-    grid = new Slick.Grid("#myGrid", data, columns, options);
-
-    grid.setSelectionModel(new Slick.CellSelectionModel());
-
-    grid.onAddNewRow.subscribe(function (e, args) {
-      var item = args.item;
-      grid.invalidateRow(data.length);
-      data.push(item);
-      grid.updateRowCount();
-      grid.render();
-    });
+  grid.onAddNewRow.subscribe(function (e, args) {
+    var item = args.item;
+    grid.invalidateRow(data.length);
+    data.push(item);
+    grid.updateRowCount();
+    grid.render();
   });
+});
 </script>
 </body>
 </html>

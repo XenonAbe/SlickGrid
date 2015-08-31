@@ -78,21 +78,23 @@
   var columns = [];
   var columnFilters = {};
 
+  function customCellFormatter(row, cell, value) {
+      if (value == null || value === '') {
+          return '';
+      }
+      if (typeof value === 'number') {
+          return value.toFixed(2);
+      }
+      return value;
+  }
+
   for (var i = 0; i < 10; i++) {
     columns.push({
         id: i,
         name: String.fromCharCode("A".charCodeAt(0) + i),
         field: i,
         width: 120,
-        formatter: function (row, cell, value) {
-            if (value == null || value == '') {
-                return '';
-            }
-            if (typeof value === 'number') {
-                return value.toFixed(2);
-            }
-            return value;
-        },
+        formatter: customCellFormatter,
         summaries: ['min','max','avg','count','sum']
     });
   }
@@ -113,12 +115,12 @@
   $(function () {
     for (var i = 0; i < 100000; i++) {
       var d = (data[i] = {});
-      d["id"] = i;
+      d.id = i;
       for (var j = 0; j < columns.length; j++) {          
-          d[j] = Math.random() * 10;
-          if (d[j] > 2 && d[j] < 3) {
-              d[j] = null;
-          }
+        d[j] = Math.random() * 10;
+        if (d[j] > 2 && d[j] < 3) {
+          d[j] = null;
+        }
       }
     }
 

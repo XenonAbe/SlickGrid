@@ -9,11 +9,13 @@
   <link rel="stylesheet" href="../controls/slick-pager.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    body {
+    body 
+    {
       overflow: auto;
     }
 
-    .options-panel {
+    .options-panel 
+    {
       position: fixed;
       top: 50%;
       right: 30px;
@@ -23,20 +25,24 @@
       z-index: 1000;
     }
 
-    .options-panel h2 {
+    .options-panel h2 
+    {
       padding-left: 0.5em;
     }
 
-    div.grid-outer-wrapper {
+    div.grid-outer-wrapper 
+    {
       width: 100%;
     }
 
-    #myGrid {
+    #myGrid 
+    {
       width: 100%;
       border: 1px solid gray;
     }
 
-    .grid-outer-wrapper {
+    .grid-outer-wrapper 
+    {
       float: none !important;
     }
   </style>
@@ -154,7 +160,7 @@ $(document).ready(function () {
 var myURL = "http://api.stackexchange.com/2.1/search?order=desc&sort=activity&site=stackoverflow&tagged=";
 
 function getData() {
-  $.get(myURL + $("#txtSearch").val(), function(data) {
+  $.get(myURL + $("#txtSearch").val(), function (data) {
     dataView.beginUpdate();
     dataView.setItems(data.items);
     dataView.endUpdate();

@@ -8,7 +8,8 @@
   <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    .cell-title {
+    .cell-title 
+    {
       font-weight: bold;
     }
   </style>
@@ -54,149 +55,149 @@
 <script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
-  var grid;
-  var columns = [
-    {id: "title", name: "Title", field: "title", width: 120, cssClass: "cell-title", editor: Slick.Editors.Text},
-    {id: "range", name: "Range", width: 120, formatter: NumericRangeFormatter, editor: NumericRangeEditor}
-  ];
+var grid;
+var columns = [
+  {id: "title", name: "Title", field: "title", width: 120, cssClass: "cell-title", editor: Slick.Editors.Text},
+  {id: "range", name: "Range", width: 120, formatter: NumericRangeFormatter, editor: NumericRangeEditor}
+];
 
-  var options = {
-    editable: true,
-    enableAddRow: false,
-    enableCellNavigation: true,
-    asyncEditorLoading: false
+var options = {
+  editable: true,
+  enableAddRow: false,
+  enableCellNavigation: true,
+  asyncEditorLoading: false
+};
+
+function NumericRangeFormatter(row, cell, value, columnDef, dataContext) {
+  return dataContext.from + " - " + dataContext.to;
+}
+
+function NumericRangeEditor(args) {
+  var $from, $to;
+  var scope = this;
+  var $container = $(args.container);
+  var defaultValue = args.item;
+
+  this.init = function () {
+    $from = $("<INPUT type=text style='width:40px' />")
+        .appendTo($container)
+        .bind("keydown", scope.handleKeyDown);
+
+    $(args.container).append("&nbsp; to &nbsp;");
+
+    $to = $("<INPUT type=text style='width:40px' />")
+        .appendTo($container)
+        .bind("keydown", scope.handleKeyDown);
+
+    scope.focus();
   };
 
-  function NumericRangeFormatter(row, cell, value, columnDef, dataContext) {
-    return dataContext.from + " - " + dataContext.to;
-  }
+  this.handleKeyDown = function (e) {
+    if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT || e.keyCode === Slick.Keyboard.TAB) {
+      e.stopImmediatePropagation();
+    }
+  };
 
-  function NumericRangeEditor(args) {
-    var $from, $to;
-    var scope = this;
-    var $container = $(args.container);
-    var defaultValue = args.item;
+  this.destroy = function () {
+    $container.empty();
+  };
 
-    this.init = function () {
-      $from = $("<INPUT type=text style='width:40px' />")
-          .appendTo($container)
-          .bind("keydown", scope.handleKeyDown);
+  this.save = function () {
+    args.commitChanges();
 
-      $(args.container).append("&nbsp; to &nbsp;");
+    grid.navigateDown();
+  };
 
-      $to = $("<INPUT type=text style='width:40px' />")
-          .appendTo($container)
-          .bind("keydown", scope.handleKeyDown);
+  this.cancel = function () {
+    scope.setDirectValue(defaultValue);
+    args.cancelChanges();
+  };
 
-      scope.focus();
+  this.hide = function () {
+    $container.hide();
+  };
+
+  this.show = function () {
+    $container.show();
+  };
+
+  this.position = function (position) {
+    // nada 
+  };
+
+  this.focus = function () {
+    $from.focus();
+  };
+
+  this.setDirectValue = function (val) {
+    defaultValue = (val || {
+      from: 0,
+      to: 0
+    });
+    $from.val(val.from);
+    $from[0].defaultValue = val.from;
+    $to.val(val.to);
+    $to[0].defaultValue = val.to;
+  };
+
+  this.serializeValue = function () {
+    return {
+      from: parseInt($from.val(), 10),
+      to: parseInt($to.val(), 10)
     };
+  };
 
-    this.handleKeyDown = function (e) {
-      if (e.keyCode == Slick.Keyboard.LEFT || e.keyCode == Slick.Keyboard.RIGHT || e.keyCode == Slick.Keyboard.TAB) {
-        e.stopImmediatePropagation();
-      }
-    };
+  this.applyValue = function (item, state) {
+    item.from = state.from;
+    item.to = state.to;
+  };
 
-    this.destroy = function () {
-      $container.empty();
-    };
-
-    this.save = function () {
-      args.commitChanges();
-
-      grid.navigateDown();
-    };
-
-    this.cancel = function () {
-      scope.setDirectValue(defaultValue);
-      args.cancelChanges();
-    };
-
-    this.hide = function () {
-      $container.hide();
-    };
-
-    this.show = function () {
-      $container.show();
-    };
-
-    this.position = function (position) {
-      // nada 
-    };
-
-    this.focus = function () {
-      $from.focus();
-    };
-
-    this.setDirectValue = function (val) {
-      defaultValue = (val || {
-        from: 0,
-        to: 0
-      });
-      $from.val(val.from);
-      $from[0].defaultValue = val.from;
-      $to.val(val.to);
-      $to[0].defaultValue = val.to;
-    };
-
-    this.serializeValue = function () {
-      return {
-        from: parseInt($from.val(), 10),
-        to: parseInt($to.val(), 10)
-      };
-    };
-
-    this.applyValue = function (item, state) {
-      item.from = state.from;
-      item.to = state.to;
-    };
-
-    this.loadValue = function (item) {
-      // clone item into defaultValue on the first invocation
-      if (!defaultValue) {
-        defaultValue = $.extend({}, item);
-      }
-
-      $from.val(item.from);
-      $to.val(item.to);
-    };
-
-    this.isValueChanged = function () {
-      return defaultValue.from != parseInt($from.val(), 10) || defaultValue.to != parseInt($from.val(), 10);
-    };
-
-    this.validate = function () {
-      if (isNaN(parseInt($from.val(), 10)) || isNaN(parseInt($to.val(), 10))) {
-        return {valid: false, msg: "Please type in valid numbers."};
-      }
-
-      if (parseInt($from.val(), 10) > parseInt($to.val(), 10)) {
-        return {valid: false, msg: "'from' cannot be greater than 'to'"};
-      }
-
-      return {valid: true, msg: null};
-    };
-
-    this.init();
-  }
-
-  $(function () {
-    var data = [];
-    for (var i = 0; i < 500; i++) {
-      var from = Math.round(Math.random() * 100);
-      data[i] = {
-        title: "Task " + i,
-        from: from,
-        to: from + Math.round(Math.random() * 100)
-      };
+  this.loadValue = function (item) {
+    // clone item into defaultValue on the first invocation
+    if (!defaultValue) {
+      defaultValue = $.extend({}, item);
     }
 
-    grid = new Slick.Grid("#myGrid", data, columns, options);
+    $from.val(item.from);
+    $to.val(item.to);
+  };
 
-    grid.onValidationError.subscribe(function (e, args) {
-      alert(args.validationResults.msg);
-    });
+  this.isValueChanged = function () {
+    return defaultValue.from != parseInt($from.val(), 10) || defaultValue.to != parseInt($from.val(), 10);
+  };
+
+  this.validate = function () {
+    if (isNaN(parseInt($from.val(), 10)) || isNaN(parseInt($to.val(), 10))) {
+      return {valid: false, msg: "Please type in valid numbers."};
+    }
+
+    if (parseInt($from.val(), 10) > parseInt($to.val(), 10)) {
+      return {valid: false, msg: "'from' cannot be greater than 'to'"};
+    }
+
+    return {valid: true, msg: null};
+  };
+
+  this.init();
+}
+
+$(function () {
+  var data = [];
+  for (var i = 0; i < 500; i++) {
+    var from = Math.round(Math.random() * 100);
+    data[i] = {
+      title: "Task " + i,
+      from: from,
+      to: from + Math.round(Math.random() * 100)
+    };
+  }
+
+  grid = new Slick.Grid("#myGrid", data, columns, options);
+
+  grid.onValidationError.subscribe(function (e, args) {
+    alert(args.validationResults.msg);
   });
+});
 </script>
 </body>
 </html>

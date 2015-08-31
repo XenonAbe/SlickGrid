@@ -7,15 +7,18 @@
   <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>        
-  	html {
-	  height: 100%;
-	}
-	
-    body {
+    html 
+    {
+      height: 100%;
+    }
+  
+    body 
+    {
       overflow: auto;
     }
 
-    .options-panel {
+    .options-panel 
+    {
       position: fixed;
       top: 15%;
       right: 20%;
@@ -25,11 +28,13 @@
       z-index: 1000;
     }
 
-    .options-panel h2 {
+    .options-panel h2 
+    {
       padding-left: 0.5em;
     }
 
-    #myGrid {
+    #myGrid 
+    {
       position: absolute;
       top: 20px;
       left: 20px;
@@ -39,16 +44,16 @@
       border: 1px solid gray;
     }
 
-	#outer {
-	  position: absolute;
-	  top: 0;
-	  left: 0;
-	  right: 0;
-	  bottom: 0;
-	  padding: 3px;
-	  border: solid grey 3px;
-	}
-	
+    #outer 
+    {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 3px;
+      border: solid grey 3px;
+    }
   </style>
 </head>
 <body>
@@ -142,10 +147,9 @@
   grid = new Slick.Grid("#myGrid", data, columns, options);
   grid.registerPlugin(new Slick.AutoSizer({container:'#myGrid'}));
 
-  function triggerChange(){
+  function triggerChange() {
     $('#myGrid').trigger('resize.slickgrid');
   }
-
 </script>
 </body>
 </html>

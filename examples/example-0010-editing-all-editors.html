@@ -11,11 +11,13 @@
   <link rel="stylesheet" href="../slick-editors.css" type="text/css"/>
   <link rel="stylesheet" href="examples.css" type="text/css"/>
   <style>
-    .cell-title {
+    .cell-title 
+    {
       font-weight: bold;
     }
 
-    .cell-effort-driven {
+    .cell-effort-driven 
+    {
       text-align: center;
     }
   </style>
@@ -38,7 +40,6 @@
 
     <h2>Options:</h2>
     <button onclick="grid.setOptions({autoEdit:true})">Auto-edit ON</button>
-    &nbsp;
     <button onclick="grid.setOptions({autoEdit:false})">Auto-edit OFF</button>
 
     <h2>View Source:</h2>
@@ -75,7 +76,7 @@
 
 <script id="script_tag_example" type="text/javascript">
   function requiredFieldValidator(value) {
-    if (value == null || value == undefined || !value.length) {
+    if (value === null || value === undefined || !value.length) {
       return {valid: false, msg: "This is a required field"};
     } else {
       return {valid: true, msg: null};
@@ -118,7 +119,7 @@
         percentComplete: Math.min(100, Math.round(Math.random() * 110)),
         start: "01/01/2009",
         finish: "01/05/2009",
-        effortDriven: (i % 5 == 0),
+        effortDriven: (i % 5 === 0),
         color: "#" + ("000000" + ((i * 999999 / 500) | 0)).slice(-6),
         option: (i * 7) % 4 + 1,
         okay: ((i * 11) % 5) > 1,
@@ -128,8 +129,8 @@
     var columnScrollTimer = null;
     grid = new Slick.Grid("#myGrid", data, columns, options);
     grid.onColumnsReordered.subscribe(function(e, args) {
-        clearInterval(columnScrollTimer);
-        columnScrollTimer = null;
+      clearInterval(columnScrollTimer);
+      columnScrollTimer = null;
     });
     grid.onAddNewRow.subscribe(function (e, args) {
       var item = args.item;
@@ -139,25 +140,25 @@
       grid.render();
     });
     grid.onColumnsReordering.subscribe(function(e,args) {
-        function scrollColumnsRight() {
-            $('#myGrid > .slick-viewport')[0].scrollLeft = $('#myGrid > .slick-viewport')[0].scrollLeft + 10;
-        }
+      function scrollColumnsRight() {
+        $('#myGrid > .slick-viewport')[0].scrollLeft = $('#myGrid > .slick-viewport')[0].scrollLeft + 10;
+      }
 
-        function scrollColumnsLeft() {
-            $('#myGrid > .slick-viewport')[0].scrollLeft = $('#myGrid > .slick-viewport')[0].scrollLeft - 10;
+      function scrollColumnsLeft() {
+        $('#myGrid > .slick-viewport')[0].scrollLeft = $('#myGrid > .slick-viewport')[0].scrollLeft - 10;
+      }
+      if (args.e.originalEvent.pageX > $('#myGrid')[0].clientWidth) {
+        if (!(columnScrollTimer)) {
+          columnScrollTimer = setInterval(scrollColumnsRight, 100);
         }
-        if (args.e.originalEvent.pageX > $('#myGrid')[0].clientWidth) {
-            if (!(columnScrollTimer)) {
-                columnScrollTimer = setInterval(scrollColumnsRight, 100);
-            }
-        } else if (args.e.originalEvent.pageX < $('#myGrid > .slick-viewport').offset().left) {
-            if (!(columnScrollTimer)) {
-                columnScrollTimer = setInterval(scrollColumnsLeft, 100);
-            }
-        } else {
-            clearInterval(columnScrollTimer);
-            columnScrollTimer = null;
+      } else if (args.e.originalEvent.pageX < $('#myGrid > .slick-viewport').offset().left) {
+        if (!(columnScrollTimer)) {
+          columnScrollTimer = setInterval(scrollColumnsLeft, 100);
         }
+      } else {
+        clearInterval(columnScrollTimer);
+        columnScrollTimer = null;
+      }
     });
   });
 </script>
