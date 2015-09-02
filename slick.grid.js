@@ -2543,8 +2543,8 @@ if (typeof Slick === "undefined") {
      *                                        manually call resizeCanvas.
      */
     function setColumns(newColumnDefinitions, resizeOptions) {
-	  getEditorLock().cancelCurrentEdit();
-	
+      getEditorLock().cancelCurrentEdit();
+  
       parseColumns(newColumnDefinitions);
       resizeOptions = resizeOptions || {};
       updateColumnCaches();
@@ -8605,32 +8605,32 @@ if (0) {
     // Debug
 
     this.getStateInfo = function () { 
-        return {
-          rowsCache: rowsCache, // Super important object, responsible for the present rendered dom of the rows
-          uiRegions: {
-            topViewport: topViewport,
-            topCanvas: topCanvas,
-            header: header,
-            subHeader: subHeader,
-            contentViewportWrap: contentViewportWrap,
-            contentViewport: contentViewport,
-            contentCanvas: contentCanvas,
-            rows: rows
-          },
-          colInfo: {
-            columnPosLeft:  columnPosLeft,
-            columnPosRight: columnPosRight
-          },
-          scrollInfo: {
-            visibleRange:  getVisibleRange(),
-            renderedRange: getRenderedRange(),
-            offset: offset,
-            scrollTop: scrollTop,
-            lastRenderedScrollTop: lastRenderedScrollTop,
-            lastRenderedScrollLeft: lastRenderedScrollLeft,
-            numVisibleRows: numVisibleRows
-          }
-        } 
+      return {
+        rowsCache: rowsCache, // Super important object, responsible for the present rendered dom of the rows
+        uiRegions: {
+          topViewport: topViewport,
+          topCanvas: topCanvas,
+          header: header,
+          subHeader: subHeader,
+          contentViewportWrap: contentViewportWrap,
+          contentViewport: contentViewport,
+          contentCanvas: contentCanvas,
+          rows: rows
+        },
+        colInfo: {
+          columnPosLeft:  columnPosLeft,
+          columnPosRight: columnPosRight
+        },
+        scrollInfo: {
+          visibleRange:  getVisibleRange(),
+          renderedRange: getRenderedRange(),
+          offset: offset,
+          scrollTop: scrollTop,
+          lastRenderedScrollTop: lastRenderedScrollTop,
+          lastRenderedScrollLeft: lastRenderedScrollLeft,
+          numVisibleRows: numVisibleRows
+        }
+      } 
     };
 
     //

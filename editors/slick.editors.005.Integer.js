@@ -84,20 +84,20 @@
           msg: "Please enter a valid integer"
         };
       }
-    
-    if (args.editorConfig && !isNaN(args.editorConfig.minValue) && val < args.editorConfig.minValue) {
-      return {
-        valid: false,
-        msg: 'Please enter a value no less than ' + args.editorConfig.minValue
-      };
-    }
-    
-    if (args.editorConfig && !isNaN(args.editorConfig.maxValue) && val > args.editorConfig.maxValue) {
-      return {
-        valid: false,
-        msg: 'Please enter a value no greater than ' + args.editorConfig.maxValue
-      };
-    }
+      
+      if (args.editorConfig && !isNaN(args.editorConfig.minValue) && val < args.editorConfig.minValue) {
+        return {
+          valid: false,
+          msg: 'Please enter a value no less than ' + args.editorConfig.minValue
+        };
+      }
+      
+      if (args.editorConfig && !isNaN(args.editorConfig.maxValue) && val > args.editorConfig.maxValue) {
+        return {
+          valid: false,
+          msg: 'Please enter a value no greater than ' + args.editorConfig.maxValue
+        };
+      }
 
       return {
         valid: true,

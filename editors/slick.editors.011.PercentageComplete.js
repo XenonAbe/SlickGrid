@@ -25,22 +25,22 @@
 
       var $body = $("body");
 
-      $helper = $("\
-        <div class='editor-percentcomplete-helper'>\
-          <div class='editor-percentcomplete-wrapper'>\
-            <div class='editor-percentcomplete-slider'>\
-            </div>\
-            <div class='editor-percentcomplete-buttons'>\
-            </div>\
-          </div>\
-        </div>").appendTo($body);
+      $helper = $("\n" +
+        "<div class='editor-percentcomplete-helper'>\n" +
+        "  <div class='editor-percentcomplete-wrapper'>\n" +
+        "    <div class='editor-percentcomplete-slider'>\n" +
+        "    </div>\n" +
+        "    <div class='editor-percentcomplete-buttons'>\n" +
+        "    </div>\n" +
+        "  </div>\n" +
+        "</div>").appendTo($body);
 
       $helper.find(".editor-percentcomplete-buttons")
-      .append("<button val='0'>Not started</button>\
-        <br/>\
-        <button val='50'>In Progress</button>\
-        <br/>\
-        <button val='100'>Complete</button>");
+      .append("<button val='0'>Not started</button>\n" +
+        "<br/>\n" +
+        "<button val='50'>In Progress</button>\n" +
+        "<br/>\n" +
+        "<button val='100'>Complete</button>");
 
       $helper.find(".editor-percentcomplete-slider").slider({
         orientation: "vertical",

@@ -86,11 +86,11 @@
     };
 
     this.setDirectValue = function (val) {
-        var key = getKeyFromKeyVal(opt, val);
-        key = opt[key].key;
-        defaultValue = key;
-        $select.val(key);
-        $select.multiselect("refresh");
+      var key = getKeyFromKeyVal(opt, val);
+      key = opt[key].key;
+      defaultValue = key;
+      $select.val(key);
+      $select.multiselect("refresh");
     };
 
     this.loadValue = function (item) {
@@ -111,10 +111,10 @@
     };
 
     this.validate = function() {
-        return {
-            valid: true,
-            msg: null
-        };
+      return {
+        valid: true,
+        msg: null
+      };
     };
 
     this.init();
