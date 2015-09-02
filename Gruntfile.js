@@ -1,4 +1,5 @@
 /* jshint node: true */
+
 /*!
  * slickGrid's Gruntfile
  */
