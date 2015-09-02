@@ -29,7 +29,7 @@ module.exports = function (grunt) {
               ' * Distributed under <%= pkg.license %> license.\n' + 
               ' * All rights reserved.\n' + 
               ' */\n' +
-              '\n',
+              '\n\n',
     bannerDocs: '/*!\n' +
               ' * slickGrid Docs (<%= pkg.homepage %>)\n' +
               ' * Copyright 2009-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' +
@@ -37,7 +37,7 @@ module.exports = function (grunt) {
               ' * Distributed under <%= pkg.license %> license.\n' + 
               ' * All rights reserved.\n' + 
               ' */\n' +
-              '\n',
+              '\n\n',
     jqueryCheck: 'if (typeof jQuery === \'undefined\') { throw new Error(\'slickGrid requires jQuery\') }\n\n',
 
     // Task configuration.
@@ -52,7 +52,7 @@ module.exports = function (grunt) {
     concat: {
       options: {
         stripBanners: false,
-        banner: '<%= banner %>\n\n',
+        banner: '<%= banner %>',
         // Replace all 'use strict' statements in the code with a single one at the top (in the prelude)
         process: function(src, filepath) {
           return '//! Source: ' + filepath + '\n\n' +
@@ -76,10 +76,10 @@ module.exports = function (grunt) {
         src: ['*.js', 'controls/*.js', 'plugins/*.js', '*.css', '*.less', '*.scss'],
         editor: function (contents, filePath) {
           var v = grunt.config.get('pkg.version');
-          //console.log('rewrite in place: ', filePath, v);
+          console.log('- rewrite in place: ', filePath, v);
           var rv = contents
-          .replace(/(slickGridVersion[^\d]+)([\d]+\.[\d.]+(?:[-.][a-zA-Z\d]+)*)/g, '$1' + v)
-          .replace(/(SlickGrid)\s+v?([\d]+\.[\d.]+(?:[-.][a-zA-Z\d]+)*)/g, '$1 v' + v);
+          .replace(/(slickGridVersion[^\d]+)([\d]+\.[\d.]+(?:[-.][a-zA-Z\d]+)*)/ig, '$1' + v)
+          .replace(/(SlickGrid)\s+v?([\d]+\.[\d.]+(?:[-.][a-zA-Z\d]+)*)/ig, '$1 v' + v);
           return rv;
         }
       }
@@ -193,10 +193,7 @@ module.exports = function (grunt) {
           banner: '<%= banner %>'
         },
         files: {
-          src: [
-            'slick.grid.css',
-            'slick-default-theme.css',
-          ]
+          src: ['slick*.js', 'controls/*.js', 'plugins/*.js', '*.css', '*.less', '*.scss']
         }
       }
     },

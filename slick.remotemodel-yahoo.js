@@ -1,6 +1,18 @@
+/*!
+ * @license
+ * slickGrid v2.3.18-alpha.1011 (https://github.com/GerHobbelt/SlickGrid)
+ * Copyright 2009-2015 Michael Leibman <michael{dot}leibman{at}gmail{dot}com>
+ *
+ * Distributed under MIT license.
+ * All rights reserved.
+ */
+
+
+
 (function ($) {
-  /***
+  /**
    * A sample AJAX data store implementation.
+   * 
    * Right now, it's hooked up to load Hackernews stories, but can
    * easily be extended to support any JSONP-compatible backend that accepts paging parameters.
    */
@@ -22,7 +34,7 @@
 
     function isDataLoaded(from, to) {
       for (var i = from; i <= to; i++) {
-        if (data[i] == undefined || data[i] == null) {
+        if (data[i] == null) {
           return false;
         }
       }

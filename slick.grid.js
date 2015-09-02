@@ -1,14 +1,15 @@
-/**
+/*!
  * @license
- * (c) 2009-2015 Michael Leibman
- * michael{dot}leibman{at}gmail{dot}com
- * http://github.com/mleibman/slickgrid
+ * slickGrid v2.3.18-alpha.1011 (https://github.com/GerHobbelt/SlickGrid)
+ * Copyright 2009-2015 Michael Leibman <michael{dot}leibman{at}gmail{dot}com>
  *
  * Distributed under MIT license.
  * All rights reserved.
- *
- * SlickGrid v2.3.18-alpha.1009
- *
+ */
+
+
+
+/**
  * NOTES:
  *     Cell/row DOM manipulations are done directly bypassing jQuery's DOM manipulation methods.
  *     This increases the speed dramatically, but can only be done safely because there are no event handlers
@@ -8677,7 +8678,7 @@ if (0) {
     // Public API
 
     __extend(this, {
-      "slickGridVersion": "2.3.18-alpha.1009",
+      "slickGridVersion": "2.3.18-alpha.1011",
 
       // Events
       "onScroll": new Slick.Event(),

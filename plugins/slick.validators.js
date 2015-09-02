@@ -1,3 +1,14 @@
+/*!
+ * @license
+ * slickGrid v2.3.18-alpha.1011 (https://github.com/GerHobbelt/SlickGrid)
+ * Copyright 2009-2015 Michael Leibman <michael{dot}leibman{at}gmail{dot}com>
+ *
+ * Distributed under MIT license.
+ * All rights reserved.
+ */
+
+
+
 (function ($) {
   var defaults = {
     messages: {
@@ -21,7 +32,7 @@
 
   function RegexValidator(options) {
     if (!isDefined(options.regex)) throw new Error("missing argument: regex");
-    return function(value) {
+    return function (value) {
       return (isDefined(value) && options.regex.test(value.toString())) ?
         { valid: true,  msg: null } :
         { valid: false, msg: options.msg };
@@ -41,8 +52,9 @@
   }
 
   for (var name in defaults.regex) {
-    regexExports[capitaliseFirstLetter(name) + "Validator"] = ctorFactory(name);
-    regexExports[name] = ctorFactory(name)();
+    var validatorObj = ctorFactory(name);
+    regexExports[capitaliseFirstLetter(name) + "Validator"] = validatorObj;
+    regexExports[name] = validatorObj();
   }
 
 
@@ -51,7 +63,7 @@
       msg: defaults.messages.required
     }, options);
 
-    return function(value) {
+    return function (value) {
       return (value === null || value === undefined || !value.length) ?
         { valid: false, msg: options.msg } :
         { valid: true, msg: null };
