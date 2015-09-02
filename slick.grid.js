@@ -600,6 +600,12 @@ if (typeof Slick === "undefined") {
         bindAncestorScrollEvents();
 
         $container
+            // See also http://stackoverflow.com/questions/10086693/jquery-resize-on-div-element
+            // 
+            // We DO NOT want to use any sort of polling-based mechanism as that would 
+            // COST US VERY DEARLY due to continuous (high!) DOM re-layout/re-rendering effort 
+            // by the browser. Instead we use the 'iframe in the background' trick described
+            // in an answer at the above link:
             .bind("resize.slickgrid", function (e) {
               resizeCanvas();
             })
