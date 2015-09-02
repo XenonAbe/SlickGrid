@@ -3943,6 +3943,7 @@ if (typeof Slick === "undefined") {
 
     function cleanUpRows(rangeToKeep) {
       assert(cellSpans.length <= getDataLengthIncludingAddNew());
+      debug_rows("before cleanup: ");
 
       // Pull up the lower bound while we're at it.
       for (var row = 0, endrow = rowsCache.length; row < endrow; row++) {
@@ -3996,13 +3997,14 @@ if (typeof Slick === "undefined") {
       }
       // and clip off the tail end of the cache index array itself:
       assert(endrow === rowsCache.length);
-      for (row = rowsCacheStartIndex; row < endrow; endrow--) {
+      for (row = rowsCacheStartIndex; row <= endrow; endrow--) {
         if (rowsCache[endrow]) {
           endrow++;
           break;
         }
       }
       rowsCache.length = endrow;
+      debug_rows("after cleanup: ");
     }
 
     function updateAllDirtyCells(rangeToUpdate, checkIfMustAbort) {
@@ -8667,6 +8669,13 @@ if (0) {
     this.eval = function (expr) {
       return eval(expr);
     };
+
+    function debug_rows(msg) {
+      var $rows = $canvas.find('div.slick-row');
+      console.log(msg || "debug_rows: ", uid, $rows.length, $rows);
+    }
+
+    this.debug_rows = debug_rows;
 
     /* jshint +W061 */
     //
