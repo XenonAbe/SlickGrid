@@ -85,7 +85,7 @@
                 if (($.isNumeric(row.level) && $.isNumeric(options.level)) ? row.level == options.level : true) {
                     for (; column = columns[col++];) {
                         value = row[column.field];
-                        if (value !== 0 && value !== null && !isNaN(value * 1)) { //0 is false so we need to test this
+                        if ($.isNumeric(value)) {
                             entry = (summaryData[column.id] || {sum: 0, values: []});
                             entry.sum += value * 1;
                             entry.values.push(value * 1);
@@ -117,8 +117,8 @@
             self.onRendered.notify($totalContainer, ev, args);
 
             if (mergeCols && mergeCols.length) {
-                var from, to, col, i = 0;
-
+                var from, to, col;
+                i = 0;
                 for (; col = mergeCols[i++];) {
                     from = $totalRow.find('.total-' + col.from);
                     to = $totalRow.find('.total-' + col.to);
@@ -128,6 +128,8 @@
                             .html(col.content.text || '\u00A0');
                     } else if(to.length > 0) {
                         to.html(col.content.text || '\u00A0');
+                    } else if (from.length) {
+                        from.html(col.content.text || '\u00A0');
                     }
                 }
             }
