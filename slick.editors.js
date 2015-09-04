@@ -543,7 +543,7 @@
 
     this.init = function () {
       function format(item) {
-        if (!item.id) return item.text; // optgroup
+        if (!item.id || !args.column.showIcons) return item.text; // optgroup
         return "<img class='slickgrid_select_editor_img' src='img/" + args.column.editor_img_prefix + item.id.toLowerCase() + ".png'/>" + item.text;
       }
 
