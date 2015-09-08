@@ -116,7 +116,7 @@
             for (; column = columns[i];) {
                 value = column.aggregator ? column.aggregator(summaryData[column.id], column, ev, args) : '\u00A0';
                 $('<div class="slick-cell slick-header-column"></div>')
-                    .addClass('l' + i + ' r' + i + ' total-' + column.id)
+                    .addClass('l' + i + ' r' + i + ' total-' + column.id + ' ' + column.cssClass)
                     .html('<span class="slick-column-name">' + value + '</span>')
                     .appendTo($totalRow);
                 i++;
