@@ -103,7 +103,7 @@
                 mergeCols = options.columnsToMerge,
                 $cell, column, value, i = 0;
 
-            $totalRow.css({position: 'relative', width: width}).empty();
+            $totalRow.css({position: 'relative', width: width, height: _grid.getOptions().rowHeight}).empty();
 
             for (; column = columns[i];) {
                 value = column.aggregator ? column.aggregator(summaryData[column.id], column, ev, args) : '\u00A0';
