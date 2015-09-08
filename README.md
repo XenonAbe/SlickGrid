@@ -23,7 +23,16 @@ Find detailed [documentation here] (https://github.com/mleibman/SlickGrid/wiki).
 5. Added `minimumContainerHeight` grid option. This is particularly useful when the grid element (container) reveal/show/appear on click (or pragmatically). 
     - Example: carousel in bootstrap where the slides are hidden (have zero height?).
     
-    
+6. Implemented the total plugin (footer), its stays at the bottom (make sure to enable `enableAddRow` to prevent the last row hiding).
+    - It fire `onRendered` event each time the footer created and recalculated (`onDataviewRefreshed` - DataView {insert, delete etc..}, `onColumnsReordered`, `onColumnsResized` and `onInitialize` Grid).
+    - Override `updateSummaryData` method to calculate the total row columns values.
+        - It it will receive 3 parameters `items`, `columns` and `callback`.
+        - One must call the callback with data (see example in the totals plugin code for example).
+    - You can pass `aggregator` for each column in the column definition.
+        - Aggregator will receive 4 parameters `{sum: <<values>>, values: [<values>>]}, columnDef, event, args`.
+        - It must return the value.
+
+        
 #### How to install this package
 
 `bower mslickgrid`
