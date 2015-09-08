@@ -79,10 +79,11 @@
             summaryData = {}; //Clean up previous data;
 
             var i = 0, value, row, column, col = 0, entry;
-
-            for (; row = items[i++];) {
-                column = null;
-                if (($.isNumeric(row.level) && $.isNumeric(options.level)) ? row.level == options.level : true) {
+            if ($.isFunction(options.updateSummaryData)) {
+                summaryData = options.updateSummaryData(items, columns, summaryData);
+            } else {
+                for (; row = items[i++];) {
+                    column = null;
                     for (; column = columns[col++];) {
                         value = row[column.field];
                         if ($.isNumeric(value)) {
@@ -96,7 +97,6 @@
                     }
                 }
             }
-
             appendColumns(ev, args);
         }
 
