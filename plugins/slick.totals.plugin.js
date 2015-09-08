@@ -34,7 +34,7 @@
 
             grid.onInitialize.subscribe(function (ev, args) {
 
-                if(!_grid) {
+                if (!_grid) {
                     _grid = args.grid;
                     _canvas = args.grid.getCanvasNode();
                     $totalContainer.appendTo(_canvas.parentElement);
@@ -86,10 +86,12 @@
                     for (; column = columns[col++];) {
                         value = row[column.field];
                         if ($.isNumeric(value)) {
-                            entry = (summaryData[column.id] || {sum: 0, values: []});
-                            entry.sum += value * 1;
-                            entry.values.push(value * 1);
-                            summaryData[column.id] = entry;
+                            if (!summaryData[column.id]) {
+                                summaryData[column.id] = {sum: value * 1, values: [value * 1]};
+                            } else {
+                                var entry = summaryData[column.id];
+                                summaryData[column.id] = {sum: (entry.sum + value * 1), values: entry.values.concat(value * 1)};
+                            }
                         }
                     }
                 }
@@ -126,7 +128,7 @@
                         to.css({left: parseInt(from.css('left'), 10)})
                             .addClass(col.cssClass || '')
                             .html(col.content.text || '\u00A0');
-                    } else if(to.length > 0) {
+                    } else if (to.length > 0) {
                         to.html(col.content.text || '\u00A0');
                     } else if (from.length) {
                         from.html(col.content.text || '\u00A0');
