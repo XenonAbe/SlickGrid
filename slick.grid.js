@@ -204,6 +204,14 @@ if (typeof Slick === "undefined") {
    *      forceSyncScrolling: {Boolean}   If true, renders more frequently during scrolling, rather than
    *                                      deferring rendering until default scroll thresholds are met (asyncRenderDelay).
    *      asyncRenderDelay:   {Number}    Delay passed to setTimeout in milliseconds before view update is actually rendered.
+   *      asyncRenderSlice:   {Number}    Number of milliseconds allowed to the render action: when more time than this is spent, the async
+   *                                      renderer will postpone the remainder of the render activity until the next time slice.
+   *      asyncRenderInterleave: {Number} Number of milliseconds before the next render timeslice will start. 
+   *                                      The 'duty cycle' (if you may call it that) of the SlickGrid renderer therefore is 
+   *                                           asyncRenderSlice / (asyncRenderSlice + asyncRenderInterleave)
+   *                                      or slightly higher -- as the renderer will continue until the `asyncRenderSlice` has actually 
+   *                                      *expired*!
+   *      pauseRendering:     {Boolean}   when set, SlickGrid will not update/render the grid until the `resumeRendering()` API has been invoked.
    *      addNewRowCssClass:  {String}    specifies CSS class for the extra bottom row: "add new row"
    *
    **/
@@ -261,6 +269,7 @@ if (typeof Slick === "undefined") {
                                     // keep your navigator keys depressed to see the delayed render + mandatory mini-cell-renders kicking in. 
       asyncRenderSlice: 50,
       asyncRenderInterleave: 20,
+      pauseRendering: false,
       addNewRowCssClass: "new-row",
       editCommandHandler: null,
       clearCellBeforeEdit: true,
@@ -5452,6 +5461,26 @@ if (typeof Slick === "undefined") {
       return h_render != null;
     }
 
+    /**
+     * Invoke this function to stop SlickGrid from rendering the grid until further notice.
+     *
+     * This call can be used by userland code to help keep the DOM and render costs lean
+     * when the grid is not visible: as the render action is held off, it will execute soon
+     * after the `resumeRendering()` has been invoked ('soon' rather than 'immediately' as
+     * the render activity is an asynchronous process).
+     *
+     * To ensure that certain assumptions about the grid (and the 'active cell' DOM part) will
+     * continue to hold, we *do* permit *forced* render actions during this time until
+     * the next `resumeRendering()` invocation.
+     */
+    function pauseRendering() {
+      options.pauseRendering = true;
+    }
+
+    function resumeRendering() {
+      options.pauseRendering = false;
+    }
+
     function forcedRenderCriticalCell(row, cell) {
       var cellBoxInfo = getCellNodeBox(row, cell);
       // when the sought-after cell is outside the visible part of the row, we don't render a series but only that single node:
@@ -5479,19 +5508,29 @@ if (typeof Slick === "undefined") {
         }
         render_perftimer.start();
 
-        var signal_timeout = false;
+        if (!options.pauseRendering) { 
+          var signal_timeout = false;
 
-        checkTheTime = function h_checkTheTime_f() {
-          // Should we stop and postpone the execution of the pending tasks?
-          if (!signal_timeout && timeSlice > 0) {
-            var delta_t = render_perftimer.mark();
-            if (delta_t >= timeSlice) {
-              //break out;
-              signal_timeout = true;
+          checkTheTime = function h_checkTheTime_f() {
+            // Should we stop and postpone the execution of the pending tasks?
+            if (!signal_timeout && timeSlice > 0) {
+              var delta_t = render_perftimer.mark();
+              if (delta_t >= timeSlice) {
+                //break out;
+                signal_timeout = true;
+              }
             }
-          }
-          return signal_timeout;
-        }; 
+            return signal_timeout;
+          };
+        } else {
+          checkTheTime = function h_checkTheTimeWhenPaused_f() {
+            // always report TRUE. Do not allow the async *chunked* render process
+            // to pick up again halfway through the action series in the code below as
+            // that would be a risk regarding render assumptions: once the time has
+            // been 'flagged' it MUST REMAIN 'flagged':
+            return true;
+          };
+        } 
       }
 
       //assert($(".slick-row").filter(":not(:visible)").length === 0);
@@ -8776,6 +8815,8 @@ if (0) {
       "render": render,
       "forcedRender": forcedRender,
       "isRenderPending": isRenderPending,
+      "pauseRendering": pauseRendering,
+      "resumeRendering": resumeRendering,
       "invalidate": invalidate,
       "invalidateCell": invalidateCell,
       "invalidateCellSpan": invalidateCellSpan,
