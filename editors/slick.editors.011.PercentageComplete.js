@@ -1,5 +1,5 @@
   // register namespace
-  Slick.Editors.PercentageComplete = PercentageCompleteEditor;
+  Slick.Editors.PercentageComplete = PercentCompleteEditor;
 
   function PercentCompleteEditor(args) {
     var $input, $picker, $helper;

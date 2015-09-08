@@ -8,7 +8,6 @@
  */
 
 
-
 //! Source: formatters/slick.formatters.js.prelude
 
 /***

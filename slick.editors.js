@@ -8,7 +8,6 @@
  */
 
 
-
 //! Source: editors/slick.editors.js.prelude
 
 /***
@@ -430,20 +429,20 @@
           msg: "Please enter a valid integer"
         };
       }
-    
-    if (args.editorConfig && !isNaN(args.editorConfig.minValue) && val < args.editorConfig.minValue) {
-      return {
-        valid: false,
-        msg: 'Please enter a value no less than ' + args.editorConfig.minValue
-      };
-    }
-    
-    if (args.editorConfig && !isNaN(args.editorConfig.maxValue) && val > args.editorConfig.maxValue) {
-      return {
-        valid: false,
-        msg: 'Please enter a value no greater than ' + args.editorConfig.maxValue
-      };
-    }
+      
+      if (args.editorConfig && !isNaN(args.editorConfig.minValue) && val < args.editorConfig.minValue) {
+        return {
+          valid: false,
+          msg: 'Please enter a value no less than ' + args.editorConfig.minValue
+        };
+      }
+      
+      if (args.editorConfig && !isNaN(args.editorConfig.maxValue) && val > args.editorConfig.maxValue) {
+        return {
+          valid: false,
+          msg: 'Please enter a value no greater than ' + args.editorConfig.maxValue
+        };
+      }
 
       return {
         valid: true,
@@ -1027,7 +1026,7 @@
 //! Source: editors/slick.editors.011.PercentageComplete.js
 
   // register namespace
-  Slick.Editors.PercentageComplete = PercentageCompleteEditor;
+  Slick.Editors.PercentageComplete = PercentCompleteEditor;
 
   function PercentCompleteEditor(args) {
     var $input, $picker, $helper;
@@ -1053,22 +1052,22 @@
 
       var $body = $("body");
 
-      $helper = $("\
-        <div class='editor-percentcomplete-helper'>\
-          <div class='editor-percentcomplete-wrapper'>\
-            <div class='editor-percentcomplete-slider'>\
-            </div>\
-            <div class='editor-percentcomplete-buttons'>\
-            </div>\
-          </div>\
-        </div>").appendTo($body);
+      $helper = $("\n" +
+        "<div class='editor-percentcomplete-helper'>\n" +
+        "  <div class='editor-percentcomplete-wrapper'>\n" +
+        "    <div class='editor-percentcomplete-slider'>\n" +
+        "    </div>\n" +
+        "    <div class='editor-percentcomplete-buttons'>\n" +
+        "    </div>\n" +
+        "  </div>\n" +
+        "</div>").appendTo($body);
 
       $helper.find(".editor-percentcomplete-buttons")
-      .append("<button val='0'>Not started</button>\
-        <br/>\
-        <button val='50'>In Progress</button>\
-        <br/>\
-        <button val='100'>Complete</button>");
+      .append("<button val='0'>Not started</button>\n" +
+        "<br/>\n" +
+        "<button val='50'>In Progress</button>\n" +
+        "<br/>\n" +
+        "<button val='100'>Complete</button>");
 
       $helper.find(".editor-percentcomplete-slider").slider({
         orientation: "vertical",
@@ -1585,11 +1584,11 @@
     };
 
     this.setDirectValue = function (val) {
-        var key = getKeyFromKeyVal(opt, val);
-        key = opt[key].key;
-        defaultValue = key;
-        $select.val(key);
-        $select.multiselect("refresh");
+      var key = getKeyFromKeyVal(opt, val);
+      key = opt[key].key;
+      defaultValue = key;
+      $select.val(key);
+      $select.multiselect("refresh");
     };
 
     this.loadValue = function (item) {
@@ -1610,10 +1609,10 @@
     };
 
     this.validate = function() {
-        return {
-            valid: true,
-            msg: null
-        };
+      return {
+        valid: true,
+        msg: null
+      };
     };
 
     this.init();
