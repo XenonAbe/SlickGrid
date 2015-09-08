@@ -79,25 +79,31 @@
             summaryData = {}; //Clean up previous data;
 
             var i = 0, value, row, column, col = 0, entry;
-            if ($.isFunction(options.updateSummaryData)) {
-                summaryData = options.updateSummaryData(items, columns, summaryData);
+            if($.isFunction(options.updateSummaryData)) {
+                options.updateSummaryData(items, columns, function(data) {
+                    summaryData = data;
+                    appendColumns(ev, args);
+                });
             } else {
                 for (; row = items[i++];) {
                     column = null;
-                    for (; column = columns[col++];) {
-                        value = row[column.field];
-                        if ($.isNumeric(value)) {
-                            if (!summaryData[column.id]) {
-                                summaryData[column.id] = {sum: value * 1, values: [value * 1]};
-                            } else {
-                                var entry = summaryData[column.id];
-                                summaryData[column.id] = {sum: (entry.sum + value * 1), values: entry.values.concat(value * 1)};
+                    if (($.isNumeric(row.level) && $.isNumeric(options.level)) ? row.level == options.level : true) {
+                        for (; column = columns[col++];) {
+                            value = row[column.field];
+                            if ($.isNumeric(value)) {
+                                if (!summaryData[column.id]) {
+                                    summaryData[column.id] = {sum: value * 1, values: [value * 1]};
+                                } else {
+                                    var entry = summaryData[column.id];
+                                    summaryData[column.id] = {sum: (entry.sum + value * 1), values: entry.values.concat(value * 1)};
+                                }
                             }
                         }
+                        col = 0;
                     }
                 }
+                appendColumns(ev, args);
             }
-            appendColumns(ev, args);
         }
 
         function appendColumns(ev, args) {
