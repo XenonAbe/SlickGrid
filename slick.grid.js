@@ -7127,6 +7127,7 @@ out:
       }
     }
 
+    // TODO: commit SHA-1: fc61ae0bbb360fe3b3f8d3dd461431c67537733c :: describe the API. code is TODO.
     function scrollCellIntoView(row, cell, doPaging, doCenteringY) {
       scrollRowIntoView(row, doPaging, doCenteringY);
 
@@ -7140,6 +7141,7 @@ out:
           right = columnPosLeft[cell + colspan],
           scrollRight = scrollLeft + viewportW;    // availableWidth = viewportHasVScroll ? viewportW - scrollbarDimensions.width : viewportW
 
+      // TODO: options.scrollHoldoffX
       if (left < scrollLeft) {
         $viewport.scrollLeft(left);
         handleScroll();
@@ -7607,6 +7609,7 @@ out:
       return activeCellNode;
     }
 
+    // TODO: commit SHA-1: fc61ae0bbb360fe3b3f8d3dd461431c67537733c :: describe the API. code is TODO.
     function scrollRowIntoView(row, doPaging, doCenteringY) {
       // Clip `row` to renderable range:
       // assert(row >= 0);
@@ -7616,6 +7619,8 @@ out:
       var height = viewportH - (viewportHasHScroll ? scrollbarDimensions.height : 0);
       var rowAtTop = getRowTop(row);
       var rowAtBottom = getRowBottom(row) - height;
+
+      // TODO: options.scrollHoldoffY
 
       // need to center row?
       if (doCenteringY) {
