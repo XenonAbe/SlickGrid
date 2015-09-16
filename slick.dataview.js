@@ -229,7 +229,8 @@
         pageSize: pagesize,
         pageNum: pagenum,
         totalRows: totalRows,
-        totalPages: totalPages
+        totalPages: totalPages,
+        dataView: self
       };
     }
 
@@ -1334,12 +1335,14 @@
       if (countBefore !== rows.length) {
         onRowCountChanged.notify({
           previous: countBefore, 
-          current: rows.length
+          current: rows.length,
+          dataView: self
         }, null, self);
       }
       if (diff.length > 0) {
         onRowsChanged.notify({
-          rows: diff
+          rows: diff,
+          dataView: self
         }, null, self);
       }
     }
@@ -1378,8 +1381,9 @@
 
         onSelectedRowIdsChanged.notify({
           grid: grid,
-          ids: selectedRowIds
-        }, new Slick.EventData(), self);
+          ids: selectedRowIds,
+          dataView: self
+        }, null, self);
       }
 
       function update() {

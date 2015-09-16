@@ -59,70 +59,70 @@
   Slick.Editors.RowMulti = RowEditor;
 
   function RowEditor(args) {
-     var theEditor;
-     var scope = this;
+    var theEditor;
+    var scope = this;
 
-     this.init = function () {
-        //var data = args.grid.getData();
-        if (args.item.editor === undefined)
-           theEditor = new ReadOnlyEditor(args);
-        else
-           theEditor = new (args.item.editor)(args);
-      };
+    this.init = function () {
+      //var data = args.grid.getData();
+      if (args.item.editor === undefined)
+        theEditor = new ReadOnlyEditor(args);
+      else
+        theEditor = new (args.item.editor)(args);
+    };
 
-      this.destroy = function () {
-        theEditor.destroy();
-      };
+    this.destroy = function () {
+      theEditor.destroy();
+    };
 
-      this.save = function () {
-        theEditor.save();
-      };
+    this.save = function () {
+      theEditor.save();
+    };
 
-      this.cancel = function () {
-        theEditor.cancel();
-      };
+    this.cancel = function () {
+      theEditor.cancel();
+    };
 
-      this.hide = function () {
-        theEditor.hide();
-      };
+    this.hide = function () {
+      theEditor.hide();
+    };
 
-      this.show = function () {
-        theEditor.show();
-      };
+    this.show = function () {
+      theEditor.show();
+    };
 
-      this.position = function (position) {
-        theEditor.position(position);
-      };
+    this.position = function (position) {
+      theEditor.position(position);
+    };
 
-      this.focus = function () {
-        theEditor.focus();
-      };
+    this.focus = function () {
+      theEditor.focus();
+    };
 
-      this.setDirectValue = function (val) {
-        theEditor.setDirectValue(val);
-      };
+    this.setDirectValue = function (val) {
+      theEditor.setDirectValue(val);
+    };
 
-      this.loadValue = function (item) {
-        theEditor.loadValue(item);
-      };
+    this.loadValue = function (item) {
+      theEditor.loadValue(item);
+    };
 
-      this.serializeValue = function () {
-        return theEditor.serializeValue();
-      };
+    this.serializeValue = function () {
+      return theEditor.serializeValue();
+    };
 
-      this.applyValue = function (item, state) {
-        theEditor.applyValue(item,state);
-      };
+    this.applyValue = function (item, state) {
+      theEditor.applyValue(item,state);
+    };
 
-      this.isValueChanged = function () {
-        return theEditor.isValueChanged();
-      };
+    this.isValueChanged = function () {
+      return theEditor.isValueChanged();
+    };
 
-      this.validate = function () {
-        return theEditor.validate();
-      };
+    this.validate = function () {
+      return theEditor.validate();
+    };
 
-      this.init();
+    this.init();
   }
 
 
@@ -325,7 +325,7 @@
     var ope = sv.charAt(0);
     if ("+-*/".indexOf(ope) < 0) return false;  // no good if it does not start with an operation
     sv = sv.substr(1);    //remove first char
-    if (sv.indexOf('+') >= 0 || sv.indexOf('-') >= 0 || sv.indexOf('*') >= 0 || sv.indexOf('/') >= 0) return false;  // no more signs please.
+    if (sv.indexOf('+') > 0 || sv.indexOf('-') > 0 || sv.indexOf('*') >= 0 || sv.indexOf('/') >= 0) return false;  // no more signs please.
     var pct = false;
     if (sv.charAt(sv.length - 1) === '%') {
       pct = true;
@@ -463,17 +463,19 @@
     var $input;
     var defaultValue;
     var scope = this;
-
+    
+    this.defaultDecimalPlaces = null;
+    
     this.init = function () {
       $input = $("<INPUT type='text' class='editor-float' />")
-          .appendTo(args.container)
-          .bind("keydown.nav", function (e) {
-            if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
-              e.stopImmediatePropagation();
-            }
-          })
-          .focus()
-          .select();
+      .appendTo(args.container)
+      .bind("keydown.nav", function (e) {
+        if (e.keyCode === Slick.Keyboard.LEFT || e.keyCode === Slick.Keyboard.RIGHT) {
+          e.stopImmediatePropagation();
+        }
+      })
+      .focus()
+      .select();
       defaultValue = 0;
     };
 
@@ -506,9 +508,39 @@
       $input.focus();
     };
 
-    this.setDirectValue = function (val) {
+    // Returns the number of fixed decimal places or `null`
+    this.getDecimalPlaces = function () {
+      var rtn = args.column && args.column.editorFixedDecimalPlaces;
+      if (!rtn && rtn !== 0) { 
+        rtn = this.defaultDecimalPlaces;
+      }
+      return (!rtn && rtn !== 0 ? null : rtn);
+    };
+  
+    this.setDecimalPlaces = function (d) {
+      assert(d == null || d === +d);
+      this.defaultDecimalPlaces = d;
+      return this;
+    };
+
+    // Convert input to number, possibly rounded at the configured number of decimals    
+    this.mkValue = function (val) {
       val = parseFloat(val);
-      if (isNaN(val)) val = 0;
+      if (isNaN(val)) {
+        val = 0;
+      }
+
+      var decPlaces = this.getDecimalPlaces();
+      if (decPlaces !== null 
+          && (val || val === 0) 
+          && val.toFixed) { 
+        val = parseFloat(val.toFixed(decPlaces));
+      }
+      return val;
+    };
+    
+    this.setDirectValue = function (val) {
+      val = this.mkValue(val);
       defaultValue = val;
       $input.val(val);
       $input[0].defaultValue = val;
@@ -521,8 +553,8 @@
 
     this.serializeValue = function () {
       var v = $input.val();
-      if (v == '') return 0.0;
-      return parseFloat(applyModifier(defaultValue, v)) || 0.0;
+      if (v === '') return 0.0;
+      return this.mkValue(applyModifier(defaultValue, v)) || 0.0;
     };
 
     this.applyValue = function (item, state) {

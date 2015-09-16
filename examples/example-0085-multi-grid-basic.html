@@ -54,7 +54,7 @@
 <script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
-  var grid;
+  var grid01, grid02;
   var columns = [
     {id: "title", name: "Title", field: "title"},
     {id: "duration", name: "Duration", field: "duration"},
@@ -89,7 +89,7 @@ $(function() {
     grid01 = new Slick.Grid("#myGrid01", data01, columns, options);
 
     var data02 = CreateData();
-    grid02 = new Slick.Grid("#myGrid02", data02, columns, options);
+    grid02 = new Slick.Grid("#myGrid02", data02, columns.slice(0), jQuery.extend({}, options));
 });
 </script>
 </body>

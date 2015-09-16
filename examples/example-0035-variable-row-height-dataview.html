@@ -120,6 +120,12 @@
 <script src="examples.showcode.js"></script>
 
 <script id="script_tag_example" type="text/javascript">
+function isIEPreVer9() { 
+  // This data is provided by the jquery.browser.js code, which mimics 
+  // the old jQuery $.browser info block:
+  return $.browser.msie && $.browser.version < 9; 
+}
+
 var grid;
 var columns = [
   {id: "sel", name: "#", field: "num", behavior: "select", cssClass: "cell-selection", width: 40, cannotTriggerInsert: true, resizable: false, selectable: false },
@@ -284,7 +290,7 @@ $(function () {
     sortdir = args.sortAsc ? 1 : -1;
     sortcol = args.sortCol.field;
 
-    if ($.browser.msie && $.browser.version <= 8) {
+    if (isIEPreVer9()) {
       // using temporary Object.prototype.toString override
       // more limited and does lexicographic sort only by default, but can be much faster
 
