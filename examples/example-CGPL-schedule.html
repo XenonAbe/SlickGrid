@@ -1,6 +1,5 @@
-<!DOCTYPE HTML>
-<meta charset="UTF-8">
-<!...Adding rev summary table and accessing the main desired revision data array...>
+<!DOCTYPE html>
+<!-- Adding rev summary table and accessing the main desired revision data array -->
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -97,8 +96,8 @@
 					<button id="reqRSDInputDeleteRowButton" onclick="deleteRow('reqRSDInputTable')">DeleteRows</button></div>
 					<br>
 				</div>
-		</div>
-		<div style="width=100%;display:table-row;">
+			</div>
+			<div style="width=100%;display:table-row;">
 				<div id="genMaxRampDiv" style="display:table-cell;height:100%;padding-left:10px;">
 					<button onclick="showhide(this)">Max Ramp Inputs Table</button>
 					<div class="hidingClass">
@@ -179,59 +178,59 @@
 						</div>
 					</div>
 				</div>
+			</div>
+		</div>
+		<div>
+			<br>
+			<button id="reqGetFromSummButton" onclick="getSummSecsToManual()">Get from revision Summary</button>
+			<button id="reqFeedByTableButton" onclick="createSumm(1)">Modify revision from Input Tables</button>
+		</div>
+		<div>
+			<h2>Undo/redo support :</h2>
+			<ul>
+				<li>Use buttons to undo/redo copy/paste</li>
+			</ul>
+			<button onclick="undoRedoBuffer.undo()"><img src="../images/arrow_undo.png" align="absmiddle"> Undo</button>
+			<button onclick="undoRedoBuffer.redo()"><img src="../images/arrow_redo.png" align="absmiddle"> Redo</button>
 		</div>
 	</div>
-			<div>
-				<br>
-				<button id="reqGetFromSummButton" onclick="getSummSecsToManual()">Get from revision Summary</button>
-				<button id="reqFeedByTableButton" onclick="createSumm(1)">Modify revision from Input Tables</button>
-			</div>
-			<div>
-				<h2>Undo/redo support :</h2>
-				<ul>
-					<li>Use buttons to undo/redo copy/paste</li>
-				</ul>
-				<button onclick="undoRedoBuffer.undo()"><img src="../images/arrow_undo.png" align="absmiddle"> Undo</button>
-				<button onclick="undoRedoBuffer.redo()"><img src="../images/arrow_redo.png" align="absmiddle"> Redo</button>
-			</div>
+	<div>
+		<div>
+			<button onclick="showhide(this)">RevisionTags Of Cells</button>
+			<table id="revMarkTable" class="hidingClass">
+			</table>
 		</div>
 		<div>
-			<div>
-				<button onclick="showhide(this)">RevisionTags Of Cells</button>
-				<table id="revMarkTable" class="hidingClass">
-				</table>
-			</div>
-			<div>
 
-			</div>
-			<div>
-
-			</div>	
 		</div>
 		<div>
-			<button onclick="showhide(this)">Desired Numeric Requisions</button>
-			<div id="myGridDes" style="height:300px" class="hidingClass"> </div>
-		</div>
-		<div>
-			<button onclick="showhide(this)">Feasible Requisions of Constituents</button>
-			<div id="myGridFeasible" style="height:300px" class="hidingClass"> </div>
-		</div>
 
-		<script src="../lib/firebugx.js"></script>
-		<script src="../lib/jquery-1.7.min.js"></script>
-		<script src="../lib/jquery-ui-1.8.16.custom.min.js"></script>
-		<script src="../lib/jquery.event.drag-2.2.js"></script>
-		<script src="../slick.core.js"></script>
-		<script src="../plugins/slick.autotooltips.js"></script>
-		<script src="../plugins/slick.cellrangedecorator.js"></script>
-		<script src="../plugins/slick.cellrangeselector.js"></script>
-		<script src="../plugins/slick.cellexternalcopymanager.js"></script>
-		<script src="../plugins/slick.cellselectionmodel.js"></script>
-		<script src="../slick.editors.js"></script>
-		<script src="../slick.formatters.js"></script>
-		<script src="../slick.grid.js"></script>
-		<script src="MainSheetUI5.js"></script>
-		<script src="infix.js"></script>
-		<script src = 'distributingRamp.js'></script>
-	</body>
-	</html>
+		</div>	
+	</div>
+	<div>
+		<button onclick="showhide(this)">Desired Numeric Requisions</button>
+		<div id="myGridDes" style="height:300px" class="hidingClass"> </div>
+	</div>
+	<div>
+		<button onclick="showhide(this)">Feasible Requisions of Constituents</button>
+		<div id="myGridFeasible" style="height:300px" class="hidingClass"> </div>
+	</div>
+
+	<script src="../lib/firebugx.js"></script>
+	<script src="../lib/jquery-1.7.min.js"></script>
+	<script src="../lib/jquery-ui-1.8.16.custom.min.js"></script>
+	<script src="../lib/jquery.event.drag-2.2.js"></script>
+	<script src="../slick.core.js"></script>
+	<script src="../plugins/slick.autotooltips.js"></script>
+	<script src="../plugins/slick.cellrangedecorator.js"></script>
+	<script src="../plugins/slick.cellrangeselector.js"></script>
+	<script src="../plugins/slick.cellexternalcopymanager.js"></script>
+	<script src="../plugins/slick.cellselectionmodel.js"></script>
+	<script src="../slick.editors.js"></script>
+	<script src="../slick.formatters.js"></script>
+	<script src="../slick.grid.js"></script>
+	<script src="MainSheetUI5.js"></script>
+	<script src="infix.js"></script>
+	<script src = 'distributingRamp.js'></script>
+</body>
+</html>
