@@ -168,7 +168,9 @@ if (typeof Slick === "undefined") {
    *                                      each individual cell's async render action takes that amount 
    *                                      of time or *less*.
    *      editable:           {Boolean}   Is editing table cells supported?
-   *      autoEdit:           {Boolean}   (?)Should editing be initiated automatically on click in cell?
+   *      autoEdit:           {Boolean}   Should editing be initiated automatically on cell focus/click?
+   *      autoEditAddRow:     {Boolean}   Should editing be initiated automatically on cell focus/click for the empty extra row at the bottom 
+   *                                      (which is shown by turning the `enableAddRow` option on)?
    *      editorFactory:      {Object}    If present, its getEditor(columnInfo, row, cell, rowMetadata, columnMetadata) method will be called
    *                                      to retrieve an editor for the specified cell,
    *                                      unless column.editor is specified, which will be used.
@@ -224,6 +226,7 @@ if (typeof Slick === "undefined") {
       enableAddRow: false,
       editable: false,
       autoEdit: true,
+      autoEditAddRow: false, 
       enableCellNavigation: true,
       enableColumnReorder: true,
       asyncEditorLoading: false,
@@ -1714,6 +1717,8 @@ if (typeof Slick === "undefined") {
                 }
               }
             }
+                } else if (options.syncColumnCellResize) {
+                    setCanvasWidth(originalCanvasWidth + d);
           }
         } else { // stretch column
           x = d;
@@ -1755,6 +1760,8 @@ if (typeof Slick === "undefined") {
                 }
               }
             }
+                } else if (options.syncColumnCellResize) {
+                  setCanvasWidth(originalCanvasWidth + d);
           }
         }
         updateColumnCaches();
@@ -7210,7 +7217,7 @@ out:
         newActiveRow = getRowFromNode(newCellNode.parentNode);
         assert(newActiveRow != null);
         if (cfg.forceEditMode == null) {
-          cfg.forceEditMode = (options.enableAddRow && newActiveRow === getDataLength()) || options.autoEdit;
+          cfg.forceEditMode = (options.enableAddRow && newActiveRow === getDataLength() && options.autoEditAddRow) || options.autoEdit;
         }
       }
 

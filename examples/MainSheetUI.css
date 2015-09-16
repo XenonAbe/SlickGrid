@@ -1,0 +1,58 @@
+div{
+overflow: hidden;
+}
+.slick-cell.copied {
+background: blue;
+background: rgba(0, 0, 255, 0.2);
+-webkit-transition: 0.5s background;
+}
+
+
+/*
+weekcalendareditor
+*/
+.wkclEdCont {
+width:210px;
+height:23px;
+overflow:hidden;
+margin-top:-1px;
+border:1px solid #DDD;
+}
+.wkclEdContNotEditing{
+width:210px;
+height:23px;
+overflow:hidden;
+margin-top:-1px;
+border-right:1px solid #DDD;
+}
+
+.wkclEdHalfDay{
+width:14px;
+height:100%;
+cursor:pointer;
+float:left;
+}
+.wkclEdDay{
+width:29px;
+height:100%;
+border-left:1px solid #DDD;
+float:left;
+}
+
+.wkclEdHeadCont{
+width:210px;
+height:23px;
+overflow:hidden;
+border:1px solid #FFF;
+border-bottom:none;
+margin-top:5px;
+}
+
+.wkclEdHeadDay{
+width:29px;
+height:100%;
+border-left:1px solid #DDD;
+float:left;
+text-align:center;
+margin-top:5px;
+}
