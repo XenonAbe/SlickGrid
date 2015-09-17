@@ -4295,6 +4295,7 @@ if (typeof Slick === "undefined") {
         cacheEntry.rowNode.style.display = "none";
         zombieRowNodeFromLastMouseWheelEvent = rowNodeFromLastMouseWheelEvent;
       } else {
+        $(cacheEntry.rowNode).empty();      // remove children from jQuery cache: fix mleibman/SlickGrid#855 :: Memory leaks when cell contains jQuery controls
         $canvas[0].removeChild(cacheEntry.rowNode);
         // cacheEntry.rowNode.classList.add("destroyed");
         // deletedRowsCache[row] = rowsCache[row];
@@ -6427,6 +6428,7 @@ out:
       if (options.debug & (DEBUG_EVENTS | DEBUG_MOUSE)) { console.log("mousewheel event: ", rowNode, this, arguments, document.activeElement); }
       if (rowNode !== rowNodeFromLastMouseWheelEvent) {
         if (zombieRowNodeFromLastMouseWheelEvent && zombieRowNodeFromLastMouseWheelEvent !== rowNode) {
+          $(zombieRowNodeFromLastMouseWheelEvent).empty();      // remove children from jQuery cache: fix mleibman/SlickGrid#855 :: Memory leaks when cell contains jQuery controls
           $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
           zombieRowNodeFromLastMouseWheelEvent = null;
         }
