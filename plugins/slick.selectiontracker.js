@@ -149,6 +149,7 @@
         }
       });
 
+      // @TODO: inspect & remove        
       _grid.setSelectedRows(selectedRows);
     }
 

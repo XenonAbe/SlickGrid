@@ -134,10 +134,12 @@
     function toggleRowSelection(row) {
       var data = _grid.getData();
       if (_selectedRowsLookup[row]) {
+        // @TODO: inspect & remove        
         _grid.setSelectedRows($.grep(_grid.getSelectedRows(), function (n) {
           return n != row;
         }));
       } else if (isRowSelectable(data, row)) {
+        // @TODO: inspect & remove        
         _grid.setSelectedRows(_grid.getSelectedRows().concat(row));
       }
     }
@@ -161,8 +163,10 @@
               rows.push(i);
             }
           }
+          // @TODO: inspect & remove        
           _grid.setSelectedRows(rows);
         } else {
+          // @TODO: inspect & remove        
           _grid.setSelectedRows([]);
         }
         e.stopPropagation();

@@ -1393,6 +1393,7 @@
           if (!preserveHidden) {
             setSelectedRowIds(self.mapRowsToIds(selectedRows));
           }
+          // @TODO: inspect & remove        
           grid.setSelectedRows(selectedRows);
           inHandler = false;
         }

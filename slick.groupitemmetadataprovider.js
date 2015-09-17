@@ -118,7 +118,7 @@
         this.getData().setRefreshHints({
           // WARING: do NOT simply use `range.top/bottom` here as the span cache 
           // can be much larger and needs to be cleared entirely too:
-          ignoreDiffsBefore: Math.max(range.spanCacheTop, range.top),
+          ignoreDiffsBefore: Math.min(range.spanCacheTop, range.top),
           ignoreDiffsAfter: Math.max(range.spanCacheBottom, range.bottom),   
           isFilterNarrowing: !item.collapsed,
           isFilterExpanding: !!item.collapsed
@@ -137,7 +137,7 @@
 
     // TODO:  add -/+ handling
     function handleGridKeyDown(e, args) {
-      if (options.enableExpandCollapse && (e.which == Slick.Keyboard.SPACE)) {
+      if (options.enableExpandCollapse && (e.which === Slick.Keyboard.SPACE)) {
         var activeCell = this.getActiveCell();
         if (activeCell) {
           var item = this.getDataItem(activeCell.row);
@@ -149,7 +149,7 @@
             this.getData().setRefreshHints({
               // WARING: do NOT simply use `range.top/bottom` here as the span cache 
               // can be much larger and needs to be cleared entirely too:
-              ignoreDiffsBefore: Math.max(range.spanCacheTop, range.top),
+              ignoreDiffsBefore: Math.min(range.spanCacheTop, range.top),
               ignoreDiffsAfter: Math.max(range.spanCacheBottom, range.bottom),   
               isFilterNarrowing: !item.collapsed,
               isFilterExpanding: !!item.collapsed   

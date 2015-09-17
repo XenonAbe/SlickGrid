@@ -83,6 +83,7 @@
 
       if (selectedRows.length === 0 || $.inArray(cell.row, selectedRows) === -1) {
         selectedRows = [cell.row];
+        // @TODO: inspect & remove        
         _grid.setSelectedRows(selectedRows);
       }
 

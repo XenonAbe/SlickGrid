@@ -229,6 +229,7 @@
         dataView.insertItem(selRow, rowData);
 
         var row = dataView.getRowById(rowData.id);
+        // @TODO: inspect & remove        
         grid.setSelectedRows([row]);
         grid.scrollRowIntoView(row);
         grid.setActiveCell(row, 0);

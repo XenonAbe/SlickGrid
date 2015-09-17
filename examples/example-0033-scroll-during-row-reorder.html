@@ -284,6 +284,7 @@ $(function() {
 
         grid.resetActiveCell();
         grid.setData(data);
+        // @TODO: inspect & remove        
         grid.setSelectedRows(selectedRows);
         grid.render();
     });
@@ -314,6 +315,7 @@ $(function() {
 
         if (!selectedRows.length || $.inArray(dd.row, selectedRows) === -1) {
             selectedRows = [dd.row];
+            // @TODO: inspect & remove        
             grid.setSelectedRows(selectedRows);
         }
 
@@ -381,6 +383,7 @@ $(function() {
                 data.splice(rowsToDelete[i], 1);
             }
             grid.invalidate();
+            // @TODO: inspect & remove        
             grid.setSelectedRows([]);
         });
 

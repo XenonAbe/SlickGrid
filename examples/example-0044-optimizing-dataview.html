@@ -174,7 +174,7 @@
       dataView.setRefreshHints({
         // WARING: do NOT simply use `cachedRangeInfo.top/bottom` here as the span cache 
         // can be much larger and needs to be cleared entirely too:
-        ignoreDiffsBefore: Math.max(cachedRangeInfo.spanCacheTop, cachedRangeInfo.top),
+        ignoreDiffsBefore: Math.min(cachedRangeInfo.spanCacheTop, cachedRangeInfo.top),
         ignoreDiffsAfter: Math.max(cachedRangeInfo.spanCacheBottom, cachedRangeInfo.bottom),   
         isFilterNarrowing: isNarrowing,
         isFilterExpanding: isExpanding

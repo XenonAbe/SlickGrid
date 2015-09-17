@@ -163,7 +163,8 @@
         });
 
         grid.setColumns(newColumnSet);
-        
+
+        // @TODO: inspect & remove        
         if (grid.getSelectedRows().length > 0) {
           grid.setSelectedRows(grid.getSelectedRows());
         }

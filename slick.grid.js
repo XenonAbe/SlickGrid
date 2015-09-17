@@ -6351,7 +6351,7 @@ out:
           toggleCellClass(times);
         },
         flash_options.speed);
-    }
+      }
 
       return false;
     }
@@ -9063,11 +9063,6 @@ if (0) {
       }
     }
 
-    function isGroupNode(row, cell) {
-      return $(getCellNode(row, cell))
-        .parents('.slick-group')
-        .length > 0;
-    }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Debug
