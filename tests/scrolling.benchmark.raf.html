@@ -38,7 +38,7 @@
         <button id="startBench_5000">Run (+= 5'000px) <span /></button>
         <hr/>
 
-        <div id="myGrid" style="width:600px;height:600px;"></div>
+        <div id="myGrid" style="width:600px;height:400px;"></div>
 
         <script>
         $("#grid_debug").click(function(e) {
@@ -111,24 +111,25 @@
         }
 
 
-        $(function()
-        {
-            data.getLength = function() { return 5000; };
+        $(function () {
+            data.getLength = function() { 
+			  return 5000; 
+			};
 
             data.getItem = function(index) {
-                // lazy-generate
-                if (!data[index]) {
-                  data[index] = generateRandomTask(index);
-                }
-                return data[index];
+              // lazy-generate
+              if (!data[index]) {
+                data[index] = generateRandomTask(index);
+              }
+              return data[index];
             };
 
             data.getItemMetadata = function (row, cell) {
               if (row % 2 === 1) {
                 return {
-                  "columns": {
-                    "duration": {
-                      "colspan": 3
+                  columns: {
+                    duration: {
+                      colspan: 3
                     }
                   }
                 };
@@ -143,9 +144,6 @@
 
 
         var $grid;
-        var lastScrollTop = 0;
-        var startTime;
-        var scrollAmount = 1000;
 
         function queue(callback) {
           var raf = window.requestAnimationFrame ||
@@ -160,20 +158,22 @@
         }
 
         function startBench(scroll, $msg_el_parent) {
-            scrollAmount = scroll;
-            lastScrollTop = 0;
-            $grid.scrollTop(0);
+            var scrollAmount = scroll;
+            var lastScrollTop = 0;
+            $grid.scrollTop = 0;
+            var startTime;
 
-            queue(function () {
+            function benchBegin() {
                 startTime = new Date();
                 bench();
-            });
-
+            }
+            
+            window.setTimeout(benchBegin, 500);
 
             function bench() {
                 var scrollTop = $grid[0].scrollTop = lastScrollTop + scrollAmount;
 
-                if ($grid[0].scrollTop == lastScrollTop + scrollAmount) {
+                if ($grid[0].scrollTop === lastScrollTop + scrollAmount) {
                     lastScrollTop = scrollTop;
                     queue(bench);
                 } else {
@@ -183,7 +183,6 @@
                 }
             }
         }
-
         </script>
     </body>
 </html>

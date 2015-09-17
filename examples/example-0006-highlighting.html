@@ -117,6 +117,8 @@ for (var i = 0; i < 4; i++) {
   });
 }
 
+var data = CreateData();
+
 var options = {
   editable: false,
   enableAddRow: false,
@@ -138,8 +140,6 @@ function CreateData() {
 }
 
 $(function() {
-  var data = CreateData();
-
   grid = new Slick.Grid("#myGrid", data, columns, options);
 
   currentServer = Math.round(Math.random() * (data.length - 1));
@@ -176,7 +176,12 @@ function simulateRealTimeUpdates() {
 
 function findCurrentServer() {
   grid.scrollRowIntoView(currentServer);
-  grid.flashCell(currentServer, grid.getColumnIndex("server"), 100);
+  grid.flashCell(currentServer, grid.getColumnIndex("server"), {
+    speed: 100,
+    times: 4 * 2,
+    delay: false,
+    // cssClass: "current-server"
+  });
 }
 </script>
 </body>

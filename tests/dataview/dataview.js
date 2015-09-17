@@ -47,16 +47,23 @@ function assertConsistency(dv, idProperty, grouping) {
             deepEqual(dv.getItemById(id), items[dv.getIdxById(id)], "getItem");
         } else {
             ok(item.__group ^ item.__groupTotals, "all non-data rows are either group header rows or group totals rows");
-            if (item.__group)
+            if (item.__group) {
                 groupRows++;
-            else if (item.__groupTotals)
+            }
+            else if (item.__groupTotals) {
                 groupTotalsRows++;
+            }
         }
     }
 
     deepEqual(groupRows, grouping.totalGroupRows, "expected number of group rows");
     deepEqual(groupTotalsRows, grouping.totalGroupTotalsRows, "expected number of group totals rows");
     deepEqual(grouping.totalGroupRows + grouping.totalGroupTotalsRows + items.length - dv.getLength(), filteredOut, "filtered rows");
+}
+
+function assertEventInfo(args, e, dv, self) {
+    ok(args && args.dataView === dv, "event args includes DataView reference");
+    ok(self === dv, "event callback `this` references the DataView");
 }
 
 test("initial setup", function() {
@@ -119,16 +126,22 @@ test("events fired on setItems", function() {
     var dv = new Slick.Data.DataView();
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.previous, 0, "previous arg");
         deepEqual(args.current, 2, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.pageSize, 0, "pageSize arg");
         deepEqual(args.pageNum, 0, "pageNum arg");
         deepEqual(args.totalRows, 2, "totalRows arg");
@@ -204,17 +217,25 @@ test("refresh fires after resume", function() {
     var count = 0;
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, {rows:[0,1]}, "args");
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.previous, 0, "previous arg");
         deepEqual(args.current, 2, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.pageSize, 0, "pageSize arg");
         deepEqual(args.pageNum, 0, "pageNum arg");
         deepEqual(args.totalRows, 2, "totalRows arg");
@@ -233,8 +254,10 @@ test("happy path", function() {
     var items = [{id:2,val:2},{id:1,val:1},{id:0,val:0}];
     var dv = new Slick.Data.DataView();
     dv.setItems(items);
-    dv.onRowsChanged.subscribe(function() {
+    dv.onRowsChanged.subscribe(function(e, args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+
         count++;
     });
     dv.onRowCountChanged.subscribe(function() {
@@ -304,17 +327,25 @@ test("applied immediately", function() {
     dv.setItems([{id:0,val:0},{id:1,val:1},{id:2,val:2}]);
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, {rows:[0]}, "args");
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.previous, 3, "previous arg");
         deepEqual(args.current, 1, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.pageSize, 0, "pageSize arg");
         deepEqual(args.pageNum, 0, "pageNum arg");
         deepEqual(args.totalRows, 1, "totalRows arg");
@@ -342,17 +373,25 @@ test("re-applied on refresh", function() {
 
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, {rows:[0]}, "args");
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.previous, 3, "previous arg");
         deepEqual(args.current, 1, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.pageSize, 0, "pageSize arg");
         deepEqual(args.pageNum, 0, "pageNum arg");
         deepEqual(args.totalRows, 1, "totalRows arg");
@@ -400,12 +439,16 @@ test("all", function() {
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.previous, 3, "previous arg");
         deepEqual(args.current, 0, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.pageSize, 0, "pageSize arg");
         deepEqual(args.pageNum, 0, "pageNum arg");
         deepEqual(args.totalRows, 0, "totalRows arg");
@@ -432,17 +475,25 @@ test("all then none", function() {
 
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, {rows:[0,1,2]}, "args");
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.previous, 0, "previous arg");
         deepEqual(args.current, 3, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.pageSize, 0, "pageSize arg");
         deepEqual(args.pageNum, 0, "pageNum arg");
         deepEqual(args.totalRows, 3, "totalRows arg");
@@ -519,6 +570,10 @@ test("basic", function() {
 
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, {rows:[1]}, "args");
         count++;
     });
@@ -564,17 +619,25 @@ test("updating an item to pass the filter", function() {
     });
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, {rows:[3]}, "args");
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.previous, 3, "previous arg");
         equal(args.current, 4, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.pageSize, 0, "pageSize arg");
         deepEqual(args.pageNum, 0, "pageNum arg");
         deepEqual(args.totalRows, 4, "totalRows arg");
@@ -599,12 +662,16 @@ test("updating an item to not pass the filter", function() {
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.previous, 4, "previous arg");
         equal(args.current, 3, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         deepEqual(args.pageSize, 0, "pageSize arg");
         deepEqual(args.pageNum, 0, "pageNum arg");
         deepEqual(args.totalRows, 3, "totalRows arg");
@@ -643,17 +710,25 @@ test("basic", function() {
     dv.setItems([{id:0,val:0},{id:1,val:1},{id:2,val:2}]);
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, {rows:[3]}, "args");
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.previous, 3, "previous arg");
         equal(args.current, 4, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.pageSize, 0, "pageSize arg");
         equal(args.pageNum, 0, "pageNum arg");
         equal(args.totalRows, 4, "totalRows arg");
@@ -712,17 +787,25 @@ test("insert at the beginning", function() {
     dv.setItems([{id:0,val:0},{id:1,val:1},{id:2,val:2}]);
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, {rows:[0,1,2,3]}, "args");
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.previous, 3, "previous arg");
         equal(args.current, 4, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.pageSize, 0, "pageSize arg");
         equal(args.pageNum, 0, "pageNum arg");
         equal(args.totalRows, 4, "totalRows arg");
@@ -742,17 +825,25 @@ test("insert in the middle", function() {
     dv.setItems([{id:0,val:0},{id:1,val:1},{id:2,val:2}]);
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, {rows:[2,3]}, "args");
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.previous, 3, "previous arg");
         equal(args.current, 4, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.pageSize, 0, "pageSize arg");
         equal(args.pageNum, 0, "pageNum arg");
         equal(args.totalRows, 4, "totalRows arg");
@@ -772,17 +863,25 @@ test("insert at the end", function() {
     dv.setItems([{id:0,val:0},{id:1,val:1},{id:2,val:2}]);
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, {rows:[3]}, "args");
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.previous, 3, "previous arg");
         equal(args.current, 4, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.pageSize, 0, "pageSize arg");
         equal(args.pageNum, 0, "pageNum arg");
         equal(args.totalRows, 4, "totalRows arg");
@@ -840,17 +939,25 @@ test("delete at the beginning", function() {
     dv.setItems([{id:05,val:0},{id:15,val:1},{id:25,val:2}]);
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, {rows:[0,1]}, "args");
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.previous, 3, "previous arg");
         equal(args.current, 2, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.pageSize, 0, "pageSize arg");
         equal(args.pageNum, 0, "pageNum arg");
         equal(args.totalRows, 2, "totalRows arg");
@@ -869,17 +976,25 @@ test("delete in the middle", function() {
     dv.setItems([{id:05,val:0},{id:15,val:1},{id:25,val:2}]);
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, {rows:[1]}, "args");
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.previous, 3, "previous arg");
         equal(args.current, 2, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.pageSize, 0, "pageSize arg");
         equal(args.pageNum, 0, "pageNum arg");
         equal(args.totalRows, 2, "totalRows arg");
@@ -901,12 +1016,16 @@ test("delete at the end", function() {
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.previous, 3, "previous arg");
         equal(args.current, 2, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.pageSize, 0, "pageSize arg");
         equal(args.pageNum, 0, "pageNum arg");
         equal(args.totalRows, 2, "totalRows arg");
@@ -1013,17 +1132,25 @@ test("adds one row per group when you do not have any aggregators", function() {
 
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
+        assertEventInfo(args, e, dv, this);
+        // and kill the reference to keep subsequent checks simpler
+        delete args.dataView;
+
         deepEqual(args, expectation.updatedRows, "args");
         count++;
     });
     dv.onRowCountChanged.subscribe(function(e,args) {
         ok(true, "onRowCountChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.previous, expectation.oldtotalRows, "previous arg");
         equal(args.current, expectation.totalDataItems + expectation.totalGroupRows + expectation.totalGroupTotalsRows, "current arg");
         count++;
     });
     dv.onPagingInfoChanged.subscribe(function(e,args) {
         ok(true, "onPagingInfoChanged called");
+        assertEventInfo(args, e, dv, this);
+
         equal(args.pageSize, 0, "pageSize arg");
         equal(args.pageNum, 0, "pageNum arg");
         equal(args.totalRows, expectation.totalDataItems + expectation.totalGroupRows + expectation.totalGroupTotalsRows, "totalRows arg");

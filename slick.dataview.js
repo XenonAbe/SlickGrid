@@ -110,7 +110,7 @@
     var groupingInfoDefaults = {
       getter: null,
       formatter: null,
-      comparer: function(a, b) { 
+      comparer: function groupingInfoComparer_f(a, b) { 
         return (a.value === b.value ? 
                 0 : 
                 (a.value > b.value ? 1 : -1)
@@ -236,7 +236,7 @@
 
     var defaultSortComparator = {
         /*! jshint -W086 */
-        valueExtractor: function (node) {
+        valueExtractor: function valueExtractorForSort_f(node) {
           switch (typeof node) {
           case 'boolean':
           case 'number':
@@ -268,7 +268,7 @@
         // Inputs to compare are two objects of format
         //     { value: <value>, order: <sequencenumber> }
         //
-        comparator: function (x, y) {
+        comparator: function comparatorForSort_f(x, y) {
             var xv = x.value;
             var yv = y.value;
             if (xv === yv) {
@@ -465,7 +465,7 @@
         //
         // -Inf, ...<negative numbers>..., NaN, UNDEFINED, NULL, FALSE, 0, ...<numbers between 0 and 1>..., TRUE, 1, ...<numbers larger than 1>..., +Inf, <strings>
         //
-        fastComparator: function (x, y) {
+        fastComparator: function fastComparatorForSort_f(x, y) {
             // Strings do not 'subtract' so we simply compare.
             if (x.value < y.value) {
                 return -1;
@@ -489,10 +489,10 @@
       sortUnstable = unstable || false;
       if (typeof comparer === 'function') {
         sortComparer = {
-            valueExtractor: function (node) {
+            valueExtractor: function sortComparerFunctionExtractor_f(node) {
                 return node;
             },
-            comparator: function (x, y) {
+            comparator: function sortComparerFunctionComparator_f(x, y) {
                 var rv = comparer(x.value, y.value);
                 if (!rv) {
                     return x.order - y.order;
@@ -502,7 +502,7 @@
         };
       } else if (typeof comparer === 'string' || typeof comparer === 'number') {
         sortComparer = {
-            valueExtractor: function (node) {
+            valueExtractor: function sortComparerStringExtractor_f(node) {
                 return node[comparer];
             },
             comparator: sortUnstable ? defaultSortComparator.fastComparator : defaultSortComparator.comparator
@@ -543,7 +543,7 @@
       // by including that one in the comparer check we create a stable sort.
 
       // temporary holder of position and sort-value
-      var map = items.map(function (d, i) {
+      var map = items.map(function itemMapperForSort(d, i) {
         return {
             value: sortComparer.valueExtractor(d),
             order: i
@@ -556,7 +556,7 @@
       // apply the map for the resulting order; but keep the 'items' reference itself unchanged however!
       // (we do that so that users can use customized Array-derived instances for `items` and get away with it)
       var rv = items.slice(0);
-      map.forEach(function (d, i) {
+      map.forEach(function mapCopierForSort(d, i) {
         items[i] = rv[d.order];
       });
 
@@ -1093,7 +1093,7 @@
               accumulatorInfo.body,
           "}"].join("\n")
       );
-      // fn.displayName = fn.name = "compiledAccumulatorLoop";   <-- disabled due to issue #1032
+      fn.displayName = fn.name = "compiledAccumulatorLoop";   // <-- disabled due to issue #1032
       return fn;
     }
 
@@ -1114,7 +1114,7 @@
       // This preserves the function template code after JS compression,
       // so that replace() commands still work as expected.
       var tpl = [
-        //"function(_items, _args) {",
+        //"function (_items, _args) {",
         "var _retval = [], _idx = 0;",
         "var $item$, $args$ = _args;",
         "_coreloop:",
@@ -1130,7 +1130,7 @@
       tpl = tpl.replace(/\$args\$/gi, filterInfo.params[1]);
 
       var fn = new Function("_items,_args", tpl);
-      // fn.displayName = fn.name = "compiledFilter";   <-- disabled due to issue #1032
+      fn.displayName = fn.name = "compiledFilter";   // <-- disabled due to issue #1032
       return fn;
     }
 
@@ -1151,7 +1151,7 @@
       // This preserves the function template code after JS compression,
       // so that replace() commands still work as expected.
       var tpl = [
-        //"function(_items, _args, _cache) {",
+        //"function (_items, _args, _cache) {",
         "var _retval = [], _idx = 0;",
         "var $item$, $args$ = _args;",
         "_coreloop:",
@@ -1171,7 +1171,7 @@
       tpl = tpl.replace(/\$args\$/gi, filterInfo.params[1]);
 
       var fn = new Function("_items,_args,_cache", tpl);
-      //fn.displayName = fn.name = "compiledFilterWithCaching";   <-- disabled due to issue #1032
+      fn.displayName = fn.name = "compiledFilterWithCaching";   // <-- disabled due to issue #1032
       return fn;
     }
 
@@ -1398,14 +1398,14 @@
         }
       }
 
-      grid.onSelectedRowsChanged.subscribe(function (e, args) {
+      grid.onSelectedRowsChanged.subscribe(function selectedRowsChangedHandler_f(e, args) {
         if (inHandler) { return; }
         var newSelectedRowIds = self.mapRowsToIds(grid.getSelectedRows());
         if (!preserveHiddenOnSelectionChange || !grid.getOptions().multiSelect) {
           setSelectedRowIds(newSelectedRowIds);
         } else {
           // keep the ones that are hidden
-          var existing = $.grep(selectedRowIds, function (id) { 
+          var existing = $.grep(selectedRowIds, function selectedRowsGrep_f(id) { 
             return self.getRowById(id) === undefined; 
           });
           // add the newly selected ones
@@ -1452,7 +1452,7 @@
         }
       }
 
-      grid.onCellCssStylesChanged.subscribe(function (e, args) {
+      grid.onCellCssStylesChanged.subscribe(function cellCssStylesChangedHandler(e, args) {
         if (inHandler) { return; }
         if (key !== args.key) { return; }
         if (args.hash) {
@@ -1469,7 +1469,7 @@
       return options;
     }
 
-    function getFilteredItems () {
+    function getFilteredItems() {
       return filteredItems;
     }
 
