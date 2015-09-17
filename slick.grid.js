@@ -247,6 +247,8 @@ if (typeof Slick === "undefined") {
       asyncEditorLoadDelay: 100,
       forceFitColumns: false,
       resizeOnlyDraggedColumn: false,
+      fitHeaderToContent: false,
+      forceFitHeaderToContent: false,
       enableAsyncPostRender: false,
       asyncPostRenderDelay: 50,
       asyncPostRenderSlice: 50,
@@ -1437,6 +1439,23 @@ if (typeof Slick === "undefined") {
         }
       }
 
+      // @TO-BE-INSPECTED
+      
+      // fit the header column sizes to its content if corresponding
+      // options are specified
+      if (options.fitHeaderToContent) {
+         for (var j = 0; j < columns.length; j++) {
+            // get the total width of header
+            var headerWidth = headerElements[j].outerWidth();
+            columns[j].width = Math.max(columns[j].width, headerWidth);
+            if (options.forceFitHeaderToContent) {
+              columns[j].minWidth = headerWidth;
+            }
+         }
+      }
+
+      // /@TO-BE-INSPECTED
+
       // @TO-TEST              
       if (0) {
         // re-attach DOM node to viewport
@@ -1448,6 +1467,16 @@ if (typeof Slick === "undefined") {
       if (options.enableColumnReorder) {
         setupColumnReorder();
       }
+
+      // @TO-BE-INSPECTED
+      
+      // recalculate width of header
+      $headers.width(getHeadersWidth());
+      // apply column header widths because the widths
+      // of the columns have changed eventually
+      applyColumnHeaderWidths();
+
+      // /@TO-BE-INSPECTED
     }
 
     function setupColumnSort() {
@@ -4972,7 +5001,18 @@ if (typeof Slick === "undefined") {
       if (options.forceFitColumns && oldViewportHasVScroll !== viewportHasVScroll) {
         autosizeColumns();
       }
-      return updateCanvasWidth();
+      var rv = updateCanvasWidth();
+
+      // @TO-BE-INSPECTED
+
+      // vertical scrollbar could have been added
+      // through update so call handleScroll() to
+      // sync header scrolling
+      handleScroll();
+
+      // /@TO-BE-INSPECTED
+
+      return rv;
     }
 
     /*
@@ -5929,6 +5969,15 @@ if (typeof Slick === "undefined") {
         $headerRowScroller[0].scrollLeft = scrollLeft;
         $footerRowScroller[0].scrollLeft = scrollLeft;
         reRender = true;
+      } else {
+        // @TO-BE-INSPECTED
+      
+        // when width of headers cells changed and h scrolling
+        // has been applied $headerScroller[0].scrollLeft gets 0
+        // seometimes so reset it to previous scrollLeft
+        $headerScroller[0].scrollLeft = prevScrollLeft;
+
+        // /@TO-BE-INSPECTED
       }
 
       if (vScrollDist /* && vScrollDist > options.rowHeight */) {
@@ -9091,6 +9140,21 @@ if (0) {
         render();
       }
     }
+
+    // @TO-BE-INSPECTED
+      
+    function updateColumnWidthBounds() {
+      columnsById = {};
+      $.each(columns, function (i) {
+        var m = columns[i] = $.extend({}, columnDefaults, columns[i]);
+        columnsById[m.id] = i;
+        //make m.width be between its bounds
+        m.minWidth && (m.width = Math.max(m.width, m.minWidth));
+        m.maxWidth && (m.width = Math.min(m.width, m.maxWidth));
+      });
+    }
+
+    // /@TO-BE-INSPECTED
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////
