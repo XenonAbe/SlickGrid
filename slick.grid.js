@@ -4190,6 +4190,7 @@ if (typeof Slick === "undefined") {
           for (var cellToRemove = cellCache.length - 1; cellToRemove >= columns.length; cellToRemove--) {
             var node = cellCache[cellToRemove];
             if (node) {
+              $(node).empty();      // remove children from jQuery cache: fix mleibman/SlickGrid#855 :: Memory leaks when cell contains jQuery controls
               cacheEntry.rowNode.removeChild(node);
               delete cellCache[cellToRemove];
 
@@ -4701,6 +4702,7 @@ if (typeof Slick === "undefined") {
       for (var cellToRemove = cellCache.length - 1; cellToRemove >= columns.length; cellToRemove--) {
         var node = cellCache[cellToRemove];
         if (node) {
+          $(node).empty();      // remove children from jQuery cache: fix mleibman/SlickGrid#855 :: Memory leaks when cell contains jQuery controls
           cacheEntry.rowNode.removeChild(node);
           delete cellCache[cellToRemove];
 
@@ -5164,6 +5166,7 @@ if (typeof Slick === "undefined") {
                   assert(cacheEntry.isDirty >= 0);
                 }
 
+                $(olNode).empty();      // remove children from jQuery cache: fix mleibman/SlickGrid#855 :: Memory leaks when cell contains jQuery controls
                 cacheEntry.rowNode.removeChild(olNode);
                 delete cellCache[c];
                 if (postProcessedRows[row]) {
@@ -5192,6 +5195,7 @@ if (typeof Slick === "undefined") {
               assert(cacheEntry.isDirty >= 0);
             }
 
+            $(node).empty();      // remove children from jQuery cache: fix mleibman/SlickGrid#855 :: Memory leaks when cell contains jQuery controls
             cacheEntry.rowNode.removeChild(node);
             delete cellCache[columnIdx];
             if (postProcessedRows[row]) {
