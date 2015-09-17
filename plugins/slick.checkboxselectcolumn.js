@@ -126,6 +126,9 @@
         }
 
         toggleRowSelection(args.row);
+        _grid.setActiveCell(args.row, args.cell);
+        _grid.focus();
+
         e.stopPropagation();
         e.stopImmediatePropagation();
       }
