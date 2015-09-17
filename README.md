@@ -35,7 +35,7 @@ This is a fork of SlickGrid maintained by Ger Hobbelt / Visyond Inc. The new fea
 
 **UPDATE:  March 5th, 2014 - I have too many things going on in my life right now to really give SlickGrid support and development the time and attention it deserves.  I am not stopping it, but I will most likely be unresponsive for some time.  Sorry.**
 
-## SlickGrid is an advanced JavaScript grid/spreadsheet component
+## SlickGrid is an advanced jQuery grid/spreadsheet component
 
 Some highlights:
 
