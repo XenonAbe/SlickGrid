@@ -250,7 +250,11 @@ if (typeof Slick === "undefined") {
       asyncPostRenderDelay: 50,
       asyncPostRenderSlice: 50,
       autoHeight: false,
-      editorLock: Slick.GlobalEditorLock,
+      // WARNING: Instances of SlickGrid should not share one global `EditorLock` by default.
+      //
+      // When f.e. SlickGrid is used as a part of an editor inside another SlickGrid,
+      // sharing a global editor lock will close the editor unexpectedly.
+      editorLock: new Slick.EditorLock(),                     
       headerHeight: 25,
       showHeaderRow: false,
       headerRowHeight: 25,
@@ -1286,7 +1290,7 @@ if (typeof Slick === "undefined") {
 
         if (columnDef.sortable) {
           $header.addClass("slick-header-sortable");
-          $header.append("<span class='slick-sort-indicator' />");
+          $header.prepend("<span class='slick-sort-indicator' />");
         }
         
         if (options.enableColumnReorder && columnDef.reorderable) {
