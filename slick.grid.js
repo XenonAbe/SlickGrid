@@ -297,7 +297,7 @@ if (typeof Slick === "undefined") {
       viewportChangedEventThreshold: 20,
       addNewRowCssClass: "new-row",
       editCommandHandler: null,
-      //clearCellBeforeEdit: true, -- superceded by editor attribute `.suppressClearOnEdit`
+      clearCellBeforeEdit: true,        // @TODO -- supercede by editor attribute `.suppressClearOnEdit`
       createCssRulesCallback: null,
       skipPaging: false                 // Reveal one hidden row at a time instead of an entirely new page on keypress
     };
@@ -6619,7 +6619,6 @@ out:
 
     function __handleKeyDown(e) {
       assert(!(e instanceof Slick.EventData));
-      //console.log("keydown: ", this, arguments, document.activeElement);
       var activeCellInfo = null;
       if (activeCellNode) {
         activeCellInfo = {
@@ -7952,6 +7951,12 @@ out:
       // DOM container node, among other things, so the editor code can perform this optional
       // 'cleanup before we add our own editor-specific DOM content' at initialization time
       // any way it wishes.
+
+      // don't clear the cell if a custom editor is passed through
+      if (!editor && options.clearCellBeforeEdit) {
+        activeCellNode.innerHTML = "";
+      }
+
       var info = __extend({}, options.editorOptions, columnDef.editorOptions, rowMetadata && rowMetadata.editorOptions, columnMetadata && columnMetadata.editorOptions, {
         grid: self,
         gridPosition: getGridPosition(),
