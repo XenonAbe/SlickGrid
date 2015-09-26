@@ -30,9 +30,9 @@
     });
     var _options;
     var _defaults = {
-      selectActiveCell: true
+      selectActiveCell: true,
+      useDefaultSelectedRangesFilter: true          // set to FALSE if you don't want to apply the default `removeInvalidRanges()` range filter; specify a *function* if you wish to apply a custom filter function.
     };
-
 
     function init(grid) {
       _options = $.extend(true, {}, _defaults, options);
@@ -69,7 +69,7 @@
     }
 
     function setSelectedRanges(ranges) {
-      // simple check for: empty selection didn't change, prevent firing onSelectedRangesChanged
+      // simple check for: empty selection doesn't change anything from existing empty selection, prevent firing `onSelectedRangesChanged`
       if ((!_ranges || _ranges.length === 0) && (!ranges || ranges.length === 0)) { 
         return; 
       }
@@ -146,7 +146,7 @@
           // scroll the grid automatically when selection expands out of viewport
           var viewRow = dirRow > 0 ? new_last.toRow : new_last.fromRow;
           var viewCell = dirCell > 0 ? new_last.toCell : new_last.fromCell;
-          _grid.scrollRowIntoView(viewRow);
+          //_grid.scrollRowIntoView(viewRow); -- implicit in `scrollCellIntoView()`
           _grid.scrollCellIntoView(viewRow, viewCell);
         } else {
           ranges.push(last);

@@ -1403,7 +1403,7 @@
         }
       }
 
-      grid.onSelectedRowsChanged.subscribe(function selectedRowsChangedHandler_f(e, args) {
+      function selectedRangesChangedHandler(e, args) {
         if (inHandler) { return; }
         var newSelectedRowIds = self.mapRowsToIds(grid.getSelectedRows());
         if (!preserveHiddenOnSelectionChange || !grid.getOptions().multiSelect) {
@@ -1416,7 +1416,9 @@
           // add the newly selected ones
           setSelectedRowIds(existing.concat(newSelectedRowIds));
         }
-      });
+      }
+
+      grid.onSelectedRangesChanged.subscribe(selectedRangesChangedHandler);
 
       this.onRowsChanged.subscribe(update);
 

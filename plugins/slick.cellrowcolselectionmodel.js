@@ -26,7 +26,7 @@
         var _handler = new Slick.EventHandler();
         var _inHandler;
         var _selector = new Slick.CellRangeSelector({
-            "selectionCss": {
+            selectionCss: {
                 "border": "2px solid black"
             }
         });
@@ -110,7 +110,7 @@
                 var r = ranges[i];
                 if (!r.fromCell) {
                     // we return here if r.fromCell is NaN
-                    // this it the case if we are selecting a row
+                    // this is the case if we are selecting a row
                     return ranges;
                 } else {
                     // we are selecting a cell range

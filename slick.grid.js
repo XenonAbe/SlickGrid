@@ -134,7 +134,7 @@ if (typeof Slick === "undefined") {
    *      headerRowFormatter: {Function}  formatter(rowIndex, colIndex, cellValue, colInfo, rowDataItem, cellMetaInfo) for headerRow cells (option.showHeaderRow)
    *      editor:             {Function}  The constructor function for the class to use for editing of grid cells
    *      validator:          {Function}  A function to be called when validating user-entered values
-   *      cannotTriggerInsert: {Boolean}
+   *      cannotTriggerInsert: {Boolean}  An edit attempt in this column cannot add a new row when the active row happens to be the extra 'add new' row 
    *      resizable:          {Boolean}   Whether this column can be resized
    *      selectable:         {Boolean}   Whether this column can be selected
    *      sortable:           {Boolean}   Whether the grid rows can be sorted by this column
@@ -284,6 +284,7 @@ if (typeof Slick === "undefined") {
       defaultHeaderRowFormatter: defaultHeaderRowFormatter,
       minBufferSize: 3,
       maxBufferSize: 50,
+      scrollbarDimensions: null,    // provide a `{width:X, height:Y}` object to override the internal `measureScrollbar()` call; use this when you employ a custom scrollbar component.
       scrollHoldoffX: 2,
       scrollHoldoffY: 3,
       smoothScrolling: true,
@@ -504,7 +505,7 @@ if (typeof Slick === "undefined") {
 
       // calculate these only once and share between grid instances
       maxSupportedCssHeight = maxSupportedCssHeight || getMaxSupportedCssHeight();
-      scrollbarDimensions = scrollbarDimensions || measureScrollbar();
+      scrollbarDimensions = scrollbarDimensions || options.scrollbarDimensions || measureScrollbar();
 
       options = __extend({}, defaults, options);
       validateAndEnforceOptions();
@@ -842,19 +843,43 @@ if (typeof Slick === "undefined") {
       });
     }
 
+    /**
+     * Register a SlickGrid plugin.
+     *
+     * @param  {SlickGridPlugIn} plugin The plugin instance you want to register.
+     */
     function registerPlugin(plugin) {
+      assert(plugin && typeof plugin.init === "function");
       plugins.unshift(plugin);
       plugin.init(self);
     }
 
+    /**
+     * Unregister a SlickGrid plugin when it has been previously registered.
+     *
+     * @param  {SlickGridPlugIn} plugin The plugin instance you want to unregister.
+     *
+     * Note: the `plugin` parameter may be NULL in which case **all** registered
+     * plugins are unregistered!
+     */
     function unregisterPlugin(plugin) {
-      for (var i = plugins.length; i >= 0; i--) {
-        if (plugins[i] === plugin) {
+      // Defensive coding:
+      // 
+      // Account for the obscure issue where unregistering one plugin can cause its
+      // `destroy` method to unregister *another* plugin: hence re-evaluate the
+      // `plugins.length` on every round!
+      // 
+      // Otherwise unregister these plugins in the *reverse order* in which they have
+      // been registered.
+      for (var i = 0; i < plugins.length; i++) {
+        if (!plugin || plugins[i] === plugin) {
           if (plugins[i].destroy) {
             plugins[i].destroy();
           }
           plugins.splice(i, 1);
-          break;
+          if (plugin) {
+            break;
+          }
         }
       }
     }
@@ -1470,11 +1495,13 @@ if (typeof Slick === "undefined") {
 
       // @TO-BE-INSPECTED
       
+if (0) {
       // recalculate width of header
       $headers.width(getHeadersWidth());
       // apply column header widths because the widths
       // of the columns have changed eventually
       applyColumnHeaderWidths();
+}
 
       // /@TO-BE-INSPECTED
     }
@@ -2625,25 +2652,44 @@ if (typeof Slick === "undefined") {
 
       setCellCssStyles("selected-ranges", hash);
 
-      trigger(self.onSelectedRowsChanged, {
-        rows: getSelectedRows(), 
+      trigger(self.onSelectedRangesChanged, {
+        rows: selectedRows,
         ranges: ranges,
+        hash: hash,
         grid: self
       }, e);
     }
 
+    /**
+     * @api
+     * 
+     * Return the 1D columns array representing the columns as shown in the *datagrid*.
+     *
+     * Note: you can obtain exactly the same info by calling the `getColumnsInfo()` API and
+     * inspecting the `gridColumns` property in the returned result.
+     * 
+     * This API is here for backwards compatibility of the SlickGrid API.
+     *
+     * See also: `getLeafColumns()`
+     *  
+     * @return {Array} The set of column definition objects.
+     */
     function getColumns() {
       return columns; // === getColumnsInfo().gridColumns;
     }
 
-    // Produce the entire column tree as an object containing both the original
-    // column definition tree and the flattened lists.
-    //
-    // Note: technically, `ret.gridColumns` === `ret.lookupMatrix[ret.lookupMatrix.length - 1]` i.e.
-    // the flattened array of column definitions used for rendering the datagrid is the last
-    // (i.e. 'deepest') row of columns in the nestedColumns 2D lookup matrix.
-    // We decide to offer it separately however for ease of use: many applications of this API
-    // will look for this list in particular as getColumns() doesn't deliver it.
+    /**
+     * @api
+     * 
+     * Produce the entire column tree as an object containing both the original
+     * column definition tree and the flattened lists.
+     *
+     * Note: technically, `ret.gridColumns` === `ret.lookupMatrix[ret.lookupMatrix.length - 1]` i.e.
+     * the flattened array of column definitions used for rendering the datagrid is the last
+     * (i.e. 'deepest') row of columns in the nestedColumns 2D lookup matrix.
+     * We decide to offer it separately however for ease of use: many applications of this API
+     * will look for this list in particular as getColumns() doesn't deliver it.
+     */
     function getColumnsInfo() { 
       return {
         definitionTree: columnsDefTree,         // the input
@@ -2652,6 +2698,18 @@ if (typeof Slick === "undefined") {
       };
     }
 
+    /**
+     * @api
+     * 
+     * Return the 'leaves-only' column definition set, i.e. the set of column definitions which
+     * define each individual column without regard for groupings: this is
+     * the 1D columns array representing the columns as shown in the *datagrid*.
+     *
+     * Note: this is technically identical to calling the `getColumns()` API, but this one's 
+     * name represents the logic better when header column hierarchies are used with SlickGrid.
+     *  
+     * @return {Array} The set of column definition objects.
+     */
     function getLeafColumns() {
       return columns;
     }
@@ -2673,12 +2731,14 @@ if (typeof Slick === "undefined") {
     }
 
     /**
+     * @api
+     * 
      * Set or re-set the columns in the grid
      * @param {array}     columnDefinitions   columns to set
      * @param {object}    opts                mixed in with the `onColumnsChanged` data sent to event handlers
-     *                                        resizeOptions.skipResizeCanvas let's you skip that step. 
+     *                                        `resizeOptions.skipResizeCanvas` let's you skip that step. 
      *                                        This boosts performance if you don't need it because you're planning to 
-     *                                        manually call resizeCanvas.
+     *                                        manually call `resizeCanvas()`.
      */
     function setColumns(newColumnDefinitions, resizeOptions) {
       getEditorLock().cancelCurrentEdit();
@@ -3232,7 +3292,7 @@ if (typeof Slick === "undefined") {
       //
       // (Yes, this discussion ignores the cost of the rowheight position cache table update which
       // is O(N) on its own but which is also to be treated as "negligible cost" when amortized over
-      // the number of getRowWithFractionFromPosition calls vs. cache invalidation.)
+      // the number of `getRowWithFractionFromPosition` calls vs. cache invalidation.)
       probe = (posY / options.rowHeight) | 0;
       probe = Math.min(rowsInPosCache - 1, Math.max(0, probe));
       probeInfo = getRowPosition(probe);
@@ -3336,6 +3396,15 @@ if (typeof Slick === "undefined") {
     // Use a binary search alike algorithm to find the column, using 
     // linear estimation to produce the split/probe point: this should improve
     // significantly on the O(log(n)) of a binary search. 
+    // 
+    // @return {Object} The (possibly clipped) cell position info:
+    //                  ```
+    //                  {
+    //                    position: {Integer} cell index  
+    //                    fraction: {Float}   position within cell: ratio of the cell width: (0 <= fraction < 1)
+    //                    width:    {Number}  cell width (assumed **default cell width** when the position is outside the legal range)
+    //                  };
+    //                  ```
     function getColumnWithFractionFromPosition(posX, clipToValidRange) {
       if (clipToValidRange == null) {
         clipToValidRange = true;
@@ -3358,6 +3427,8 @@ if (typeof Slick === "undefined") {
         width = options.defaultColumnWidth;
         assert(width > 0);
         if (!clipToValidRange) {
+          // calculate fraction from the left edge:
+          // (outside the grid range the rowFraction/cellFraction represents the number of estimated rows/cells it is out of range)
           probe = Math.floor((posX - top) / width);
           fraction = (posX - probe * width) / width;
         }
@@ -3368,7 +3439,7 @@ if (typeof Slick === "undefined") {
         };
       }
 
-      // perform a binary search through the col cache: O(log2(n)) vs. linear scan at O(n):
+      // perform a binary search through the column cache: O(log2(n)) vs. linear scan at O(n):
       //
       // This first call to getColTop(colsInPosCache - 1) is here to help update the col cache
       // at the start of the search; at least for many scenarios where all (or the last) cols
@@ -3438,7 +3509,7 @@ if (typeof Slick === "undefined") {
       //
       // (Yes, this discussion ignores the cost of the colwidth position cache table update which
       // is O(N) on its own but which is also to be treated as "negligible cost" when amortized over
-      // the number of getColWithFractionFromPosition calls vs. cache invalidation.)
+      // the number of `getColumnWithFractionFromPosition` calls vs. cache invalidation.)
       probe = (posX / options.defaultColumnWidth) | 0;
       probe = Math.min(colsInPosCache - 1, Math.max(0, probe));
       probeInfo = getColumnOffset(probe);
@@ -4713,6 +4784,7 @@ if (typeof Slick === "undefined") {
     }
 
     function updateRow(row) {
+      var node;
       var cacheEntry = rowsCache[row];
       if (!cacheEntry) {
         return;
@@ -4726,7 +4798,7 @@ if (typeof Slick === "undefined") {
       var cellCache = cacheEntry.cellNodesByColumnIdx;
       var dirtyFlags = cacheEntry.dirtyCellNodes;
       for (var columnIdx = cacheEntry.cellNodesByColumnStart, end = Math.min(cellCache.length, columns.length); columnIdx < end; columnIdx++) {
-        var node = cellCache[columnIdx];
+        node = cellCache[columnIdx];
         if (!node) {
           continue;
         }
@@ -4736,7 +4808,7 @@ if (typeof Slick === "undefined") {
 
       // Kill all cells which are still around after the column count has changed:
       for (var cellToRemove = cellCache.length - 1; cellToRemove >= columns.length; cellToRemove--) {
-        var node = cellCache[cellToRemove];
+        node = cellCache[cellToRemove];
         if (node) {
           if (options.cellsMayHaveJQueryHandlers) {
             $(node).remove();      // remove children from jQuery cache: fix mleibman/SlickGrid#855 :: Memory leaks when cell contains jQuery controls
@@ -4830,7 +4902,11 @@ if (typeof Slick === "undefined") {
       return rv;
     }
 
-    // Returns the size of the content area
+    /**
+     * @api
+     * 
+     * Returns the size of the content area
+     */
     function getContentSize() {
       var canvasWidth = $canvas.outerWidth(),
           canvasHeight = $canvas.height(),
@@ -4844,7 +4920,11 @@ if (typeof Slick === "undefined") {
       };
     }
 
-    // Returns the size of the visible area, i.e. between the scroll bars
+    /**
+     * @api
+     * 
+     * Returns the size of the visible area, i.e. between the scroll bars
+     */
     function getVisibleSize() {
       var width = $viewport.outerWidth(),
           height = $viewport.height(),
@@ -5024,7 +5104,7 @@ if (typeof Slick === "undefined") {
      * 
      * However, do note that the fractional info is about the (partially visible bottom) row `.bottomVisible`.
      */ 
-    function getVisibleRange(viewportTop, viewportLeft) {
+    function getVisibleRange(viewportTop, viewportLeft, clipToValidRange) {
       if (viewportTop == null) {
         viewportTop = scrollTop;
       }
@@ -5032,13 +5112,18 @@ if (typeof Slick === "undefined") {
         viewportLeft = scrollLeft;
       }
 
-      var top = getRowWithFractionFromPosition(viewportTop + pageOffset, false);
-      var bottom = getRowWithFractionFromPosition(viewportTop + pageOffset + viewportH, false); // test at the first INvisible pixel
+      var top = getRowWithFractionFromPosition(viewportTop + pageOffset, clipToValidRange);
+      var bottom = getRowWithFractionFromPosition(viewportTop + pageOffset + viewportH, clipToValidRange); // test at the first INvisible pixel
 
-      // Use a binary search alike algorithm to find the left and right columns, using 
-      // linear estimation to produce the split/probe point:
+      // Use the `getColumnWithFractionFromPosition(...)` API to translate the left/right pixel
+      // positions to column indices.
       // 
-      //getColumnWithFractionFromPosition(...)
+      // 
+      //  
+      // (which under the hood employs a fast binary search alike algorithm to find the left and right columns, using 
+      // linear estimation to produce the split/probe point):
+      // 
+      // `getColumnWithFractionFromPosition(...)`
       //  
       return {
         top: top.position,                          // the first visible row
@@ -6151,7 +6236,8 @@ out:
      *                      you have set the `dontBarf` argument to `true`, in which case this API will
      *                      merely return the boolean value `false`.
      *
-     * @param {Array} hash  A 2D hash of additional cell CSS classes keyed by row number 
+     * @param {Hash:Object} hash  
+     *                      A 2D hash of additional cell CSS classes keyed by row number 
      *                      and then by column id. Multiple CSS classes can be specified 
      *                      and separated by space.
      *
@@ -6192,9 +6278,155 @@ out:
       trigger(self.onCellCssStylesChanged, { 
         key: key, 
         hash: hash,
+        //previousHash: null,
         grid: self 
       });
       return true;
+    }
+
+    /**
+     * Update / insert the CSS class value for the cells listed in the hash to the given `key`.
+     *
+     * This API is a little costlier to use then the `setCellCssStyles()` and `addCellCssStyles()`
+     * APIs which completely replace the hash, i.e. the set of cells addressed by the `key`
+     * as this API updates the cell sets: the cell entries in the `addHash` are added to the
+     * set, while the cells listed in the `removeHash` are removed from the set.
+     *
+     * Either `addHash` or `removeHash` may be null when you do not need that half of the
+     * functionality.
+     *
+     * Note that a cell listed in both `addHash` and `removeHash` (a conflict) 
+     * will be *removed* from the resulting set as `removeHash` has priority over 
+     * `addHash` by design.
+     *
+     * This API will produce a cleaned-up hash set where empty rows and falsey (nulled) hash entries 
+     * have been removed. 
+     *
+     * **Off topic**: the name of this API is inspired by the query command in advanced SQL DB engines, 
+     * such as Oracle and DB2: `UPSERT` name is a contraction of `UPDATE` and `INSERT`.   
+     *
+     * @param {String} key  A unique key you can use in calls to `setCellCssStyles` and `removeCellCssStyles`. 
+     *                      If a hash with that key has already been set, an exception will be thrown unless
+     *                      you have set the `dontBarf` argument to `true`, in which case this API will
+     *                      merely return the boolean value `false`.
+     *
+     * @param {Hash:Object} addHash  
+     *                      A 2D hash of additional cell CSS classes keyed by row number 
+     *                      and then by column id. Multiple CSS classes can be specified 
+     *                      and separated by space.
+     *
+     * @param {Hash:Object} removeHash  
+     *                      Ditto as `addHash`; any cells listed in this hash will have their
+     *                      CSS class(es) for this key removed. Hence it does not matter what the
+     *                      actual *value* for that cell is in this particular hash, just 
+     *                      as long as it evaluates as 'truthy'.
+     *
+     * @return {Hash:Object} 
+     *                      Return a *reference* to the new hash set. 
+     *                      
+     *                      Note: You can obtain the same info by calling the 
+     *                      `getCellCssStyles()` API with `options.clone` set to `false`.
+     */
+    function upsertCellCssStyles(key, addHash, removeHash) {
+      var previousHash = cellCssClasses[key];
+      var newHash;
+      var row, cellId, lineHash, addLineHash, removeLineHash, previousLineHash;
+
+      // now mix the hashes:
+      if (!previousHash && !removeHash) {
+        newHash = addHash || null;
+      } else {
+        // clone the existing hash while we mix in the new hashes:
+        newHash = {};
+        previousLineHash = previousHash && previousHash[row];
+        //@TO-OPT
+        for (row in previousLineHash) {
+          previousLineHash = previousHash[row];
+          lineHash = {};
+          cellId = null;
+          for (cellId in previousLineHash) {
+            // Only valid cell values will make it into the new hash  
+            if (previousLineHash[cellId]) {
+              lineHash[cellId] = previousLineHash[cellId];
+            }
+          }
+          // only set up the row when there's some actual cell content:
+          if (cellId !== null) {
+            newHash[row] = lineHash; 
+          }
+        }
+        
+        //@TO-OPT
+        for (row in addHash) {
+          // You might think you'ld be able to update the entire row all at once... 
+          // but do check against the `removeHash` and do not reference (and modify) 
+          // the input `addHash` entry, so no 'shorthand' hacking allowed around here, 
+          // so stuff like this is *out*:
+          // 
+          // ```
+          // if (!previousHash[row]) {
+          //   lineHash = addHash;
+          // } else { ... }
+          // ```
+          // 
+          // Also I assume it's faster in the end to apply all `removeHash`es all at once,
+          // thus foregoing a lot of `if(...)` checks in these 'add' loops right here and 
+          // then having to bother about the `removeHash` maybe containing rows which are 
+          // not in the `addHash` and vice versa... Hence: keep it simple!
+          lineHash = newHash[row] || {};
+          cellId = null;
+          // now mix in the new 'add' values:
+          addLineHash = addHash[row];
+          for (cellId in addLineHash) {
+            // Only valid cell values will make it into the new hash  
+            if (addLineHash[cellId]) {
+              lineHash[cellId] = addLineHash[cellId];
+            }
+          }
+          // only set up the row when there's some actual cell content:
+          if (cellId !== null) {
+            newHash[row] = lineHash; 
+          }
+        }
+        
+        // As I mentioned above, we're going to kill all `removeHash`es all at once in here:
+        // this is going to be faster than mix these actions into the 'add' loops above.
+        for (row in removeHash) {
+          lineHash = newHash[row];
+          // when there's nothing to remove here, take the shortcut:
+          if (!lineHash) {
+            delete newHash[row];
+            continue;
+          }
+          
+          // now mix out the new 'remove' values:
+          removeLineHash = removeHash[row];
+          for (cellId in removeLineHash) {
+            // `removeHash[][]` entry must be *truthy* is all we ask:
+            if (removeLineHash[cellId]) {
+              delete lineHash[cellId];
+            }
+          }
+          // now check if we emptied the entire row:
+          cellId = null;
+          for (cellId in lineHash) {
+            // no, we didn't. Keep it around!
+            break;
+          }
+          if (cellId === null) {
+            delete newHash[row]; 
+          }
+        }
+      }
+      cellCssClasses[key] = newHash;
+      updateCellCssStylesOnRenderedRows(newHash, previousHash);
+
+      trigger(self.onCellCssStylesChanged, { 
+        key: key, 
+        hash: newHash,
+        previousHash: previousHash,
+        grid: self 
+      });
     }
 
     /**
@@ -6217,7 +6449,7 @@ out:
 
       trigger(self.onCellCssStylesChanged, { 
         key: key, 
-        hash: null,
+        //hash: null,
         previousHash: prevHash,
         grid: self 
       });
@@ -6293,17 +6525,25 @@ out:
       });
     }
 
-    // Clone hash so, for example, `setCellCssStyles()` will be able to see the changes 
-    // when you feed it this hash after editing it: cloning MUST be 2 levels deep!
-    // 
-    // Note: this is a separate function as the `for..in` causes the code to remain unoptimized
-    // ( http://commondatastorage.googleapis.com/io-2013/presentations/223.pdf / https://github.com/paperjs/paper.js/issues/466 )
-    //
-    // @param {Array} hash  A 2D array of CSS class values. The array is indexed by [*row number*][*column ID*].
-    //                      (The *column ID* is the `id` property registered in the column definition object.)
-    //
-    // @return {Array}      A clone of the given 2D hash array.
+    /**
+     * Clone hash so, for example, `setCellCssStyles()` will be able to see the changes 
+     * when you feed it this hash after editing it: cloning MUST be 2 levels deep!
+     * 
+     * Note: this is a separate function as the `for..in` causes the code to remain unoptimized
+     * ( http://commondatastorage.googleapis.com/io-2013/presentations/223.pdf / https://github.com/paperjs/paper.js/issues/466 )
+     *
+     * @param {Hash:Object} hash  
+     *                      A 2D array of CSS class values. The array is indexed by [*row number*][*column ID*].
+     *                      (The *column ID* is the `id` property registered in the column definition object.)
+     *
+     * @return {Hash:Object}      
+     *                      A clone of the given 2D hash array or FALSE when the input `hash` was null/falsey.
+     *                      (Thus an **empty** `hash` will be cloned, like any other valid `hash` set!)
+     */
     function cloneCellCssStylesHash(hash) {
+      if (!hash) {
+        return false;
+      }
       var o = {};
       for (var prop in hash) {
         var s = hash[prop];
@@ -6317,23 +6557,26 @@ out:
       return o;
     }
 
-    // Accepts a key name, returns the group of CSS classes defined under that name. 
-    // See `setCellCssStyles` for more info.
-    //
-    // Note: when you wish to use the returned hash as (edited) input to `setCellCssStyles()`,
-    // then the returned hash must be a semi-deep clone (2 levels deep) as otherwise `setCellCssStyles()`
-    // won't be able to see the change by setting `options.clone = true`. 
-    // See `grid.flashCell() :: toggleCellClass()` for an example.
-    //
-    // @param {String} key  The key name, e.g. `selected-range` or `flashing`
-    //
-    // @param {boolean} options.clone  
-    //                      When `options.clone` is set, the returned 2D hash object will be a clone
-    //                      rather than a direct reference. Use this option when you intend to 
-    //                      edit/change the given hash array.
-    //
-    // @return {Array}      A reference (or clone) of the associated 2D hash object. 
-    //                      Returns FALSE when no cells have anything set for this particular key!
+    /**
+     * Accepts a key name, returns the group of CSS classes defined under that name. 
+     * See `setCellCssStyles` for more info.
+     *
+     * Note: when you wish to use the returned hash as (edited) input to `setCellCssStyles()`,
+     * then the returned hash must be a semi-deep clone (2 levels deep) as otherwise `setCellCssStyles()`
+     * won't be able to see the change by setting `options.clone = true`. 
+     * See `grid.flashCell() :: toggleCellClass()` for an example.
+     *
+     * @param {String} key  The key name, e.g. `selected-range` or `flashing`
+     *
+     * @param {boolean} options.clone  
+     *                      When `options.clone` is set, the returned 2D hash object will be a clone
+     *                      rather than a direct reference. Use this option when you intend to 
+     *                      edit/change the given hash array.
+     *
+     * @return {Hash:Object}
+     *                      A reference (or clone) of the associated 2D hash object. 
+     *                      Returns FALSE when no cells have anything set for this particular key!
+     */
     function getCellCssStyles(key, options) {
       var hash = cellCssClasses[key];
       if (options && options.clone) {
@@ -6342,19 +6585,23 @@ out:
       return hash || false;
     }
 
-    // Internal hash to track flashing cells:
+    /*
+     * Internal hash to track flashing cells:
+     */
     var flash_timer_hh = {};
 
-    // parameters:
-    //   row,cell:    grid cell coordinate
-    //   options:
-    //     speed:     number of milliseconds one half of each ON/OFF toggle cycle takes (default: 100ms)
-    //     times:     number of flash half-cycles to run through (default: 4) - proper "flashing" requires you to set this to an EVEN number
-    //     delay:     0/false: start flashing immediately. true: wait one half-cycle to begin flashing. <+N>: wait N milliseconds to begin flashing.
-    //     cssClass:  the class to toggle; when set, this overrides the SlickGrid options.cellFlashingCssClass
-    //
-    // Notes:
-    // - when `times` = 0 or ODD, then the `flash` class is SET [at the end of the flash period] but never reset!
+    /**
+     * parameters:
+     *   row,cell:    grid cell coordinate
+     *   options:
+     *     speed:     number of milliseconds one half of each ON/OFF toggle cycle takes (default: 100ms)
+     *     times:     number of flash half-cycles to run through (default: 4) - proper "flashing" requires you to set this to an EVEN number
+     *     delay:     0/false: start flashing immediately. true: wait one half-cycle to begin flashing. <+N>: wait N milliseconds to begin flashing.
+     *     cssClass:  the class to toggle; when set, this overrides the SlickGrid options.cellFlashingCssClass
+     *
+     * Notes:
+     * - when `times` = 0 or ODD, then the `flash` class is SET [at the end of the flash period] but never reset!
+     */
     function flashCell(row, cell, flash_options) {
       flash_options = __extend({}, {
         speed: 100,
@@ -7168,63 +7415,11 @@ out:
       cfg = cfg || {};
       var clipToValidRange = cfg.clipToValidRange;
 
-      var rowInfo = getRowWithFractionFromPosition(y + pageOffset, clipToValidRange);
-      var columnCount = columns.length;
-      var cell = 0;
-      var cellFraction;
-
-      var w = 0;
-      var cellWidth = 0;
-      for (var i = 0; i < columnCount && w < x; i++) {
-        w += (cellWidth = columns[i].width);
-        cell++;
-      }
-
-      // calculate fraction from the left edge:
-      // (outside the grid range the rowFraction/cellFraction represents the number of estimated rows/cells it is out of range)
-      x -= w;
-      if (x < 0) {
-        cell--;
-        assert(cell >= -1);
-        if (cell === -1) {
-          cellWidth = options.defaultColumnWidth;
-          assert(cellWidth);
-          if (clipToValidRange) {
-            cell = 0;
-          } else {
-            cell = Math.floor(x / cellWidth);
-            x -= cell * cellWidth;
-            assert(x >= 0);
-          }
-        } else {
-          assert(cellWidth);
-          x += cellWidth;
-          assert(x >= 0);
-        }
-        cellFraction = x / cellWidth;
-      } else if (x > 0) {
-        assert(cell === columnCount);
-        cellWidth = options.defaultColumnWidth;
-        assert(cellWidth);
-        if (clipToValidRange) {
-          cell--;
-          x += cellWidth;  
-        } else {
-          var dx = Math.floor(x / cellWidth);
-          cell += dx;
-          x -= dx * cellWidth;
-          assert(x >= 0);
-        }
-        cellFraction = x / cellWidth;
-      } else if (cell === columnCount && clipToValidRange) {
-        assert(x === 0);
-        assert(cellWidth);
-        cell--;
-        x += cellWidth;  
-        cellFraction = x / cellWidth;
-      }
+      var rowInfo = getRowWithFractionFromPosition(y + pageOffset /* + scrollTop ??? */, clipToValidRange);
+      var colInfo = getColumnWithFractionFromPosition(x /* + scrollLeft ??? */, clipToValidRange);
 
       var row = rowInfo.position;
+      var cell = colInfo.position;
       var spans = getSpans(row, cell);
       if (spans) {
         // assert(row === spans.row);
@@ -7232,7 +7427,7 @@ out:
 
         // **NOTE**:
         // 
-        // getCellFromPoint() & getCellFromEvent() are special in that we decode the row and column individually and in the
+        // `getCellFromPoint()` & `getCellFromEvent()` are special in that we decode the row and column individually and in the
         // fundamental return values do NOT care about actual rowspan/colspan issues at the intersection point.
         // 
         // When the caller of this function/API is interested in the actual 'live cell' they can go 
@@ -7250,9 +7445,9 @@ out:
         row: row,
         cell: cell,
         rowFraction: rowInfo.fraction,
-        cellFraction: cellFraction,
-        cellWidth: cellWidth,
+        cellFraction: colInfo.fraction,
         cellHeight: rowInfo.height,
+        cellWidth: colInfo.width,
         spanInfo: spans
       };
     }
@@ -8749,7 +8944,10 @@ out:
     }
 
     /**
+     * @internal [private description]
+     * 
      * @param {string} dir Navigation direction.
+     * 
      * @return {boolean} Whether navigation resulted in a change of active cell.
      */
     function navigate(dir) {
@@ -8774,7 +8972,7 @@ if (0) {
           // and continue with the regular execution path for activeCellNode
         } else {
           // WARNING: the stepFunctions assume a starting coordinate to be valid
-          // to that they can properly step through the col/rowspans. 
+          // so that they can properly step through the col/rowspans. 
           // Today we are not located on a cell per se, so we simply move a
           // given number of rows/columns in the indicated direction.
           var visible = getVisibleRange();
@@ -9117,12 +9315,119 @@ if (0) {
       return true;
     }
 
-    function rowsToRanges(rows) {
-      var ranges = [];
-      var lastCell = columns.length - 1;
-      for (var i = 0, len = rows.length; i < len; i++) {
-        ranges.push(new Slick.Range(rows[i], 0, rows[i], lastCell));
+    /**
+     * Produce a set of `Range`s from the given set of row index numbers.
+     *
+     * @param  {Array} ranges  A set of row index numbers.
+     * @param  {Options:Object} cfg    
+     *                         These options are supported:
+     *                         
+     *                         - `sort` : Guarantee that the range set produced is sorted in ascending row order.
+     *                         - `merge` : Guarantee that the range set produced has adjacent rows merged into one `Range`;
+     *                           with this option *disabled*, each row will be represented by an individual `Range` instance.
+     *
+     *                         When you do not provide this object (or specify `null` or another falsey value here instead)
+     *                         the default settings will be used: both `sort` and `dedup` will be **enabled**. 
+     *
+     * @return {Array}         A set of `Range` objects representing the given rows.
+     */
+    function rowsToRanges(rows, cfg) {
+      var option_sort, option_merge;
+      if (!cfg) {
+        option_sort = false;
+        option_merge = true;
+      } else {
+        option_sort = !!cfg.sort;
+        option_merge = !!cfg.merge;
       }
+      var i, len;      
+      var first_row, last_row, current_row;
+      var ranges = [];
+      if (rows.length === 0) {
+        return ranges;
+      }
+      var lastCell = columns.length - 1;
+
+      // 'sort' is implicit when 'merge' is required:
+      if (option_sort || option_merge) {
+        rows.sort(function rowSortComparer_f(a, b) { 
+          return a - b; 
+        });
+
+        if (option_merge) {
+          for (i = 0, len = rows.length; i < len; i++) {
+            ranges.push(new Slick.Range(rows[i], 0, rows[i], lastCell));
+          }
+        } else {
+          assert(rows.length >= 1);
+          first_row = last_row = rows[0];
+          for (i = 1, len = rows.length; i < len; i++) {
+            current_row = rows[i];
+            if (current_row === last_row + 1) {
+              last_row = current_row;
+            } else {
+              ranges.push(new Slick.Range(first_row, 0, last_row, lastCell));
+              first_row = last_row = current_row;
+            }
+          }
+          ranges.push(new Slick.Range(first_row, 0, last_row, lastCell));
+        }
+      }
+      return ranges;
+    }
+
+    /**
+     * Produce a row set from the given set of ranges.
+     *
+     * @param  {Array} ranges  A set of `Range` objects.
+     * @param  {Options:Object} cfg    
+     *                         These options are supported:
+     *                         
+     *                         - `sort` : Guarantee that the row set produced is sorted in ascending order.
+     *                         - `dedup` : Guarantee that the row set produced does not contain any duplicate row indices.
+     *
+     *                         When you do not provide this object (or specify `null` or another falsey value here instead)
+     *                         the default settings will be used: both `sort` and `dedup` will be **enabled**. 
+     *
+     * @return {Array}         A set of row index numbers.
+     */
+    function rangesToRows(ranges, cfg) {
+      var option_sort, option_dedup;
+      if (!cfg) {
+        option_sort = false;
+        option_dedup = true;
+      } else {
+        option_sort = !!cfg.sort;
+        option_dedup = !!cfg.dedup;
+      }
+
+      var i, len;
+      var rows = [];
+      for (i = 0, len = ranges.length; i < len; i++) {
+        var range = ranges[i];
+        for (var j = range.fromRow, jj = range.toRow; j <= jj; j++) {
+          rows.push(j);
+        }
+      }
+      // Note: when `dedup` (deduplicate output) is enabled, this implies `sort = true`
+      if (option_dedup || option_sort) {
+        rows.sort(function rowSortComparer_f(a, b) { 
+          return a - b; 
+        });
+
+        if (option_dedup) {
+          var previous_row = -1e9;
+          var filtered_rows = [];
+          for (i = 0, len = rows.length; i < len; i++) {
+            var current_row = rows[i];
+            if (current_row !== previous_row) {
+              filtered_rows.push(current_row);
+              previous_row = current_row; 
+            }
+          }
+          rows = filtered_rows;
+        }
+      } 
       return ranges;
     }
 
@@ -9138,6 +9443,20 @@ if (0) {
         throw new Error("Selection model is not set");
       }
       selectionModel.setSelectedRanges(rowsToRanges(rows));
+    }
+    
+    function getSelectedRanges() {
+      if (!selectionModel) {
+        throw new Error("Selection model is not set");
+      }
+      return selectedRanges;
+    }
+
+    function setSelectedRanges(ranges) {
+      if (!selectionModel) {
+        throw new Error("Selection model is not set");
+      }
+      selectionModel.setSelectedRanges(ranges);
     }
     
     function scrollPort(pxVertical, pxHorizontal) {
@@ -9287,7 +9606,7 @@ if (0) {
       "onDragStart": new Slick.Event(),
       "onDrag": new Slick.Event(),
       "onDragEnd": new Slick.Event(),
-      "onSelectedRowsChanged": new Slick.Event(),
+      "onSelectedRangesChanged": new Slick.Event(),
       "onCellCssStylesChanged": new Slick.Event(),
       "onRowsRendered": new Slick.Event(),
       "onRenderStart": new Slick.Event(),
@@ -9321,6 +9640,8 @@ if (0) {
       "setSelectionModel": setSelectionModel,
       "getSelectedRows": getSelectedRows,
       "setSelectedRows": setSelectedRows,
+      "getSelectedRanges": getSelectedRanges,
+      "setSelectedRanges": setSelectedRanges,
       "getContainerNode": getContainerNode,
       "getDataItemValueForColumn": getDataItemValueForColumn,
       "setDataItemValueForColumn": setDataItemValueForColumn,
@@ -9402,6 +9723,7 @@ if (0) {
       "addCellCssStyles": addCellCssStyles,
       "setCellCssStyles": setCellCssStyles,
       "removeCellCssStyles": removeCellCssStyles,
+      "upsertCellCssStyles": upsertCellCssStyles,
       "getCellCssStyles": getCellCssStyles,
       "setCssRule": setCssRule,
 
@@ -9415,7 +9737,9 @@ if (0) {
       "getEditController": getEditController,
 
       // export utility function(s)
-      "scrollPort": scrollPort
+      "scrollPort": scrollPort,
+      "rangesToRows": rangesToRows,
+      "rowsToRanges": rowsToRanges
     });
 
     init();

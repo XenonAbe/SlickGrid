@@ -175,7 +175,7 @@ function simulateRealTimeUpdates() {
 }
 
 function findCurrentServer() {
-  grid.scrollRowIntoView(currentServer);
+  grid.scrollCellIntoView(currentServer, grid.getColumnIndex("server"));
   grid.flashCell(currentServer, grid.getColumnIndex("server"), {
     speed: 100,
     times: 4 * 2,

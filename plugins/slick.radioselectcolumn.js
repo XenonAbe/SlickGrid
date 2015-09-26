@@ -24,6 +24,7 @@
       _grid = grid;
       _handler
         .subscribe(_grid.onSelectedRowsChanged, handleSelectedRowsChanged)
+        .subscribe(_grid.onSelectedRangesChanged, handleSelectedRangesChanged)
         .subscribe(_grid.onClick, handleClick)
         .subscribe(_grid.onKeyDown, handleKeyDown);
     }
