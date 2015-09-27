@@ -113,7 +113,7 @@
             dataView.setFilter(filter);
             dataView.endUpdate();
 
-            var filterPlugin = new Ext.Plugins.HeaderFilter({});
+            var filterPlugin = new Slick.Plugins.HeaderFilter({});
 
             // This event is fired when a filter is selected
             filterPlugin.onFilterApplied.subscribe(function () {
@@ -138,7 +138,7 @@
 
             grid.registerPlugin(filterPlugin);
 
-            var overlayPlugin = new Ext.Plugins.Overlays({});
+            var overlayPlugin = new Slick.Plugins.Overlays({});
 
             // Event fires when a range is selected
             overlayPlugin.onFillUpDown.subscribe(function (e, args) {

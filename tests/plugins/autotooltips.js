@@ -1,4 +1,5 @@
 (function($) {
+  "use strict";
 
   var grid,         // The SlickGrid instance
       cols = [      // The column definitions

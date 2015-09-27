@@ -10,6 +10,8 @@
 
 
 (function ($) {
+  "use strict";
+
   $.extend(true, window, {
     Slick: {
       SelectionTracker: SelectionTracker

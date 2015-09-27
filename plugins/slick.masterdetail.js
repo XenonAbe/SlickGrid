@@ -10,6 +10,8 @@
 
 
 (function($) {
+    "use strict";
+
     // Register namespace
     $.extend(true, window, {
         SlickGrid : {

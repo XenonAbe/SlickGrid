@@ -1,4 +1,5 @@
 (function ($) {
+  "use strict";
 
   var grid;
   var el, offsetBefore, offsetAfter, dragged, cols, col, row, data;

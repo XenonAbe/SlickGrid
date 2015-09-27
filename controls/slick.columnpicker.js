@@ -10,6 +10,8 @@
 
 
 (function ($) {
+  "use strict";
+
   function SlickColumnPicker(columns, grid, options) {
     var $menu;
     var columnCheckboxes;
@@ -188,6 +190,8 @@
       "destroy": destroy
     };
   }
+
+
   // Slick.Controls.ColumnPicker
   $.extend(true, window, {
     Slick: {
@@ -196,4 +200,5 @@
       }
     }
   });
+
 })(jQuery);

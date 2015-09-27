@@ -10,6 +10,8 @@
 
 
 (function ($) {
+  "use strict";
+
   // register namespace
   $.extend(true, window, {
     Slick: {
@@ -75,4 +77,5 @@
 
     init();
   }
+
 })(jQuery);

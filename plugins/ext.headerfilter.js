@@ -10,8 +10,10 @@
 
 
 (function ($) {
+    "use strict";
+
     $.extend(true, window, {
-        Ext: {
+        Slick: {
             Plugins: {
                 HeaderFilter: HeaderFilter
             }

@@ -111,7 +111,7 @@
             dataView.setFilter(filter);
             dataView.endUpdate();
 
-            var filterPlugin = new Ext.Plugins.HeaderFilter({});
+            var filterPlugin = new Slick.Plugins.HeaderFilter({});
 
             filterPlugin.onFilterApplied.subscribe(function () {
                 dataView.refresh();
@@ -144,7 +144,7 @@
 
             grid.registerPlugin(filterPlugin);
 
-            var overlayPlugin = new Ext.Plugins.Overlays({ 
+            var overlayPlugin = new Slick.Plugins.Overlays({ 
                 decoratorWidth: 1
             });
 

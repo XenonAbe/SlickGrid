@@ -10,6 +10,8 @@
 
 
 (function ($) {
+  "use strict";
+
   /**
    * A sample AJAX data store implementation.
    * 

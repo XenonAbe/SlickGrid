@@ -10,6 +10,8 @@
 
 
 (function ($) {
+  "use strict";
+
   var defaults = {
     pagesize: 50,
     page_margin: 150,

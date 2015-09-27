@@ -10,6 +10,8 @@
 
 
 (function ($) {
+  "use strict";
+
   var defaults = {
     messages: {
       number: "Field must contain only numbers",
@@ -75,10 +77,10 @@
   $.extend(true, window, {
     Slick: {
       Validators: $.extend(true, regexExports, {
-        "defaults": defaults,
-        "RequiredValidator": RequiredValidator,
-        "required": required,
-        "RegexValidator": RegexValidator
+        defaults: defaults,
+        RequiredValidator: RequiredValidator,
+        required: required,
+        RegexValidator: RegexValidator
       })
     }
   });
