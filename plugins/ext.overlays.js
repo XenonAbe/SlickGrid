@@ -10,13 +10,7 @@
 
 
 (function ($) {
-    $.extend(true, window, {
-        Ext: {
-            Plugins: {
-                Overlays: Overlays
-            }
-        }
-    });
+    "use strict";
 
     function Overlays(options) {
         var $headerOverlay;
@@ -40,7 +34,7 @@
             options = $.extend(true, {}, defaults, options);
             grid = g;
 
-            dragDecorator = new overlayRangeDecorator(grid);
+            dragDecorator = new OverlayRangeDecorator(grid);
 
             $headerOverlay = createRowHeaderOverlay(1200);
             $rowOverlay = createRowHeaderOverlay(500);
@@ -276,116 +270,6 @@
             e.stopPropagation();
         }
 
-        function Overlay(target, prefix) {
-            var className = (prefix || "") + "cell-overlay";
-
-            this.$left = $("<div>")
-                .addClass(className)
-                .addClass("left")
-                .appendTo(target);
-
-            this.$right = $("<div>")
-                .addClass(className)
-                .addClass("right")
-                .appendTo(target);
-
-            this.$top = $("<div>")
-                .addClass(className)
-                .addClass("top")
-                .appendTo(target);
-
-            this.$bottom = $("<div>")
-                .addClass(className)
-                .addClass("bottom")
-                .appendTo(target);
-
-            this.$handle = $("<div>")
-                .addClass("handle-overlay")
-                .appendTo(target);
-
-            this.toggle = function (showOrHide) {
-                this.$left.toggle(showOrHide);
-                this.$right.toggle(showOrHide);
-                this.$top.toggle(showOrHide);
-                this.$bottom.toggle(showOrHide);
-                this.$handle.toggle(showOrHide);
-            };
-        }
-
-        function overlayRangeDecorator(targetGrid) {
-            var decorator;
-            var r;
-
-            function show(range) {
-                r = range;
-                if (!decorator) {
-                    decorator = new Overlay(grid.getCanvasNode(), "selection-");
-                }
-
-                var from = targetGrid.getCellNodeBox(range.fromRow, range.fromCell);
-                var to = targetGrid.getCellNodeBox(range.toRow, range.toCell);
-
-                decorator.$left.css({
-                    top: from.top - 2,
-                    left: from.left - 2,
-                    height: to.bottom - from.top + 2,
-                    width: options.decoratorWidth
-                });
-
-                decorator.$right.css({
-                    top: from.top - 2,
-                    left: to.right - 1,
-                    height: to.bottom - from.top + 2,
-                    width: options.decoratorWidth
-                });
-
-                decorator.$top.css({
-                    top: from.top - 2,
-                    left: to.left - 1,
-                    height: options.decoratorWidth,
-                    width: to.right - from.left + 2
-                });
-
-                decorator.$bottom.css({
-                    top: to.bottom - 1,
-                    left: from.left - 2,
-                    height: options.decoratorWidth,
-                    width: to.right - from.left + 3
-                });
-
-                decorator.$handle.css({
-                    top: to.bottom - 3,
-                    left: from.right - 4,
-                    height: 1,
-                    width: 1
-                });
-
-                return decorator;
-            }
-
-            function getSelectedRange() {
-                return r;
-            }
-
-            function hide() {
-                if (decorator) {
-                    decorator.toggle(false);
-                    decorator = null;
-                }
-            }
-
-            function hideHandle() {
-                decorator.$handle.hide();
-            }
-
-            return {
-                hide: hide,
-                hideHandle: hideHandle,
-                show: show,
-                getSelectedRange: getSelectedRange
-            };
-        }
-
         $.extend(this, {
             "init": init,
             "destroy": destroy,
@@ -393,4 +277,133 @@
             "onFillUpDown": new Slick.Event()
         });
     }
+
+    //////////////////////////////////////////////////////////////////////////////////
+
+    function Overlay(target, prefix) {
+        var className = (prefix || "") + "cell-overlay";
+
+        this.$left = $("<div>")
+            .addClass(className)
+            .addClass("left")
+            .appendTo(target);
+
+        this.$right = $("<div>")
+            .addClass(className)
+            .addClass("right")
+            .appendTo(target);
+
+        this.$top = $("<div>")
+            .addClass(className)
+            .addClass("top")
+            .appendTo(target);
+
+        this.$bottom = $("<div>")
+            .addClass(className)
+            .addClass("bottom")
+            .appendTo(target);
+
+        this.$handle = $("<div>")
+            .addClass("handle-overlay")
+            .appendTo(target);
+
+        this.toggle = function (showOrHide) {
+            this.$left.toggle(showOrHide);
+            this.$right.toggle(showOrHide);
+            this.$top.toggle(showOrHide);
+            this.$bottom.toggle(showOrHide);
+            this.$handle.toggle(showOrHide);
+        };
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////
+
+    function OverlayRangeDecorator(targetGrid) {
+        var decorator;
+        var r;
+
+        function show(range) {
+            r = range;
+            if (!decorator) {
+                decorator = new Overlay(grid.getCanvasNode(), "selection-");
+            }
+
+            var from = targetGrid.getCellNodeBox(range.fromRow, range.fromCell);
+            var to = targetGrid.getCellNodeBox(range.toRow, range.toCell);
+
+            decorator.$left.css({
+                top: from.top - 2,
+                left: from.left - 2,
+                height: to.bottom - from.top + 2,
+                width: options.decoratorWidth
+            });
+
+            decorator.$right.css({
+                top: from.top - 2,
+                left: to.right - 1,
+                height: to.bottom - from.top + 2,
+                width: options.decoratorWidth
+            });
+
+            decorator.$top.css({
+                top: from.top - 2,
+                left: to.left - 1,
+                height: options.decoratorWidth,
+                width: to.right - from.left + 2
+            });
+
+            decorator.$bottom.css({
+                top: to.bottom - 1,
+                left: from.left - 2,
+                height: options.decoratorWidth,
+                width: to.right - from.left + 3
+            });
+
+            decorator.$handle.css({
+                top: to.bottom - 3,
+                left: from.right - 4,
+                height: 1,
+                width: 1
+            });
+
+            return decorator;
+        }
+
+        function getSelectedRange() {
+            return r;
+        }
+
+        function hide() {
+            if (decorator) {
+                decorator.toggle(false);
+                decorator = null;
+            }
+        }
+
+        function hideHandle() {
+            decorator.$handle.hide();
+        }
+
+        return {
+            hide: hide,
+            hideHandle: hideHandle,
+            show: show,
+            getSelectedRange: getSelectedRange
+        };
+    }
+
+
+
+    $.extend(true, window, {
+        Slick: {
+            Plugins: {
+                Overlays: Overlays,
+            }
+        },
+        Slick: {
+            Overlay: Overlay,
+            OverlayRangeDecorator: OverlayRangeDecorator
+        }
+    });
+
 })(jQuery);

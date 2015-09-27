@@ -16,35 +16,7 @@
  */
 
 (function ($) {
-  // register namespace
-  $.extend(true, window, {
-    Slick: {
-      Event: Event,
-      EventData: EventData,
-      EventHandler: EventHandler,
-      Keyboard: Keyboard(),
-      PerformanceTimer: PerformanceTimer,
-      HtmlEntities: HtmlEntities,
-      BoxInfo: BoxInfo,
-      Range: Range,
-      NonDataRow: NonDataItem,
-      Group: Group,
-      GroupTotals: GroupTotals,
-      MasterRow: MasterRow,
-      NestedRow: NestedRow,
-      LoadingRow: LoadingRow,
-      MissingRow: MissingRow,
-      EditorLock: EditorLock,
-
-      /***
-       * A global singleton editor lock.
-       * @class GlobalEditorLock
-       * @static
-       * @constructor
-       */
-      GlobalEditorLock: new EditorLock()
-    }
-  });
+  "use strict";
 
   /***
    * An event object for passing data to event handlers and letting them control propagation.
@@ -928,7 +900,7 @@
    */
   function Keyboard() {
     // for now, base the keyboard code set off of jQueryUI, if it is present
-    var keycodes = $.extend({},  $.ui && $.ui.keyCode, {
+    var keycodes = $.extend({}, $.ui && $.ui.keyCode, {
       BACKSPACE: 8,
       COMMA: 188,
       DELETE: 46,
@@ -957,6 +929,37 @@
 
     return keycodes;
   }
+
+
+  // register namespace
+  $.extend(true, window, {
+    Slick: {
+      Event: Event,
+      EventData: EventData,
+      EventHandler: EventHandler,
+      Keyboard: Keyboard(),
+      PerformanceTimer: PerformanceTimer,
+      HtmlEntities: HtmlEntities,
+      BoxInfo: BoxInfo,
+      Range: Range,
+      NonDataRow: NonDataItem,
+      Group: Group,
+      GroupTotals: GroupTotals,
+      MasterRow: MasterRow,
+      NestedRow: NestedRow,
+      LoadingRow: LoadingRow,
+      MissingRow: MissingRow,
+      EditorLock: EditorLock,
+
+      /***
+       * A global singleton editor lock.
+       * @class GlobalEditorLock
+       * @static
+       * @constructor
+       */
+      GlobalEditorLock: new EditorLock()
+    }
+  });
 
 })(jQuery);
 

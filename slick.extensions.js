@@ -9,23 +9,36 @@
 
 
 
-(function ($, exports) {
+(function ($) {
+  "use strict";
 
-  exports.getColumnHeaderElement = function(columnId) {
+  // Slick.Grid
+  $.extend(true, window, {
+    Slick: {
+      Grid: {
+        getColumnHeaderElement: getColumnHeaderElement,
+        toggleColumnHeaderCssClass: toggleColumnHeaderCssClass,
+        removeColumnHeaderCssClass: removeColumnHeaderCssClass,
+        addColumnHeaderCssClass: addColumnHeaderCssClass
+      }
+    }
+  });
+
+  function getColumnHeaderElement(columnId) {
     var headers = $( this.getContainerNode() ).find('.slick-header-columns').get(0).children;
     return headers[ this.getColumnIndex(columnId) ];
-  };
+  }
 
-  exports.toggleColumnHeaderCssClass = function(columnId, cssClass) {
-    $( exports.getColumnHeaderElement.call(this, columnId) ).toggleClass(cssClass);
-  };
+  function toggleColumnHeaderCssClass(columnId, cssClass) {
+    $( this.getColumnHeaderElement(columnId) ).toggleClass(cssClass);
+  }
 
-  exports.removeColumnHeaderCssClass = function(columnId, cssClass) {
-    $( exports.getColumnHeaderElement.call(this, columnId) ).removeClass(cssClass);
-  };
+  function removeColumnHeaderCssClass(columnId, cssClass) {
+    $( this.getColumnHeaderElement(columnId) ).removeClass(cssClass);
+  }
 
-  exports.addColumnHeaderCssClass = function(columnId, cssClass) {
-    $( exports.getColumnHeaderElement.call(this, columnId) ).addClass(cssClass);
-  };
+  function addColumnHeaderCssClass(columnId, cssClass) {
+    $( this.getColumnHeaderElement(columnId) ).addClass(cssClass);
+  }
 
-})(jQuery, Slick.Grid.prototype);
+})(jQuery);
