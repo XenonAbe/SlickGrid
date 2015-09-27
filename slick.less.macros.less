@@ -1,11 +1,11 @@
-/*!
- * @license
- * slickGrid v2.3.18-alpha.1011 (https://github.com/GerHobbelt/SlickGrid)
- * Copyright 2009-2015 Michael Leibman <michael{dot}leibman{at}gmail{dot}com>
- *
- * Distributed under MIT license.
- * All rights reserved.
- */
+//!
+// @license
+// slickGrid v2.3.18-alpha.1011 (https://github.com/GerHobbelt/SlickGrid)
+// Copyright 2009-2015 Michael Leibman <michael{dot}leibman{at}gmail{dot}com>
+//
+// Distributed under MIT license.
+// All rights reserved.
+///
 
 
 
@@ -61,11 +61,24 @@
 
 .transition(@value)
 {
-    .prefixer(transition,   @value);
+  .prefixer(transition, @value);
 }
 
 .text-overflow(@value)
 {
   .opera-prefix(text-overflow, @value);
   text-overflow: @value;
+}
+
+// Ensure the addressed DOM elements render using the CSS box-model.
+.box-model()
+{
+  // Note: when your userland CSS rules override these, you *MAY* get an exception thrown 
+  // by SlickGrid at initialization time as SlickGrid requires this mode for all its 
+  // DOM elements to ensure a correct render of the grid is produced at minimal cost.
+  // 
+  // We say *MAY* because the JS code doesn't check its entire internal tree thoroughly
+  // for these settings as that's too much up-front cost for when your userland CSS/LESS
+  // *may* happen to screw this up.
+  .prefixer(box-sizing, border-box);
 }

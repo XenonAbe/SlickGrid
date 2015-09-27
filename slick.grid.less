@@ -1,20 +1,20 @@
-/*!
- * @license
- * slickGrid v2.3.18-alpha.1011 (https://github.com/GerHobbelt/SlickGrid)
- * Copyright 2009-2015 Michael Leibman <michael{dot}leibman{at}gmail{dot}com>
- *
- * Distributed under MIT license.
- * All rights reserved.
- */
+//!
+// @license
+// slickGrid v2.3.18-alpha.1011 (https://github.com/GerHobbelt/SlickGrid)
+// Copyright 2009-2015 Michael Leibman <michael{dot}leibman{at}gmail{dot}com>
+//
+// Distributed under MIT license.
+// All rights reserved.
+///
 
 
 
-/*
- * IMPORTANT:
- * In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.
- * No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS
- * classes should alter those!
- */
+///
+// IMPORTANT:
+// In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.
+// No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) or user-specified CSS
+// classes should alter those!
+///
 
 @import (less) "slick.config.less";
 
@@ -32,6 +32,8 @@
     border-left-width: 0;
     border-top-width: 0;
 
+    .box-model();
+
     .slick-viewport,
     .slick-top-panel-scroller,
     .slick-header, 
@@ -46,18 +48,26 @@
       border-bottom-width: 0;
       margin: 0;
       outline: 0;
+
+      .box-model();
     }
     .slick-viewport {
       overflow: auto;
+
+      .box-model();
     }
     .slick-header, 
     .slick-headerrow, 
     .slick-footerrow {
       overflow: hidden;
+
+      .box-model();
     }
     .slick-headerrow {
       border-top-color: transparent;
       border-top-width: 0;
+
+      .box-model();
     }
 
     .slick-top-panel,
@@ -72,6 +82,8 @@
       padding: 0;
       border: 0;
       outline: 0;
+
+      .box-model();
     }
 
     .slick-cell, 
@@ -89,6 +101,8 @@
       border-left-width: 0;
       margin: 0;
       padding: 0;
+
+      .box-model();
 
       overflow: hidden;
       .text-overflow(ellipsis);
@@ -117,16 +131,22 @@
     .grid-canvas {
       position: relative;
       outline: 0;
+
+      .box-model();
     }
 
     .slick-row {
       position: absolute;
       border: 0;
       width: 100%;
+
+      .box-model();
     }
 
     .slick-header-column-sorted {
       font-style: italic;
+
+      .box-model();
     }
 
     .slick-sort-indicator {
@@ -138,18 +158,26 @@
       position: absolute;
       left: 0;
       background: url('images/sort-undetermined.png');
+
+      .box-model();
     }
 
     .slick-sort-indicator-desc {
       background: url('images/sort-desc.png');
+
+      .box-model();
     }
 
     .slick-sort-indicator-asc {
       background: url('images/sort-asc.png');
+
+      .box-model();
     }
 
     .slick-header-sortable .slick-column-name {
       margin-left: 10px;
+
+      .box-model();
     }
 
     .slick-resizable-handle {
@@ -161,17 +189,24 @@
       right: 0;
       top: 0;
       height: 100%;
+
+      .box-model();
     }
 
     .slick-resizable-handle-hover {
       background-color: #ccc;
+
+      .box-model();
     }
 
     .slick-sortable-placeholder {
       background: silver;
+
+      .box-model();
     }
 
     .slick-group {
+      .box-model();
     }
 
     .slick-group-toggle {
@@ -207,6 +242,8 @@
       background: blue;
       .opacity(0.15);
       cursor: move;
+
+      .box-model();
     }
 
     .slick-reorder-guide {
@@ -214,11 +251,15 @@
       height: 2px;
       background: blue;
       .opacity(0.7);
+
+      .box-model();
     }
 
     .slick-selection {
       z-index: 10;
       position: absolute;
       border: 2px dashed black;
+
+      .box-model();
     }
 }
