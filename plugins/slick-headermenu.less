@@ -4,30 +4,110 @@
 // ```
 // <div role="columnheader" id="..." title="Select/Deselect All" class="ui-state-default slick-header-column level0 colspan1">
 //   <span class="slick-column-name">bla</span>
-//   <div class="slick-header-menubutton"></div>
+//   <div class="slick-header-menubutton {options.buttonCssClass}" title="{menu.tooltip}"></div>
 //   <div class="slick-resizable-handle" style="width: 16px;"></div>
 // </div>
 // ```
 //
 // and we are trying to ensure that the MENUBUTTON indeed overlaps the slick-resizable-handle DIV below it for mouse/touch.
+//
+// ---
+// 
+// The menu itself is attached to the SlickGrid *container* node like this:
+// 
+// - fire `onBeforeMenuShow` event
+// 
+// - render:
+// 
+//   ```
+//   <div class="slick-header-menu">
+//      <div class="slick-header-menuitem" title="{item.tooltip}">
+//        ...
+//      </div>
+//      <div class="slick-header-menuitem slick-header-column-active" title="{item.title}">
+//        ...
+//      </div>
+//      <div class="slick-header-menuitem slick-header-menuitem-disabled"
+//           styles="background-image", "url({item.iconImage})">
+//        <div class="slick-header-menuicon {item.iconCssClass}">
+//        </div>
+//        <span class="slick-header-menucontent">
+//          {item.title}
+//        </span>
+//      </div>
+//      ...
+//   </div>
 
-/* Menu button */
-.slick-header-menubutton {
-  position: absolute;
-  // Ensure the MENUBUTTON in the column header sits *on top* of the column resize DIV (which is position:absolute)
-  z-index: 1;
 
+
+//------------------------------------------------------------------------------------------
+
+//
+// ## Theming
+// 
+// Themable entities; see also https://github.com/less/less.js/issues/1706 why we do it this
+// way. 
+// The user can override these settings by specifying the same name, with their choice
+// of value, in the user-defined theme LESS file which should follow this LESS file.
+// 
+// See also: http://stackoverflow.com/questions/18792255/how-to-override-mixins-in-less-css-1-4
+// 
+
+// Ensure the MENUBUTTON in the column header sits *on top* of the column resize DIV (which is position:absolute)
+@slick-header-menubutton-z-index: 1;
+
+// default theme mixins
+.slick-header-menubutton-theme() {
   right: 3px;         // keep some space for the column-resize button to 'see' the mouse 
-  top: 0;
-  bottom: 0;
   width: 14px;
+
   background-repeat: no-repeat;
   background-position: left center;
   background-image: url(../images/down.gif);
+
+  border-left: thin ridge silver;
+}
+
+.slick-header-menu-theme() {
+  margin: 0;
+  padding: 2px;
+}
+
+.slick-header-menuitem-theme() {
+  margin: 0;
+  padding: 0;
+}
+
+.slick-header-menuicon-theme() {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+.slick-header-menucontent-theme() {
+  // nada  
+}
+
+.slick-header-menuitem-disabled-theme() {
+  color: silver;
+}
+
+//------------------------------------------------------------------------------------------
+
+// Menu button
+.slick-header-menubutton {
+  position: absolute;
+  // Ensure the MENUBUTTON in the column header sits *on top* of the column resize DIV (which is position:absolute)
+  z-index: @slick-header-menubutton-z-index;
+
+  top: 0;
+  bottom: 0;
   cursor: pointer;
 
   display: none;
-  border-left: thin ridge silver;
+  .slick-header-menubutton-theme();
 }
 
 .slick-header-column:hover > .slick-header-menubutton,
@@ -35,41 +115,38 @@
   display: inline-block;
 }
 
-/* Menu */
+// Menu 
 .slick-header-menu {
   position: absolute;
   display: inline-block;
   margin: 0;
-  padding: 2px;
+  padding: 0;
   cursor: default;
+  .slick-header-menu-theme();
 }
 
-
-/* Menu items */
+// Menu items 
 .slick-header-menuitem {
   list-style: none;
   margin: 0;
   padding: 0;
   cursor: pointer;
+  .slick-header-menuitem-theme();
 }
 
 .slick-header-menuicon {
   display: inline-block;
-  width: 16px;
-  height: 16px;
   vertical-align: middle;
-  margin-right: 4px;
-  background-repeat: no-repeat;
-  background-position: center center;
+  .slick-header-menuicon-theme();
 }
 
 .slick-header-menucontent {
   display: inline-block;
   vertical-align: middle;
+  .slick-header-menucontent-theme();
 }
 
-
-/* Disabled */
+// Disabled
 .slick-header-menuitem-disabled {
-  color: silver;
+  .slick-header-menuitem-disabled-theme();
 }

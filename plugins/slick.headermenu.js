@@ -10,6 +10,8 @@
 
 
 (function ($) {
+  "use strict";
+
   // register namespace
   $.extend(true, window, {
     Slick: {
@@ -31,8 +33,8 @@
    *
    *   var columns = [
    *     {
-   *       id: 'myColumn',
-   *       name: 'My column',
+   *       id: "myColumn",
+   *       name: "My column",
    *
    *       // This is the relevant part
    *       header: {
@@ -62,6 +64,10 @@
    *    command:      A command identifier to be passed to the onCommand event handlers.
    *    iconCssClass: A CSS class to be added to the menu item icon.
    *    iconImage:    A url to the icon image.
+   *    
+   * **WARNING**: `item.iconImage` is **deprecated**; tweak the relevant 
+   * style / LESS theme mixin (`.slick-header-menuicon-theme()`) 
+   * instead -- possibly in conjunction with the `item.iconCssClass` option.
    *
    *
    * The plugin exposes the following events:
@@ -84,7 +90,20 @@
    *
    * @param options {Object} Options:
    *    buttonCssClass:   an extra CSS class to add to the menu button
-   *    buttonImage:      a url to the menu button image (default '../images/down.gif')
+   *    buttonImage:      a url to the menu button image (default: '../images/down.gif')
+   *    monitorBodyEvents: 
+   *                      (default: `true`) monitor body mouse click events: when the user clicks
+   *                      outside SlickGrid the menu will be destroyed.
+   *
+   *                      Note: more complex applications for which this basic functionality is
+   *                      unsuitable can handle this themselves by calling the `hideMenu()`
+   *                      API when the application logic decides the header menu should go
+   *                      away.
+   *
+   * **WARNING**: `buttonImage` is a **deprecated** option; use relevant style / LESS theme mixin
+   * (`.slick-header-menubutton-theme()`) instead -- possibly in conjunction with the 
+   * `buttonCssClass` option.
+   * 
    * @class Slick.Plugins.HeaderButtons
    * @constructor
    */
@@ -92,10 +111,12 @@
     var _grid;
     var _self = this;
     var _handler = new Slick.EventHandler();
-    var _defaults = {
+    
+    /* @const */ var _defaults = {
       buttonCssClass: null,
-      buttonImage: null
+      buttonImage: null               // deprecated option; use the LESS theme mixins instead (possibly in conjunction with the `buttonCssClass` option).
     };
+    
     var $menu;
     var $activeHeaderColumn;
 
@@ -110,19 +131,24 @@
       // Force the grid to re-render the header now that the events are hooked up.
       _grid.setColumns(_grid.getColumns());
 
-      // Hide the menu on outside click.
-      $(document.body).bind("mousedown", handleBodyMouseDown);
+      if (options.monitorBodyEvents) {
+        // Hide the menu on outside click.
+        $(document.body).bind("mousedown", handleBodyMouseDown);
+      }
     }
 
 
     function destroy() {
       _handler.unsubscribeAll();
-      $(document.body).unbind("mousedown", handleBodyMouseDown);
+      if (options.monitorBodyEvents) {
+        $(document.body).unbind("mousedown", handleBodyMouseDown);
+      }
+      hideMenu();
     }
 
 
     function handleBodyMouseDown(e) {
-      if ($menu && $menu[0] != e.target && !$.contains($menu[0], e.target)) {
+      if ($menu && $menu[0] !== e.target && !$.contains($menu[0], e.target)) {
         hideMenu();
       }
     }
@@ -138,6 +164,16 @@
     }
 
     function handleHeaderCellRendered(e, args) {
+      /*
+       * ```
+       * args: {
+       *   node: headerNode (DOM element reference)
+       *   column: `columnDef` object
+       *   cell: column index (0..n-1)
+       *   grid: SlickGrid instance
+       * }
+       * ```
+       */
       var column = args.column;
       var menu = column.header && column.header.menu;
 
@@ -152,6 +188,7 @@
         }
 
         if (options.buttonImage) {
+          console.warn("options.buttonImage for slick.headermenu plugin is deprecated; tweak the relevant style / LESS theme mixin (.slick-header-menubutton-theme()) instead.");
           $el.css("background-image", "url(" + options.buttonImage + ")");
         }
 
@@ -167,6 +204,16 @@
 
 
     function handleBeforeHeaderCellDestroy(e, args) {
+      /*
+       * ```
+       * args: {
+       *   node: headerNode (DOM element reference)
+       *   column: `columnDef` object
+       *   cell: column index (0..n-1)
+       *   grid: SlickGrid instance
+       * }
+       * ```
+       */
       var column = args.column;
 
       if (column.header && column.header.menu) {
@@ -202,12 +249,12 @@
       for (var i = 0; i < menu.items.length; i++) {
         var item = menu.items[i];
 
-        if (typeof item === 'function') {
-          item.call(this, menu, columnDef)
+        if (typeof item === "function") {
+          item.call(this, menu, columnDef, i, menu.items)
             .appendTo($menu);
         } else {
           var $li = $("<div class='slick-header-menuitem'></div>")
-            .data("command", item.command || '')
+            .data("command", item.command || "")
             .data("column", columnDef)
             .data("item", item)
             .bind("click", handleMenuItemClick)
@@ -229,6 +276,7 @@
           }
 
           if (item.iconImage) {
+            console.warn("item.iconImage for slick.headermenu plugin is deprecated; tweak the relevant style / LESS theme mixin (.slick-header-menuicon-theme()) instead (possibly in conjunction with the item.iconCssClass option).");
             $icon.css("background-image", "url(" + item.iconImage + ")");
           }
 
@@ -261,19 +309,19 @@
       var columnDef = $(this).data("column");
       var item = $(this).data("item");
 
-      if (item.disabled) {
-        return;
-      }
+      // Even when an item is *disabled*, we still consume the *click* user input.
+      // It's just that we don't do anything with it...
+      if (!item.disabled) {
+        hideMenu();
 
-      hideMenu();
-
-      if (command != null && command !== '') {
-        _self.onCommand.notify({
-            grid: _grid,
-            column: columnDef,
-            command: command,
-            item: item
-          }, e, _self);
+        if (command != null && command !== "") {
+          _self.onCommand.notify({
+              grid: _grid,
+              column: columnDef,
+              command: command,
+              item: item
+            }, e, _self);
+        }
       }
 
       // Stop propagation so that it doesn't register as a header click event.
@@ -282,11 +330,12 @@
     }
 
     $.extend(this, {
-      "init": init,
-      "destroy": destroy,
+      init: init,
+      destroy: destroy,
+      hideMenu: hideMenu,
 
-      "onBeforeMenuShow": new Slick.Event(),
-      "onCommand": new Slick.Event()
+      onBeforeMenuShow: new Slick.Event(),
+      onCommand: new Slick.Event()
     });
   }
 })(jQuery);
