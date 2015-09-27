@@ -7,6 +7,7 @@
   "devel"    : true,
   "eqeqeq"   : false,
   "eqnull"   : true,
+  "esnext"   : true,
   "expr"     : true,
   "laxbreak" : true,
   "quotmark" : false,
