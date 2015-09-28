@@ -10,27 +10,7 @@
 
 
 (function ($) {
-  $.extend(true, window, {
-    Slick: {
-      Data: {
-        DataView: DataView,
-        Aggregators: {
-          Avg: AvgAggregator,
-          Mde: MdeAggregator,
-          Mdn: MdnAggregator,
-          Min: MinAggregator,
-          Max: MaxAggregator,
-          Sum: SumAggregator,
-          Std: StdAggregator,
-          CheckCount: CheckCountAggregator,
-          DateRange: DateRangeAggregator,
-          Unique: UniqueAggregator,
-          WeightedAverage: WeightedAverageAggregator
-        }
-      }
-    }
-  });
-
+  "use strict";
 
   /***
    * A sample Model implementation.
@@ -52,10 +32,16 @@
    *
    *                                                        Interface structure:
    *                                                          { getRowMetadata:       function(item, row, cell, rows) { return meta; } }
-   *          {Boolean}     .inlineFilters                  True if the filter expression should
-   *                                                        be "inlined" internally for performance.
+   *          {Boolean}     .inlineFilters                  `true` if the filter expression should
+   *                                                        be "compiled" a.k.a. "inlined" internally for performance.
    *                                                        Inlining should lead to better performance,
    *                                                        but may not work in some circumstances.
+   *                                                        Default: `false`.
+   *          {Boolean}     .inlineAggregators              `true` if the group aggregators should
+   *                                                        be "compiled" a.k.a. "inlined" internally for performance.
+   *                                                        Inlining should lead to better performance,
+   *                                                        but may not work in some circumstances.
+   *                                                        Default: `false`.
    *          {Boolean}     .showExpandedGroupRows [KCPT]   If true, group header rows are shown
    *                                                        for expanded groups as well as
    *                                                        collapsed groups. If false, group
@@ -80,15 +66,19 @@
       flattenGroupedRows: flattenGroupedRows, // function (groups, level, groupingInfos, filteredItems, options) { return all_rows_you_want_to_see[]; }
       showExpandedGroupRows: true,
       inlineFilters: false,
+      inlineAggregators: false,
       idProperty: "id",
-      stableSort: true                        // set this to FALSE if you don't need it for your data (your sort key is always guaranteed unique, for instance) for a sort speedup
+      stableSort: true,                       // set this to FALSE if you don't need it for your data (your sort key is always guaranteed unique, for instance) for a sort speedup
+      sortAsc: true                           // sort order preference
     };
 
     options = $.extend(true, {}, defaults, options);
 
     // private
     var idProperty = options.idProperty;  // property holding a unique row id
-    var stableSort = options.stableSort;
+    var stableSort = options.stableSort;  // option setting: changes when overridden by the `sort()` API parameter.
+    var sortAsc = true;                   // option setting: changes when overridden by the `sort()` API parameter.
+
     var items = [];         // data by index
     var rows = [];          // data by row
     var idxById = {};       // indexes by id
@@ -96,7 +86,6 @@
     var filter = null;      // filter function
     var updated = null;     // updated item ids
     var suspendCount = 0;   // suspends the recalculation
-    var sortAsc = true;
     var sortComparer;
     var refreshHints = {};
     var prevRefreshHints = {};
@@ -105,6 +94,58 @@
     var compiledFilter;
     var compiledFilterWithCaching;
     var filterCache = [];
+
+    // browser compatibility checks:
+    var hasFunctionDisplayName = false;
+    var hasFunctionName = false;
+    var hasFunctionCompilation = false;
+
+    // detect browser abilities re function compilation
+    try {
+      var __fn = new Function("_args", "{return _args;}");
+      var filterInfo = getFunctionInfo(__fn);
+      if (!filterInfo.params || filterInfo.params.length !== 1 || filterInfo.params[0] !== "_args") {
+        throw "_args";
+      } 
+      if (!filterInfo.body || filterInfo.body !== "{return _args;}") {
+        throw "body";
+      } 
+
+      try {
+        __fn.displayName = "sg_foobar___";
+        if (__fn(1) === 1) {
+          hasFunctionDisplayName = true;
+        }
+      } catch (ex) { 
+      }
+
+      try {
+        __fn.name = "sg_foobar___";
+        if (__fn(1) === 1) {
+          hasFunctionName = true;
+        }
+      } catch (ex) { 
+      }
+
+      // test compilation last: we only enable that one when we passed the other tests:
+      try {
+        if (__fn(1) === 1) {
+          hasFunctionCompilation = true;
+        }
+      } catch (ex) { 
+      }
+    } catch (ex) {
+      // something weird crashed in there: kill all the features! 
+      hasFunctionDisplayName = false;
+      hasFunctionName = false;
+      hasFunctionCompilation = false;
+    }
+
+    // and disable the related options when we have found that our current browser won't be able to cope anyway:
+    if (!hasFunctionCompilation) {
+      options.inlineFilters = false;
+      options.inlineAggregators = false;
+    }
 
     // grouping
     var groupingInfoDefaults = {
@@ -156,7 +197,7 @@
     }
 
     function setRefreshHints(hints) {
-      refreshHints = hints;
+      refreshHints = hints || {};
     }
 
     function getRefreshHints() {
@@ -177,18 +218,40 @@
       for (var i = startingIndex, l = items.length; i < l; i++) {
         id = items[i][idProperty];
         if (id === undefined) {
-          throw new Error("Each data element must implement a unique 'id' property, it can't be undefined.");
+          throw new Error("Each data element must implement a unique 'id' property, it can't be undefined. The data element at row index " + i + " is therefor illegal.");
         }
         idxById[id] = i;
       }
     }
 
-    function ensureIdUniqueness() {
+    /**
+     * @internal Check if a given single new item `newItem` has a unique ID. When no item
+     * is passed to this function the entire data set is tested for proper ID uniqueness.
+     *
+     * Any ID collisions / omissions are reported by throwing an exception.
+     *
+     * @param  {Any} newItem    A single item, which will be added to the data set later on.
+     *
+     *                          This is an optional argument. When not given (or when it is null/false)
+     *                          the entire data set will be scanned for ID omissions & collisions. 
+     */
+    function ensureIdUniqueness(newItem) {
       var id;
-      for (var i = 0, l = items.length; i < l; i++) {
-        id = items[i][idProperty];
-        if (id === undefined || idxById[id] !== i) {
-          throw new Error("Each data element must implement a unique 'id' property. `"+ id +"` is not unique.");
+      if (newItem) {
+        id = newItem[idProperty];
+        if (id === undefined) {
+          throw new Error("Each data element must implement a unique 'id' property, it can't be undefined. The data element at row index " + i + " is therefor illegal.");
+        }
+        // When this ID is already known by the lookup table, it means we already have this ID in our present data set.
+        if (idxById[id]) {
+          throw new Error("Each data element must implement a unique 'id' property. The new item would collide with the 'id' `" + id + "` at row index " + i + ".");
+        }
+      } else {
+        for (var i = 0, l = items.length; i < l; i++) {
+          id = items[i][idProperty];
+          if (id === undefined || idxById[id] !== i) {
+            throw new Error("Each data element must implement a unique 'id' property. 'id' `" + id + "` at row index " + i + " is not unique.");
+          }
         }
       }
     }
@@ -486,7 +549,7 @@
 
     function sort(comparer, ascending, unstable) {
       sortAsc = (ascending == null ? true : ascending);
-      sortUnstable = unstable || false;
+      stableSort = (unstable != null ? unstable : stableSort) || false;
       if (typeof comparer === 'function') {
         sortComparer = {
             valueExtractor: function sortComparerFunctionExtractor_f(node) {
@@ -505,12 +568,12 @@
             valueExtractor: function sortComparerStringExtractor_f(node) {
                 return node[comparer];
             },
-            comparator: sortUnstable ? defaultSortComparator.fastComparator : defaultSortComparator.comparator
+            comparator: stableSort ? defaultSortComparator.comparator : defaultSortComparator.fastComparator
         };
       } else {
-        sortComparer = $.extend({}, defaultSortComparator, (sortUnstable ? {
-            comparator: defaultSortComparator.fastComparator
-        } : {}), comparer);
+        sortComparer = $.extend({}, defaultSortComparator, {
+            comparator: stableSort ? defaultSortComparator.comparator : defaultSortComparator.fastComparator
+        }, comparer);
       }
       // check the comparator spec:
       assert(typeof sortComparer.valueExtractor === 'function');
@@ -577,6 +640,7 @@
     function setFilter(filterFn) {
       filter = filterFn;
       if (options.inlineFilters) {
+        assert(hasFunctionCompilation);
         compiledFilter = compileFilter(filter);
         compiledFilterWithCaching = compileFilterWithCaching(filter);
       }
@@ -738,12 +802,14 @@
 
     function insertItem(insertBefore, item) {
       items.splice(insertBefore, 0, item);
+      ensureIdUniqueness(item);
       updateIdxById(insertBefore);
       refresh();
     }
 
     function addItem(item) {
       items.push(item);
+      ensureIdUniqueness(item);
       updateIdxById(items.length - 1);
       refresh();
     }
@@ -1078,22 +1144,42 @@
     function getFunctionInfo(fn) {
       var fnRegex = /^function[^(]*\(([^)]*)\)\s*{([\s\S]*)}$/;
       var matches = fn.toString().match(fnRegex);
+      // WARNING/NOTE: it turns out that at least Chrome puts some surplus at the end of the 
+      // function parameter list when the function has been previously created using the
+      // `new Function(...)` operation.
+      // 
+      // For completeness sake we cover that here too.
+      var args = matches[1].replace(/\/\*\*\//g, ' ').trim();
       return {
-        params: matches[1].split(","),
-        body: matches[2]
+        params: args.split(","),
+        body: matches[2].trim()
       };
     }
 
     function compileAccumulatorLoop(aggregator) {
-      var accumulatorInfo = getFunctionInfo(aggregator.accumulate);
-      var fn = new Function(
-          "_items",
-          ["for (var " + accumulatorInfo.params[0] + ", _i = 0, _il = _items.length; _i < _il; _i++) {",
-              accumulatorInfo.params[0] + " = _items[_i];",
-              accumulatorInfo.body,
-          "}"].join("\n")
-      );
-      fn.displayName = fn.name = "compiledAccumulatorLoop";   // <-- disabled due to issue #1032
+      if (options.inlineAggregators) {
+        var accumulatorInfo = getFunctionInfo(aggregator.accumulate);
+        fn = new Function(
+            "_items",
+            ["for (var " + accumulatorInfo.params[0] + ", _i = 0, _il = _items.length; _i < _il; _i++) {",
+                accumulatorInfo.params[0] + " = _items[_i];",
+                accumulatorInfo.body,
+            "}"].join("\n")
+        );
+        // The next bits are only enabled on browsers which can handle them; see also issue #1032
+        if (hasFunctionDisplayName) { fn.displayName = "compiledAccumulatorLoop"; }
+        if (hasFunctionName) { fn.name = "compiledAccumulatorLoop"; }
+      } else {
+        fn = function vanillaAccumulatorLoop(_items) {
+          for (var _a1, _i = 0, _il = _items.length; _i < _il; _i++) {
+            _a1 = _items[_i];
+            aggregator.accumulate(_a1);
+          }
+        };
+        // The next bits are only enabled on browsers which can handle them; see also issue #1032
+        if (hasFunctionDisplayName) { fn.displayName = "vanillaAccumulatorLoop"; }
+        if (hasFunctionName) { fn.name = "vanillaAccumulatorLoop"; }
+      }
       return fn;
     }
 
@@ -1102,14 +1188,13 @@
 
       var filterPath1 = "{ continue _coreloop; }$1";
       var filterPath2 = "{ _retval[_idx++] = $item$; continue _coreloop; }$1";
-      // make some allowances for minification - there's only so far we can go with RegEx
+      // make some allowances for minification - there's only so far we can go with RegExes.
       var filterBody = filterInfo.body
           .replace(/return false\s*([;}]|\}|$)/gi, filterPath1)
           .replace(/return!1([;}]|\}|$)/gi, filterPath1)
           .replace(/return true\s*([;}]|\}|$)/gi, filterPath2)
           .replace(/return!0([;}]|\}|$)/gi, filterPath2)
-          .replace(/return ([^;}]+?)\s*([;}]|$)/gi,
-          "{ if ($1) { _retval[_idx++] = $item$; }; continue _coreloop; }$2");
+          .replace(/return ([^;}]+?)\s*([;}]|$)/gi, "{ if ($1) { _retval[_idx++] = $item$; }; continue _coreloop; }$2");
 
       // This preserves the function template code after JS compression,
       // so that replace() commands still work as expected.
@@ -1130,7 +1215,9 @@
       tpl = tpl.replace(/\$args\$/gi, filterInfo.params[1]);
 
       var fn = new Function("_items,_args", tpl);
-      fn.displayName = fn.name = "compiledFilter";   // <-- disabled due to issue #1032
+      // The next bits are only enabled on browsers which can handle them; see also issue #1032
+      if (hasFunctionDisplayName) { fn.displayName = "compiledFilter"; }
+      if (hasFunctionName) { fn.name = "compiledFilter"; }
       return fn;
     }
 
@@ -1171,7 +1258,9 @@
       tpl = tpl.replace(/\$args\$/gi, filterInfo.params[1]);
 
       var fn = new Function("_items,_args,_cache", tpl);
-      fn.displayName = fn.name = "compiledFilterWithCaching";   // <-- disabled due to issue #1032
+      // The next bits are only enabled on browsers which can handle them; see also issue #1032
+      if (hasFunctionDisplayName) { fn.displayName = "compiledFilterWithCaching"; }
+      if (hasFunctionName) { fn.name = "compiledFilterWithCaching"; }
       return fn;
     }
 
@@ -1365,9 +1454,11 @@
      * @param preserveHiddenOnSelectionChange {Boolean} Whether to keep selected items
      *     that are currently out of the view (see preserveHidden) as selected when selection
      *     changes.
+     *     
      * @return {Slick.Event} An event that notifies when an internal list of selected row ids
      *     changes.  This is useful since, in combination with the above two options, it allows
-     *     access to the full list selected row ids, and not just the ones visible to the grid.
+     *     access to the full list of selected row ids, and not just the ones visible to the grid.
+     *     
      * @method syncGridSelection
      */
     function syncGridSelection(grid, preserveHidden, preserveHiddenOnSelectionChange) {
@@ -1403,6 +1494,24 @@
         }
       }
 
+      function updateOnRowsChanged(e, args) {
+        assert(args);
+        assert(args.dataView === self);
+        assert(args.rows);
+
+        grid.invalidateRows(args.rows);
+        update();
+      }
+
+      function updateOnRowCountChanged(e, args) {
+        assert(args);
+        assert(args.dataView === self);
+        assert(args.previous !== args.current);
+
+        grid.updateRowCount();
+        update();
+      }
+
       function selectedRangesChangedHandler(e, args) {
         if (inHandler) { return; }
         var newSelectedRowIds = self.mapRowsToIds(grid.getSelectedRows());
@@ -1420,9 +1529,9 @@
 
       grid.onSelectedRangesChanged.subscribe(selectedRangesChangedHandler);
 
-      this.onRowsChanged.subscribe(update);
+      this.onRowsChanged.subscribe(updateOnRowsChanged);
 
-      this.onRowCountChanged.subscribe(update);
+      this.onRowCountChanged.subscribe(updateOnRowCountChanged);
 
       return onSelectedRowIdsChanged;
     }
@@ -1459,21 +1568,36 @@
         }
       }
 
-      grid.onCellCssStylesChanged.subscribe(function cellCssStylesChangedHandler(e, args) {
+      function cellCssStylesChangedHandler(e, args) {
+        assert(e);
+        assert(args);
         if (inHandler) { return; }
         if (key !== args.key) { return; }
         if (args.hash) {
           storeCellCssStyles(args.hash);
         }
-      });
+      }
+
+      grid.onCellCssStylesChanged.subscribe(cellCssStylesChangedHandler);
 
       this.onRowsChanged.subscribe(update);
 
       this.onRowCountChanged.subscribe(update);
     }
 
+    /**
+     * Report back the currently active set of options, such as the current state of
+     * the `sortAsc` and `stableSort` options, which may have changed by some API call
+     * parameters overriding the original setting. 
+     *
+     * @return {Object::Options} A shallow copy of the current `options` object.
+     */
     function getOptions() {
-      return options;
+      return $.extend(true, {}, options, {
+        idProperty: idProperty,
+        stableSort: stableSort,
+        sortAsc: sortAsc
+      });
     }
 
     function getFilteredItems() {
@@ -1877,6 +2001,28 @@
 
   // TODO:  add more built-in aggregators
   // TODO:  merge common aggregators in one to prevent needless iterating
+
+
+  $.extend(true, window, {
+    Slick: {
+      Data: {
+        DataView: DataView,
+        Aggregators: {
+          Avg: AvgAggregator,
+          Mde: MdeAggregator,
+          Mdn: MdnAggregator,
+          Min: MinAggregator,
+          Max: MaxAggregator,
+          Sum: SumAggregator,
+          Std: StdAggregator,
+          CheckCount: CheckCountAggregator,
+          DateRange: DateRangeAggregator,
+          Unique: UniqueAggregator,
+          WeightedAverage: WeightedAverageAggregator
+        }
+      }
+    }
+  });
 
 })(jQuery);
 
