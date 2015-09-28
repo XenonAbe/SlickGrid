@@ -96,54 +96,13 @@
     var compiledFilterWithCaching;
     var filterCache = [];
 
-    // browser compatibility checks:
+    // function compilation support:
+    var compileJavaScript = Slick.CompileJavaScript;
     var hasFunctionDisplayName = false;
     var hasFunctionName = false;
-    var hasFunctionCompilation = false;
-
-    // detect browser abilities re function compilation
-    try {
-      var __fn = new Function("_args", "{return _args;}");                                  // jshint ignore:line
-      var filterInfo = getFunctionInfo(__fn);
-      if (!filterInfo.params || filterInfo.params.length !== 1 || filterInfo.params[0] !== "_args") {
-        throw "_args";
-      } 
-      if (!filterInfo.body || filterInfo.body !== "{return _args;}") {
-        throw "body";
-      } 
-
-      try {
-        __fn.displayName = "sg_foobar___";
-        if (__fn(1) === 1) {
-          hasFunctionDisplayName = true;
-        }
-      } catch (ex) { 
-      }
-
-      try {
-        __fn.name = "sg_foobar___";
-        if (__fn(1) === 1) {
-          hasFunctionName = true;
-        }
-      } catch (ex) { 
-      }
-
-      // test compilation last: we only enable that one when we passed the other tests:
-      try {
-        if (__fn(1) === 1) {
-          hasFunctionCompilation = true;
-        }
-      } catch (ex) { 
-      }
-    } catch (ex) {
-      // something weird crashed in there: kill all the features! 
-      hasFunctionDisplayName = false;
-      hasFunctionName = false;
-      hasFunctionCompilation = false;
-    }
 
     // and disable the related options when we have found that our current browser won't be able to cope anyway:
-    if (!hasFunctionCompilation) {
+    if (!compileJavaScript.canDecompile() || !compileJavaScript.canCompile()) {
       options.inlineFilters = false;
       options.inlineAggregators = false;
     }
@@ -639,7 +598,8 @@
     function setFilter(filterFn) {
       filter = filterFn;
       if (options.inlineFilters) {
-        assert(hasFunctionCompilation);
+        assert(compileJavaScript.canCompile());
+        assert(compileJavaScript.canDecompile());
         compiledFilter = compileFilter(filter);
         compiledFilterWithCaching = compileFilterWithCaching(filter);
       }
@@ -1140,34 +1100,16 @@
       return groupedRows;
     }
 
-    function getFunctionInfo(fn) {
-      var fnRegex = /^function[^(]*\(([^)]*)\)\s*{([\s\S]*)}$/;
-      var matches = fn.toString().match(fnRegex);
-      // WARNING/NOTE: it turns out that at least Chrome puts some surplus at the end of the 
-      // function parameter list when the function has been previously created using the
-      // `new Function(...)` operation.
-      // 
-      // For completeness sake we cover that here too.
-      var args = matches[1].replace(/\/\*\*\//g, ' ').trim();
-      return {
-        params: args.split(","),
-        body: matches[2].trim()
-      };
-    }
-
     function compileAccumulatorLoop(aggregator) {
       if (options.inlineAggregators) {
-        var accumulatorInfo = getFunctionInfo(aggregator.accumulate);
-        fn = new Function(                                  // jshint ignore:line
+        var accumulatorInfo = compileJavaScript.decompile(aggregator.accumulate);
+        fn = compileJavaScript("compiledAccumulatorLoop",
             "_items",
             ["for (var " + accumulatorInfo.params[0] + ", _i = 0, _il = _items.length; _i < _il; _i++) {",
                 accumulatorInfo.params[0] + " = _items[_i];",
                 accumulatorInfo.body,
-            "}"].join("\n")
+            "}"]
         );
-        // The next bits are only enabled on browsers which can handle them; see also issue #1032
-        if (hasFunctionDisplayName) { fn.displayName = "compiledAccumulatorLoop"; }
-        if (hasFunctionName) { fn.name = "compiledAccumulatorLoop"; }
       } else {
         fn = function vanillaAccumulatorLoop(_items) {
           for (var _a1, _i = 0, _il = _items.length; _i < _il; _i++) {
@@ -1183,7 +1125,7 @@
     }
 
     function compileFilter(filterFn) {
-      var filterInfo = getFunctionInfo(filterFn);
+      var filterInfo = compileJavaScript.decompile(filterFn);
 
       var filterPath1 = "{ continue _coreloop; }$1";
       var filterPath2 = "{ _retval[_idx++] = $item$; continue _coreloop; }$1";
@@ -1213,15 +1155,12 @@
       tpl = tpl.replace(/\$item\$/gi, filterInfo.params[0]);
       tpl = tpl.replace(/\$args\$/gi, filterInfo.params[1]);
 
-      var fn = new Function("_items,_args", tpl);                                  // jshint ignore:line
-      // The next bits are only enabled on browsers which can handle them; see also issue #1032
-      if (hasFunctionDisplayName) { fn.displayName = "compiledFilter"; }
-      if (hasFunctionName) { fn.name = "compiledFilter"; }
+      var fn = compileJavaScript("compiledFilter", ["_items", "_args"], tpl);
       return fn;
     }
 
     function compileFilterWithCaching(filterFn) {
-      var filterInfo = getFunctionInfo(filterFn);
+      var filterInfo = compileJavaScript.decompile(filterFn);
 
       var filterPath1 = "{ continue _coreloop; }$1";
       var filterPath2 = "{ _cache[_i] = true;_retval[_idx++] = $item$; continue _coreloop; }$1";
@@ -1256,10 +1195,7 @@
       tpl = tpl.replace(/\$item\$/gi, filterInfo.params[0]);
       tpl = tpl.replace(/\$args\$/gi, filterInfo.params[1]);
 
-      var fn = new Function("_items,_args,_cache", tpl);                                  // jshint ignore:line
-      // The next bits are only enabled on browsers which can handle them; see also issue #1032
-      if (hasFunctionDisplayName) { fn.displayName = "compiledFilterWithCaching"; }
-      if (hasFunctionName) { fn.name = "compiledFilterWithCaching"; }
+      var fn = compileJavaScript("compiledFilterWithCaching", ["_items", "_args", "_cache"], tpl);
       return fn;
     }
 

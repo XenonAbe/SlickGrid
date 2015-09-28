@@ -1136,9 +1136,9 @@
       Event: Event,
       EventData: EventData,
       EventHandler: EventHandler,
-      Keyboard: Keyboard(),                                                                 // jshint ignore:line
+      Keyboard: Keyboard(),                      /* only need a single instance of this one */   // jshint ignore:line
       PerformanceTimer: PerformanceTimer,
-      CompileJavaScript: CompileJavaScript,
+      CompileJavaScript: CompileJavaScript(),    /* only need a single instance of this one */   // jshint ignore:line
       HtmlEntities: HtmlEntities,
       BoxInfo: BoxInfo,
       Range: Range,
