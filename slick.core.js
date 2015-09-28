@@ -752,6 +752,204 @@
     return obj;
   }
 
+  /**
+   * Detect which features regarding run-time JavaScript code generation / compilation
+   * are available in the current environment.
+   *
+   * Can we compile a function from a string of source code, and if so, how? 
+   *
+   * + this class provides a wrapper to encapsulate the warnings and misgivings about this
+   *   sort of thing in various browsers.
+   *
+   * + report whether we can name such generated functions and provide a means to do
+   *   so through our compiler wrapper.
+   */
+  function CompileJavaScript() {
+    var hasFunctionDisplayName = false;
+    var hasFunctionName = false;
+    var hasFunctionCompilation = false;
+    var hasFunctionDecompilation = false;
+
+    // detect browser abilities re function compilation
+    try {
+      var __fn = new Function("_args", "{return _args;}");
+      var filterInfo = getFunctionInfo(__fn);
+      if (!filterInfo.params || filterInfo.params.length !== 1 || filterInfo.params[0] !== "_args") {
+        throw "_args";
+      } 
+      if (!filterInfo.body || filterInfo.body !== "{return _args;}") {
+        throw "body";
+      } 
+      hasFunctionDecompilation = false;
+
+      // Test function *naming* support; see also https://github.com/mleibman/SlickGrid/issues/1032
+      try {
+        __fn.displayName = "sg_foobar___";
+        if (__fn(1) === 1) {
+          hasFunctionDisplayName = true;
+        }
+      } catch (ex) { 
+      }
+
+      try {
+        __fn.name = "sg_foobar___";
+        if (__fn(1) === 1) {
+          hasFunctionName = true;
+        }
+      } catch (ex) { 
+      }
+
+      // test compilation last: we only enable that one when we passed the other tests:
+      try {
+        if (__fn(1) === 1) {
+          hasFunctionCompilation = true;
+        }
+      } catch (ex) { 
+      }
+    } catch (ex) {
+      // something weird crashed in there: kill all the features! 
+      hasFunctionDisplayName = false;
+      hasFunctionName = false;
+      hasFunctionCompilation = false;
+    }
+
+    /**
+     * Decompile a given function into source code
+     *
+     * @param  {Function} fn The function to decompile
+     *
+     * @return {Object/Hash} The decompiled parts:
+     *
+     *                       - `params`: array of function parameters
+     *                       - `body`: the function body (source code)
+     */
+    function getFunctionInfo(fn) {
+      var fnRegex = /^function[^(]*\(([^)]*)\)\s*{([\s\S]*)}$/;
+      var matches = fn.toString().match(fnRegex);
+      // WARNING/NOTE: it turns out that at least Chrome puts some surplus at the end of the 
+      // function parameter list when the function has been previously created using the
+      // `new Function(...)` operation.
+      // 
+      // For completeness sake we cover that here too.
+      var args = matches[1].replace(/\/\*\*\//g, ' ').trim();
+      return {
+        params: args.split(","),
+        body: matches[2].trim()
+      };
+    }
+
+    /**
+     * @api
+     * 
+     * Compile the given function source code to an executable JavaScript function.
+     *
+     * @param  {String} functionName       Optional function name. May be `null`.
+     * @param  {String/Array} functionParameters 
+     *                                     Optional function parameters. May be `null`. 
+     *                                     
+     *                                     Parameters can be specified
+     *                                     as an array of parameter names or pre-combined (comma-separated)
+     *                                     into a single string, e.g. "arg1, arg2".
+     * @param  {String/Array} functionBody The function *body* source code. May of course be 
+     *                                     *empty*, which is assumed when the parameter is 
+     *                                     falsey (e.g. `null` or `undefined`) instead of a direct empty string.
+     *                                     
+     *                                     Body source code can be specified
+     *                                     as an array of lines or pre-combined (comma-separated)
+     *                                     into a single string, e.g. "var rv = arg1 + arg2; return rv;".
+     *                                     Note that when the body is an array of strings, these are
+     *                                     combined using only NEWLINE characters; no 'smart stuff' is
+     *                                     applied re implicit semicolon fixups nor do we apply any
+     *                                     kind of code analysis or uglification/minification.
+     *
+     * @return {Function}                  The compiled JavaScript function.
+     *
+     *                                     We will return `null` when the current environment
+     *                                     does not support function compilation. 
+     *
+     * **WARNING**: 
+     * 
+     * When we cannot compile the given function for whatever *other* reason
+     * (than simply that we found that the current environment does not support function
+     * compilation at all), **an exception will be thrown**.
+     *  
+     * The caller is responsible for quality assurance of the inputs and handling this 
+     * potential situation.
+     */
+    var compiler = function compile_javascript(functionName, functionParameters, functionBody) {
+      if (Array.isArray(functionParameters)) {
+        functionParameters = functionParameters.join(",");
+      }
+      if (Array.isArray(functionBody)) {
+        functionBody = functionBody.join("\n");
+      }
+
+      var fn;
+
+      if (hasFunctionCompilation) {
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function
+        fn = new Function(functionParameters || "", functionBody || "");
+      } else {
+        return null;
+      }
+      // The next bits are only enabled on browsers which can handle them; see also issue #mleibman/1032 (https://github.com/mleibman/SlickGrid/issues/1032)
+      if (functionName) {
+        if (hasFunctionDisplayName) { fn.displayName = functionName; }
+        if (hasFunctionName) { fn.name = functionName; }
+      }
+      return fn;
+    };
+
+    /**
+     * @api
+     *
+     * @return {Boolean} `true` when the current environment supports run-time function compilation
+     *                   from source.
+     */
+    compiler.canCompile = function can_we_compilejavascript() {
+      return hasFunctionCompilation;
+    };
+
+    /**
+     * @api
+     *
+     * @return {Boolean} `true` when the current environment supports run-time function **de**compilation
+     *                   *to* source.
+     */
+    compiler.canDecompile = function can_we_decompilejavascript() {
+      return hasFunctionDecompilation;
+    };
+
+    /**
+     * @api
+     *
+     * @return {Boolean} `true` when the current environment naming run-time compiled functions.
+     *
+     * Note that the *way* functions can named differs per browser environment; this is covered
+     * by using this compiler class to both compile *and optionally name* the run-time
+     * generated function source code.  
+     */
+    compiler.canNameCompiledFunction = function can_we_namejavascriptfunction() {
+      return hasFunctionCompilation && (hasFunctionName || hasFunctionDisplayName);
+    };
+
+    /**
+     * @api
+     * 
+     * Decompile a given function into source code.
+     *
+     * @param  {Function} fn The function to decompile
+     *
+     * @return {Object/Hash} The decompiled parts:
+     *
+     *                       - `params`: array of function parameters
+     *                       - `body`: the function body (source code)
+     */
+    compiler.decompile = getFunctionInfo;
+
+    return compiler;
+  }
+
 
   // This is inspired by
   // http://stackoverflow.com/questions/7753448/how-do-i-escape-quotes-in-html-attribute-values
@@ -939,6 +1137,7 @@
       EventHandler: EventHandler,
       Keyboard: Keyboard(),
       PerformanceTimer: PerformanceTimer,
+      CompileJavaScript: CompileJavaScript,
       HtmlEntities: HtmlEntities,
       BoxInfo: BoxInfo,
       Range: Range,
