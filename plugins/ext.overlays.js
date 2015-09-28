@@ -398,9 +398,7 @@
         Slick: {
             Plugins: {
                 Overlays: Overlays,
-            }
-        },
-        Slick: {
+            },
             Overlay: Overlay,
             OverlayRangeDecorator: OverlayRangeDecorator
         }

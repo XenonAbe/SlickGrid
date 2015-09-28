@@ -1,6 +1,8 @@
+/*jshint sub:true, shadow:true */
+
 var grid; //The cell grid object.
 var data = []; //The data used by the cell grid
-//The Generator  default Parameters or the generator cofiguration
+//The Generator  default Parameters or the generator configuration
 var genName = 'CGPL';
 //Below are default values for initialisation, can change if wanted through grid or input tables.
 var genRamp = 30;
@@ -22,7 +24,7 @@ var tiedToDC = false;
 var tiedToRamp = false;
 
 //Database Array-Used right now as the database
-var revDataArray = new Array();
+var revDataArray = [];
 
 
 //cell grid options for customization
@@ -35,38 +37,40 @@ var options = {
 };
 
 var undoRedoBuffer = {
-    commandQueue: [],
-    commandCtr: 0,
+  commandQueue: [],
+  commandCtr: 0,
 
-    queueAndExecuteCommand: function(editCommand) {
-      this.commandQueue[this.commandCtr] = editCommand;
-      this.commandCtr++;
-      editCommand.execute();
-    },
+  queueAndExecuteCommand: function (editCommand) {
+    this.commandQueue[this.commandCtr] = editCommand;
+    this.commandCtr++;
+    editCommand.execute();
+  },
 
-    undo: function() {
-      if (this.commandCtr == 0)
-        return;
+  undo: function () {
+    if (this.commandCtr === 0) {
+      return;
+    }
 
-      this.commandCtr--;
-      var command = this.commandQueue[this.commandCtr];
+    this.commandCtr--;
+    var command = this.commandQueue[this.commandCtr];
 
-      if (command && Slick.GlobalEditorLock.cancelCurrentEdit()) {
-        command.undo();
-      }
-    },
-    redo: function() {
-      if (this.commandCtr >= this.commandQueue.length)
-        return;
-      var command = this.commandQueue[this.commandCtr];
-      this.commandCtr++;
-      if (command && Slick.GlobalEditorLock.cancelCurrentEdit()) {
-        command.execute();
-      }
+    if (command && Slick.GlobalEditorLock.cancelCurrentEdit()) {
+      command.undo();
+    }
+  },
+  redo: function () {
+    if (this.commandCtr >= this.commandQueue.length)
+      return;
+    var command = this.commandQueue[this.commandCtr];
+    this.commandCtr++;
+    if (command && Slick.GlobalEditorLock.cancelCurrentEdit()) {
+      command.execute();
     }
   }
-  // undo shortcut
-$(document).keydown(function(e) {
+};
+
+// undo shortcut
+$(document).keydown(function (e) {
   if (e.which == 90 && (e.ctrlKey || e.metaKey)) { // CTRL + (shift) + Z
     if (e.shiftKey) {
       undoRedoBuffer.redo();
@@ -77,7 +81,7 @@ $(document).keydown(function(e) {
 });
 
 var pluginOptions = {
-  clipboardCommandHandler: function(editCommand) {
+  clipboardCommandHandler: function (editCommand) {
     undoRedoBuffer.queueAndExecuteCommand.call(undoRedoBuffer, editCommand);
   },
   includeHeaderWhenCopying: false
@@ -124,6 +128,7 @@ var columns = [{
   field: "avail",
   width: 40
 }];
+
 //Adding Constituent Requisition columns iteratively
 for (var i = 0; i < constituentNames.length; i++) {
   columns.push({
@@ -191,7 +196,7 @@ function findSibling(el, cls) {
 }
 
 //On loading of the html page do the following
-$(function() {
+$(function () {
   //Add options to the dropdowns og the following 'select' inouts
   addOptions(['selectReqConst', 'selectRSDInputConst']);
   //Set the whole grid to default values, rsd urs not included
@@ -237,8 +242,8 @@ $(function() {
   grid.getCanvasNode().focus();
   //enabling the excel style functionality by the plugin
   grid.registerPlugin(new Slick.CellExternalCopyManager(pluginOptions));
-  //Things to do on adding a new Row - TODO - not needed coz we dont add new rows other than 96
-  grid.onAddNewRow.subscribe(function(e, args) {
+  //Things to do on adding a new Row - TODO - not needed coz we don't add new rows other than 96
+  grid.onAddNewRow.subscribe(function (e, args) {
     var item = args.item;
     var column = args.column;
     grid.invalidateRow(data.length);
@@ -309,7 +314,7 @@ function addRow(tableID) {
   newcell.appendChild(s);
   for (var i = 1; i < colCount - 1; i++) {
     newcell = row.insertCell(i);
-    var t = document.createElement("input");
+    t = document.createElement("input");
     t.min = '1';
     t.value = '';
     if (i != colCount - 2) {
@@ -346,7 +351,7 @@ function addRowRSDURS(tableID) {
   newcell.appendChild(s);
   for (var i = 1; i < colCount - 2; i++) {
     newcell = row.insertCell(i);
-    var t = document.createElement("input");
+    t = document.createElement("input");
     t.min = '1';
     t.value = '';
     if (i != colCount - 3) { //change coz  of insertion in column
@@ -358,7 +363,7 @@ function addRowRSDURS(tableID) {
   }
   //for rsdInputTable
   newcell = row.insertCell(colCount - 2);
-  var t = document.createElement("select");
+  t = document.createElement("select");
   var op = new Option();
   op.value = 'Yes';
   op.text = "Yes";
@@ -392,7 +397,7 @@ function deleteRow(tableID) {
       var row = table.rows[i];
       var colCount = table.rows[0].cells.length;
       var chkbox = row.cells[colCount - 1].childNodes[0];
-      if (null != chkbox && true == chkbox.checked) {
+      if (null != chkbox && chkbox.checked) {
         table.deleteRow(i);
         rowCount--;
         i--;
@@ -404,7 +409,7 @@ function deleteRow(tableID) {
 }
 
 function createSumm(overridePermissionRequired) { //by pressing modify revision by input tables button
-  //tieing all the tables to one button
+  //tying all the tables to one button
   var x1 = modifyReq(false);
   var x2 = modifyDC(false);
   var x3 = modifyDec(false);
@@ -429,7 +434,7 @@ function modifyReq(overridePermissionRequired) {
   var rowCount = table.rows.length;
   if (rowCount < 2)
     return false;
-  //Fisrt validate the input semantics.Allowable values are 1 to 96 in case of block numbers and possitive integers along with null, full, nochange, percentage loads.
+  //First validate the input semantics.Allowable values are 1 to 96 in case of block numbers and positive integers along with null, full, nochange, percentage loads.
   for (var i = 1; i < rowCount; i++) {
     var cellval = table.rows[i].cells[3].childNodes[0].value;
     //For null cell value validation
@@ -474,7 +479,7 @@ function modifyReq(overridePermissionRequired) {
       if (isNaN(cellvalue)) {
         cellvalue = cellvalue.toUpperCase();
       }
-      (data[blkNum])[constcol] = cellvalue;
+      data[blkNum][constcol] = cellvalue;
     }
   }
   return true;
@@ -484,7 +489,7 @@ function resetGrid(val) {
   //ToDo validate grid dynamically using on cellchange listener
   for (var i = 0; i < 96; i++) {
     //i is iterator for the row i ...
-    var d = (data[i]);
+    var d = data[i];
     for (var j = 0; j < constituentNames.length; j++) {
       //j is iterator the column j ...
       //Resetting the data values of the cell i,j(row,column) to val
@@ -497,7 +502,7 @@ function resetGridRSDURS(val) {
   //ToDo validate grid dynamically using on cellchange listener
   for (var i = 0; i < 96; i++) {
     //i is iterator for the row i ...
-    var d = (data[i]);
+    var d = data[i];
     for (var j = 0; j < constituentNames.length; j++) {
       //j is iterator the column j ...
       //Resetting the data values of the cell i,j(row,column) to val
@@ -510,19 +515,19 @@ function resetGridRSDURS(val) {
 function resetGridDCorRamp(val) {
   for (var i = 0; i < 96; i++) {
     //i is iterator for the row i ...
-    if (val == "DC")
-      (data[i])['onBar'] = genOnBar;
-    else if (val == "Dec")
-      (data[i])['DC'] = genDecCap;
-    else if (val == "Ramp")
-      (data[i])['rampNum'] = genRamp;
+    if (val === "DC")
+      data[i]['onBar'] = genOnBar;
+    else if (val === "Dec")
+      data[i]['DC'] = genDecCap;
+    else if (val === "Ramp")
+      data[i]['rampNum'] = genRamp;
   }
 }
 
 //TODO : sectionsArray being global variable.Make it local variable and pass between the functions like createSections,createSectionSummaryTable etc., whereever required
 function createSections() {
   //Find the sections of the columns
-  sectionsArray = new Array();
+  sectionsArray = [];
   for (var constcol1 = 0; constcol1 < constituentNames.length + 3; constcol1++) { //last two for onBarDC and MaxRamp and DC respectively
     switch (constcol1) {
       case constituentNames.length:
@@ -538,14 +543,14 @@ function createSections() {
         constcol = constcol1;
         break;
     }
-    var sections = new Array();
+    var sections = [];
     var sectionStart = 0;
     for (var blkNum = 1; blkNum < 96; blkNum++) {
-      if ((data[blkNum])[constcol] != (data[blkNum - 1])[constcol]) {
+      if (data[blkNum][constcol] != data[blkNum - 1][constcol]) {
         sections.push({
           'secStart': sectionStart,
           'secEnd': blkNum - 1,
-          'val': (data[blkNum - 1])[constcol]
+          'val': data[blkNum - 1][constcol]
         });
         sectionStart = blkNum;
       }
@@ -553,21 +558,21 @@ function createSections() {
     sections.push({
       'secStart': sectionStart,
       'secEnd': 95,
-      'val': (data[95])[constcol]
+      'val': data[95][constcol]
     });
     //sectionsArray.push(sections);
     sectionsArray[constcol] = sections;
   }
   //URS Version
   for (var constcol = 0; constcol < constituentNames.length; constcol++) {
-    var sections = new Array();
+    var sections = [];
     var sectionStart = 0;
     for (var blkNum = 1; blkNum < 96; blkNum++) {
-      if ((data[blkNum])['RSD' + constcol] != (data[blkNum - 1])['RSD' + constcol]) {
+      if (data[blkNum]['RSD' + constcol] != data[blkNum - 1]['RSD' + constcol]) {
         sections.push({
           'secStart': sectionStart,
           'secEnd': blkNum - 1,
-          'val': (data[blkNum - 1])['RSD' + constcol]
+          'val': data[blkNum - 1]['RSD' + constcol]
         });
         sectionStart = blkNum;
       }
@@ -575,21 +580,21 @@ function createSections() {
     sections.push({
       'secStart': sectionStart,
       'secEnd': 95,
-      'val': (data[95])['RSD' + constcol]
+      'val': data[95]['RSD' + constcol]
     });
     //sectionsArray.push(sections);
     sectionsArray['RSD' + constcol] = sections;
   }
   //For URS option
   for (var constcol = 0; constcol < constituentNames.length; constcol++) {
-    var sections = new Array();
+    var sections = [];
     var sectionStart = 0;
     for (var blkNum = 1; blkNum < 96; blkNum++) {
-      if ((data[blkNum])['URS' + constcol] != (data[blkNum - 1])['URS' + constcol]) {
+      if (data[blkNum]['URS' + constcol] != data[blkNum - 1]['URS' + constcol]) {
         sections.push({
           'secStart': sectionStart,
           'secEnd': blkNum - 1,
-          'val': (data[blkNum - 1])['URS' + constcol]
+          'val': data[blkNum - 1]['URS' + constcol]
         });
         sectionStart = blkNum;
       }
@@ -597,7 +602,7 @@ function createSections() {
     sections.push({
       'secStart': sectionStart,
       'secEnd': 95,
-      'val': (data[95])['URS' + constcol]
+      'val': data[95]['URS' + constcol]
     });
     //sectionsArray.push(sections);
     sectionsArray['URS' + constcol] = sections;
@@ -642,9 +647,9 @@ function createSectionSummaryTableRowRSDURS(j, val, summTab) {
     var td2 = document.createElement('td');
     var td3 = document.createElement('td');
     td0.appendChild(document.createTextNode(textStr));
-    td1.appendChild(document.createTextNode((sections[i])['secStart'] + 1));
-    td2.appendChild(document.createTextNode((sections[i])['secEnd'] + 1));
-    td3.appendChild(document.createTextNode((sections[i])['val']));
+    td1.appendChild(document.createTextNode(sections[i]['secStart'] + 1));
+    td2.appendChild(document.createTextNode(sections[i]['secEnd'] + 1));
+    td3.appendChild(document.createTextNode(sections[i]['val']));
     tr.appendChild(td0);
     tr.appendChild(td1);
     tr.appendChild(td2);
@@ -667,9 +672,9 @@ function createSectionSummaryTableRow(j) {
     var td2 = document.createElement('td');
     var td3 = document.createElement('td');
     td0.appendChild(document.createTextNode(textStr));
-    td1.appendChild(document.createTextNode((sections[i])['secStart'] + 1));
-    td2.appendChild(document.createTextNode((sections[i])['secEnd'] + 1));
-    td3.appendChild(document.createTextNode((sections[i])['val']));
+    td1.appendChild(document.createTextNode(sections[i]['secStart'] + 1));
+    td2.appendChild(document.createTextNode(sections[i]['secEnd'] + 1));
+    td3.appendChild(document.createTextNode(sections[i]['val']));
     tr.appendChild(td0);
     tr.appendChild(td1);
     tr.appendChild(td2);
@@ -693,7 +698,7 @@ function validateGrid() {
   for (var i = 0; i < 96; i++) {
     //Validating the data values of the grid here...
     //i is iterator for the row i ...
-    var d = (data[i]);
+    var d = data[i];
     var cellval;
     var alertstr;
     //validating constituent columns
@@ -732,12 +737,12 @@ function validateGrid() {
       cellval = d["URS" + j];
       //check if it is a number
       if (typeof cellval == "number") {
-        if (cellval == 0) {
+        if (cellval === 0) {
           d["URS" + j] = "No";
         } else
           d["URS" + j] = "Yes";
       } else {
-        var isNO = cellval.match(/^\NO$/i) || cellval == '0';
+        var isNO = cellval.match(/^\NO$/i) || cellval === '0';
         if (isNO) {
           d["URS" + j] = "No";
         } else {
@@ -858,7 +863,7 @@ function addRowOfInput(tableID, colName, fromb, tob, val, chosenval) {
   newcell.appendChild(s);
   for (var i = 1; i < 4; i++) {
     newcell = row.insertCell(i);
-    var t = document.createElement("input");
+    t = document.createElement("input");
     if (i == 1) {
       t.min = '1';
       t.type = 'number';
@@ -878,7 +883,7 @@ function addRowOfInput(tableID, colName, fromb, tob, val, chosenval) {
   if (tableID == "reqRSDInputTable") {
     //stubselect
     newcell = row.insertCell(colCount - 2);
-    var t = document.createElement("select");
+    t = document.createElement("select");
     var op = new Option();
     op.value = 'Yes';
     op.text = "Yes";
@@ -978,7 +983,7 @@ Calculate the formula columns values
 function calulateFormulaColumns() {
   for (var i = 0; i < 96; i++) {
     //i is iterator for the row i or block i+1...
-    var d = (data[i]);
+    var d = data[i];
     d["offBar"] = d["DC"] - d["onBar"];
     var sumgen = 0;
     for (var j = 0; j < constituentNames.length; j++) {
@@ -990,7 +995,7 @@ function calulateFormulaColumns() {
     }
     d["avail"] = d["onBar"] - sumgen;
     if (i > 0) {
-      d["rampedVal"] = d["avail"] - (data[i - 1])["avail"];
+      d["rampedVal"] = d["avail"] - data[i - 1]["avail"];
     } else
       d["rampedVal"] = "NA";
   }
@@ -1003,6 +1008,8 @@ function calulateFormulaColumns() {
 //by the revision and mark the next remaining blocks of the column as the same rev number.
 //Continue this till current revision.
 function markCellsWithRevs() {
+  var td0;
+  
   //First mark all cells with 0 rev.
   for (var i = 0; i < 96; i++) {
     var m = (markRev[i]);
@@ -1120,7 +1127,7 @@ function markCellsWithRevs() {
   var tr = document.createElement('tr');
   for (var constcol = -4; constcol < constituentNames.length; constcol++) {
     //Add cells to the table
-    var td0 = document.createElement('td');
+    td0 = document.createElement('td');
     switch (constcol) {
       case -4:
         td0.appendChild(document.createTextNode("BlockNumber"));
@@ -1142,13 +1149,13 @@ function markCellsWithRevs() {
   }
   for (var constcol = 0; constcol < constituentNames.length; constcol++) {
     //Add cells to the table
-    var td0 = document.createElement('td');
+    td0 = document.createElement('td');
     td0.appendChild(document.createTextNode("RSD" + constituentNames[constcol]));
     tr.appendChild(td0);
   }
   for (var constcol = 0; constcol < constituentNames.length; constcol++) {
     //Add cells to the table
-    var td0 = document.createElement('td');
+    td0 = document.createElement('td');
     td0.appendChild(document.createTextNode("URS" + constituentNames[constcol]));
     tr.appendChild(td0);
   }
@@ -1206,7 +1213,7 @@ function modifyDC(overridePermissionRequired) {
   var rowCount = table.rows.length;
   if (rowCount < 2)
     return false;
-  //Fisrt validate the input semantics.Allowable values are 1 to 96 in case of block numbers and possitive integers along with null, full, nochange, percentage loads.
+  //First validate the input semantics.Allowable values are 1 to 96 in case of block numbers and positive integers along with null, full, nochange, percentage loads.
   for (var i = 1; i < rowCount; i++) {
     var cellval = table.rows[i].cells[3].childNodes[0].value;
     //For null cell value validation
@@ -1244,7 +1251,7 @@ function modifyDC(overridePermissionRequired) {
     for (var blkNum = Number(table.rows[i].cells[1].childNodes[0].value) - 1; blkNum <= Number(table.rows[i].cells[2].childNodes[0].value) - 1; blkNum++) {
       //table.rows[i].cells[3].childNodes[0].value = number in the form of string and no need to convert to number since javascript takes care of it
       var cellvalue = table.rows[i].cells[3].childNodes[0].value;
-      (data[blkNum])["onBar"] = cellvalue;
+      data[blkNum]["onBar"] = cellvalue;
     }
   }
   return true;
@@ -1255,7 +1262,7 @@ function modifyDec(overridePermissionRequired) {
   var rowCount = table.rows.length;
   if (rowCount < 2)
     return false;
-  //Fisrt validate the input semantics.Allowable values are 1 to 96 in case of block numbers and possitive integers along with null, full, nochange, percentage loads.
+  //First validate the input semantics.Allowable values are 1 to 96 in case of block numbers and positive integers along with null, full, nochange, percentage loads.
   for (var i = 1; i < rowCount; i++) {
     var cellval = table.rows[i].cells[3].childNodes[0].value;
     //For null cell value validation
@@ -1293,7 +1300,7 @@ function modifyDec(overridePermissionRequired) {
     for (var blkNum = Number(table.rows[i].cells[1].childNodes[0].value) - 1; blkNum <= Number(table.rows[i].cells[2].childNodes[0].value) - 1; blkNum++) {
       //table.rows[i].cells[3].childNodes[0].value = number in the form of string and no need to convert to number since javascript takes care of it
       var cellvalue = table.rows[i].cells[3].childNodes[0].value;
-      (data[blkNum])["DC"] = cellvalue;
+      data[blkNum]["DC"] = cellvalue;
     }
   }
   return true;
@@ -1304,7 +1311,7 @@ function modifyRamp(overridePermissionRequired) {
   var rowCount = table.rows.length;
   if (rowCount < 2)
     return false;
-  //Fisrt validate the input semantics.Allowable values are 1 to 96 in case of block numbers and possitive integers along with null, full, nochange, percentage loads.
+  //First validate the input semantics.Allowable values are 1 to 96 in case of block numbers and positive integers along with null, full, nochange, percentage loads.
   for (var i = 1; i < rowCount; i++) {
     var cellval = table.rows[i].cells[3].childNodes[0].value;
     //For null cell value validation
@@ -1342,7 +1349,7 @@ function modifyRamp(overridePermissionRequired) {
     for (var blkNum = Number(table.rows[i].cells[1].childNodes[0].value) - 1; blkNum <= Number(table.rows[i].cells[2].childNodes[0].value) - 1; blkNum++) {
       //table.rows[i].cells[3].childNodes[0].value = number in the form of string and no need to convert to number since javascript takes care of it
       var cellvalue = table.rows[i].cells[3].childNodes[0].value;
-      (data[blkNum])["rampNum"] = cellvalue; //changed
+      data[blkNum]["rampNum"] = cellvalue; //changed
     }
   }
   return true;
@@ -1354,7 +1361,7 @@ function modifyRSD(overridePermissionRequired) {
   var rowCount = table.rows.length;
   if (rowCount < 2)
     return false;
-  //Fisrt validate the input semantics.Allowable values are 1 to 96 in case of block numbers and possitive integers along with null, full, nochange, percentage loads.
+  //First validate the input semantics.Allowable values are 1 to 96 in case of block numbers and positive integers along with null, full, nochange, percentage loads.
   for (var i = 1; i < rowCount; i++) {
     var cellval = table.rows[i].cells[3].childNodes[0].value;
     //For null cell value validation
@@ -1400,8 +1407,8 @@ function modifyRSD(overridePermissionRequired) {
       if (isNaN(cellvalue)) {
         cellvalue = cellvalue.toUpperCase();
       }
-      (data[blkNum])['RSD' + constcol] = cellvalue;
-      (data[blkNum])['URS' + constcol] = cellvalueurs;
+      data[blkNum]['RSD' + constcol] = cellvalue;
+      data[blkNum]['URS' + constcol] = cellvalueurs;
     }
   }
   return true;
@@ -1448,10 +1455,12 @@ function performAlgo() {
     var sections = sectionsArray[constcol];
     for (var j = 0; j < sections.length; j++) {
       for (var k = sections[j].secStart; k <= sections[j].secEnd; k++) {
-        if (isNaN(constcol))
-          (data1[k])[constcol] = +sections[j].val;
-        else
-          (data1[k])[constcol] = +ConvertCellValToNum(sections[j].val, constcol, k, 0, (data1[k])['onBar']);
+        if (isNaN(constcol)) {
+          data1[k][constcol] = +sections[j].val;
+        }
+        else {
+          data1[k][constcol] = +ConvertCellValToNum(sections[j].val, constcol, k, 0, data1[k]['onBar']);
+        }
       }
     }
     //URS Version
@@ -1459,19 +1468,19 @@ function performAlgo() {
       sections = sectionsArray["RSD" + constcol];
       for (var j = 0; j < sections.length; j++) {
         for (var k = sections[j].secStart; k <= sections[j].secEnd; k++) {
-          (data1[k])["RSD" + constcol] = +ConvertCellValToNum(sections[j].val, constcol, k, 0, (data1[k])['DC'] - (data1[k])['onBar']);
+          data1[k]["RSD" + constcol] = +ConvertCellValToNum(sections[j].val, constcol, k, 0, data1[k]['DC'] - data1[k]['onBar']);
         }
       }
       sections = sectionsArray["URS" + constcol];
       for (var j = 0; j < sections.length; j++) {
         for (var k = sections[j].secStart; k <= sections[j].secEnd; k++) {
-          (data1[k])["URS" + constcol] = sections[j].val;
+          data1[k]["URS" + constcol] = sections[j].val;
         }
       }
     }
     //URS Version
   }
-  //Now the desired numeric values fo the grid are known
+  //Now the desired numeric values for the grid are known
   //Building the grid and configuring the grid
   grid1 = new Slick.Grid("#myGridDes", data1, columns, options);
   grid1.setSelectionModel(new Slick.CellSelectionModel());
@@ -1485,17 +1494,17 @@ function performAlgo() {
   var data2 = [];
   for (var i = 0; i < data1.length; i++) {
     data2[i] = {};
-    (data2[i])["onBar"] = (data1[i])["onBar"];
-    (data2[i])["DC"] = (data1[i])["DC"];
+    data2[i]["onBar"] = data1[i]["onBar"];
+    data2[i]["DC"] = data1[i]["DC"];
   }
   for (var i = 0; i < consReqPercentages.length; i++) {
-    (data2[0])[i] = (data1[0])[i];
+    data2[0][i] = (data1[0])[i];
     //URS Version
-    (data2[0])["RSD" + i] = (data1[0])["RSD" + i];
-    (data2[0])["URS" + i] = 0; //ToDo Temporary setting for 1st URS row 
+    data2[0]["RSD" + i] = (data1[0])["RSD" + i];
+    data2[0]["URS" + i] = 0; //ToDo Temporary setting for 1st URS row 
     //URS Version
   }
-  (data2[0])["SNo"] = 1;
+  data2[0]["SNo"] = 1;
   var maxCellVals = new Array(3 * consReqPercentages.length);
   //initialize the array maxcellvals array with 0
   for (var j = 0; j < maxCellVals.length; j++) {
@@ -1511,8 +1520,8 @@ function performAlgo() {
     rowRevs = [];
     percentages = [];
     for (var j = 0; j < consReqPercentages.length; j++) {
-      maxCellVals[j] = consReqPercentages[j] * (data1[i])["onBar"];
-      rowRevVals.push((data1[i])[j]);
+      maxCellVals[j] = consReqPercentages[j] * data1[i]["onBar"];
+      rowRevVals.push(data1[i][j]);
       rowPrevRevVals.push((data2[i - 1])[j]);
       rowRevs.push((markRev[i])[j]);
       percentages.push(consReqPercentages[j]);
@@ -1520,19 +1529,19 @@ function performAlgo() {
     //URS Version
     //Adding the RSD+URS requirements to the solving array
     for (var j = 0; j < consReqPercentages.length; j++) {
-      maxCellVals[j + consReqPercentages.length] = consReqPercentages[j] * ((data1[i])["DC"] - (data1[i])["onBar"]);
-      rowRevVals.push((data1[i])["RSD" + j]);
+      maxCellVals[j + consReqPercentages.length] = consReqPercentages[j] * (data1[i]["DC"] - data1[i]["onBar"]);
+      rowRevVals.push(data1[i]["RSD" + j]);
       rowPrevRevVals.push((data2[i - 1])["RSD" + j]);
       rowRevs.push((markRev[i])["RSD" + j]);
       percentages.push(consReqPercentages[j]);
     }
     //Now enter desired URS
     for (var j = 0; j < consReqPercentages.length; j++) {
-      maxCellVals[j + 2 * consReqPercentages.length] = (data1[i])["onBar"];
-      var maxrsdshare = consReqPercentages[j] * ((data1[i])["DC"] - (data1[i])["onBar"]);
-      if ((data1[i])["RSD" + j] > maxrsdshare && (data1[i])["URS" + j] == "Yes") //if RSD+URS>RSD Share and URS asked == Yes then allocate desired URS
+      maxCellVals[j + 2 * consReqPercentages.length] = data1[i]["onBar"];
+      var maxrsdshare = consReqPercentages[j] * (data1[i]["DC"] - data1[i]["onBar"]);
+      if (data1[i]["RSD" + j] > maxrsdshare && data1[i]["URS" + j] == "Yes") //if RSD+URS>RSD Share and URS asked == Yes then allocate desired URS
       {
-        rowRevVals.push((data1[i])["RSD" + j] - maxrsdshare);
+        rowRevVals.push(data1[i]["RSD" + j] - maxrsdshare);
       } else {
         rowRevVals.push(0);
       }
@@ -1540,15 +1549,15 @@ function performAlgo() {
       rowRevs.push((markRev[i])["URS" + j]);
       percentages.push(consReqPercentages[j]);
     }
-    var result = solveRamping(consReqPercentages, rowRevs, rowRevVals, rowPrevRevVals, maxCellVals, (data1[i])["rampNum"], (data1[i])["onBar"]);
+    var result = solveRamping(consReqPercentages, rowRevs, rowRevVals, rowPrevRevVals, maxCellVals, data1[i]["rampNum"], data1[i]["onBar"]);
     for (var j = 0; j < consReqPercentages.length; j++) {
-      (data2[i])[j] = result[j];
-      (data2[i])["RSD" + j] = result[consReqPercentages.length + j];
-      (data2[i])["URS" + j] = result[2 * consReqPercentages.length + j];
+      data2[i][j] = result[j];
+      data2[i]["RSD" + j] = result[consReqPercentages.length + j];
+      data2[i]["URS" + j] = result[2 * consReqPercentages.length + j];
     }
     //URS Version
-    //data2[i] = solveRamping(consReqPercentages, rowRevs, rowRevVals, rowPrevRevVals, maxCellVals, (data1[i])["rampNum"], (data1[i])["onBar"]);
-    (data2[i])["SNo"] = i + 1;
+    //data2[i] = solveRamping(consReqPercentages, rowRevs, rowRevVals, rowPrevRevVals, maxCellVals, data1[i]["rampNum"], data1[i]["onBar"]);
+    data2[i]["SNo"] = i + 1;
   }
   grid2 = new Slick.Grid("#myGridFeasible", data2, columns, options);
   grid2.setSelectionModel(new Slick.CellSelectionModel());
@@ -1560,12 +1569,11 @@ function performAlgo() {
 
 /*
 Calculate the formula columns values for resulting solution
-
 */
 function calculateFormulaColumnsSolution(grid2, data2) {
   for (var i = 0; i < 96; i++) {
     //i is iterator for the row i or block i+1...
-    var d = (data2[i]);
+    var d = data2[i];
     d["offBar"] = d["DC"] - d["onBar"];
     var sumgen = 0;
     for (var j = 0; j < constituentNames.length; j++) {

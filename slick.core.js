@@ -772,7 +772,7 @@
 
     // detect browser abilities re function compilation
     try {
-      var __fn = new Function("_args", "{return _args;}");
+      var __fn = new Function("_args", "{return _args;}");                                  // jshint ignore:line
       var filterInfo = getFunctionInfo(__fn);
       if (!filterInfo.params || filterInfo.params.length !== 1 || filterInfo.params[0] !== "_args") {
         throw "_args";
@@ -888,7 +888,7 @@
 
       if (hasFunctionCompilation) {
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function
-        fn = new Function(functionParameters || "", functionBody || "");
+        fn = new Function(functionParameters || "", functionBody || "");                    // jshint ignore:line
       } else {
         return null;
       }
@@ -1135,7 +1135,7 @@
       Event: Event,
       EventData: EventData,
       EventHandler: EventHandler,
-      Keyboard: Keyboard(),
+      Keyboard: Keyboard(),                                                                 // jshint ignore:line
       PerformanceTimer: PerformanceTimer,
       CompileJavaScript: CompileJavaScript,
       HtmlEntities: HtmlEntities,

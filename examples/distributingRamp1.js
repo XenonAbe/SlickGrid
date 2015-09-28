@@ -5,6 +5,8 @@ function handle(e)
 }
 
 function Catagorise() {
+	var i, j, k;
+
 	//Revisions of all the cells in a particular row
 	//var rowRevs = [1, 1, 1, 3, 4, 5, 4, 3];
 	var rowRevs = document.getElementById('RevsIn').value.split(",");
@@ -25,8 +27,8 @@ function Catagorise() {
 	var modifiedRowRevVals = rowRevVals;
 	var cellRamp = 0;
 	var rampOfRow = 0;
-	//Now modify the present rev values to stisfy *hard constraints* and then calculate the ramp of the row
-	for (var i = 0; i < rowRevVals.length; i++) {
+	//Now modify the present rev values to satisfy *hard constraints* and then calculate the ramp of the row
+	for (i = 0; i < rowRevVals.length; i++) {
 		if (rowRevVals[i] < 0) {
 			rowRevVals[i] = 0;
 		} else if (rowRevVals[i] > 10) //here 10 is the maximum share value of the constituent 
@@ -38,26 +40,26 @@ function Catagorise() {
 	}
 	//modify the present rev values to satisfy *hard constraints* and ramp of row calculation over
 	var rampDiffOfRow = 0;
-	if(rampOfRow>=0)
+	if (rampOfRow >= 0)
 	{
-		rampDiffOfRow = rampOfRow - maxRampOfRow; //rampDiffOfRow is possitive if rampedUp more than maxRampOfRow
+		rampDiffOfRow = rampOfRow - maxRampOfRow; //rampDiffOfRow is positive if rampedUp more than maxRampOfRow
 	}
-	else{//rampOfRow neagtive
+	else { //rampOfRow negative
 		rampDiffOfRow = rampOfRow + maxRampOfRow; //rampDiffOfRow is negative if rampedUp more than maxRampOfRow
 	}
 	
-	if((rampDiffOfRow<=0 && rampOfRow>=0)||(rampDiffOfRow>=0 && rampOfRow<=0)) //then no problem!!!
+	if ((rampDiffOfRow <= 0 && rampOfRow >= 0) || (rampDiffOfRow >= 0 && rampOfRow <= 0)) //then no problem!!!
 	{
 
 	} else {
 		//sacrificing from bigger revision till smallest revision
 		var rampUpByRevCells;
-		for (var i = 0; i < rowRevsDupExcluded.length && Math.abs(rampDiffOfRow)>0.1; i++) {
+		for (i = 0; i < rowRevsDupExcluded.length && Math.abs(rampDiffOfRow) > 0.1; i++) {
 			//Access the *columns of a specific revision* number			
 			var colNums = rowRevsCatagorised[rowRevsDupExcluded[i]].cols;
 			//Get the amount of ramp up they have been through
 			rampUpByRevCells = 0;
-			for (var j = 0; j < colNums.length; j++) {
+			for (j = 0; j < colNums.length; j++) {
 				//TODO do negative ramped cell segregation and updating the rampUp benifit of rampedUpCells here.
 				rampUpByRevCells += rowRevVals[colNums[j]] - rowPrevRevVals[colNums[j]];
 			} //amount of rampUp the cells of a particular revision have been through is found out
@@ -65,7 +67,7 @@ function Catagorise() {
 			//Now make the rev to sacrifice rampUp and update the rampOfRow value.
 			//Maximum rampUp sacrifice will be equal to rampUpByRevCells.
 			var rampUpToSacrifice = 0;
-			if (((rampDiffOfRow <= rampUpByRevCells) && rampDiffOfRow>=0)||((rampDiffOfRow >= rampUpByRevCells) && rampDiffOfRow<=0)) //Then the row can sacrifice the complete excess ramp up
+			if (((rampDiffOfRow <= rampUpByRevCells) && rampDiffOfRow >= 0) || ((rampDiffOfRow >= rampUpByRevCells) && rampDiffOfRow <= 0)) //Then the row can sacrifice the complete excess ramp up
 			{
 				rampUpToSacrifice = rampDiffOfRow;
 				rampDiffOfRow = 0;
@@ -81,22 +83,26 @@ function Catagorise() {
 			var toRampUpPrev = rampUpByRevCells - rampUpToSacrifice;
 			do {
 				var iterationRampUp = 0;
-				//Goto to each colNumber and rampit up till with its rampUpShare but dont ramp up if the value exceeds the desired value.***Note we didnot consider the negative ramp conditions
+				//Goto to each colNumber and rampit up till with its rampUpShare but don't ramp up if the value exceeds the desired value.
+				//***Note we did not consider the negative ramp conditions
 
 				//find the columns Ramping up actually
 				var colsToRampUp = [];
-				for (var k = 0; k < colNums.length; k++) {
+				for (k = 0; k < colNums.length; k++) {
 					//if the column cell wants to ramp up
-					if ((rowRevVals[colNums[k]] - rowPrevRevVals[colNums[k]] > 0) && rampDiffOfRow>=0)
+					if ((rowRevVals[colNums[k]] - rowPrevRevVals[colNums[k]] > 0) && rampDiffOfRow >= 0) {
 						colsToRampUp.push(colNums[k]);
-					else if((rowRevVals[colNums[k]] - rowPrevRevVals[colNums[k]] < 0) && rampDiffOfRow<=0)//redundant...
+					}
+					else if ((rowRevVals[colNums[k]] - rowPrevRevVals[colNums[k]] < 0) && rampDiffOfRow <= 0) {
+						//redundant...
 						colsToRampUp.push(colNums[k]);
+					}
 				}
 				//Now we know the columns to ramp up in a particular revision.
 				//Now try to distribute the ramp up according to rampUpShare of each cell and update iteration ramp up and toRampUpPrev
-				for (var k = 0; k < colsToRampUp.length; k++) {
+				for (k = 0; k < colsToRampUp.length; k++) {
 					var ramptocell = toRampUpPrev * shareincolstorampup(colsToRampUp[k], colsToRampUp); //todo function
-					if (((ramptocell > rowRevVals[colsToRampUp[k]]-rowPrevRevVals[colsToRampUp[k]])&&ramptocell>0) || ((ramptocell < rowRevVals[colsToRampUp[k]]-rowPrevRevVals[colsToRampUp[k]])&&ramptocell<0)) {
+					if (((ramptocell > rowRevVals[colsToRampUp[k]] - rowPrevRevVals[colsToRampUp[k]]) && ramptocell > 0) || ((ramptocell < rowRevVals[colsToRampUp[k]] - rowPrevRevVals[colsToRampUp[k]]) && ramptocell < 0)) {
 						ramptocell = rowRevVals[colsToRampUp[k]] - rowPrevRevVals[colsToRampUp[k]];
 					}
 					modifiedRowRevVals[colsToRampUp[k]] = rowPrevRevVals[colsToRampUp[k]] + ramptocell;
@@ -108,7 +114,7 @@ function Catagorise() {
 		}
 	}
 	var resString = '';
-	for (var k = 0; k < modifiedRowRevVals.length; k++) {
+	for (k = 0; k < modifiedRowRevVals.length; k++) {
 		resString += (modifiedRowRevVals[k] + ',');
 	}
 	document.getElementById('console').innerHTML = resString;
@@ -124,7 +130,7 @@ function segregateColumns(rowRevs) {
 	for (var i = 0; i < rowRevs.length; i++) {
 		if (!rowRevsCatagorised.hasOwnProperty(rowRevs[i]))
 			rowRevsCatagorised[rowRevs[i]] = {
-				'cols': new Array()
+				cols: []
 			};
 		rowRevsCatagorised[rowRevs[i]].cols.push(i);
 	}
@@ -138,8 +144,8 @@ function getRevNumsinDescOrder(rowRevsCatagorised) {
 			rowRevsDupExcluded.push(property.toString());
 		}
 	}
-	return rowRevsDupExcluded.sort(function(a, b) {
-		return b - a
+	return rowRevsDupExcluded.sort(function (a, b) {
+		return b - a;
 	});
 }
 

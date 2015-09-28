@@ -1390,10 +1390,10 @@ if (typeof Slick === "undefined") {
             }
           };
           info.html = getHeaderRowFormatter(-1000 + columnDef.headerRow, cell)(-1000 + columnDef.headerRow, cell, columnDef.initialHeaderRowValue, columnDef, null /* rowDataItem */, info);
-          var stringArray = [];
+          stringArray = [];
           stringArray.push("<div");
 
-          var metaData = getAllCustomMetadata(null, null, info) || {};
+          metaData = getAllCustomMetadata(null, null, info) || {};
           patchupCellAttributes(metaData, info, "columnbaseheader");
           metaData.id = mkSaneId(columnDef, cell, "headerrow" + columnDef.headerRow);
           appendMetadataAttributes(stringArray, -1000 + columnDef.headerRow, cell, metaData, columnDef, null, info);
@@ -1442,10 +1442,10 @@ if (typeof Slick === "undefined") {
             }
           };
           info.html = getHeaderRowFormatter(-3000 + columnDef.headerRow, cell)(-3000 + columnDef.headerRow, cell, columnDef.initialFooterRowValue, columnDef, null /* rowDataItem */, info);
-          var stringArray = [];
+          stringArray = [];
           stringArray.push("<div");
 
-          var metaData = getAllCustomMetadata(null, null, info) || {};
+          metaData = getAllCustomMetadata(null, null, info) || {};
           patchupCellAttributes(metaData, info, "columnfooter");
           metaData.id = mkSaneId(columnDef, cell, "footer" + columnDef.headerRow);
           appendMetadataAttributes(stringArray, -3000 + columnDef.headerRow, cell, metaData, columnDef, null, info);
@@ -4890,7 +4890,8 @@ if (0) {
     }
 
     function invalidateRows(rows) {
-      var i, rl, row, endrow, c, r, span, rowspan, colspan;
+      var i, rl, row, endrow, c, r, span, rowspan, colspan, cacheEntry, cellNodes, dirtyFlaggingArray, cell, colCount;
+
       if (!rows || !rows.length) {
         return;
       }
@@ -4921,11 +4922,11 @@ if (0) {
         // }
         
         // flag all cached cells as dirty:
-        var cacheEntry = rowsCache[row];
+        cacheEntry = rowsCache[row];
         if (cacheEntry) {
-          var cellNodes = cacheEntry.cellNodesByColumnIdx;
-          var dirtyFlaggingArray = cacheEntry.dirtyCellNodes;
-          for (var cell = cacheEntry.cellNodesByColumnStart, colCount = cellNodes.length; cell < colCount; cell++) {
+          cellNodes = cacheEntry.cellNodesByColumnIdx;
+          dirtyFlaggingArray = cacheEntry.dirtyCellNodes;
+          for (cell = cacheEntry.cellNodesByColumnStart, colCount = cellNodes.length; cell < colCount; cell++) {
             if (cellNodes[cell] && !dirtyFlaggingArray[cell]) {
               dirtyFlaggingArray[cell] = true;
               assert(cacheEntry.isDirty >= 0);
@@ -5043,11 +5044,11 @@ if (0) {
         // }
         
         // flag all cached cells as dirty:
-        var cacheEntry = rowsCache[row];
+        cacheEntry = rowsCache[row];
         if (cacheEntry) {
-          var cellNodes = cacheEntry.cellNodesByColumnIdx;
-          var dirtyFlaggingArray = cacheEntry.dirtyCellNodes;
-          for (var cell = cacheEntry.cellNodesByColumnStart, colCount = cellNodes.length; cell < colCount; cell++) {
+          cellNodes = cacheEntry.cellNodesByColumnIdx;
+          dirtyFlaggingArray = cacheEntry.dirtyCellNodes;
+          for (cell = cacheEntry.cellNodesByColumnStart, colCount = cellNodes.length; cell < colCount; cell++) {
             if (cellNodes[cell] && !dirtyFlaggingArray[cell]) {
               dirtyFlaggingArray[cell] = true;
               assert(cacheEntry.isDirty >= 0);
@@ -8725,8 +8726,9 @@ out:
       getEditorLock().activate(editController);
       $(activeCellNode).addClass("editable");
 
-      var useEditor = editor || getEditor(activeRow, activeCell);
-      assert(useEditor);
+      // `UseEditor` is a reference to the desired editor *constructor*:
+      var UseEditor = editor || getEditor(activeRow, activeCell);
+      assert(UseEditor);
     
       // ## About `suppressClearOnEdit` / `clearCellBeforeEdit` settings in other SlickGrid clones
       //
@@ -8754,7 +8756,7 @@ out:
         commitChanges: commitEditAndSetFocus,
         cancelChanges: cancelEditAndSetFocus
       });
-      currentEditor = new useEditor(info);
+      currentEditor = new UseEditor(info);
 
       // assert that the complete editor API is available:
       assert(currentEditor);

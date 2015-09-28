@@ -25,7 +25,7 @@
       "short":          SHORT_VALUE,
       "medium":         MEDIUM_VALUE,
       "long":           LONG_VALUE,
-      "mixed":          ( i % 2 == 0 ? SHORT_VALUE : LONG_VALUE ),
+      "mixed":          (i % 2 === 0 ? SHORT_VALUE : LONG_VALUE),
       "header":         i,
       "tooltipHeader":  i
     });

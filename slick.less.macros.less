@@ -16,6 +16,8 @@
 .opacity(@opacity)
 {
   opacity: @opacity;
+  // See also: http://stackoverflow.com/questions/9436776/lesscss-method-with-ie-filter-alpha-opacity-css/9436801#9436801
+  // http://lesscss.org/features/#features-overview-feature-functions
   filter: ~`"alpha(opacity = " + @{opacity} * 100 + ")"`;
 }
 

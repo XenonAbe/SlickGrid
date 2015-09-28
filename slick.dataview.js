@@ -102,7 +102,7 @@
 
     // detect browser abilities re function compilation
     try {
-      var __fn = new Function("_args", "{return _args;}");
+      var __fn = new Function("_args", "{return _args;}");                                  // jshint ignore:line
       var filterInfo = getFunctionInfo(__fn);
       if (!filterInfo.params || filterInfo.params.length !== 1 || filterInfo.params[0] !== "_args") {
         throw "_args";
@@ -298,7 +298,6 @@
     }
 
     var defaultSortComparator = {
-        /*! jshint -W086 */
         valueExtractor: function valueExtractorForSort_f(node) {
           switch (typeof node) {
           case 'boolean':
@@ -311,7 +310,7 @@
             if (node === null) {
               return node;
             }
-            /*! fall through */
+            /* falls through */
           default:
             return "x" + node.toString();   // string conversion here ensures the strings come out as NaN when treated as numbers
           }
@@ -359,9 +358,9 @@
                 case 'number':
                     if (isNaN(yv)) {
                         return 1;                   // rate a NaN below all booleans
-                    } else {
-                        return -1;                  // rate a boolean below a number when "boolean minus number equals zero"
-                    }
+                    } 
+                    // otherwise:
+                    return -1;                  // rate a boolean below a number when "boolean minus number equals zero"
                 case 'string':
                     return -1;
                 case 'undefined':
@@ -453,11 +452,11 @@
                 case 'string':
                     if (xv < yv) {
                         return -1;
-                    } else {
-                        // equality should've already been caught at the top where we perform the === check, so this must be:
-                        assert(xv > yv);
-                        return 1;
                     }
+                    // otherwise:
+                    // equality should've already been caught at the top where we perform the === check, so this must be:
+                    assert(xv > yv);
+                    return 1;
                 case 'undefined':
                     return 1;
                 case 'object':
@@ -539,7 +538,6 @@
             // we don't care and treat them as equals
             return x.order - y.order;
         }
-        /*! jshint +W086 */
     };
 
     function getDefaultSortComparator() {
@@ -1159,7 +1157,7 @@
     function compileAccumulatorLoop(aggregator) {
       if (options.inlineAggregators) {
         var accumulatorInfo = getFunctionInfo(aggregator.accumulate);
-        fn = new Function(
+        fn = new Function(                                  // jshint ignore:line
             "_items",
             ["for (var " + accumulatorInfo.params[0] + ", _i = 0, _il = _items.length; _i < _il; _i++) {",
                 accumulatorInfo.params[0] + " = _items[_i];",
@@ -1214,7 +1212,7 @@
       tpl = tpl.replace(/\$item\$/gi, filterInfo.params[0]);
       tpl = tpl.replace(/\$args\$/gi, filterInfo.params[1]);
 
-      var fn = new Function("_items,_args", tpl);
+      var fn = new Function("_items,_args", tpl);                                  // jshint ignore:line
       // The next bits are only enabled on browsers which can handle them; see also issue #1032
       if (hasFunctionDisplayName) { fn.displayName = "compiledFilter"; }
       if (hasFunctionName) { fn.name = "compiledFilter"; }
@@ -1257,7 +1255,7 @@
       tpl = tpl.replace(/\$item\$/gi, filterInfo.params[0]);
       tpl = tpl.replace(/\$args\$/gi, filterInfo.params[1]);
 
-      var fn = new Function("_items,_args,_cache", tpl);
+      var fn = new Function("_items,_args,_cache", tpl);                                  // jshint ignore:line
       // The next bits are only enabled on browsers which can handle them; see also issue #1032
       if (hasFunctionDisplayName) { fn.displayName = "compiledFilterWithCaching"; }
       if (hasFunctionName) { fn.name = "compiledFilterWithCaching"; }

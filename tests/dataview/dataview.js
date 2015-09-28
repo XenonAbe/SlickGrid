@@ -21,11 +21,13 @@ function assertConsistency(dv, idProperty, grouping) {
         filteredOut = 0,
         row,
         id,
-        item;
+        item,
+        i, 
+        len;
     var groupRows = 0;
     var groupTotalsRows = 0;
 
-    for (var i = 0; i < items.length; i++) {
+    for (i = 0; i < items.length; i++) {
         id = items[i][idProperty];
         deepEqual(dv.getItemByIdx(i), items[i], "getItemByIdx");
         deepEqual(dv.getItemById(id), items[i], "getItemById");
@@ -39,7 +41,7 @@ function assertConsistency(dv, idProperty, grouping) {
         }
     }
 
-    for (var i = 0, len = dv.getLength(); i < len; i++) {
+    for (i = 0, len = dv.getLength(); i < len; i++) {
         item = dv.getItem(i);
         id = item[idProperty];
         if (id != null) {
@@ -595,7 +597,7 @@ test("updating an item not passing the filter", function() {
     var dv = new Slick.Data.DataView();
     dv.setItems([{id:0,val:0},{id:1,val:1},{id:2,val:2},{id:3,val:1337}]);
     dv.setFilter(function(o) {
-        return o["val"] !== 1337;
+        return o.val !== 1337;
     });
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(false, "onRowsChanged called");
@@ -616,7 +618,7 @@ test("updating an item to pass the filter", function() {
     var dv = new Slick.Data.DataView();
     dv.setItems([{id:0,val:0},{id:1,val:1},{id:2,val:2},{id:3,val:1337}]);
     dv.setFilter(function(o) {
-        return o["val"] !== 1337;
+        return o.val !== 1337;
     });
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
@@ -655,7 +657,7 @@ test("updating an item to not pass the filter", function() {
     var dv = new Slick.Data.DataView();
     dv.setItems([{id:0,val:0},{id:1,val:1},{id:2,val:2},{id:3,val:3}]);
     dv.setFilter(function(o) {
-        return o["val"] !== 1337;
+        return o.val !== 1337;
     });
     dv.onRowsChanged.subscribe(function(e,args) {
         console.log(args);
@@ -746,7 +748,7 @@ test("add an item not passing the filter", function() {
     var dv = new Slick.Data.DataView();
     dv.setItems([{id:0,val:0},{id:1,val:1},{id:2,val:2}]);
     dv.setFilter(function(o) {
-        return o["val"] !== 1337;
+        return o.val !== 1337;
     });
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(false, "onRowsChanged called");

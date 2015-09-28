@@ -23,7 +23,7 @@
     var localStorage = window.localStorage;
 
     if (typeof localStorage === 'undefined') {
-      console.error('localStorage is not available. slickgrid statepersistor disabled.');
+      console.error('localStorage is not available. slickgrid state persistor disabled.');
     }
 
     return {
@@ -54,7 +54,7 @@
 
   var defaults = {
     key_prefix: "slickgrid:",
-    storage: new localStorageWrapper()
+    storage: localStorageWrapper()
   };
 
   function State(options) {

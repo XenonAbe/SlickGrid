@@ -17,11 +17,11 @@ function evalArithmeticExp(s) {
     var exp;
  
     while (exp = s.match(reMD)) {
-      s = exp[0].match(reM)? s.replace(exp[0], multiply(exp[0])) : s.replace(exp[0], divide(exp[0]));
+      s = exp[0].match(reM) ? s.replace(exp[0], multiply(exp[0])) : s.replace(exp[0], divide(exp[0]));
     }
  
     while (exp = s.match(reAS)) {
-      s = exp[0].match(reA)? s.replace(exp[0], add(exp[0])) : s.replace(exp[0], subtract(exp[0]));
+      s = exp[0].match(reA) ? s.replace(exp[0], add(exp[0])) : s.replace(exp[0], subtract(exp[0]));
     }
  
     return '' + s;
@@ -49,7 +49,7 @@ function evalArithmeticExp(s) {
         return add(s.replace(/--/,'+'));
       }
       b = s.split('-');
-      return b.length == 3? -1 * b[1] - b[2] : b[0] - b[1];
+      return b.length == 3 ? -1 * b[1] - b[2] : b[0] - b[1];
     }
   }
 }

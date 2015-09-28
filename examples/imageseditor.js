@@ -33,6 +33,7 @@
     this.loadValue = function (item) {
       var images = item[args.column.field];
       var image;
+      var $facy, $add, $image, $delete, $update, $url;
 
       if (args.grid.recentEvent) {  // get exact image
         var e = args.grid.recentEvent;
@@ -49,11 +50,11 @@
                     '<input type="button" name="update" value="Update" />' +
                   '</div>');
 
-        var $facy = $('#facybox');
-        var $image = $facy.find('img');
-        var $delete = $facy.find('input[name=delete]');
-        var $update = $facy.find('input[name=update]');
-        var $url = $facy.find('input[name=url]');
+        $facy = $('#facybox');
+        $image = $facy.find('img');
+        $delete = $facy.find('input[name=delete]');
+        $update = $facy.find('input[name=update]');
+        $url = $facy.find('input[name=url]');
 
         $(document).bind('afterClose.facybox', function() {
           args.grid.resetActiveCell();
@@ -78,9 +79,9 @@
                     '<input type="button" name="add" value="Add" />' +
                   '</div>');
 
-        var $facy = $('#facybox');
-        var $add = $facy.find('input[name=add]');
-        var $url = $facy.find('input[name=url]');
+        $facy = $('#facybox');
+        $add = $facy.find('input[name=add]');
+        $url = $facy.find('input[name=url]');
 
         $(document).bind('afterClose.facybox', function() {
           args.grid.resetActiveCell();

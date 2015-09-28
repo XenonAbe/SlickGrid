@@ -22,21 +22,23 @@
   }
 
   var setUpGrid = function () {
+    var i, j;
+
     if (grid) {
       grid.destroy(); // doing the destroy at the start of setup, instead of in teardown, leaves a nice grid to see when you're viewing the test page.
     }
     var ROWS = 500, COLS = 20;
     data = [];
-    for (var i = 0; i < ROWS; i++) {
+    for (i = 0; i < ROWS; i++) {
       row = { id: "id_" + i };
-      for (var j = 0; j < COLS; j++) {
+      for (j = 0; j < COLS; j++) {
         row["col_" + j] = i + "." + j;
       }
       data.push(row);
     }
 
     cols = [];
-    for (var i = 0; i < COLS; i++) {
+    for (i = 0; i < COLS; i++) {
       cols.push({
         id: "col" + i,
         field: "col_" + i,
