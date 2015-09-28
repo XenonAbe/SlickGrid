@@ -9,6 +9,7 @@
 
 
 
+
 /***
  * Contains HTML5/ES5 shims for legacy boxes.
  * @module Shims

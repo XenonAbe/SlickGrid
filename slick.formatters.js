@@ -8,6 +8,8 @@
  */
 
 
+
+
 //! Source: formatters/slick.formatters.js.prelude
 
 /***
@@ -36,6 +38,18 @@
 
 //! Source: formatters/slick.formatters.001.PercentComplete.js
 
+
+
+
+
+
+
+
+
+
+
+
+
   // register namespace
   Slick.Formatters.PercentComplete = PercentCompleteFormatter;
 
@@ -59,6 +73,18 @@
   }
 
 //! Source: formatters/slick.formatters.002.PercentCompleteBar.js
+
+
+
+
+
+
+
+
+
+
+
+
 
   // register namespace
   Slick.Formatters.PercentCompleteBar = PercentCompleteBarFormatter;
@@ -88,6 +114,18 @@
 
 //! Source: formatters/slick.formatters.003.YesNo.js
 
+
+
+
+
+
+
+
+
+
+
+
+
   // register namespace
   Slick.Formatters.YesNo = YesNoFormatter;
 
@@ -102,6 +140,18 @@
 
 
 //! Source: formatters/slick.formatters.004.Checkmark.js
+
+
+
+
+
+
+
+
+
+
+
+
 
   // register namespace
   Slick.Formatters.Checkmark = CheckmarkFormatter;
@@ -118,6 +168,18 @@
 
 //! Source: formatters/slick.formatters.005.Color.js
 
+
+
+
+
+
+
+
+
+
+
+
+
   // register namespace
   Slick.Formatters.Color = ColorFormatter;
 
@@ -132,6 +194,18 @@
 
 
 //! Source: formatters/slick.formatters.006.BackColor.js
+
+
+
+
+
+
+
+
+
+
+
+
 
   // register namespace
   Slick.Formatters.BackColor = BackColorFormatter;
@@ -149,6 +223,18 @@
 
 
 //! Source: formatters/slick.formatters.007.Text.js
+
+
+
+
+
+
+
+
+
+
+
+
 
   // register namespace
   Slick.Formatters.Text = TextFormatter;
@@ -170,6 +256,18 @@
 
 
 //! Source: formatters/slick.formatters.008.ReferenceValue.js
+
+
+
+
+
+
+
+
+
+
+
+
 
   // register namespace
   Slick.Formatters.ReferenceValue = ReferenceValueFormatter;
@@ -204,6 +302,18 @@
 
 
 //! Source: formatters/slick.formatters.009.Date.js
+
+
+
+
+
+
+
+
+
+
+
+
 
   // register namespace
   Slick.Formatters.Date = DateFormatter;
@@ -242,6 +352,18 @@
 
 //! Source: formatters/slick.formatters.010.Chain.js
 
+
+
+
+
+
+
+
+
+
+
+
+
   // register namespace
   Slick.Formatters.Chain = Chain;
 
@@ -262,6 +384,18 @@
 
 
 //! Source: formatters/slick.formatters.011.Link.js
+
+
+
+
+
+
+
+
+
+
+
+
 
   // register namespace
   Slick.Formatters.Link = LinkFormatter;
@@ -296,6 +430,18 @@
 
 
 //! Source: formatters/slick.formatters.012.Concatenator.js
+
+
+
+
+
+
+
+
+
+
+
+
 
   // register namespace
   Slick.Formatters.Concatenator = Concatenator;

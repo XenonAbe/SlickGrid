@@ -9,6 +9,7 @@
 
 
 
+
 (function ($) {
   "use strict";
 
@@ -71,7 +72,7 @@
             idx = _selection.indexOf(id);
             if (idx > -1) {
               deletedIDs.push(id);
-              _selection.splice(idx,1);
+              _selection.splice(idx, 1);
             }
           });
         } else {
@@ -84,7 +85,7 @@
               idx = _selection.indexOf(id);
               if (idx > -1) {
                 deletedIDs.push(id);
-                _selection.splice(idx,1);
+                _selection.splice(idx, 1);
               }
             });
           }

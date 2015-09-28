@@ -1,3 +1,26 @@
+//!
+// @license
+// slickGrid v2.3.18-alpha.1011 (https://github.com/GerHobbelt/SlickGrid)
+// Copyright 2009-2015 Michael Leibman <michael{dot}leibman{at}gmail{dot}com>
+//
+// Distributed under MIT license.
+// All rights reserved.
+///
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   function applyModifier(val, mod) {
     var m = isValidModifier(mod);
     if (!m)
@@ -24,7 +47,7 @@
     var ope = sv.charAt(0);
     if ("+-*/".indexOf(ope) < 0) return false;  // no good if it does not start with an operation
     sv = sv.substr(1);    //remove first char
-    if (sv.indexOf('+') >= 0 || sv.indexOf('-') >= 0 || sv.indexOf('*') >= 0 || sv.indexOf('/') >= 0) return false;  // no more signs please.
+    if (sv.indexOf('+') > 0 || sv.indexOf('-') > 0 || sv.indexOf('*') >= 0 || sv.indexOf('/') >= 0) return false;  // no more signs please.
     var pct = false;
     if (sv.charAt(sv.length - 1) === '%') {
       pct = true;

@@ -1,11 +1,12 @@
 /*!
  * @license
- * SlickGrid v2.3.18-alpha.1011 (https://github.com/GerHobbelt/SlickGrid)
+ * slickGrid v2.3.18-alpha.1011 (https://github.com/GerHobbelt/SlickGrid)
  * Copyright 2009-2015 Michael Leibman <michael{dot}leibman{at}gmail{dot}com>
  *
  * Distributed under MIT license.
  * All rights reserved.
  */
+
 
 
 
@@ -3153,7 +3154,7 @@ if (0) {
           height = rowHeightCache[r];
           if (height === undefined) {
             var rowMetadata = data.getItemMetadata && data.getItemMetadata(r, false);
-            rowHeightCache[r] = ((rowMetadata && rowMetadata.height) ||options.rowHeight);
+            rowHeightCache[r] = ((rowMetadata && rowMetadata.height) || options.rowHeight);
           } else if (rowPositionCache[r] !== undefined) {
             break;
           }

@@ -1,5 +1,17 @@
+/*!
+ * @license
+ * slickGrid v2.3.18-alpha.1011 (https://github.com/GerHobbelt/SlickGrid)
+ * Copyright 2009-2015 Michael Leibman <michael{dot}leibman{at}gmail{dot}com>
+ *
+ * Distributed under MIT license.
+ * All rights reserved.
+ */
+
+
+
+
 function evalArithmeticExp(s) {
-  s = s.replace(/\s/g,'').replace(/^\+/,'');
+  s = s.replace(/\s/g, '').replace(/^\+/, '');
   var rePara = /\([^\(\)]*\)/;
   var exp = s.match(rePara);
  
@@ -9,7 +21,7 @@ function evalArithmeticExp(s) {
   return evalExp(s);
  
   function evalExp(s) {
-    s = s.replace(/[\(\)]/g,'');
+    s = s.replace(/[\(\)]/g, '');
     var reMD = /\d+\.?\d*\s*[\*\/]\s*[+-]?\d+\.?\d*/;
     var reM = /\*/;
     var reAS = /-?\d+\.?\d*\s*[\+-]\s*[+-]?\d+\.?\d*/;
@@ -37,16 +49,16 @@ function evalArithmeticExp(s) {
     }
  
     function add(s, b) {
-      s = s.replace(/^\+/,'').replace(/\++/,'+');
+      s = s.replace(/^\+/, '').replace(/\++/, '+');
       b = s.split('+');
       return Number(b[0]) + Number(b[1]);
     }
  
     function subtract(s, b) {
-      s = s.replace(/\+-|-\+/g,'-');
+      s = s.replace(/\+-|-\+/g, '-');
  
       if (s.match(/--/)) {
-        return add(s.replace(/--/,'+'));
+        return add(s.replace(/--/, '+'));
       }
       b = s.split('-');
       return b.length == 3 ? -1 * b[1] - b[2] : b[0] - b[1];

@@ -8,6 +8,8 @@
  */
 
 
+
+
 (function($) {
   "use strict";
 
@@ -209,7 +211,7 @@
     updateRefs: function (ref) {
       var refs;
       refs = this.refManager.getUpdateRefs(ref);
-      for (var i = 0; i < refs.length; i +=1) {
+      for (var i = 0; i < refs.length; i++) {
         this.evalRefAndDependentRefs(ref);
       }
     },

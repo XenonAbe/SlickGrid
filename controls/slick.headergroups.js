@@ -9,6 +9,7 @@
 
 
 
+
 (function ($) {
   function SlickGridHeaderGroups(_grid, _groupsDef) {
     this.grid = _grid;

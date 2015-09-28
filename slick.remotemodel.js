@@ -9,6 +9,7 @@
 
 
 
+
 (function ($) {
   "use strict";
 
@@ -305,7 +306,7 @@
 
         var direction = col.sortAsc ? 1 : -1;
         if (column.order_fields) {
-          $.each(column.order_fields, function(k,v) {
+          $.each(column.order_fields, function(k, v) {
             result.push({
               field: v,
               dir: direction
@@ -322,7 +323,7 @@
       refresh();
     }
 
-    function updatreGridOnDataLoaded(e,args) {
+    function updatreGridOnDataLoaded(e, args) {
       for (var i = args.from; i <= args.to; i++) {
         _grid.invalidateRow(i);
       }

@@ -9,6 +9,7 @@
 
 
 
+
 (function ($) {
   function SlickGridPager(dataView, grid, $container) {
     var $status;

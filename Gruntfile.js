@@ -89,7 +89,7 @@ module.exports = function (grunt) {
           console.log('- rewrite in place: ', filePath, v);
           var rv = contents
           .replace(/(slickGridVersion[^\d]+)([\d]+\.[\d.]+(?:[-.][a-zA-Z\d]+)*)/ig, '$1' + v)
-          .replace(/(SlickGrid)\s+v?([\d]+\.[\d.]+(?:[-.][a-zA-Z\d]+)*)/ig, '$1 v' + v);
+          .replace(/(slickGrid)\s+v?([\d]+\.[\d.]+(?:[-.][a-zA-Z\d]+)*)/ig, '$1 v' + v);
           return rv;
         }
       }
@@ -204,18 +204,31 @@ module.exports = function (grunt) {
           replace: true             // replace any banner already present
         },
         files: {
-          src: ['slick*.js', 'controls/*.js', 'plugins/*.js', 'wrappers/*.js', '*.css']
+          src: [
+          'slick*.js', 'controls/**/*.js', 'plugins/**/*.js', 'wrappers/**/*.js', 
+          '*.css', 'controls/**/*.css', 'plugins/**/*.css', 'wrappers/**/*.css']
         }
       },
 
-      CSS_sources: {
+      CSS_extras: {
+        options: {
+          position: 'top',
+          banner: '<%= banner %>',
+          replace: true             // replace any banner already present
+        },
+        files: {
+          src: ['tests/**/*.css']
+        }
+      },
+
+      LESS_SASS_sources: {
         options: {
           position: 'top',
           banner: '<%= banner4Less %>',
           replace: true             // replace any banner already present
         },
         files: {
-          src: ['*.less', '*.scss']
+          src: ['*.less', '*.scss', 'controls/**/*.less', 'controls/**/*.scss', 'plugins/**/*.less', 'plugins/**/*.scss', 'examples/**/*.less', 'examples/**/*.scss']
         }
       },
 
@@ -237,7 +250,7 @@ module.exports = function (grunt) {
           replace: true             // replace any banner already present
         },
         files: {
-          src: ['examples/*.js', 'tests/*.js']
+          src: ['examples/**/*.js', 'tests/**/*.js']
         }
       }
     },
@@ -306,6 +319,8 @@ module.exports = function (grunt) {
 
   // Load all files starting with `grunt-`
   require('load-grunt-tasks')(grunt, {scope: 'devDependencies'});
+  require( 'time-grunt')( grunt );
+
   grunt.loadNpmTasks('assemble-less');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-concat');
@@ -319,7 +334,7 @@ module.exports = function (grunt) {
   grunt.registerTask('compile', ['clean', 'libsync', 'less', 'js_precompile']);
 
   // JS precompile task.
-  grunt.registerTask('js_precompile', ['concat', 'usebanner:dist']);
+  grunt.registerTask('js_precompile', ['concat']);
 
   // Lint task.
   grunt.registerTask('lint', ['csslint', 'jshint', 'jscs']);
