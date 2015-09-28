@@ -8,6 +8,8 @@
  */
 
 
+
+
 (function ($) {
   "use strict";
 
@@ -70,7 +72,7 @@
     }
 
     function handleKeyDown(e, args) {
-      if (32 == e.which && _grid.getColumns()[args.cell].id === _options.columnId) {
+      if (Slick.Keyboard.SPACE === e.which && _grid.getColumns()[args.cell].id === _options.columnId) {
         // if editing, try to commit
         if (!_grid.getEditorLock().isActive() || _grid.getEditorLock().commitCurrentEdit()) {
           _grid.setSelectedRows(args.row === _selectedRow ? [] : [args.row]); // deselect if currently selected
@@ -93,7 +95,7 @@
         formatter: radioSelectionFormatter
       };
     }
-  
+
     function radioSelectionFormatter(row, cell, value, columnDef, dataContext) {
       return dataContext
         ? _selectedRow === row
