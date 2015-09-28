@@ -29,13 +29,8 @@ if (typeof Slick === "undefined") {
 }
 
 
-(function ($) {
-  // Slick.Grid
-  $.extend(true, window, {
-    Slick: {
-      Grid: SlickGrid
-    }
-  });
+(function (window, $) {
+  "use strict";
 
   // Helper function to aid Chrome/V8 optimizer: for...in loops prevent a function to become JIT compiled so we separate out this bit of code here:
   function __extend_support(dst, src) {
@@ -148,6 +143,8 @@ if (typeof Slick === "undefined") {
    *      rowHeight:          {Number}    Height of each row in pixels
    *      autoHeight:         {Boolean}   (?) Don't need vertical scroll bar
    *      defaultColumnWidth: {Number}    Default column width for columns that don't specify a width
+   *      minColumnWidth:     {Number}    Default *minimum* column width for columns that don't specify a minimum width
+   *      maxColumnWidth:     {Number}    Default *maximum* column width for columns that don't specify a maximum width
    *      enableColumnReorder: {Boolean}  Can columns be reordered?
    *      enableAddRow:       {Boolean}   Can rows be added?
    *      showTopPanel:       {Boolean}   Should the top panel be shown?
@@ -231,12 +228,16 @@ if (typeof Slick === "undefined") {
    **/
   function SlickGrid(container, data, columnDefinitions, options) {
     // settings
+    // 
+    // @const @nocollapse
     var defaults = {
-      debug: 0xffff & ~DEBUG_EVENTS & ~DEBUG_MOUSE & ~DEBUG_KEYBOARD & ~DEBUG_FOCUS & ~DEBUG_CONTAINER_EVENTS & ~DEBUG_RENDER,
+      debug: 0xffff & ~DEBUG_EVENTS & ~DEBUG_MOUSE /* & ~DEBUG_KEYBOARD & ~DEBUG_FOCUS */ & ~DEBUG_CONTAINER_EVENTS & ~DEBUG_RENDER,
       explicitInitialization: false,
       cellsMayHaveJQueryHandlers: false,     // TRUE when the grid is expected to contain one or more grid cells which will have (jQuery) event handlers and/or data attached. This then fixes the inherent memory leaks (issue mleibman/SlickGrid#855).
       rowHeight: 25,
       defaultColumnWidth: 80,
+      minColumnWidth: 30,
+      maxColumnWidth: Infinity,
       enableAddRow: false,
       editable: false,
       autoEdit: true,
@@ -303,20 +304,33 @@ if (typeof Slick === "undefined") {
       skipPaging: false                 // Reveal one hidden row at a time instead of an entirely new page on keypress
     };
 
+    // @const @nocollapse
     var columnDefaults = {
       name: "",
       resizable: true,
       sortable: false,
-      minWidth: 30,
+      width: defaults.defaultColumnWidth,
+      minWidth: defaults.minColumnWidth,
+      maxWidth: defaults.maxColumnWidth,
       rerenderOnResize: false,
       headerCssClass: null,
       defaultSortAsc: true,
       focusable: true,
       selectable: true,
       reorderable: true,
-      dataItemColumnValueExtractor: null
-      // childrenFirstIndex: <N>                set to the first flattened column index covered by this column when this column is a parent (forming an inclusive range)
-      // childrenLastIndex:  <N>                set to the last flattened column index covered by this column when this column is a parent (forming an inclusive range)
+      dataItemColumnValueExtractor: null,
+      headerColSpan: 1,
+      headerRowSpan: 1,
+      toolTip: null,
+      headerRowToolTip: null,
+      footerRowToolTip: null,
+
+      // internals:
+      headerRow: 0,
+      headerRowLayerIndex: 0,
+      children: null,
+      childrenFirstIndex: 0,     // set to the first flattened column index covered by this column when this column is a parent (forming an inclusive range)
+      childrenLastIndex: 0,      // set to the last flattened column index covered by this column when this column is a parent (forming an inclusive range)
     };
 
     // scroller
@@ -333,7 +347,7 @@ if (typeof Slick === "undefined") {
     // private
     var initialized = 0;    // 0/1/2: 2 = fully initialized
     var $container;
-    var containerName = "slickgrid";
+    /* @const */ var containerName = "slickgrid";
     var uid = containerName + "_" + Math.round(1000000 * Math.random());
     var self = this;
     var $focusSink, $focusSink2;
@@ -351,9 +365,13 @@ if (typeof Slick === "undefined") {
     var viewportH, viewportW;
     var canvasWidth, totalColumnsWidth;
     var viewportHasHScroll, viewportHasVScroll;
-    var headerColumnWidthDiff = 0, headerColumnHeightDiff = 0, // border+padding
-        cellWidthDiff = 0, cellHeightDiff = 0;
-    var absoluteColumnMinWidth;
+
+    // (Dev Note: we always work in CSS `box-sizing: box-model` -- or rather: any model which does **not**
+    // require us to compensate for *borders*: those **MUST** be part of the (header/footer/regular) cells
+    // at all times (so that userland code can apply arbitrary custom border styles where it wants
+    // without causing a *lot* of trouble all around! The old 'HeightDiff' and 'WidthDiff' hacks were
+    // just that -- *hacks* -- which *cannot* deliver when you start customizing your column borders
+    // on a per-column basis.)
 
     var tabbingDirection = 1;
     var activePosY;
@@ -386,9 +404,10 @@ if (typeof Slick === "undefined") {
 
     var rowsCache = [];
     // var deletedRowsCache = [];
-    var rowPositionCache = [];
     var rowsCacheStartIndex = MAX_INT;
     // var deletedRowsCacheStartIndex = MAX_INT;
+    var rowPositionCache = [];                      // it's faster to have a column store for the row height and position caches
+    var rowHeightCache = [];                        // it's faster to have a column store for the row height and position caches
     var cellSpans = [];
     var cellSpansFillSlotSize = 50;   // this value is adaptive and represents the amount of cellSpans entries which can be filled in about a quarter of an async render timeslice.
     var renderedRows = 0;
@@ -404,9 +423,9 @@ if (typeof Slick === "undefined") {
     var selectedRows = [];
 
     var plugins = [];
-    var cellCssClasses = {};
+    /* @dict */ var cellCssClasses = {};
 
-    var columnsById = {};
+    /* @dict */ var columnsById = {};
     var columns = null;
     var columnsDefTree = null;
     var sortColumns = [];
@@ -437,7 +456,13 @@ if (typeof Slick === "undefined") {
     var zombieRowNodeFromLastMouseWheelEvent;  // node that was hidden instead of getting deleted
 
     // store css attributes if display:none is active in container or parent
-    var cssShow = { position: 'absolute', visibility: 'hidden', display: 'block' };
+    // 
+    // @const @nocollapse
+    var cssShow = { 
+      position: 'absolute', 
+      visibility: 'hidden', 
+      display: 'block' 
+    };
     var $hiddenParents;
     var oldProps = [];
 
@@ -465,7 +490,7 @@ if (typeof Slick === "undefined") {
       NAVIGATE_END, gotoEnd
     );
 
-    // Internal use: generate a lookup table for a key,value set.
+    // Internal use: generate a lookup table for a (key,value) set.
     function LU(/* ... */) {
       var lu = [];
       for (var a = arguments, i = 0, l = a.length; i < l; i += 2) {
@@ -509,8 +534,6 @@ if (typeof Slick === "undefined") {
 
       options = __extend({}, defaults, options);
       validateAndEnforceOptions();
-      assert(options.defaultColumnWidth > 0);
-      columnDefaults.width = options.defaultColumnWidth;
 
       parseColumns(columnDefinitions);
       assert(columns);
@@ -532,6 +555,11 @@ if (typeof Slick === "undefined") {
           .attr("role", "grid")
           .attr("tabIndex", 0)
           .attr("hideFocus", "true");
+
+      if ($container.css("box-sizing") !== "border-box" && $container.css("-moz-box-sizing") !== "border-box" && $container.css("-webkit-box-sizing") !== "border-box") {
+        console.error("SlickGrid requires the grid container and the grid itself to be rendered in CSS border-box box-sizing model.");
+        //throw new Error("SlickGrid requires the grid container and the grid itself to be rendered in CSS border-box box-sizing model.");
+      }
 
       // set up a positioning container if needed
       if (!/relative|absolute|fixed/.test($container.css("position"))) {
@@ -608,11 +636,7 @@ if (typeof Slick === "undefined") {
 
         setViewportWidth();
 
-        // header columns and cells may have different padding/border skewing width calculations (box-sizing, hello?)
-        // calculate the diff so we can set consistent sizes
-        measureCellPaddingAndBorder();
-
-        // for usability reasons, all text selection in SlickGrid is disabled
+        // For usability reasons, all text selection in SlickGrid is disabled
         // with the exception of input and textarea elements (selection must
         // be enabled there so that editors work as expected); note that
         // selection in grid cells (grid body) is already unavailable in
@@ -632,7 +656,9 @@ if (typeof Slick === "undefined") {
         createColumnHeaders();
         setupColumnSort();
         createCssRules();
-        cacheRowPositions();
+        var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
+        var numberOfRows = dataLengthIncludingAddNew;
+        cacheRowPositions(numberOfRows);
         resizeCanvas();
         //updateAntiscroll();
         bindAncestorScrollEvents();
@@ -761,7 +787,9 @@ if (typeof Slick === "undefined") {
             })
             .fixClick(handleContainerClickEvent, handleContainerDblClickEvent)
             .bind("contextmenu." + containerName, handleContainerContextMenu)
-            .bind("keydown." + containerName, handleContainerKeyDown);
+            .bind("keydown." + containerName, handleContainerKeyDown)
+            .bind("keypress." + containerName, handleContainerKeyPress)
+            .bind("keyup." + containerName, handleContainerKeyUp);
         $viewport
             .bind("scroll", handleScrollEvent);
         $headerScroller
@@ -778,9 +806,13 @@ if (typeof Slick === "undefined") {
         $footerRowScroller
             .bind("scroll", handleFooterRowScroll);
         $focusSink.add($focusSink2)
-            .bind("keydown", handleKeyDown);
+            .bind("keydown", handleKeyDown)
+            .bind("keypress", handleKeyPress)
+            .bind("keyup", handleKeyUp);
         $canvas
             .bind("keydown", handleKeyDown)
+            .bind("keypress", handleKeyPress)
+            .bind("keyup", handleKeyUp)
             .fixClick(handleClick, handleDblClick)
             .bind("contextmenu", handleContextMenu)
             .bind("draginit", handleDragInit)
@@ -917,7 +949,7 @@ if (typeof Slick === "undefined") {
       return dim;
     }
 
-    // Return the pixel positions of the left and right edge of the column, relative to the left edge of the entire grid.
+    // Return the pixel positions of the left edge of the column, relative to the left edge of the entire grid.
     function getColumnOffset(cell) {
       var l = columns.length;
       // Is the cache ready? If not, update it.
@@ -1171,7 +1203,7 @@ if (typeof Slick === "undefined") {
     }
 
     function mkSaneId(columnDef, cell, row) {
-      s = "" + uid + "_c" + cell + "_r" + row + "_" + columnDef.id;
+      var s = "" + uid + "_c" + cell + "_r" + row + "_" + columnDef.id;
       s = s.replace(/[^a-zA-Z0-9]+/g, "_");
       //assert($("[aria-describedby=" + s + "]").length === 0);
       return s;
@@ -1309,6 +1341,7 @@ if (typeof Slick === "undefined") {
         var cellCss, info;
         var headerRowCell;
         var footerRowCell;
+        var stringArray, metaData;
 
         if (options.enableColumnReorder || columnDef.sortable) {
           $header
@@ -1436,10 +1469,11 @@ if (typeof Slick === "undefined") {
         }
       }
 
+      var i, j, len, column, cell, layer;
+
       if (hasNestedColumns) {
         for (i = 0, len = nestedColumns.length; i < len; i++) {
-          var cell;
-          var layer = nestedColumns[i];
+          layer = nestedColumns[i];
 
           for (j = 0, llen = layer.length; j < llen; j++) {
             column = layer[j];
@@ -1469,7 +1503,7 @@ if (typeof Slick === "undefined") {
       // fit the header column sizes to its content if corresponding
       // options are specified
       if (options.fitHeaderToContent) {
-         for (var j = 0; j < columns.length; j++) {
+         for (j = 0; j < columns.length; j++) {
             // get the total width of header
             var headerWidth = headerElements[j].outerWidth();
             columns[j].width = Math.max(columns[j].width, headerWidth);
@@ -1717,7 +1751,7 @@ if (0) {
           c.__columnResizeInfo = {
             // lock each column's width option to current width
             previousWidth: c.width, // previousWidth should NOT be measured from the UI as this will b0rk the system depending on boxmodel. // $(e).outerWidth();
-            absMinWidth: Math.max(c.minWidth || 0, absoluteColumnMinWidth),
+            absMinWidth: c.minWidth
           };
         }
 
@@ -1901,7 +1935,7 @@ if (0) {
           c = columns[j];
           assert(c);
           assert(c.__columnResizeInfo);
-          newWidth = c.width; // again, we should NEVER get the cell width from the UI as that will screw us seven ways to Hell thanks to the CSS boxmodels // $(columnElements[j]).outerWidth();
+          newWidth = c.width; // again, we should NEVER get the cell width from the UI as that will screw us seven ways to Hell thanks to the CSS boxmodels and the browser repaint costs that come with measuring the DOM // $(columnElements[j]).outerWidth();
 
           if (c.__columnResizeInfo.previousWidth !== newWidth) {
             adjustedColumns.push(c);
@@ -2091,29 +2125,6 @@ if (0) {
       return delta;
     }
 
-    function measureCellPaddingAndBorder() {
-      var el, i, len, val;
-
-      el = $("<div class='ui-state-default slick-header-column slick-header-is-leaf hl0 hr0 hrt0 hrb0' style='visibility:hidden'>-</div>").appendTo($headers);
-      headerColumnWidthDiff = headerColumnHeightDiff = 0;
-      if (el.css("box-sizing") !== "border-box" && el.css("-moz-box-sizing") !== "border-box" && el.css("-webkit-box-sizing") !== "border-box") {
-        headerColumnWidthDiff = getHBoxDelta(el);
-        headerColumnHeightDiff = getVBoxDelta(el);
-      }
-      el.remove();
-
-      var r = $("<div class='slick-row' />").appendTo($canvas);
-      el = $("<div class='slick-cell' style='visibility:hidden'>-</div>").appendTo(r);
-      cellWidthDiff = cellHeightDiff = 0;
-      if (el.css("box-sizing") !== "border-box" && el.css("-moz-box-sizing") !== "border-box" && el.css("-webkit-box-sizing") !== "border-box") {
-        cellWidthDiff = getHBoxDelta(el);
-        cellHeightDiff = getVBoxDelta(el);
-      }
-      r.remove();
-
-      absoluteColumnMinWidth = Math.max(headerColumnWidthDiff, cellWidthDiff);
-    }
-
     // These rules are responsible for heights and cell widths, but not column header widths.
     //
     // See also github issue #223: stylesheet variable is undefined in Chrome
@@ -2143,7 +2154,7 @@ if (0) {
         sheet = stylesheet;
       }
 
-      var rowHeight = options.rowHeight - cellHeightDiff;
+      var rowHeight = options.rowHeight;
       var headersCount = (hasNestedColumns ? nestedColumns.length : 1);
       var headerHeight = headersCount * options.headerHeight;
       var rules = [
@@ -2411,6 +2422,7 @@ if (0) {
       rowsCache = undefined;
       // deletedRowsCache = undefined;
       rowPositionCache = undefined;
+      rowHeightCache = undefined;
       cellSpans = undefined;
       selectedRows = undefined;
       plugins = undefined;
@@ -2471,7 +2483,7 @@ if (0) {
     }
 
     function autosizeColumns() {
-      var i, c, len,
+      var i, c, len, width,
           widths = [],
           shrinkLeeway = 0,
           total = 0,
@@ -2483,7 +2495,7 @@ if (0) {
         widths.push(c.width);
         total += c.width;
         if (c.resizable) {
-          shrinkLeeway += c.width - Math.max(c.minWidth || 0, absoluteColumnMinWidth);
+          shrinkLeeway += c.width - c.minWidth;
         }
       }
 
@@ -2493,11 +2505,11 @@ if (0) {
         var shrinkProportion = (total - availableWidth) / shrinkLeeway;
         for (i = 0, len = columns.length; i < len && total > availableWidth; i++) {
           c = columns[i];
-          var width = widths[i];
-          if (!c.resizable || width <= Math.max(c.minWidth || 0, absoluteColumnMinWidth)) {
+          width = widths[i];
+          if (!c.resizable || width <= c.minWidth) {
             continue;
           }
-          var absMinWidth = Math.max(c.minWidth || 0, absoluteColumnMinWidth);
+          var absMinWidth = c.minWidth;
           var shrinkSize = Math.floor(shrinkProportion * (width - absMinWidth)) || 1;
           shrinkSize = Math.min(shrinkSize, width - absMinWidth);
           total -= shrinkSize;
@@ -2848,6 +2860,12 @@ if (0) {
     }
 
     function validateAndEnforceOptions() {
+      assert(options.defaultColumnWidth > 0);
+      columnDefaults.width = options.defaultColumnWidth;
+      assert(options.minColumnWidth > 0);
+      columnDefaults.minWidth = options.minColumnWidth;
+      assert(options.maxColumnWidth >= options.minColumnWidth);
+      columnDefaults.maxWidth = options.maxColumnWidth;
     }
 
     // Note: this is a separate function as the for..in causes the code to remain unoptimized
@@ -2935,7 +2953,7 @@ if (0) {
         appendCellCssStylesToArray(cellCss, cellCssClasses, row, m);
       }
 
-      var cellHeight = options.rowHeight - cellHeightDiff;
+      var cellHeight = options.rowHeight;
 
       var info = {
           cellCss: cellCss,
@@ -3047,13 +3065,8 @@ if (0) {
               assert(columnsById[column.id] === undefined);
             }
             columnsById[column.id] = columns.length;
-            // make sure `minWidth <= width <= maxWidth`
-            if (column.minWidth && column.width < column.minWidth) {
-              column.width = column.minWidth;
-            }
-            if (column.maxWidth && column.width > column.maxWidth) {
-              column.width = column.maxWidth;
-            }
+            // make sure width is between its bounds: `minWidth <= width <= maxWidth`
+            column.width = Math.min(Math.max(column.width, column.minWidth), column.maxWidth);
             column.headerColSpan = 1;
             column.headerRowSpan = 1;
             columns.push(column);
@@ -3122,61 +3135,114 @@ if (0) {
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Rendering / Scrolling
 
-    function cacheRowPositions() {
-      var len = getDataLengthIncludingAddNew();
-      getRowPosition(len - 1);
-    }
-
-    function getRowPosition(row) {
-      assert(row >= -1);
-      assert(row <= getDataLengthIncludingAddNew() + 1);
+    /**
+     * @internal 
+     * 
+     * Update the row pixel position and height info for all rows up to the given row.
+     *
+     * @param  {Number} row The last row index which must be updated.
+     */
+    function cacheRowPositions(row) {
+      assert(row >= 0);
+      assert(row <= getDataLengthIncludingAddNew());
+      var height, r;
       var pos = rowPositionCache[row];
-      if (!pos || pos.top == null) {
-        var r, top, rowMetadata;
-        // do not recurse; loop until we hit the last valid and *complete* cache entry (or row === 0)
-        for (r = row; r >= 0; r--) {
-          pos = rowPositionCache[r];
-          if (!pos) {
-            rowMetadata = data.getItemMetadata && data.getItemMetadata(r, false);
-            pos = rowPositionCache[r] = {
-              top: undefined,     // this way the cache object doesn't change "type" as all fields are created initially: aim for Chrome V8 top perf.
-              height: (rowMetadata && rowMetadata.height > 0) ? rowMetadata.height : options.rowHeight
-            };
-          } else if (pos.top != null) {
+      if (pos === undefined) {
+        // do not recurse; loop until we hit the last *completely* valid position cache entry (or row === 0)
+        for (r = row - 1; r >= 0; r--) {
+          height = rowHeightCache[r];
+          if (height === undefined) {
+            var rowMetadata = data.getItemMetadata && data.getItemMetadata(r, false);
+            rowHeightCache[r] = ((rowMetadata && rowMetadata.height) ||options.rowHeight);
+          } else if (rowPositionCache[r] !== undefined) {
             break;
           }
         }
-        // we now know that all preceding cache elements (up to and including the [row] entry) have been set up with a valid .height
-        // so now all we need to do is update all .top values; all entries' .height is valid hence we can run a very tight loop:
+        // now fill the position cache from that last full slot we found:
         if (r < 0) {
-          assert(r === -1);
-          assert(pageOffset === 0);
-          pos = {
-            top: -pageOffset,
-            height: 0
-          };
+          r = 0; 
         }
-        assert(pos);
-        while (++r <= row) {
-          top = pos.top + pos.height;
-          pos = rowPositionCache[r];
-          pos.top = top;
+        // We now know that all preceding cache elements (up to and including the `[r]` entry) have been set up with a valid height
+        // so now all we need to do is update all top position values; all entries' height is valid hence we can run a very tight loop.
+        // 
+        // Note that we never access the height cache for the bottom row (`row`) which is correct since there won't be any.
+        // The height cache is only an intermediate cache: if we ever need to calculate the height of a row, we subtract the two
+        // adjacent top position coordinates instead! 
+        pos = 0;
+        for ( ; r < row; r++) {
+          rowPositionCache[r] = pos;
+          height = rowHeightCache[r];
+          assert(height !== undefined);
+          pos += height;
         }
+        rowPositionCache[r] = pos;
       }
       return pos;
     }
 
+    /**
+     * Return the top pixel position of the row.
+     *
+     * @param  {Number} row The row index
+     *
+     * @return {Number}     The pixel position in the grid canvas. 
+     *                      Not compensated for either CSS `box-sizing` model 
+     *                      nor any paging or scrolling offset.
+     */
     function getRowTop(row) {
-      return getRowPosition(row).top;
+      assert(row >= 0);
+      assert(row <= getDataLengthIncludingAddNew());
+      var pos = rowPositionCache[row];
+      if (pos === undefined) {
+        return cacheRowPositions(row);
+      }
+      return pos;
     }
 
+    /**
+     * Return the height of the row in pixels.
+     *
+     * @param  {Number} row The row index
+     *
+     * @return {Number}     The pixel position in the grid canvas. 
+     *                      Not compensated for CSS `box-sizing` model. 
+     */
     function getRowHeight(row) {
-      return getRowPosition(row).height;
+      assert(row >= 0);
+      assert(row <= getDataLengthIncludingAddNew() - 1);
+      row++;
+      var pos = rowPositionCache[row];
+      if (pos === undefined) {
+        pos = cacheRowPositions(row);
+      }
+      row--;
+      var postop = rowPositionCache[row];
+      if (postop === undefined) {
+        postop = cacheRowPositions(row);
+        assert(rowPositionCache[row] === postop);
+      }
+      assert(pos - postop > 0);
+      return pos - postop;
     }
 
+    /**
+     * Return the pixel position **1 (one) pixel _below_** the row bottom.
+     *
+     * @param  {Number} row The row index
+     *
+     * @return {Number}     The pixel position in the grid canvas. 
+     *                      Not compensated for either CSS `box-sizing` model 
+     *                      nor any paging or scrolling offset.
+     */
     function getRowBottom(row) {
-      var pos = getRowPosition(row);
-      return pos.top + pos.height;
+      assert(row >= 0);
+      assert(row <= getDataLengthIncludingAddNew() - 1);
+      row++;
+      var pos = rowPositionCache[row];
+      if (pos === undefined) {
+        return cacheRowPositions(row);
+      }
+      return pos;
     }
 
     // Return the row index at the given grid pixel coordinate Y.
@@ -3191,27 +3257,42 @@ if (0) {
     // will be produced as this function will estimate the row number using the
     // default row height.
     //
-    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>).
+    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>) *unless* the
+    // function reports an out-of-legal-range 'clipped' position: the fraction shows
+    // how far out-of-range the given coordinate was as a ratio of the given row height.
+    // 
+    // Use a binary search alike algorithm to find the row, using 
+    // linear estimation to produce the initial split/probe point and probing range: 
+    // this improves significantly on the O(log(n)) of a binary search.
+    // 
+    // @return {Object} The (possibly clipped) row position info:
+    //                  ```
+    //                  {
+    //                    position: {Integer} row index  
+    //                    fraction: {Float}   position within row: ratio of the row height: (0 <= fraction < 1)
+    //                    height:   {Number}  row height (assumed **default row height** when the position is outside the legal range)
+    //                  };
+    //                  ```
     function getRowWithFractionFromPosition(posY, clipToValidRange) {
       if (clipToValidRange == null) {
         clipToValidRange = true;
       }
 
-      //assert(posY >= 0); -- posY can be a negative number when this function is called from inside a drag from bottom-right to top-left where the user drags until outside the grid canvas area
-      var rowsInPosCache = getDataLengthIncludingAddNew();
-      var topRowInfo;
-      var bottomRowInfo;
+      //assert(posY >= 0); -- posY can be a negative number when this function is called from inside a drag from bottom-bottom to top-top where the user drags until outside the grid canvas area
+      assert(rowPositionCache.length === getDataLengthIncludingAddNew() + 1);
+      var rowsInPosCache = getDataLengthIncludingAddNew(); // WARNING: here specifically **NOT** `rowPositionCache.length`! 
       var fraction;
-      var probe, top, probeInfo, height, dy;
+      var probe, probe2, top, bottom, probeInfo, height, dy;
 
       if (!rowsInPosCache) {
-        topRowInfo = getRowPosition(0);
-        top = topRowInfo.top;
+        top = getRowTop(0);
         probe = 0;
         fraction = 0;
         height = options.rowHeight;
         assert(height > 0);
         if (!clipToValidRange) {
+          // calculate fraction from the top edge:
+          // (outside the grid range the rowFraction/cellFraction represents the number of estimated rows/cells it is out of range)
           probe = Math.floor((posY - top) / height);
           fraction = (posY - probe * height) / height;
         }
@@ -3222,28 +3303,39 @@ if (0) {
         };
       }
 
-      // perform a binary search through the row cache: O(log2(n)) vs. linear scan at O(n):
+      // perform a binary search, primed by a dual linear estimate probe through the row cache: 
+      // O(1) .. O(log2(n)) vs. original linear scan at O(n):
       //
-      // This first call to getRowTop(rowsInPosCache - 1) is here to help update the row cache
+      // This first call to `getRowTop(rowsInPosCache)` is here to help update the row cache
       // at the start of the search; at least for many scenarios where all (or the last) rows
-      // have been invalidated:
-      bottomRowInfo = getRowPosition(rowsInPosCache - 1);
-      if (posY >= bottomRowInfo.top) {
-        // Return the last row in the grid if we've got to clip
-        top = bottomRowInfo.top;
-        probe = rowsInPosCache - 1;
-        height = bottomRowInfo.height;
-        assert(height > 0);
-        fraction = (posY - top) / height;
-        assert(height > 0);
-        if (!clipToValidRange && posY >= top + height) {
+      // have been invalidated.
+      //
+      // (Dev. Note: indeed we sample the `getRowTop()` for the row index **one past the end of
+      // the available set**: this is **not a mistake** but a deliberate action as the height of
+      // the last *valid* row is identical to `getRowTop(row + 1) - getRowTop(row)`
+      // and we happen to encode the 'bottom edge (+1)' of the grid in the 'top offset' of the
+      // next *invalid* row: that way we have a *single* *continuous* array of 'top offsets' to
+      // work on/with, speeding up our code by otherwise keeping it as simple as possible.
+      bottom = getRowTop(rowsInPosCache);
+      if (posY >= bottom) {
+        // Return the last row in the grid if we've got to clip, otherwise estimate
+        // which row this would have been:
+        if (!clipToValidRange) {
+          probe = rowsInPosCache;
           height = options.rowHeight;
-          posY -= top + height;
+          posY -= bottom;
           dy = Math.floor(posY / height);
-          probe += 1 + dy;
+          probe += dy;
           fraction = (posY - dy * height) / height;
           assert(fraction >= 0);
           assert(fraction < 1);
+        } else {
+          probe = rowsInPosCache - 1;
+          top = getRowTop(probe);
+          height = bottom - top;
+          assert(height > 0);
+          fraction = (posY - top) / height;
+          assert(fraction >= 1);
         }
         return {
           position: probe,
@@ -3251,26 +3343,43 @@ if (0) {
           height: height
         };
       }
-      topRowInfo = getRowPosition(0);
-      if (posY < topRowInfo.top) {
-        // Return the first row in the grid if we've got to clip
-        top = topRowInfo.top;
+      top = getRowTop(0);
+      if (posY < top) {
         probe = 0;
-        height = topRowInfo.height;
-        assert(height > 0);
-        fraction = (posY - top) / height;
-        assert(height > 0);
-        if (!clipToValidRange && posY < top) {
+        // Return the first row in the grid if we've got to clip, otherwise estimate
+        // which row this would have been:
+        if (!clipToValidRange) {
           height = options.rowHeight;
           posY -= top;
           dy = Math.floor(posY / height);
+          assert(dy < 0);
           probe += dy;
           fraction = (posY - dy * height) / height;
           assert(fraction >= 0);
           assert(fraction < 1);
+        } else {
+          bottom = getRowTop(1);
+          height = bottom - top;
+          assert(height > 0);
+          fraction = (posY - top) / height;
+          assert(fraction < 0);
         }
         return {
           position: probe,
+          fraction: fraction,
+          height: height
+        };
+      } else if (rowsInPosCache === 1) {
+        assert(top <= posY);
+        assert(bottom > posY);
+        // When there's only a single row we now know we have a solid hit!        
+        height = bottom - top;
+        assert(height > 0);
+        fraction = (posY - top) / height;
+        assert(fraction >= 0);
+        assert(fraction < 1);
+        return {
+          position: 0,
           fraction: fraction,
           height: height
         };
@@ -3278,104 +3387,270 @@ if (0) {
 
       var l = 0;
       var r = rowsInPosCache - 1;
-      // before we enter the binary search, we attempt to improve the initial guess + search range
-      // using the heuristic that the variable cell height will be close to rowHeight:
-      // we perform two probes (at ≈1‰ interval) to save 10 probes (1000 ≈ 2^10) if we are lucky;
+      // Before we enter the binary search, we attempt to improve the initial guess + search range
+      // using the heuristic that the variable row height will be close to the *average* row height:
+      // we perform two linear estimate probes (the second one minus ≈1‰ interval) to save 10 probes (1000 ≈ 2^10) if we are lucky;
       // we "loose" 1 probe (the second) to inefficiency if we are unlucky (though one may argue
       // that the possibly extremely skewed split point for the first probe is also a loss -- which
-      // would be true if the number of rows with non-standard rowHeight is large and/or deviating
-      // from that norm `options.rowHeight` a lot for some rows, thus moving the targets outside the
-      // "is probably within 1‰ of the norm" for most row positions.
+      // would be true if the number of rows with non-standard `options.rowHeight` is large and/or deviating
+      // from that norm `options.rowHeight` a lot for only rows at the top 
+      // or bottom side of the grid, thus moving the targets outside the
+      // "is probably within 1‰ of the norm" for most row positions. Any mistake by the first probe
+      // 'going wide' will be compensated somewhat by the second linear estimate probe which employs 
+      // improved grid info.
       // 
       // Alas, for my tested (large!) grids this heuristic gets us very near O(2) vs O(log2(N)).
-      // For grids which do not employ custom rowHeight at all, the performance is O(1). I like that!
+      // For grids which do not employ custom `options.rowHeight` at all, the performance is O(1). I like that!
       //
-      // (Yes, this discussion ignores the cost of the rowheight position cache table update which
+      // (Yes, this discussion ignores the cost of the row position cache table update which
       // is O(N) on its own but which is also to be treated as "negligible cost" when amortized over
       // the number of `getRowWithFractionFromPosition` calls vs. cache invalidation.)
-      probe = (posY / options.rowHeight) | 0;
-      probe = Math.min(rowsInPosCache - 1, Math.max(0, probe));
-      probeInfo = getRowPosition(probe);
-      top = probeInfo.top;
-      if (top > posY) {
+      height = bottom - top;
+      assert(height > 0);
+      // Linear estimate number 1 & save one division by *not* using an intermediate variable:
+      // 
+      // ```
+      // var averageHeight = Math.max(1, height / rowsInPosCache);
+      // probe = (posY / averageHeight) | 0;
+      // ```
+      // 
+      // Note that the 'integer cast' (`y | 0`) takes care of any NaN that *might* have crawled out of the
+      // `probe` estimate below -- though `bottom === top` is **highly** unlikely. 
+      probe = (posY * rowsInPosCache / height) | 0;
+      assert(r >= 1);
+      probe = Math.min(r, Math.max(1, probe));    // set a lower bound of *1* to potentially double-duty the next probe to check for any top row hit
+      probeInfo = getRowTop(probe);
+      if (probeInfo > posY) {
         r = probe - 1;
-        probe = r - 1 - (0.001 * rowsInPosCache) | 0;
-        probe = Math.max(0, probe);
-        probeInfo = getRowPosition(probe);
-        top = probeInfo.top;
-        if (top > posY) {
-          r = probe - 1;
-        } else if (top + probeInfo.height > posY) {
-          fraction = (posY - top) / probeInfo.height;
+        bottom = probeInfo;
+        height = bottom - top;
+        assert(height > 0);
+        assert(l === 0);
+        // Did we get a hit on the top row now, incidentally?
+        if (r === 0) {
+          fraction = (posY - top) / height;
           assert(fraction >= 0);
           assert(fraction < 1);
           return {
-            position: probe,
+            position: l,
             fraction: fraction,
-            height: probeInfo.height
+            height: height
           };
-        } else {
-          l = probe + 1;
         }
-      } else if (top + probeInfo.height > posY) {
-        fraction = (posY - top) / probeInfo.height;
-        assert(fraction >= 0);
-        assert(fraction < 1);
-        return {
-          position: probe,
-          fraction: fraction,
-          height: probeInfo.height
-        };
+        // We have updated our 'average row height' knowledge for the range of rows we're going
+        // to look at from now on in the `height` value.
+        // 
+        // Note: we 'overshoot' the second probe by a minimal amount to skew it towards the
+        // top:
+        assert(r + 1 === probe);
+        probe2 = (posY * probe / height - 0.001 * rowsInPosCache) | 0;
+        assert(r >= 1);
+        probe2 = Math.min(r, Math.max(1, probe2));
+        assert(probe2 !== probe);
+        probeInfo = getRowTop(probe2);
+        if (probeInfo > posY) {
+          r = probe2 - 1;
+          assert(l === 0);
+          assert(r >= l);
+          // Did we get a (rare!) hit on the top row now, incidentally?
+          if (r === 0) {
+            bottom = probeInfo;
+            height = bottom - top;
+            assert(height > 0);
+            assert(l === 0);
+            fraction = (posY - top) / height;
+            assert(fraction >= 0);
+            assert(fraction < 1);
+            return {
+              position: l,
+              fraction: fraction,
+              height: height
+            };
+          }
+          assert(r > l);
+        } else {
+          assert(probeInfo <= posY);
+          l = probe2;
+          top = probeInfo;
+          // what we are *really* going to check here: 
+          // 
+          // ```
+          // if (r + 1 !== l + 1) {
+          //   bottom = getRowTop(l + 1);
+          // }
+          // if (bottom > posY) {
+          //   BINGO! HIT!
+          // }
+          // ```
+          // 
+          // but this way we keep the old `bottom` edge intact for when we *don't* get a hit
+          // bottom now:
+          if (r !== l) {
+            assert(l + 1 < r + 1);                
+            probeInfo = getRowTop(l + 1);
+          } else {
+            // We've just discovered we're located in the *last* row of the grid:
+            probeInfo = bottom;
+            assert(probeInfo > posY);
+          }
+          if (probeInfo > posY) {
+            height = probeInfo - top;
+            assert(height > 0);
+            fraction = (posY - top) / height;
+            assert(fraction >= 0);
+            assert(fraction < 1);
+            return {
+              position: l,
+              fraction: fraction,
+              height: height
+            };
+          }
+          l++;
+          top = probeInfo;
+          assert(r >= l);
+        }
       } else {
+        assert(probeInfo <= posY);
+        // By necessity both these main branches look quite different: contrary to the
+        // main `if()` branch above we're in a position here where our first linear estimate 
+        // may deliver a direct hit!
         l = probe + 1;
-        probe = l + 1 + (0.001 * rowsInPosCache) | 0;
-        probe = Math.min(rowsInPosCache - 1, probe);
-        probeInfo = getRowPosition(probe);
-        top = probeInfo.top;
-        if (top > posY) {
-          r = probe - 1;
-        } else if (top + probeInfo.height > posY) {
-          fraction = (posY - top) / probeInfo.height;
+        top = probeInfo;
+        assert(r + 1 === rowsInPosCache);
+        if (l !== rowsInPosCache) {
+          assert(l < rowsInPosCache);
+          probeInfo = getRowTop(l);
+        } else {
+          // We've just discovered we're located in the *last* row of the grid:
+          probeInfo = bottom;
+          assert(probeInfo > posY);
+        }
+        if (probeInfo > posY) {
+          height = probeInfo - top;
+          assert(height > 0);
+          assert(probe === l - 1);
+          fraction = (posY - top) / height;
           assert(fraction >= 0);
           assert(fraction < 1);
           return {
             position: probe,
             fraction: fraction,
-            height: probeInfo.height
+            height: height
           };
         } else {
-          l = probe + 1;
+          assert(probeInfo <= posY);
+          assert(l < rowsInPosCache);
+          top = probeInfo;
+          // update our 'average row height' knowledge for the range of rows we're going
+          // to look at from now on.
+          // 
+          // Note: we 'overshoot' the second probe by a minimal amount to skew it towards the
+          // bottom:
+          height = bottom - top;
+          assert(height > 0);
+          assert(probe === l - 1);
+          probe2 = (posY * (r - probe) / height + 0.001 * rowsInPosCache) | 0;
+          assert(r >= l + 1);
+          probe2 = Math.min(r, Math.max(l + 1, probe2));    // guarantee that `probe2` doesn't probe the same slot as did `probe`; the potential side effect is that `probe2` can do double-duty for checking a direct hit on row `l`.
+          probeInfo = getRowTop(probe2);
+          if (probeInfo > posY) {
+            r = probe2 - 1;
+            assert(r >= l);
+            // Did we get a (rare) direct hit on the row immediately to the bottom of the initial probe row now, incidentally?
+            // (We just happen to have all the relevant info for that row on hand thanks to the position of the second 
+            // linear estimate probe...)
+            if (r === l) {
+              bottom = probeInfo;
+              height = bottom - top;
+              assert(height > 0);
+              assert(l > 0);
+              fraction = (posY - top) / height;
+              assert(fraction >= 0);
+              assert(fraction < 1);
+              return {
+                position: l,
+                fraction: fraction,
+                height: height
+              };
+            }
+          } else {
+            l = probe2;
+            top = probeInfo;
+            assert(probeInfo <= posY);
+            assert(l < rowsInPosCache);
+            // what we *really* check here: 
+            // 
+            // ```
+            // if (r + 1 !== l + 1) {
+            //   bottom = getRowTop(l + 1);
+            // }
+            // if (bottom > posY) {
+            //   BINGO! HIT!
+            // }
+            // ```
+            // but this way we keep the old `bottom` edge intact for when we *don't* get a hit
+            // bottom now:
+            if (r !== l) {
+              assert(r > l);
+              probeInfo = getRowTop(l + 1);
+            } else {
+              // We've just discovered we're located in the *last* row of the grid:
+              probeInfo = bottom;
+              assert(probeInfo > posY);
+            }
+            if (probeInfo > posY) {
+              //bottom = probeInfo;
+              height = probeInfo - top;
+              fraction = (posY - top) / height;
+              assert(fraction >= 0);
+              assert(fraction < 1);
+              return {
+                position: l,
+                fraction: fraction,
+                height: height
+              };
+            }
+            l++;
+            top = probeInfo;
+            assert(r >= l);
+          }
         }
       }
-      assert(l <= r || r < 0);
 
-      while (l < r) {
-        probe = ((l + r) / 2) | 0; // INT/FLOOR
-        probeInfo = getRowPosition(probe);
-        top = probeInfo.top;
-        if (top > posY) {
+      assert(l <= r);
+      assert(top === getRowTop(l));
+      // Regrettably `bottom` is not so useful: it points to the *top* edge of the bottom row `r`.   :-(
+
+      while (l <= r) {
+        probe = ((l + r + 1) / 2) | 0; // make sure the probe doesn't test the already previously sampled `l` slot
+        probeInfo = getRowTop(probe);
+        if (probeInfo > posY) {
           r = probe - 1;
-        } else if (top + probeInfo.height > posY) {
-          fraction = (posY - top) / probeInfo.height;
-          assert(fraction >= 0);
-          assert(fraction < 1);
-          return {
-            position: probe,
-            fraction: fraction,
-            height: probeInfo.height
-          };
+          assert(r >= l);
+          // Did we get a (rare) direct hit on the `l` row, incidentally?
+          // (We just happen to have all the relevant info for that row on hand...)
+          if (r === l) {
+            break;        // We choose to break out of the loop instead of immediately the result as that way we shut up any less-than-brilliant code flow analyzers about a possible null-return path.
+          }
         } else {
-          l = probe + 1;
+          assert(probeInfo <= posY);
+          assert(probe >= l + 1);
+          l = probe;
+          top = probeInfo;
         }
       }
-      probeInfo = getRowPosition(l);
-      fraction = (posY - probeInfo.top) / probeInfo.height;
+      assert(r === l);
+      bottom = probeInfo;
+      height = bottom - top;
+      assert(height > 0);
+      assert(l > 0);
+      fraction = (posY - top) / height;
       assert(fraction >= 0);
       assert(fraction < 1);
       return {
         position: l,
         fraction: fraction,
-        height: probeInfo.height
+        height: height
       };
     }
 
@@ -3391,11 +3666,13 @@ if (0) {
     // will be produced as this function will estimate the column number using the
     // default column width.
     //
-    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>).
+    // The fraction is guaranteed to be less than 1 (value range: [0 .. 1>) *unless* the
+    // function reports an out-of-legal-range 'clipped' position: the fraction shows
+    // how far out-of-range the given coordinate was as a ratio of the given column width.
     // 
     // Use a binary search alike algorithm to find the column, using 
-    // linear estimation to produce the split/probe point: this should improve
-    // significantly on the O(log(n)) of a binary search. 
+    // linear estimation to produce the initial split/probe point and probing range: 
+    // this improves significantly on the O(log(n)) of a binary search.
     // 
     // @return {Object} The (possibly clipped) cell position info:
     //                  ```
@@ -3410,18 +3687,14 @@ if (0) {
         clipToValidRange = true;
       }
 
-      //assert(posY >= 0); -- posY can be a negative number when this function is called from inside a drag from bottom-right to top-left where the user drags until outside the grid canvas area
+      //assert(posX >= 0); -- posX can be a negative number when this function is called from inside a drag from bottom-right to top-left where the user drags until outside the grid canvas area
       assert(columnPosLeft.length === columns.length + 1);
-      // prime the cache if it wasn't already:
-      var bottomColInfo = getColumnOffset(columns.length);
       var colsInPosCache = columns.length; // WARNING: here specifically **NOT** columnPosLeft.length! 
-      var topColInfo;
       var fraction;
-      var probe, top, probeInfo, width, dy;
+      var probe, probe2, left, right, probeInfo, width, dx;
 
       if (!colsInPosCache) {
-        topColInfo = getColumnOffset(0);
-        top = topColInfo;
+        left = getColumnOffset(0);
         probe = 0;
         fraction = 0;
         width = options.defaultColumnWidth;
@@ -3429,7 +3702,7 @@ if (0) {
         if (!clipToValidRange) {
           // calculate fraction from the left edge:
           // (outside the grid range the rowFraction/cellFraction represents the number of estimated rows/cells it is out of range)
-          probe = Math.floor((posX - top) / width);
+          probe = Math.floor((posX - left) / width);
           fraction = (posX - probe * width) / width;
         }
         return {
@@ -3439,28 +3712,39 @@ if (0) {
         };
       }
 
-      // perform a binary search through the column cache: O(log2(n)) vs. linear scan at O(n):
+      // perform a binary search, primed by a dual linear estimate probe through the column cache: 
+      // O(1) .. O(log2(n)) vs. original linear scan at O(n):
       //
-      // This first call to getColTop(colsInPosCache - 1) is here to help update the col cache
-      // at the start of the search; at least for many scenarios where all (or the last) cols
-      // have been invalidated:
-      bottomColInfo = getColumnOffset(colsInPosCache - 1);
-      if (posX >= bottomColInfo.top) {
-        // Return the last col in the grid if we've got to clip
-        top = bottomColInfo.top;
-        probe = colsInPosCache - 1;
-        width = bottomColInfo.width;
-        assert(width > 0);
-        fraction = (posX - top) / width;
-        assert(width > 0);
-        if (!clipToValidRange && posX >= top + width) {
+      // This first call to `getColumnOffset(colsInPosCache)` is here to help update the column cache
+      // at the start of the search; at least for many scenarios where all (or the last) columns
+      // have been invalidated.
+      //
+      // (Dev. Note: indeed we sample the `getColumnOffset()` for the column index **one past the end of
+      // the available set**: this is **not a mistake** but a deliberate action as the width of
+      // the last *valid* column is identical to `getColumnOffset(column + 1) - getColumnOffset(column)`
+      // and we happen to encode the 'right edge (+1)' of the grid in the 'left offset' of the
+      // next *invalid* column: that way we have a *single* *continuous* array of 'left offsets' to
+      // work on/with, speeding up our code by otherwise keeping it as simple as possible.
+      right = getColumnOffset(colsInPosCache);
+      if (posX >= right) {
+        // Return the last column in the grid if we've got to clip, otherwise estimate
+        // which column this would have been:
+        if (!clipToValidRange) {
+          probe = colsInPosCache;
           width = options.defaultColumnWidth;
-          posX -= top + width;
-          dy = Math.floor(posX / width);
-          probe += 1 + dy;
-          fraction = (posX - dy * width) / width;
+          posX -= right;
+          dx = Math.floor(posX / width);
+          probe += dx;
+          fraction = (posX - dx * width) / width;
           assert(fraction >= 0);
           assert(fraction < 1);
+        } else {
+          probe = colsInPosCache - 1;
+          left = getColumnOffset(probe);
+          width = right - left;
+          assert(width > 0);
+          fraction = (posX - left) / width;
+          assert(fraction >= 1);
         }
         return {
           position: probe,
@@ -3468,26 +3752,43 @@ if (0) {
           width: width
         };
       }
-      topColInfo = getColumnOffset(0);
-      if (posX < topColInfo.top) {
-        // Return the first col in the grid if we've got to clip
-        top = topColInfo.top;
+      left = getColumnOffset(0);
+      if (posX < left) {
         probe = 0;
-        width = topColInfo.width;
-        assert(width > 0);
-        fraction = (posX - top) / width;
-        assert(width > 0);
-        if (!clipToValidRange && posX < top) {
+        // Return the first column in the grid if we've got to clip, otherwise estimate
+        // which column this would have been:
+        if (!clipToValidRange) {
           width = options.defaultColumnWidth;
-          posX -= top;
-          dy = Math.floor(posX / width);
-          probe += dy;
-          fraction = (posX - dy * width) / width;
+          posX -= left;
+          dx = Math.floor(posX / width);
+          assert(dx < 0);
+          probe += dx;
+          fraction = (posX - dx * width) / width;
           assert(fraction >= 0);
           assert(fraction < 1);
+        } else {
+          right = getColumnOffset(1);
+          width = right - left;
+          assert(width > 0);
+          fraction = (posX - left) / width;
+          assert(fraction < 0);
         }
         return {
           position: probe,
+          fraction: fraction,
+          width: width
+        };
+      } else if (colsInPosCache === 1) {
+        assert(left <= posX);
+        assert(right > posX);
+        // When there's only a single column we now know we have a solid hit!        
+        width = right - left;
+        assert(width > 0);
+        fraction = (posX - left) / width;
+        assert(fraction >= 0);
+        assert(fraction < 1);
+        return {
+          position: 0,
           fraction: fraction,
           width: width
         };
@@ -3495,104 +3796,270 @@ if (0) {
 
       var l = 0;
       var r = colsInPosCache - 1;
-      // before we enter the binary search, we attempt to improve the initial guess + search range
-      // using the heuristic that the variable cell width will be close to defaultColumnWidth:
-      // we perform two probes (at ≈1‰ interval) to save 10 probes (1000 ≈ 2^10) if we are lucky;
+      // Before we enter the binary search, we attempt to improve the initial guess + search range
+      // using the heuristic that the variable cell width will be close to the *average* column width:
+      // we perform two linear estimate probes (the second one minus ≈1‰ interval) to save 10 probes (1000 ≈ 2^10) if we are lucky;
       // we "loose" 1 probe (the second) to inefficiency if we are unlucky (though one may argue
       // that the possibly extremely skewed split point for the first probe is also a loss -- which
-      // would be true if the number of cols with non-standard defaultColumnWidth is large and/or deviating
-      // from that norm `options.defaultColumnWidth` a lot for some cols, thus moving the targets outside the
-      // "is probably within 1‰ of the norm" for most col positions.
+      // would be true if the number of columns with non-standard `defaultColumnWidth` is large and/or deviating
+      // from that norm `options.defaultColumnWidth` a lot for only columns at the left-most 
+      // or right-most side of the grid, thus moving the targets outside the
+      // "is probably within 1‰ of the norm" for most column positions. Any mistake by the first probe
+      // 'going wide' will be compensated somewhat by the second linear estimate probe which employs 
+      // improved grid info.
       // 
       // Alas, for my tested (large!) grids this heuristic gets us very near O(2) vs O(log2(N)).
-      // For grids which do not employ custom defaultColumnWidth at all, the performance is O(1). I like that!
+      // For grids which do not employ custom `defaultColumnWidth` at all, the performance is O(1). I like that!
       //
-      // (Yes, this discussion ignores the cost of the colwidth position cache table update which
+      // (Yes, this discussion ignores the cost of the column position cache table update which
       // is O(N) on its own but which is also to be treated as "negligible cost" when amortized over
       // the number of `getColumnWithFractionFromPosition` calls vs. cache invalidation.)
-      probe = (posX / options.defaultColumnWidth) | 0;
-      probe = Math.min(colsInPosCache - 1, Math.max(0, probe));
+      width = right - left;
+      assert(width > 0);
+      // Linear estimate number 1 & save one division by *not* using an intermediate variable:
+      // 
+      // ```
+      // var averageWidth = Math.max(1, width / colsInPosCache);
+      // probe = (posX / averageWidth) | 0;
+      // ```
+      // 
+      // Note that the 'integer cast' (`x | 0`) takes care of any NaN that *might* have crawled out of the
+      // `probe` estimate below -- though `right === left` is **highly** unlikely. 
+      probe = (posX * colsInPosCache / width) | 0;
+      assert(r >= 1);
+      probe = Math.min(r, Math.max(1, probe));    // set a lower bound of *1* to potentially double-duty the next probe to check for any left-most column hit
       probeInfo = getColumnOffset(probe);
-      top = probeInfo.top;
-      if (top > posX) {
+      if (probeInfo > posX) {
         r = probe - 1;
-        probe = r - 1 - (0.001 * colsInPosCache) | 0;
-        probe = Math.max(0, probe);
-        probeInfo = getColumnOffset(probe);
-        top = probeInfo.top;
-        if (top > posX) {
-          r = probe - 1;
-        } else if (top + probeInfo.width > posX) {
-          fraction = (posX - top) / probeInfo.width;
+        right = probeInfo;
+        width = right - left;
+        assert(width > 0);
+        assert(l === 0);
+        // Did we get a hit on the left-most column now, incidentally?
+        if (r === 0) {
+          fraction = (posX - left) / width;
           assert(fraction >= 0);
           assert(fraction < 1);
           return {
-            position: probe,
+            position: l,
             fraction: fraction,
-            width: probeInfo.width
+            width: width
           };
-        } else {
-          l = probe + 1;
         }
-      } else if (top + probeInfo.width > posX) {
-        fraction = (posX - top) / probeInfo.width;
-        assert(fraction >= 0);
-        assert(fraction < 1);
-        return {
-          position: probe,
-          fraction: fraction,
-          width: probeInfo.width
-        };
+        // We have updated our 'average column width' knowledge for the range of columns we're going
+        // to look at from now on in the `width` value.
+        // 
+        // Note: we 'overshoot' the second probe by a minimal amount to skew it towards the
+        // left:
+        assert(r + 1 === probe);
+        probe2 = (posX * probe / width - 0.001 * colsInPosCache) | 0;
+        assert(r >= 1);
+        probe2 = Math.min(r, Math.max(1, probe2));
+        assert(probe2 !== probe);
+        probeInfo = getColumnOffset(probe2);
+        if (probeInfo > posX) {
+          r = probe2 - 1;
+          assert(l === 0);
+          assert(r >= l);
+          // Did we get a (rare!) hit on the left-most column now, incidentally?
+          if (r === 0) {
+            right = probeInfo;
+            width = right - left;
+            assert(width > 0);
+            assert(l === 0);
+            fraction = (posX - left) / width;
+            assert(fraction >= 0);
+            assert(fraction < 1);
+            return {
+              position: l,
+              fraction: fraction,
+              width: width
+            };
+          }
+          assert(r > l);
+        } else {
+          assert(probeInfo <= posX);
+          l = probe2;
+          left = probeInfo;
+          // what we are *really* going to check here: 
+          // 
+          // ```
+          // if (r + 1 !== l + 1) {
+          //   right = getColumnOffset(l + 1);
+          // }
+          // if (right > posX) {
+          //   BINGO! HIT!
+          // }
+          // ```
+          // 
+          // but this way we keep the old `right` edge intact for when we *don't* get a hit
+          // right now:
+          if (r !== l) {
+            assert(l + 1 < r + 1);                
+            probeInfo = getColumnOffset(l + 1);
+          } else {
+            // We've just discovered we're located in the *last* column of the grid:
+            probeInfo = right;
+            assert(probeInfo > posX);
+          }
+          if (probeInfo > posX) {
+            width = probeInfo - left;
+            assert(width > 0);
+            fraction = (posX - left) / width;
+            assert(fraction >= 0);
+            assert(fraction < 1);
+            return {
+              position: l,
+              fraction: fraction,
+              width: width
+            };
+          }
+          l++;
+          left = probeInfo;
+          assert(r >= l);
+        }
       } else {
+        assert(probeInfo <= posX);
+        // By necessity both these main branches look quite different: contrary to the
+        // main `if()` branch above we're in a position here where our first linear estimate 
+        // may deliver a direct hit!
         l = probe + 1;
-        probe = l + 1 + (0.001 * colsInPosCache) | 0;
-        probe = Math.min(colsInPosCache - 1, probe);
-        probeInfo = getColumnOffset(probe);
-        top = probeInfo.top;
-        if (top > posX) {
-          r = probe - 1;
-        } else if (top + probeInfo.width > posX) {
-          fraction = (posX - top) / probeInfo.width;
+        left = probeInfo;
+        assert(r + 1 === colsInPosCache);
+        if (l !== colsInPosCache) {
+          assert(l < colsInPosCache);
+          probeInfo = getColumnOffset(l);
+        } else {
+          // We've just discovered we're located in the *last* column of the grid:
+          probeInfo = right;
+          assert(probeInfo > posX);
+        }
+        if (probeInfo > posX) {
+          width = probeInfo - left;
+          assert(width > 0);
+          assert(probe === l - 1);
+          fraction = (posX - left) / width;
           assert(fraction >= 0);
           assert(fraction < 1);
           return {
             position: probe,
             fraction: fraction,
-            width: probeInfo.width
+            width: width
           };
         } else {
-          l = probe + 1;
+          assert(probeInfo <= posX);
+          assert(l < colsInPosCache);
+          left = probeInfo;
+          // update our 'average column width' knowledge for the range of columns we're going
+          // to look at from now on.
+          // 
+          // Note: we 'overshoot' the second probe by a minimal amount to skew it towards the
+          // right:
+          width = right - left;
+          assert(width > 0);
+          assert(probe === l - 1);
+          probe2 = (posX * (r - probe) / width + 0.001 * colsInPosCache) | 0;
+          assert(r >= l + 1);
+          probe2 = Math.min(r, Math.max(l + 1, probe2));    // guarantee that `probe2` doesn't probe the same slot as did `probe`; the potential side effect is that `probe2` can do double-duty for checking a direct hit on column `l`.
+          probeInfo = getColumnOffset(probe2);
+          if (probeInfo > posX) {
+            r = probe2 - 1;
+            assert(r >= l);
+            // Did we get a (rare) direct hit on the column immediately to the right of the initial probe column now, incidentally?
+            // (We just happen to have all the relevant info for that column on hand thanks to the position of the second 
+            // linear estimate probe...)
+            if (r === l) {
+              right = probeInfo;
+              width = right - left;
+              assert(width > 0);
+              assert(l > 0);
+              fraction = (posX - left) / width;
+              assert(fraction >= 0);
+              assert(fraction < 1);
+              return {
+                position: l,
+                fraction: fraction,
+                width: width
+              };
+            }
+          } else {
+            l = probe2;
+            left = probeInfo;
+            assert(probeInfo <= posX);
+            assert(l < colsInPosCache);
+            // what we *really* check here: 
+            // 
+            // ```
+            // if (r + 1 !== l + 1) {
+            //   right = getColumnOffset(l + 1);
+            // }
+            // if (right > posX) {
+            //   BINGO! HIT!
+            // }
+            // ```
+            // but this way we keep the old `right` edge intact for when we *don't* get a hit
+            // right now:
+            if (r !== l) {
+              assert(r > l);
+              probeInfo = getColumnOffset(l + 1);
+            } else {
+              // We've just discovered we're located in the *last* column of the grid:
+              probeInfo = right;
+              assert(probeInfo > posX);
+            }
+            if (probeInfo > posX) {
+              //right = probeInfo;
+              width = probeInfo - left;
+              fraction = (posX - left) / width;
+              assert(fraction >= 0);
+              assert(fraction < 1);
+              return {
+                position: l,
+                fraction: fraction,
+                width: width
+              };
+            }
+            l++;
+            left = probeInfo;
+            assert(r >= l);
+          }
         }
       }
-      assert(l <= r || r < 0);
 
-      while (l < r) {
-        probe = ((l + r) / 2) | 0; // INT/FLOOR
+      assert(l <= r);
+      assert(left === getColumnOffset(l));
+      // Regrettably `right` is not so useful: it points to the *left* edge of the right-most column `r`.   :-(
+
+      while (l <= r) {
+        probe = ((l + r + 1) / 2) | 0; // make sure the probe doesn't test the already previously sampled `l` slot
         probeInfo = getColumnOffset(probe);
-        top = probeInfo.top;
-        if (top > posX) {
+        if (probeInfo > posX) {
           r = probe - 1;
-        } else if (top + probeInfo.width > posX) {
-          fraction = (posX - top) / probeInfo.width;
-          assert(fraction >= 0);
-          assert(fraction < 1);
-          return {
-            position: probe,
-            fraction: fraction,
-            width: probeInfo.width
-          };
+          assert(r >= l);
+          // Did we get a (rare) direct hit on the `l` column, incidentally?
+          // (We just happen to have all the relevant info for that column on hand...)
+          if (r === l) {
+            break;        // We choose to break out of the loop instead of immediately the result as that way we shut up any less-than-brilliant code flow analyzers about a possible null-return path.
+          }
         } else {
-          l = probe + 1;
+          assert(probeInfo <= posX);
+          assert(probe >= l + 1);
+          l = probe;
+          left = probeInfo;
         }
       }
-      probeInfo = getColumnOffset(l);
-      fraction = (posX - probeInfo.top) / probeInfo.width;
+      assert(r === l);
+      right = probeInfo;
+      width = right - left;
+      assert(width > 0);
+      assert(l > 0);
+      fraction = (posX - left) / width;
       assert(fraction >= 0);
       assert(fraction < 1);
       return {
         position: l,
         fraction: fraction,
-        width: probeInfo.width
+        width: width
       };
     }
 
@@ -3900,7 +4367,7 @@ if (0) {
       metaData.role = "row";
       var rowStyles = ["top: " + getRowTop(row) + "px"];
       var rowHeight = getRowHeight(row);
-      if (rowHeight !== options.rowHeight - cellHeightDiff) {
+      if (rowHeight !== options.rowHeight) {
         rowStyles.push("height: " + rowHeight + "px");
       }
 
@@ -4019,7 +4486,7 @@ if (0) {
       appendCellCssStylesToArray(cellCss, cellCssClasses, row, m);
 
       var cellHeight = getCellHeight(row, rowspan);
-      if (cellHeight !== options.rowHeight - cellHeightDiff) {
+      if (cellHeight !== options.rowHeight) {
         cellStyles.push("height:" + cellHeight + "px");
       }
 
@@ -4360,6 +4827,7 @@ if (0) {
       }
 
       rowPositionCache = [];
+      rowHeightCache = [];
       // rowsCacheStartIndex = MAX_INT;
     }
 
@@ -4469,8 +4937,10 @@ if (0) {
         var spanRow = cellSpans[row];
         var rowMetadata = data.getItemMetadata && data.getItemMetadata(row, false);
         // if the row height changes, all its successors should invalidate their style.top positions
-        if (rowMetadata && rowMetadata.height && rowMetadata.height - cellHeightDiff !== getRowHeight(row)) {
+        var newRowHeight = (rowMetadata && rowMetadata.height) || options.rowHeight;
+        if (newRowHeight !== getRowHeight(row)) {
           rowPositionCache[row] = undefined;
+          rowHeightCache[row] = newRowHeight;
           if (row < invalidateTopFrom) {
             invalidateTopFrom = row + 1;
             invalidateTo = dataLength - 1;
@@ -4557,7 +5027,7 @@ if (0) {
 
       for (row = Math.min(invalidateFrom, invalidateTopFrom); row <= invalidateTo; row++) {
         if (row >= invalidateTopFrom) {
-          rowPositionCache[row].top = undefined;
+          rowPositionCache[row] = undefined;
         }
         if (currentEditor && activeRow === row) {
           assert(getEditorLock().isActive());
@@ -4768,7 +5238,7 @@ if (0) {
         var columnMetadata = rowMetadata && rowMetadata.columns && (rowMetadata.columns[m.id] || rowMetadata.columns[cell]);
 
         var cellHeight = getCellHeight(row, rowspan);
-        if (cellHeight !== options.rowHeight - cellHeightDiff) {
+        if (cellHeight !== options.rowHeight) {
           cellNode.style.height = cellHeight + "px";
         } else if (cellNode.style.height) {
           cellNode.style.height = "";
@@ -4845,17 +5315,8 @@ if (0) {
     }
 
     function getCellHeight(row, rowspan) {
-      var cellHeight = options.rowHeight;
-      if (rowspan > 1) {
-        var rowSpanBottomIdx = row + rowspan - 1;
-        cellHeight = getRowBottom(rowSpanBottomIdx) - getRowTop(row);
-      } else {
-        var rowHeight = getRowHeight(row);
-        if (rowHeight !== options.rowHeight - cellHeightDiff) {
-          cellHeight = rowHeight;
-        }
-      }
-      cellHeight -= cellHeightDiff;
+      var rowSpanBottomIdx = row + rowspan - 1;
+      var cellHeight = getRowBottom(rowSpanBottomIdx) - getRowTop(row);
       return cellHeight;
     }
 
@@ -5003,10 +5464,18 @@ if (0) {
         return false; 
       }
 
-      cacheRowPositions();
-
       var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
       var numberOfRows = dataLengthIncludingAddNew;
+
+      // if the existing row position & width caches are too large, strip 'em down to the new size.
+      if (rowPositionCache.length > numberOfRows + 1) {
+        rowPositionCache.length = numberOfRows + 1;
+      }
+      if (rowHeightCache.length >= numberOfRows) {
+        rowHeightCache.length = numberOfRows;
+      }
+      
+      cacheRowPositions(numberOfRows);
 
       var oldViewportHasVScroll = viewportHasVScroll;
       viewportHasVScroll = (getRowBottom(numberOfRows - 1) > viewportH);
@@ -5095,11 +5564,11 @@ if (0) {
       return rv;
     }
 
-    /*
-     * WARNING: the returned object .bottom attribute points at the first row which is guaranteed to be NOT visible.
+    /**
+     * WARNING: the returned object `.bottom` attribute points at the first row which is guaranteed to be NOT visible.
      * This was done in the vanilla SlickGrid (the one which doesn't deliver fractional position info). 
      * It is in line with other range info objects which would list the bottom as "one beyond"
-     * in order to simplify height calculations (bottom - top without the obligatory +1 correction) and looping
+     * in order to simplify height calculations (`bottom - top` without the obligatory +1 correction) and looping
      * over the visible row range (`for row = rv.top; row < rv.bottom; row++`).
      * 
      * However, do note that the fractional info is about the (partially visible bottom) row `.bottomVisible`.
@@ -5520,7 +5989,8 @@ if (0) {
         assert(range.bottom > range.top || (range.bottom === range.top && getDataLength() === 0));
         c = columnCount - 1;
         var old_r = cellSpans.length;
-        assert(range.bottom <= dataLength);
+        assert(range.bottom <= dataLength + 1 /* the optional 'addNewRow' */);
+        assert(range.bottom <= getDataLengthIncludingAddNew());
         r = cellSpans.length;
         l = Math.min(range.bottom - 1, dataLength - 1); 
         while (r < l) {
@@ -6897,7 +7367,7 @@ out:
 
           var visibleRange = getVisibleRange();
           setActiveCell(visibleRange.row, visibleRange.cell, {
-            forceEditMode: false,
+            forceEditMode: 0,
             takeFocus: false
           });
         }
@@ -6991,6 +7461,123 @@ out:
         preventDefaultKeyboardActionHack(e);
       }
       if (options.debug & DEBUG_KEYBOARD) { console.log("key @ end: ", which, handled, e, activeCellInfo, getActiveCell(), document.activeElement); }
+    }
+
+    function handleContainerKeyPress(e) {
+      assert(!(e instanceof Slick.EventData));
+      if (options.debug & (DEBUG_EVENTS | DEBUG_CONTAINER_EVENTS | DEBUG_KEYBOARD)) { console.log("keypress @ CONTAINER: ", this, arguments, document.activeElement); }
+      if (signalEventObserved(e)) {
+        return;
+      }
+
+      // move focus back into SlickGrid when it's not already there?
+      //
+      // N.B. keep in mind that we have those special copy/paste tricks which employ root-level temporary DOM nodes which must catch the keyboard event!
+      __handleKeyPress(e);
+    }
+
+    function handleKeyPress(e) {
+      assert(!(e instanceof Slick.EventData));
+      if (options.debug & (DEBUG_EVENTS | DEBUG_KEYBOARD)) { console.log("keypress: ", this, arguments, document.activeElement); }
+      if (signalEventObserved(e)) {
+        return;
+      }
+
+      __handleKeyPress(e);
+    }
+
+    function __handleKeyPress(e) {
+      assert(!(e instanceof Slick.EventData));
+      var activeCellInfo = null;
+      if (activeCellNode) {
+        activeCellInfo = {
+          row: activeRow, 
+          cell: activeCell,
+          node: activeCellNode,
+          grid: self
+        };
+      }
+      assert("which" in e);
+      var which = e.which;
+      var shiftKey = e.shiftKey;
+      var altKey = e.altKey;
+      var ctrlKey = e.ctrlKey;
+
+      if (options.debug & DEBUG_KEYBOARD) { console.log("KEYPRESS: key @ start: ", which, handled, e, activeCellInfo, getActiveCell(), document.activeElement); }
+      trigger(self.onKeyPress, activeCellInfo, e);
+      var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
+
+      if (options.debug & DEBUG_KEYBOARD) { console.log("KEYPRESS: key @ after: ", which, handled, e, activeCellInfo, getActiveCell(), document.activeElement); }
+      if (!handled) {
+        //...
+      }
+
+      if (handled) {
+        // the event has been handled so don't let parent element (bubbling/propagation) or browser (default) handle it
+        e.stopPropagation();
+        e.preventDefault();
+        preventDefaultKeyboardActionHack(e);
+      }
+      if (options.debug & DEBUG_KEYBOARD) { console.log("KEYUP: key @ end: ", which, handled, e, activeCellInfo, getActiveCell(), document.activeElement); }
+    }
+
+
+    function handleContainerKeyUp(e) {
+      assert(!(e instanceof Slick.EventData));
+      if (options.debug & (DEBUG_EVENTS | DEBUG_CONTAINER_EVENTS | DEBUG_KEYBOARD)) { console.log("keyup @ CONTAINER: ", this, arguments, document.activeElement); }
+      if (signalEventObserved(e)) {
+        return;
+      }
+
+      // move focus back into SlickGrid when it's not already there?
+      //
+      // N.B. keep in mind that we have those special copy/paste tricks which employ root-level temporary DOM nodes which must catch the keyboard event!
+      __handleKeyUp(e);
+    }
+
+    function handleKeyUp(e) {
+      assert(!(e instanceof Slick.EventData));
+      if (options.debug & (DEBUG_EVENTS | DEBUG_KEYBOARD)) { console.log("keyup: ", this, arguments, document.activeElement); }
+      if (signalEventObserved(e)) {
+        return;
+      }
+
+      __handleKeyUp(e);
+    }
+
+    function __handleKeyUp(e) {
+      assert(!(e instanceof Slick.EventData));
+      var activeCellInfo = null;
+      if (activeCellNode) {
+        activeCellInfo = {
+          row: activeRow, 
+          cell: activeCell,
+          node: activeCellNode,
+          grid: self
+        };
+      }
+      assert("which" in e);
+      var which = e.which;
+      var shiftKey = e.shiftKey;
+      var altKey = e.altKey;
+      var ctrlKey = e.ctrlKey;
+
+      if (options.debug & DEBUG_KEYBOARD) { console.log("KEYUP: key @ start: ", which, handled, e, activeCellInfo, getActiveCell(), document.activeElement); }
+      trigger(self.onKeyUp, activeCellInfo, e);
+      var handled = e.isImmediatePropagationStopped() || e.isPropagationStopped() || e.isDefaultPrevented();
+
+      if (options.debug & DEBUG_KEYBOARD) { console.log("KEYUP: key @ after: ", which, handled, e, activeCellInfo, getActiveCell(), document.activeElement); }
+      if (!handled) {
+        //...
+      }
+
+      if (handled) {
+        // the event has been handled so don't let parent element (bubbling/propagation) or browser (default) handle it
+        e.stopPropagation();
+        e.preventDefault();
+        preventDefaultKeyboardActionHack(e);
+      }
+      if (options.debug & DEBUG_KEYBOARD) { console.log("KEYUP: key @ end: ", which, handled, e, activeCellInfo, getActiveCell(), document.activeElement); }
     }
 
     function handleContainerContextMenu(e) {
@@ -7216,7 +7803,7 @@ out:
       } else if (activeCellNode === cell.node && !getEditorLock().isActive()) {
         // When there's no editor active on the current cell already, make it so. (forceEditMode=2 like)
         if (options.editable) {
-          // if cfg.forceEditMode > 1 then show the editor immediately (this happens for instance when the cell is double-clicked)
+          // if `cfg.forceEditMode > 1` then show the editor immediately (this happens for instance when the cell is double-clicked)
           if (makeActiveCellEditable() || getEditorLock().isActive()) {
             // We, or any userland code, did start an editor in this cell.
             return;
@@ -7412,8 +7999,8 @@ out:
     function getCellFromPoint(x, y, cfg) {
       assert(!isNaN(x));
       assert(!isNaN(y));
-      cfg = cfg || {};
-      var clipToValidRange = cfg.clipToValidRange;
+      //cfg = cfg || {};
+      var clipToValidRange = cfg && cfg.clipToValidRange;
 
       var rowInfo = getRowWithFractionFromPosition(y + pageOffset /* + scrollTop ??? */, clipToValidRange);
       var colInfo = getColumnWithFractionFromPosition(x /* + scrollLeft ??? */, clipToValidRange);
@@ -7718,7 +8305,7 @@ out:
 
     function resetActiveCell() {
       setActiveCellInternal(null, {
-        forceEditMode: false, 
+        forceEditMode: 0, 
         takeFocus: false
       });
     }
@@ -7804,7 +8391,7 @@ out:
       }
     }
 
-    function setActiveCellInternal(newCellNode, cfg) {
+    function setActiveCellInternal(newCellNode, /* @const */ cfg) {
       // Also check which node currently has focus *before* we send events and thus give userland
       // code opportunity to revert/modify/move the focus.
       // 
@@ -7813,16 +8400,19 @@ out:
       var oldFocusCellInfo = getCellFromElement(oldFocusNode);
 
       assert(cfg); // opt_editMode, takeFocus, coordinate
+      var forceEditMode = cfg.forceEditMode; 
 
       var activeCellChanged = (activeCellNode != newCellNode);
       var newActiveRow;
       if (newCellNode != null) {
         newActiveRow = getRowFromNode(newCellNode.parentNode);
         assert(newActiveRow != null);
-        if (cfg.forceEditMode == null) {
-          cfg.forceEditMode = (options.enableAddRow && newActiveRow === getDataLength() && options.autoEditAddRow) || options.autoEdit;
+        if (forceEditMode == null) {
+          forceEditMode = (options.enableAddRow && newActiveRow === getDataLength() && options.autoEditAddRow) || options.autoEdit;
         }
       }
+      // convert the boolean-or-numeric setting to a guaranteed number 0, 1 or 2/3/...:
+      forceEditMode = (forceEditMode && forceEditMode > 1 ? forceEditMode : +!!forceEditMode);
 
       // onActiveCellChanging should fire before we *might* instantiate an editor!
       // This order of events is important so that the editor-augmented cell instance doesn't get
@@ -7835,7 +8425,7 @@ out:
         trigger(self.onActiveCellChanging, {
           activeCell:     newCellNode,
           prevActiveCell: activeCellNode,
-          editMode:       cfg.forceEditMode,
+          editMode:       forceEditMode,
           grid:           self
         }, e);
         if (e.isHandled()) {
@@ -7850,7 +8440,7 @@ out:
           .parent().removeClass("active-row");          // We don't know the old PosY so this only works well for rowspan=1 cells
       }
 
-      var prevActiveCell = activeCellNode;
+      var prevActiveCellNode = activeCellNode;
       activeCellNode = newCellNode;
 
       if (newCellNode != null) {
@@ -7859,7 +8449,7 @@ out:
         activeCell = getCellFromNode(newCellNode);
         assert(activeRow != null);
         assert(activeCell != null);
-        assert(cfg.forceEditMode != null);
+        assert(forceEditMode != null);
         // Only update the active cursor coordinate (which may be anywhere inside the cell span!)
         // when the coordinate is either outside the current cell span OR when the caller has 
         // explicitly demanded we set the cursor coordinate as well:
@@ -7891,8 +8481,8 @@ out:
           //activeCellNode.focus();
           trigger(self.onActiveCellChanged, {
             activeCell:     newCellNode,
-            prevActiveCell: prevActiveCell,
-            editMode:       cfg.forceEditMode,
+            prevActiveCell: prevActiveCellNode,
+            editMode:       forceEditMode,
             grid:           self
           }, e);
           if (e.isHandled()) {
@@ -7944,9 +8534,9 @@ out:
           if (options.debug & DEBUG_FOCUS) { console.log("focus fixup exec END: ", document.activeElement); }
         }
 
-        if (options.editable && cfg.forceEditMode && isCellPotentiallyEditable(activeRow, activeCell)) {
-          // if cfg.forceEditMode > 1 then show the editor immediately (this happens for instance when the cell is double-clicked)
-          if (options.asyncEditorLoading >= cfg.forceEditMode) {
+        if (options.editable && forceEditMode && isCellPotentiallyEditable(activeRow, activeCell)) {
+          // if `forceEditMode > 1` then show the editor immediately (this happens for instance when the cell is double-clicked)
+          if (options.asyncEditorLoading >= forceEditMode) {
             h_editorLoader = setTimeout(function h_show_editor_f() {
               makeActiveCellEditable();
             }, options.asyncEditorLoadDelay);
@@ -8955,10 +9545,15 @@ out:
         return false;
       }
 
-      if (!activeCellNode && dir !== NAVIGATE_PREV && dir !== NAVIGATE_NEXT && dir !== NAVIGATE_HOME && dir !== NAVIGATE_END) {
-if (0) {
-        // See if a cell has focus and if so, use that one to base the move on;
-        // otherwise simply scroll in the indicated direction if possible.
+      if (!activeCellNode) {
+        // We're not on an active cell right now, so we won't know where to move to next. 
+        // See if a cell/row/column has focus and if so, use that one to base the move on unless the 
+        // userland event handler tells us otherwise; 
+        // simply scroll in the indicated direction if possible.
+        // 
+        // Note that we MAY arrive at this peculiar position when we haven't rendered the
+        // `activeNode`, hence we *do* check the render-result-independent `activeCell` and
+        // `activeRow` settings before we travel any further:
         assert(!activeCell);
         assert(!activeRow);
         assert(!getEditorLock().isActive());
@@ -9011,11 +9606,7 @@ if (0) {
             assert(0);
             break;
           }
-
-
-
         }
-}
 
         return false;
       }
@@ -9190,7 +9781,7 @@ if (0) {
       return false;
     }
 
-    function gotoCell(row, cell, cfg) {
+    function gotoCell(row, cell, /* @const */ cfg) {
       cfg = cfg || {};
 
       if (!initialized) { return; }
@@ -9472,9 +10063,8 @@ if (0) {
       $.each(columns, function (i) {
         var m = columns[i] = $.extend({}, columnDefaults, columns[i]);
         columnsById[m.id] = i;
-        //make m.width be between its bounds
-        m.minWidth && (m.width = Math.max(m.width, m.minWidth));
-        m.maxWidth && (m.width = Math.min(m.width, m.maxWidth));
+        // make sure width is between its bounds: `minWidth <= width <= maxWidth`
+        m.width = Math.min(Math.max(m.width, m.minWidth), m.maxWidth);
       });
     }
 
@@ -9502,7 +10092,7 @@ if (0) {
           columnPosRight: columnPosRight
         },
         scrollInfo: {
-          visibleRange:  getVisibleRange(),
+          visibleRange: getVisibleRange(),
           renderedRange: getRenderedRange(),
           offset: offset,
           scrollTop: scrollTop,
@@ -9550,198 +10140,208 @@ if (0) {
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Public API
 
-    __extend(this, {
-      "slickGridVersion": "2.3.18-alpha.1011",
+    __extend(this, /* @nocollapse */ {
+      slickGridVersion: "2.3.18-alpha.1011",
 
       // Events
-      "onScroll": new Slick.Event(),
-      "onSort": new Slick.Event(),
-      "onHeaderMouseEnter": new Slick.Event(),
-      "onHeaderMouseLeave": new Slick.Event(),
-      "onHeaderContextMenu": new Slick.Event(),
-      "onHeaderClick": new Slick.Event(),
-      "onHeaderDblClick": new Slick.Event(),
-      "onHeaderCellRendered": new Slick.Event(),
-      "onBeforeHeaderCellDestroy": new Slick.Event(),
-      "onHeaderRowCellRendered": new Slick.Event(),
-      "onBeforeHeaderRowCellDestroy": new Slick.Event(),
-      "onFooterRowCellRendered": new Slick.Event(),
-      "onBeforeFooterRowCellDestroy": new Slick.Event(),
-      "onFocusIn": new Slick.Event(),
-      "onFocusOut": new Slick.Event(),
-      "onFocusMoved": new Slick.Event(),
-      "onFocusSet": new Slick.Event(),
-      "onMouseEnter": new Slick.Event(),
-      "onMouseLeave": new Slick.Event(),
-      "onClick": new Slick.Event(),
-      "onDblClick": new Slick.Event(),
-      "onContextMenu": new Slick.Event(),
-      "onKeyDown": new Slick.Event(),
-      "onAddNewRow": new Slick.Event(),
-      "onValidationError": new Slick.Event(),
-      "onInvalidate": new Slick.Event(),
-      "onCanvasWidthChanged": new Slick.Event(),
-      "onViewportChanged": new Slick.Event(),
-      "onColumnsStartReorder": new Slick.Event(),
-      "onColumnsReordering": new Slick.Event(),
-      "onColumnsReordered": new Slick.Event(),
-      "onColumnsStartResize": new Slick.Event(), // onColumnsResizeStart
-      "onColumnsResizing": new Slick.Event(),
-      "onColumnsResized": new Slick.Event(),
-      "onColumnCalcWidth": new Slick.Event(),
-      "onColumnsChanged": new Slick.Event(),
-      "onCellChange": new Slick.Event(),
-      "onBeforeEditCell": new Slick.Event(),
-      "onBeforeCellEditorDestroy": new Slick.Event(),
-      "onAfterInit": new Slick.Event(),
-      "onBeforeDestroy": new Slick.Event(),
-      "onActiveCellChanging": new Slick.Event(),
-      "onActiveCellChanged": new Slick.Event(),
-      "onActiveCellPositionChanged": new Slick.Event(),
-      "onHeaderDragInit": new Slick.Event(),
-      "onHeaderDragStart": new Slick.Event(),
-      "onHeaderDrag": new Slick.Event(),
-      "onHeaderDragEnd": new Slick.Event(),
-      "onDragInit": new Slick.Event(),
-      "onDragStart": new Slick.Event(),
-      "onDrag": new Slick.Event(),
-      "onDragEnd": new Slick.Event(),
-      "onSelectedRangesChanged": new Slick.Event(),
-      "onCellCssStylesChanged": new Slick.Event(),
-      "onRowsRendered": new Slick.Event(),
-      "onRenderStart": new Slick.Event(),
-      "onRenderEnd": new Slick.Event(),
+      onScroll: new Slick.Event(),
+      onSort: new Slick.Event(),
+      onHeaderMouseEnter: new Slick.Event(),
+      onHeaderMouseLeave: new Slick.Event(),
+      onHeaderContextMenu: new Slick.Event(),
+      onHeaderClick: new Slick.Event(),
+      onHeaderDblClick: new Slick.Event(),
+      onHeaderCellRendered: new Slick.Event(),
+      onBeforeHeaderCellDestroy: new Slick.Event(),
+      onHeaderRowCellRendered: new Slick.Event(),
+      onBeforeHeaderRowCellDestroy: new Slick.Event(),
+      onFooterRowCellRendered: new Slick.Event(),
+      onBeforeFooterRowCellDestroy: new Slick.Event(),
+      onFocusIn: new Slick.Event(),
+      onFocusOut: new Slick.Event(),
+      onFocusMoved: new Slick.Event(),
+      onFocusSet: new Slick.Event(),
+      onMouseEnter: new Slick.Event(),
+      onMouseLeave: new Slick.Event(),
+      onClick: new Slick.Event(),
+      onDblClick: new Slick.Event(),
+      onContextMenu: new Slick.Event(),
+      onKeyDown: new Slick.Event(),
+      onKeyPress: new Slick.Event(),
+      onKeyUp: new Slick.Event(),
+      onAddNewRow: new Slick.Event(),
+      onValidationError: new Slick.Event(),
+      onInvalidate: new Slick.Event(),
+      onCanvasWidthChanged: new Slick.Event(),
+      onViewportChanged: new Slick.Event(),
+      onColumnsStartReorder: new Slick.Event(),
+      onColumnsReordering: new Slick.Event(),
+      onColumnsReordered: new Slick.Event(),
+      onColumnsStartResize: new Slick.Event(), // onColumnsResizeStart
+      onColumnsResizing: new Slick.Event(),
+      onColumnsResized: new Slick.Event(),
+      onColumnCalcWidth: new Slick.Event(),
+      onColumnsChanged: new Slick.Event(),
+      onCellChange: new Slick.Event(),
+      onBeforeEditCell: new Slick.Event(),
+      onBeforeCellEditorDestroy: new Slick.Event(),
+      onAfterInit: new Slick.Event(),
+      onBeforeDestroy: new Slick.Event(),
+      onActiveCellChanging: new Slick.Event(),
+      onActiveCellChanged: new Slick.Event(),
+      onActiveCellPositionChanged: new Slick.Event(),
+      onHeaderDragInit: new Slick.Event(),
+      onHeaderDragStart: new Slick.Event(),
+      onHeaderDrag: new Slick.Event(),
+      onHeaderDragEnd: new Slick.Event(),
+      onDragInit: new Slick.Event(),
+      onDragStart: new Slick.Event(),
+      onDrag: new Slick.Event(),
+      onDragEnd: new Slick.Event(),
+      onSelectedRangesChanged: new Slick.Event(),
+      onCellCssStylesChanged: new Slick.Event(),
+      onRowsRendered: new Slick.Event(),
+      onRenderStart: new Slick.Event(),
+      onRenderEnd: new Slick.Event(),
 
       // Methods
-      "registerPlugin": registerPlugin,
-      "unregisterPlugin": unregisterPlugin,
-      "getId": getId,
-      "getColumnsInfo": getColumnsInfo,
-      "getColumns": getColumns,
-      "getColumnIndexFromEvent": getColumnIndexFromEvent,
-      "getColumnFromEvent": getColumnFromEvent,
-      "setColumns": setColumns,
-      "updateColumnWidths": updateColumnWidths,
-      "getLeafColumns": getLeafColumns,
-      "getColumnIndex": getColumnIndex,
-      "updateColumnHeader": updateColumnHeader,
-      "setSortColumn": setSortColumn,
-      "setSortColumns": setSortColumns,
-      "getSortColumns": getSortColumns,
-      "autosizeColumns": autosizeColumns,
-      "setupColumnResize": setupColumnResize,
-      "getOptions": getOptions,
-      "setOptions": setOptions,
-      "getData": getData,
-      "getDataLength": getDataLength,
-      "getDataItem": getDataItem,
-      "setData": setData,
-      "getSelectionModel": getSelectionModel,
-      "setSelectionModel": setSelectionModel,
-      "getSelectedRows": getSelectedRows,
-      "setSelectedRows": setSelectedRows,
-      "getSelectedRanges": getSelectedRanges,
-      "setSelectedRanges": setSelectedRanges,
-      "getContainerNode": getContainerNode,
-      "getDataItemValueForColumn": getDataItemValueForColumn,
-      "setDataItemValueForColumn": setDataItemValueForColumn,
-      "getCellValueAndInfo": getCellValueAndInfo,
-      "isInitialized": isInitialized,
+      registerPlugin: registerPlugin,
+      unregisterPlugin: unregisterPlugin,
+      getId: getId,
+      getColumnsInfo: getColumnsInfo,
+      getColumns: getColumns,
+      getColumnIndexFromEvent: getColumnIndexFromEvent,
+      getColumnFromEvent: getColumnFromEvent,
+      setColumns: setColumns,
+      updateColumnWidths: updateColumnWidths,
+      getLeafColumns: getLeafColumns,
+      getColumnIndex: getColumnIndex,
+      updateColumnHeader: updateColumnHeader,
+      setSortColumn: setSortColumn,
+      setSortColumns: setSortColumns,
+      getSortColumns: getSortColumns,
+      autosizeColumns: autosizeColumns,
+      setupColumnResize: setupColumnResize,
+      getOptions: getOptions,
+      setOptions: setOptions,
+      getData: getData,
+      getDataLength: getDataLength,
+      getDataItem: getDataItem,
+      setData: setData,
+      getSelectionModel: getSelectionModel,
+      setSelectionModel: setSelectionModel,
+      getSelectedRows: getSelectedRows,
+      setSelectedRows: setSelectedRows,
+      getSelectedRanges: getSelectedRanges,
+      setSelectedRanges: setSelectedRanges,
+      getContainerNode: getContainerNode,
+      getDataItemValueForColumn: getDataItemValueForColumn,
+      setDataItemValueForColumn: setDataItemValueForColumn,
+      getCellValueAndInfo: getCellValueAndInfo,
+      isInitialized: isInitialized,
 
-      "render": render,
-      "forcedRender": forcedRender,
-      "isRenderPending": isRenderPending,
-      "pauseRendering": pauseRendering,
-      "resumeRendering": resumeRendering,
-      "invalidate": invalidate,
-      "invalidateCell": invalidateCell,
-      "invalidateCellSpan": invalidateCellSpan,
-      "invalidateColumn": invalidateColumn,
-      "invalidateColumns": invalidateColumns,
-      "invalidateRow": invalidateRow,
-      "invalidateRows": invalidateRows,
-      "invalidateAllRows": invalidateAllRows,
-      "invalidateAllPostProcessingResults": invalidateAllPostProcessingResults,
-      "updateCell": updateCell,
-      "updateRow": updateRow,
-      "getCachedRowRangeInfo": getCachedRowRangeInfo,
-      "getViewport": getVisibleRange,
-      "getRenderedRange": getRenderedRange,
-      "getContentSize": getContentSize,
-      "getVisibleSize": getVisibleSize,
-      "resizeCanvas": resizeCanvas,
-      "updateRowCount": updateRowCount,
-      "scrollRowIntoView": scrollRowIntoView,
-      "scrollRowToTop": scrollRowToTop,
-      "scrollRowToCenter": scrollRowToCenter,
-      "scrollCellIntoView": scrollCellIntoView,
-      "scrollTo": scrollTo,
-      "getCanvasNode": getCanvasNode,
-      "focus": setFocus,
+      render: render,
+      forcedRender: forcedRender,
+      isRenderPending: isRenderPending,
+      pauseRendering: pauseRendering,
+      resumeRendering: resumeRendering,
+      invalidate: invalidate,
+      invalidateCell: invalidateCell,
+      invalidateCellSpan: invalidateCellSpan,
+      invalidateColumn: invalidateColumn,
+      invalidateColumns: invalidateColumns,
+      invalidateRow: invalidateRow,
+      invalidateRows: invalidateRows,
+      invalidateAllRows: invalidateAllRows,
+      invalidateAllPostProcessingResults: invalidateAllPostProcessingResults,
+      updateCell: updateCell,
+      updateRow: updateRow,
+      getCachedRowRangeInfo: getCachedRowRangeInfo,
+      getViewport: getVisibleRange,
+      getRenderedRange: getRenderedRange,
+      getContentSize: getContentSize,
+      getVisibleSize: getVisibleSize,
+      resizeCanvas: resizeCanvas,
+      updateRowCount: updateRowCount,
+      scrollRowIntoView: scrollRowIntoView,
+      scrollRowToTop: scrollRowToTop,
+      scrollRowToCenter: scrollRowToCenter,
+      scrollCellIntoView: scrollCellIntoView,
+      scrollTo: scrollTo,
+      getCanvasNode: getCanvasNode,
+      focus: setFocus,
 
-      "getCellFromPoint": getCellFromPoint,
-      "getCellFromElement": getCellFromElement,
-      "getCellFromEvent": getCellFromEvent,
-      "getRowFromEvent": getRowFromEvent,
-      "getActiveCell": getActiveCell,
-      "setActiveCell": setActiveCell,
-      "getActiveCellNode": getActiveCellNode,
-      "getActiveCellPosition": getActiveCellPosition,
-      "resetActiveCell": resetActiveCell,
-      "editActiveCell": makeActiveCellEditable,
-      "commitEditAndSetFocus": commitEditAndSetFocus,
-      "cancelEditAndSetFocus": cancelEditAndSetFocus,
+      getCellFromPoint: getCellFromPoint,
+      getCellFromElement: getCellFromElement,
+      getCellFromEvent: getCellFromEvent,
+      getRowFromEvent: getRowFromEvent,
+      getActiveCell: getActiveCell,
+      setActiveCell: setActiveCell,
+      getActiveCellNode: getActiveCellNode,
+      getActiveCellPosition: getActiveCellPosition,
+      resetActiveCell: resetActiveCell,
+      editActiveCell: makeActiveCellEditable,
+      commitEditAndSetFocus: commitEditAndSetFocus,
+      cancelEditAndSetFocus: cancelEditAndSetFocus,
 
-      "getCellEditor": getCellEditor,
-      "getCellNode": getCellNode,
-      "getCellNodeBox": getCellNodeBox,
-      "canCellBeSelected": canCellBeSelected,
-      "canCellBeActive": canCellBeActive,
-      "cellExists": cellExists,
-      "navigatePrev": navigatePrev,
-      "navigateNext": navigateNext,
-      "navigateUp": navigateUp,
-      "navigateDown": navigateDown,
-      "navigateLeft": navigateLeft,
-      "navigateRight": navigateRight,
-      "navigatePageUp": navigatePageUp,
-      "navigatePageDown": navigatePageDown,
-      "navigateHome": navigateHome,
-      "navigateEnd": navigateEnd,
-      "gotoCell": gotoCell,
-      "getTopPanel": getTopPanel,
-      "setTopPanelVisibility": setTopPanelVisibility,
-      "setHeaderRowVisibility": setHeaderRowVisibility,
-      "getHeaderRow": getHeaderRow,
-      "getHeaderRowColumn": getHeaderRowColumn,
-      "getHeadersColumn": getHeadersColumn,
-      "setFooterRowVisibility": setFooterRowVisibility,
-      "getFooterRow": getFooterRow,
-      "getFooterRowColumn": getFooterRowColumn,
-      "getGridPosition": getGridPosition,
-      "flashCell": flashCell,
-      "addCellCssStyles": addCellCssStyles,
-      "setCellCssStyles": setCellCssStyles,
-      "removeCellCssStyles": removeCellCssStyles,
-      "upsertCellCssStyles": upsertCellCssStyles,
-      "getCellCssStyles": getCellCssStyles,
-      "setCssRule": setCssRule,
+      getCellEditor: getCellEditor,
+      getCellNode: getCellNode,
+      getCellNodeBox: getCellNodeBox,
+      canCellBeSelected: canCellBeSelected,
+      canCellBeActive: canCellBeActive,
+      cellExists: cellExists,
+      navigatePrev: navigatePrev,
+      navigateNext: navigateNext,
+      navigateUp: navigateUp,
+      navigateDown: navigateDown,
+      navigateLeft: navigateLeft,
+      navigateRight: navigateRight,
+      navigatePageUp: navigatePageUp,
+      navigatePageDown: navigatePageDown,
+      navigateHome: navigateHome,
+      navigateEnd: navigateEnd,
+      gotoCell: gotoCell,
+      getTopPanel: getTopPanel,
+      setTopPanelVisibility: setTopPanelVisibility,
+      setHeaderRowVisibility: setHeaderRowVisibility,
+      getHeaderRow: getHeaderRow,
+      getHeaderRowColumn: getHeaderRowColumn,
+      getHeadersColumn: getHeadersColumn,
+      setFooterRowVisibility: setFooterRowVisibility,
+      getFooterRow: getFooterRow,
+      getFooterRowColumn: getFooterRowColumn,
+      getGridPosition: getGridPosition,
+      flashCell: flashCell,
+      addCellCssStyles: addCellCssStyles,
+      setCellCssStyles: setCellCssStyles,
+      removeCellCssStyles: removeCellCssStyles,
+      upsertCellCssStyles: upsertCellCssStyles,
+      getCellCssStyles: getCellCssStyles,
+      setCssRule: setCssRule,
 
-      "handleKeyDown": handleKeyDown,
+      handleKeyDown: handleKeyDown,
 
-      "init": finishInitialization,
-      "destroy": destroy,
+      init: finishInitialization,
+      destroy: destroy,
 
       // IEditor implementation
-      "getEditorLock": getEditorLock,
-      "getEditController": getEditController,
+      getEditorLock: getEditorLock,
+      getEditController: getEditController,
 
       // export utility function(s)
-      "scrollPort": scrollPort,
-      "rangesToRows": rangesToRows,
-      "rowsToRanges": rowsToRanges
+      scrollPort: scrollPort,
+      rangesToRows: rangesToRows,
+      rowsToRanges: rowsToRanges
     });
 
     init();
   }
-}(jQuery));
+
+  // export Slick.Grid
+  $.extend(true, window, {
+    Slick: {
+      Grid: SlickGrid
+    }
+  });
+
+}(window, jQuery));
