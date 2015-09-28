@@ -7,7 +7,7 @@ This is a fork of SlickGrid maintained by Ger Hobbelt / Visyond Inc. The new fea
 
 ## This Fork's Features
 
-* This is synced with the 6pac slickgrid repo: @6pac is maintaining his own clone as a separate 'alternative master'. Check [his wiki](https://github.com/6pac/SlickGrid/wiki) for details.
+* This is synced with the 6pac SlickGrid repo: @6pac is maintaining his own clone as a separate 'alternative master'. Check [his wiki](https://github.com/6pac/SlickGrid/wiki) for details.
 * Cells spanning arbitrary numbers of rows and/or columns (colspan / rowspan)
 * A footer row that mimics the behavior of the header row, with similar options and controls.
 * Enhanced info feed to/from Formatters and Editors
@@ -27,8 +27,8 @@ This is a fork of SlickGrid maintained by Ger Hobbelt / Visyond Inc. The new fea
 * Triggers a new event `onColumnsChanged` when you set the columns
 * Exposes the existing method `grid.setupColumnResize()`, which allows you to re-enable column resizing if you're manually screwing around with the headers.
 * Some new options on `setColumns` and `resizeCanvas` let you prevent some of the expensive calculations, useful if you're doing them yourself externally.
-* Adds [antiscroll](https://github.com/learnboost/antiscroll) compatability to enable a uniform, OSX-style scrolling experience across browsers. Enable antiscroll by including the antiscroll library on your page, and passing the `useAntiscroll: true` option to your SlickGrid instance. By default we don't show scrollbars until the user begins scrolling (to mimic the way OSX does it); to change that behavior, you can set the `showScrollbarsOnHover` option.
-* Adds `skipPaging` option to prevent slickgrid from paging when user keypress takes the user off the current page. Instead, up & down keypresses reveal one new row at a time.
+* Adds [antiscroll](https://github.com/learnboost/antiscroll) compatibility to enable a uniform, OSX-style scrolling experience across browsers. Enable antiscroll by including the antiscroll library on your page, and passing the `useAntiscroll: true` option to your SlickGrid instance. By default we don't show scrollbars until the user begins scrolling (to mimic the way OSX does it); to change that behavior, you can set the `showScrollbarsOnHover` option.
+* Adds `skipPaging` option to prevent SlickGrid from paging when user keypress takes the user off the current page. Instead, up & down keypresses reveal one new row at a time.
 
 
 ### Message by Michael Leibman (@mleibman)
@@ -69,7 +69,7 @@ Some highlights:
 * add row/column pinning according to the new flexible design
   * allow grids to show without separate headers & footers: those must become part of the canvas itself
   * support CSS3 box-model (so that special more or less custom edge styles don't impact cell size: keeping cell position calculations simple and per-cell CSS agnostic)
-  * add row and column folding & sliding support: if column headers also are part of the canvas itslef, then rows and columns are equal citizens that way and we can design one way to 'pin' (i.e. 'left limit' and/or 'right limit') columns and/or rows: one mechanism to recalculate the cell positions given pin settings (left limit, right limit, visiblity priority level)
+  * add row and column folding & sliding support: if column headers also are part of the canvas itself, then rows and columns are equal citizens that way and we can design one way to 'pin' (i.e. 'left limit' and/or 'right limit') columns and/or rows: one mechanism to recalculate the cell positions given pin settings (left limit, right limit, visibility priority level)
   * fix remaining problems:
     + drag/resize handles and their (jQuery!) events are now part of the canvas, which goes counter to the original MLeibman design concept of keeping jQuery out of there
     + drag/resize handles now don't always stick to the right edge of a cell: when it is (partly) overlapped by a higher priority pinned cell, we need to decide what we want we want to do re drag/resize UX here: should the right/bottom?/top?/left? edge be visible before we accept a drag/resize operation?
