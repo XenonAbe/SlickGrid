@@ -31,6 +31,15 @@ module.exports = function (grunt) {
               ' * All rights reserved.\n' + 
               ' */\n' +
               '\n\n',
+    banner4Less: '//!\n' +
+              '// @license\n' +
+              '// slickGrid v<%= pkg.version %> (<%= pkg.homepage %>)\n' +
+              '// Copyright 2009-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' +
+              '//\n' + 
+              '// Distributed under <%= pkg.license %> license.\n' + 
+              '// All rights reserved.\n' + 
+              '///\n' +
+              '\n\n',
     bannerDocs: '/*!\n' +
               ' * slickGrid Docs (<%= pkg.homepage %>)\n' +
               ' * Copyright 2009-<%= grunt.template.today("yyyy") %> <%= pkg.author %>\n' +
@@ -191,10 +200,44 @@ module.exports = function (grunt) {
       dist: {
         options: {
           position: 'top',
-          banner: '<%= banner %>'
+          banner: '<%= banner %>',
+          replace: true             // replace any banner already present
         },
         files: {
-          src: ['slick*.js', 'controls/*.js', 'plugins/*.js', '*.css', '*.less', '*.scss']
+          src: ['slick*.js', 'controls/*.js', 'plugins/*.js', 'wrappers/*.js', '*.css']
+        }
+      },
+
+      CSS_sources: {
+        options: {
+          position: 'top',
+          banner: '<%= banner4Less %>',
+          replace: true             // replace any banner already present
+        },
+        files: {
+          src: ['*.less', '*.scss']
+        }
+      },
+
+      JS_partials: {
+        options: {
+          position: 'top',
+          banner: '<%= banner4Less %>',
+          replace: true             // replace any banner already present
+        },
+        files: {
+          src: ['editors/*.js', 'formatters/*.js']
+        }
+      },
+
+      JS_sources: {
+        options: {
+          position: 'top',
+          banner: '<%= banner %>',
+          replace: true             // replace any banner already present
+        },
+        files: {
+          src: ['examples/*.js', 'tests/*.js']
         }
       }
     },
@@ -273,7 +316,10 @@ module.exports = function (grunt) {
   grunt.registerTask('libsync', ['copy:libsync']);
 
   // Preparation (compile) task.
-  grunt.registerTask('compile', ['clean', 'libsync', 'less']);
+  grunt.registerTask('compile', ['clean', 'libsync', 'less', 'js_precompile']);
+
+  // JS precompile task.
+  grunt.registerTask('js_precompile', ['concat', 'usebanner:dist']);
 
   // Lint task.
   grunt.registerTask('lint', ['csslint', 'jshint', 'jscs']);
