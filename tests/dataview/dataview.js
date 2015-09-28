@@ -937,7 +937,7 @@ test("must have id (custom)", function() {
 test("delete at the beginning", function() {
     var count = 0;
     var dv = new Slick.Data.DataView();
-    dv.setItems([{id:05,val:0},{id:15,val:1},{id:25,val:2}]);
+    dv.setItems([{id:5,val:0},{id:15,val:1},{id:25,val:2}]);
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
         assertEventInfo(args, e, dv, this);
@@ -964,7 +964,7 @@ test("delete at the beginning", function() {
         equal(args.totalRows, 2, "totalRows arg");
         count++;
     });
-    dv.deleteItem(05);
+    dv.deleteItem(5);
     equal(count, 3, "events fired");
     equal(dv.getItems().length, 2, "items updated");
     equal(dv.getLength(), 2, "rows updated");
@@ -974,7 +974,7 @@ test("delete at the beginning", function() {
 test("delete in the middle", function() {
     var count = 0;
     var dv = new Slick.Data.DataView();
-    dv.setItems([{id:05,val:0},{id:15,val:1},{id:25,val:2}]);
+    dv.setItems([{id:5,val:0},{id:15,val:1},{id:25,val:2}]);
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(true, "onRowsChanged called");
         assertEventInfo(args, e, dv, this);
@@ -1011,7 +1011,7 @@ test("delete in the middle", function() {
 test("delete at the end", function() {
     var count = 0;
     var dv = new Slick.Data.DataView();
-    dv.setItems([{id:05,val:0},{id:15,val:1},{id:25,val:2}]);
+    dv.setItems([{id:5,val:0},{id:15,val:1},{id:25,val:2}]);
     dv.onRowsChanged.subscribe(function(e,args) {
         ok(false, "onRowsChanged called");
     });
@@ -1057,7 +1057,7 @@ function loadData(count, seed, options) {
        start: someDates[ Math.floor((semiRandom.random() * 2)) ],
        finish: someDates[ Math.floor((semiRandom.random() * 2)) ],
        cost: Math.round(semiRandom.random() * 10000) / 100,
-       effortDriven: (i % 5 == 0)
+       effortDriven: (i % 5 === 0)
     };
   }
   var dv = new Slick.Data.DataView(options);
