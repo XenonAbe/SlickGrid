@@ -43,6 +43,25 @@
     "grunt-sed": "0.1.1",
     "grunt-version-bump": "1.0.5",
     "load-grunt-tasks": "3.3.0",
-    "time-grunt": "1.2.1"
+    "mocha": "*",
+    "should": "*",
+    "time-grunt": "1.2.1",
+    "verb": "^0.8.10"
+  },
+  "bugs": {
+    "url": "https://github.com/GerHobbelt/slick-grid/issues"
+  },
+  "files": [
+    "slick.core.js",
+    "slick.dataview.js",
+    "slick.grid.js",
+    "slick.shims.js"
+  ],
+  "main": "slick.grid.js",
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "mocha"
   }
 }
