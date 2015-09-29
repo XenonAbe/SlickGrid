@@ -4887,17 +4887,26 @@ if (0) {
       }
 
       if (rowNodeFromLastMouseWheelEvent === cacheEntry.rowNode) {
-        cacheEntry.rowNode.style.display = 'none';
+        cacheEntry.rowNode.style.display = "none";
         zombieRowNodeFromLastMouseWheelEvent = rowNodeFromLastMouseWheelEvent;
         zombieRowCacheFromLastMouseWheelEvent = cacheEntry;
         zombieRowPostProcessedFromLastMouseWheelEvent = postProcessedRows[row];
         // ignore post processing cleanup in this case - it will be dealt with later
       } else {
-        if (options.enableAsyncPostRenderCleanup && postProcessedRows[row]) {
-          queuePostProcessedRowForCleanup(cacheEntry, postProcessedRows[row], row);
+        if (options.cellsMayHaveJQueryHandlers) {
+          if (options.enableAsyncPostRenderCleanup && postProcessedRows[row]) {
+            queuePostProcessedRowForCleanup(cacheEntry, postProcessedRows[row], row);
+          } else {
+            $(cacheEntry.rowNode).remove();      // remove children from jQuery cache: fix mleibman/SlickGrid#855 :: Memory leaks when cell contains jQuery controls
+          }
         } else {
           $canvas[0].removeChild(cacheEntry.rowNode);
         }
+        // cacheEntry.rowNode.classList.add("destroyed");
+        // deletedRowsCache[row] = rowsCache[row];
+        // if (deletedRowsCacheStartIndex > row) {
+        //   deletedRowsCacheStartIndex = row;
+        // }
       }
 
       rowsCache[row] = undefined;
@@ -7232,12 +7241,16 @@ out:
 
     function handleMouseWheel(e) {
       var rowNode = $(e.target).closest(".slick-row")[0];
-      if (rowNode != rowNodeFromLastMouseWheelEvent) {
-        if (zombieRowNodeFromLastMouseWheelEvent && zombieRowNodeFromLastMouseWheelEvent != rowNode) {
-          $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
-          if (options.enableAsyncPostRenderCleanup && zombieRowPostProcessedFromLastMouseWheelEvent) {
-            queuePostProcessedRowForCleanup(zombieRowCacheFromLastMouseWheelEvent,
-              zombieRowPostProcessedFromLastMouseWheelEvent);
+      assert(rowNode != rowNodeFromLastMouseWheelEvent ? rowNode !== rowNodeFromLastMouseWheelEvent : rowNode === rowNodeFromLastMouseWheelEvent);
+      if (options.debug & (DEBUG_EVENTS | DEBUG_MOUSE)) { console.log("mousewheel event: ", rowNode, this, arguments, document.activeElement); }
+      if (rowNode !== rowNodeFromLastMouseWheelEvent) {
+        if (zombieRowNodeFromLastMouseWheelEvent && zombieRowNodeFromLastMouseWheelEvent !== rowNode) {
+          if (options.cellsMayHaveJQueryHandlers) {
+            if (options.enableAsyncPostRenderCleanup && zombieRowPostProcessedFromLastMouseWheelEvent) {
+              queuePostProcessedRowForCleanup(zombieRowCacheFromLastMouseWheelEvent, zombieRowPostProcessedFromLastMouseWheelEvent);
+            } else {
+              $(zombieRowNodeFromLastMouseWheelEvent).remove();      // remove children from jQuery cache: fix mleibman/SlickGrid#855 :: Memory leaks when cell contains jQuery controls
+            }
           } else {
             $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
           }
@@ -7247,7 +7260,7 @@ out:
 
           if (options.enableAsyncPostRenderCleanup) { startPostProcessingCleanup(); }
         }
-        rowNodeFromLastMouseWheelEvent = rowNode;      
+        rowNodeFromLastMouseWheelEvent = rowNode;
       }
     }
 
