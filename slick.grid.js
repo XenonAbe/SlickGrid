@@ -240,6 +240,7 @@ if (typeof Slick === "undefined") {
       minColumnWidth: 30,
       maxColumnWidth: Infinity,
       enableAddRow: false,
+      leaveSpaceForNewRows: false,
       editable: false,
       autoEdit: true,
       autoEditAddRow: false, 
@@ -254,6 +255,8 @@ if (typeof Slick === "undefined") {
       enableAsyncPostRender: false,
       asyncPostRenderDelay: 50,
       asyncPostRenderSlice: 50,
+      enableAsyncPostRenderCleanup: false,                          // TODO: check this feature and re-implement it in my render environment...
+      asyncPostRenderCleanupDelay: 40,
       autoHeight: false,
       // WARNING: Instances of SlickGrid should not share one global `EditorLock` by default.
       //
@@ -443,6 +446,9 @@ if (typeof Slick === "undefined") {
     var postProcessedRows = [];
     var postProcessToRow = 0;
     var postProcessFromRow = MAX_INT;
+    var h_postrenderCleanup = null;
+    var postProcessedCleanupQueue = [];
+    var postProcessgroupId = 0;
 
     // perf counters
     var counter_rows_rendered = 0;
@@ -455,6 +461,8 @@ if (typeof Slick === "undefined") {
     // See http://crbug.com/312427.
     var rowNodeFromLastMouseWheelEvent;  // this node must not be deleted while inertial scrolling
     var zombieRowNodeFromLastMouseWheelEvent;  // node that was hidden instead of getting deleted
+    var zombieRowCacheFromLastMouseWheelEvent;  // row cache for above node
+    var zombieRowPostProcessedFromLastMouseWheelEvent;  // post processing references for above node
 
     // store css attributes if display:none is active in container or parent
     // 
@@ -525,6 +533,16 @@ if (typeof Slick === "undefined") {
         isBrowser.safari    = /safari/i.test(isBrowser.browser);
         isBrowser.safari605 = isBrowser.safari && /6\.0/.test(isBrowser.version);
         isBrowser.msie      = /msie/i.test(isBrowser.browser);
+      }
+
+	  // jQuery prior to version 1.8 handles `.width()` setter/getter as a direct CSS write/read.
+	  // jQuery 1.8 changed `.width()` to read the true inner element width if `box-sizing` is set to `border-box` and introduced a setter for `.outerWidth()`.
+	  // So for equivalent functionality, prior to 1.8 use `.width()` and after use `.outerWidth()`.
+      //
+      // *We* expect jQuery 1.8+ and do *not support* older jQuery versions any more.
+	  var jQueryVersion = parseFloat($.fn.jquery);
+	  if (jQueryVersion < 1.8) {
+        throw new Error("SlickGrid requires jQuery 1.8 or later.");
       }
 
       cacheCssForHiddenInit();
@@ -2861,6 +2879,9 @@ if (0) {
     }
 
     function validateAndEnforceOptions() {
+      if (options.autoHeight) {
+        options.leaveSpaceForNewRows = false;
+      }
       assert(options.defaultColumnWidth > 0);
       columnDefaults.width = options.defaultColumnWidth;
       assert(options.minColumnWidth > 0);
@@ -4866,19 +4887,17 @@ if (0) {
       }
 
       if (rowNodeFromLastMouseWheelEvent === cacheEntry.rowNode) {
-        cacheEntry.rowNode.style.display = "none";
+        cacheEntry.rowNode.style.display = 'none';
         zombieRowNodeFromLastMouseWheelEvent = rowNodeFromLastMouseWheelEvent;
+        zombieRowCacheFromLastMouseWheelEvent = cacheEntry;
+        zombieRowPostProcessedFromLastMouseWheelEvent = postProcessedRows[row];
+        // ignore post processing cleanup in this case - it will be dealt with later
       } else {
-        if (options.cellsMayHaveJQueryHandlers) {
-          $(cacheEntry.rowNode).remove();      // remove children from jQuery cache: fix mleibman/SlickGrid#855 :: Memory leaks when cell contains jQuery controls
+        if (options.enableAsyncPostRenderCleanup && postProcessedRows[row]) {
+          queuePostProcessedRowForCleanup(cacheEntry, postProcessedRows[row], row);
         } else {
           $canvas[0].removeChild(cacheEntry.rowNode);
         }
-        // cacheEntry.rowNode.classList.add("destroyed");
-        // deletedRowsCache[row] = rowsCache[row];
-        // if (deletedRowsCacheStartIndex > row) {
-        //   deletedRowsCacheStartIndex = row;
-        // }
       }
 
       rowsCache[row] = undefined;
@@ -5467,8 +5486,9 @@ if (0) {
       }
 
       var dataLengthIncludingAddNew = getDataLengthIncludingAddNew();
-      var numberOfRows = dataLengthIncludingAddNew;
-
+      var numberOfRows = dataLengthIncludingAddNew +
+          (options.leaveSpaceForNewRows ? numVisibleRows - 1 : 0);
+          
       // if the existing row position & width caches are too large, strip 'em down to the new size.
       if (rowPositionCache.length > numberOfRows + 1) {
         rowPositionCache.length = numberOfRows + 1;
@@ -7212,18 +7232,22 @@ out:
 
     function handleMouseWheel(e) {
       var rowNode = $(e.target).closest(".slick-row")[0];
-      assert(rowNode != rowNodeFromLastMouseWheelEvent ? rowNode !== rowNodeFromLastMouseWheelEvent : rowNode === rowNodeFromLastMouseWheelEvent);
-      if (options.debug & (DEBUG_EVENTS | DEBUG_MOUSE)) { console.log("mousewheel event: ", rowNode, this, arguments, document.activeElement); }
-      if (rowNode !== rowNodeFromLastMouseWheelEvent) {
-        if (zombieRowNodeFromLastMouseWheelEvent && zombieRowNodeFromLastMouseWheelEvent !== rowNode) {
-          if (options.cellsMayHaveJQueryHandlers) {
-            $(zombieRowNodeFromLastMouseWheelEvent).remove();      // remove children from jQuery cache: fix mleibman/SlickGrid#855 :: Memory leaks when cell contains jQuery controls
+      if (rowNode != rowNodeFromLastMouseWheelEvent) {
+        if (zombieRowNodeFromLastMouseWheelEvent && zombieRowNodeFromLastMouseWheelEvent != rowNode) {
+          $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
+          if (options.enableAsyncPostRenderCleanup && zombieRowPostProcessedFromLastMouseWheelEvent) {
+            queuePostProcessedRowForCleanup(zombieRowCacheFromLastMouseWheelEvent,
+              zombieRowPostProcessedFromLastMouseWheelEvent);
           } else {
             $canvas[0].removeChild(zombieRowNodeFromLastMouseWheelEvent);
           }
           zombieRowNodeFromLastMouseWheelEvent = null;
+          zombieRowCacheFromLastMouseWheelEvent = null;
+          zombieRowPostProcessedFromLastMouseWheelEvent = null;
+
+          if (options.enableAsyncPostRenderCleanup) { startPostProcessingCleanup(); }
         }
-        rowNodeFromLastMouseWheelEvent = rowNode;
+        rowNodeFromLastMouseWheelEvent = rowNode;      
       }
     }
 
