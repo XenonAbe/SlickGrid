@@ -8787,6 +8787,8 @@ out:
         gridPosition: getGridPosition(),
         position: getActiveCellPosition(),
         container: activeCellNode,
+        row: activeRow,
+        cell: activeCell,
         column: columnDef,
         item: item || {},
         rowMetadata: rowMetadata,
