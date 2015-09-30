@@ -80,9 +80,9 @@
       var item = this.getDataItem(args.row);
       if (item && item instanceof Slick.Group && $(e.target).hasClass(options.toggleCssClass)) {
         var range = _grid.getRenderedRange();
-        dataView.setRefreshHints({
+        this.getData().setRefreshHints({
           ignoreDiffsBefore: range.top,
-          ignoreDiffsAfter: range.bottom
+          ignoreDiffsAfter: range.bottom + 1
         });
 
         if (item.collapsed) {
@@ -104,9 +104,9 @@
           var item = this.getDataItem(activeCell.row);
           if (item && item instanceof Slick.Group) {
             var range = _grid.getRenderedRange();
-            dataView.setRefreshHints({
+            this.getData().setRefreshHints({
               ignoreDiffsBefore: range.top,
-              ignoreDiffsAfter: range.bottom
+              ignoreDiffsAfter: range.bottom + 1
             });
 
             if (item.collapsed) {
