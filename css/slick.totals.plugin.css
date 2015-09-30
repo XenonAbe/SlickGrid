@@ -1,0 +1,18 @@
+.total-spacer-row {
+    visibility: hidden;
+}
+
+.totals-container {
+    position: absolute;
+    overflow: hidden;
+    bottom: 0;
+}
+
+.totals-container .slick-header-columns {
+    border-bottom: none;
+    border-top: 1px solid silver;
+}
+
+.slick-total-cell {
+    position: absolute;
+}

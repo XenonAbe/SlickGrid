@@ -1,30 +1,43 @@
-## This is the 6pac slickgrid repo
+Find detailed [documentation here] (https://github.com/mleibman/SlickGrid/wiki).
 
-I am maintaining this branch as a separate 'alternative master'. Check [my wiki](https://github.com/6pac/SlickGrid/wiki) for details.
+###Extension of 6pac repo
 
-Original mleibman README follows:
+#### This repo made following changes
 
---------------------------------------------------------------------------------------------------------------------
+1. Column configuration have new property `preventClearOnEdit`.
+    - This basically prevent the cell content get clear on editor get activate.
+    - Helpful in case's like [here](https://github.com/6pac/SlickGrid/issues/11).
 
-Find documentation and examples in [the wiki](https://github.com/mleibman/SlickGrid/wiki).
+2. Now the editor will receive event as second parameter when available.
 
-# Welcome to SlickGrid
+3. Two new events are added `onInitialize` and `onRendered`.
+    - `onInitialize` will be get called when the actual init is finished (in case of lazy init enable it get called after that).
+    - `onRendered` will be called after the `render' completes.
+    
+4. Exposed following 4 methods:
+    - `getHeaderWidth` to get the header width.
+    - `getCanvasWidth` return the canvas width.
+    - `getViewportHeight` return viewport height.
+    - `getUID` return the grid ID.
 
-## SlickGrid is an advanced JavaScript grid/spreadsheet component
+5. Added `minimumContainerHeight` grid option. This is particularly useful when the grid element (container) reveal/show/appear on click (or pragmatically). 
+    - Example: carousel in bootstrap where the slides are hidden (have zero height?).
+    
+6. Implemented the total plugin (footer), its stays at the bottom (make sure to enable `enableAddRow` to prevent the last row hiding).
+    - It fire `onRendered` event each time the footer created and recalculated (`onDataviewRefreshed` - DataView {insert, delete etc..}, `onColumnsReordered`, `onColumnsResized` and `onInitialize` Grid).
+    - Pass `updateSummaryData` method in options and implement to calculate the total row columns values.
+        - It it will receive 3 parameters `items`, `columns` and `callback`.
+        - One must call the callback with data (see example in the totals plugin code for example).
+    - You can pass `aggregator` for each column in the column definition.
+        - Aggregator will receive 4 parameters `{sum: <<values>>, values: [<values>>]}, columnDef, event, args`.
+        - It must return the value.
 
-Some highlights:
 
-* Adaptive virtual scrolling (handle hundreds of thousands of rows with extreme responsiveness)
-* Extremely fast rendering speed
-* Supports jQuery UI Themes
-* Background post-rendering for richer cells
-* Configurable & customizable
-* Full keyboard navigation
-* Column resize/reorder/show/hide
-* Column autosizing & force-fit
-* Pluggable cell formatters & editors
-* Support for editing and creating new rows.
-* Grouping, filtering, custom aggregators, and more!
-* Advanced detached & multi-field editors with undo/redo support.
-* “GlobalEditorLock” to manage concurrent edits in cases where multiple Views on a page can edit the same data.
-* Support for [millions of rows](http://stackoverflow.com/a/2569488/1269037)
+#### How to install this package
+
+`bower mslickgrid`
+
+
+#### Note: If your looking for more features, Angularjs support as well (IE9+, modern browser) I recommend [angulargrid] (http://angulargrid.com/). Its rewritten SlickGrid to support Angular (with/without)
+
+### Original license [MIT] (https://github.com/mleibman/SlickGrid/blob/master/MIT-LICENSE.txt) 
