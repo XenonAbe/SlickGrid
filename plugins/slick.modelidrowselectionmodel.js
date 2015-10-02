@@ -1,4 +1,4 @@
-(function ($, angular) {
+(function ($) {
     $.extend(true, window, {
         "Slick": {
             "ModelIdRowSelectionModel": ModelIdRowSelectionModel
@@ -36,7 +36,7 @@
 
         function setSelectedUniqueIds(ids) {
             var rowPositionIds;
-            _selectedUniqueIds = angular.copy(ids);
+            _selectedUniqueIds = arrayConcat([], ids);
             if (allSelected()) {
                 var dataView = _grid.getData();
                 var getIdList = function (item) { return item[dataView.getIdProperty()]; };
@@ -91,7 +91,7 @@
             var _newRows = [];
             if (_grid.getData()) {
                 var _dataView = _grid.getData();
-                if (angular.isFunction(_dataView.mapIdsToRows)) {
+                if ($.isFunction(_dataView.mapIdsToRows)) {
                     _newRows = _dataView.mapIdsToRows(rows);
                 }
             }
@@ -191,14 +191,99 @@
                     _grid.scrollRowIntoView(active);
                     var selection = getRowsRange(top, bottom);
                     var dataView = _grid.getData();
-                    var ids = dataView.mapRowsToIds(selection);
+                    var ids = getSelectionInGroup(selection, dataView);
                     _allSelected = false;
                     setSelectedUniqueIds(ids);
+
+                    dataView.refresh();
                 }
 
                 e.preventDefault();
                 e.stopPropagation();
             }
+        }
+
+        function itemMatcher(isGroup) {
+            return function (item, index) {
+                if (isGroup) {
+                    return item instanceof Slick.Group || item instanceof Slick.GroupTotals;
+                }
+                return !(item instanceof Slick.Group) && !(item instanceof Slick.GroupTotals);
+            };
+        }
+
+        function arrayConcat(a1) {
+            if (!arguments || arguments.length < 2) {
+                return arguments;
+            }
+
+            var concatedArray = arguments[0];
+            var list;
+            var argumentsIndex = arguments.length;
+
+            while (--argumentsIndex) {
+                list = arguments[argumentsIndex];
+                if (!$.isArray(list)) {
+                    continue;
+                }
+                var index = 0, length = list.length, anotherValue;
+                for (index; index < length; index++) {
+                    anotherValue = list[index];
+                    concatedArray.push(anotherValue);
+                }
+            }
+            return concatedArray;
+        }
+
+        function getSelectionInGroup(absoluteSelection, dataView) {
+            if (!$.isArray(absoluteSelection) || !absoluteSelection.length) {
+                return absoluteSelection;
+            }
+            var reletiveIds = [];
+
+            var selectedItems = absoluteSelection.map(function (id) { return dataView.getItem(id); });
+            var idProperty = dataView.getIdProperty();
+
+            reletiveIds = $.grep(selectedItems, itemMatcher(false)).map(function (item) { return item[idProperty]; });
+            var groupRows = $.grep(selectedItems, itemMatcher(true));
+
+            var ids = getIdsFromGroups(groupRows, idProperty);
+            arrayConcat(reletiveIds, ids);
+
+            return reletiveIds;
+        }
+
+        function getIdsFromGroups(groups, idProperty) {
+            if (!($.isArray(groups) && groups.length)) {
+                return [];
+            }
+
+            var ids = [], groupIds;
+            var group, length = groups.length, index;
+
+            for (index = 0; index < length; index++) {
+                group = groups[index];
+                groupIds = getIdsFromGroup(group, idProperty);
+                arrayConcat(ids, groupIds);
+            }
+            return ids;
+        }
+
+        function getIdsFromGroup(group, idProperty) {
+            var ids = [];
+
+            if (!group) {
+                return ids;
+            }
+
+            if ($.isArray(group.rows) && group.rows.length) {
+                ids = group.rows.map(function (item) { return item[idProperty]; });
+            }
+
+            var groupIds = getIdsFromGroups(group.groups, idProperty);
+            arrayConcat(ids, groupIds);
+
+            return ids;
         }
 
         function handleClick(e) {
@@ -238,11 +323,13 @@
             }
 
             var dataView = _grid.getData();
-            var ids = dataView.mapRowsToIds(selection);
+            var ids = getSelectionInGroup(selection, dataView);
             _allSelected = false;
             setSelectedUniqueIds(ids);
+
+            dataView.refresh();
             e.stopImmediatePropagation();
             return true;
         }
     }
-})(jQuery, angular);
+})(jQuery);
