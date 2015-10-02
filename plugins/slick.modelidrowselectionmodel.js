@@ -192,10 +192,9 @@
                     var selection = getRowsRange(top, bottom);
                     var dataView = _grid.getData();
                     var ids = getSelectionInGroup(selection, dataView);
-
+                    _allSelected = false;
                     setSelectedUniqueIds(ids);
 
-                    _allSelected = false;
                     dataView.refresh();
                 }
 
@@ -325,10 +324,9 @@
 
             var dataView = _grid.getData();
             var ids = getSelectionInGroup(selection, dataView);
-
+            _allSelected = false;
             setSelectedUniqueIds(ids);
 
-            _allSelected = false;
             dataView.refresh();
             e.stopImmediatePropagation();
             return true;
