@@ -8,7 +8,8 @@
                     Min: MinAggregator,
                     Max: MaxAggregator,
                     Sum: SumAggregator,
-                    UniqueString: UniqueStringAggregator
+                    UniqueString: UniqueStringAggregator,
+                    SelectionCount: SelectionCountAggregator
                 }
             }
         }
@@ -519,9 +520,6 @@
             return groups;
         }
 
-        // TODO:  lazy totals calculation
-
-
         function calculateGroupTotals(group) {
             // TODO:  try moving iterating over groups into compiled accumulator
             var gi = groupingInfos[group.level];
@@ -619,10 +617,10 @@
             var fn = new Function(
                 "_items",
                 "for (var " + accumulatorInfo.params[0] + ", _i=0, _il=_items.length; _i<_il; _i++) {" +
-                    accumulatorInfo.params[0] + " = _items[_i]; " +
-                    accumulatorInfo.body +
-                    "}"
-            );
+                accumulatorInfo.params[0] + " = _items[_i]; " +
+                accumulatorInfo.body +
+                "}"
+                );
             fn.displayName = fn.name = "compiledAccumulatorLoop";
             return fn;
         }
@@ -639,7 +637,7 @@
             // This preserves the function template code after JS compression,
             // so that replace() commands still work as expected.
             var tpl = [
-                //"function(_items, _args) { ",
+            //"function(_items, _args) { ",
                 "var _retval = [], _idx = 0; ",
                 "var $item$, $args$ = _args; ",
                 "_coreloop: ",
@@ -671,7 +669,7 @@
             // This preserves the function template code after JS compression,
             // so that replace() commands still work as expected.
             var tpl = [
-                //"function(_items, _args, _cache) { ",
+            //"function(_items, _args, _cache) { ",
                 "var _retval = [], _idx = 0; ",
                 "var $item$, $args$ = _args; ",
                 "_coreloop: ",
@@ -786,10 +784,10 @@
                         item.__group !== r.__group ||
                         item.__group && !item.equals(r))
                         || (eitherIsNonData &&
-                        // no good way to compare totals since they are arbitrary DTOs
-                        // deep object comparison is pretty expensive
-                        // always considering them 'dirty' seems easier for the time being
-                        (item.__groupTotals || r.__groupTotals))
+                            // no good way to compare totals since they are arbitrary DTOs
+                            // deep object comparison is pretty expensive
+                            // always considering them 'dirty' seems easier for the time being
+                            (item.__groupTotals || r.__groupTotals))
                         || item[idProperty] != r[idProperty]
                         || (updated && updated[item[idProperty]])
                         ) {
@@ -1084,6 +1082,56 @@
         }
     }
 
+    function SelectionCountAggregator(selectionModel) {
+        /// variables
+        this.selectionModel = selectionModel;
+        this.selectionCount = 0;
+        this.selectedIdLookup = {};
+        this.cached = false;
+
+        /// API
+        this.init = init;
+        this.accumulate = accumulate;
+        this.storeResult = storeResult;
+        this.generateSelectedIdLookup = generateSelectedIdLookup;
+
+        /// API Implementation
+        function init() {
+            this.selectionCount = 0;
+            this.selectedIdLookup = {};
+            this.cached = false;
+        }
+
+        function accumulate(item) {
+            if (!this.cached) {
+                this.cached = true;
+                this.selectionCount = 0;
+                this.selectedIdLookup = this.generateSelectedIdLookup();
+            }
+
+            if (this.selectedIdLookup[item._id]) {
+                this.selectionCount += 1;
+            }
+        }
+
+        function storeResult(groupTotals) {
+            this.cached = false;
+
+            groupTotals.selectedCount = this.selectionCount;
+        }
+
+        /// private helper methods
+        function generateSelectedIdLookup() {
+            var lookup = {};
+            var ids = this.selectionModel.getSelectedUniqueIds();
+            if (!$.isArray(ids) || !ids.length) {
+                return lookup;
+            }
+            $.each(ids, function (index, id) { lookup[id] = true; });
+            return lookup;
+        }
+    }
+
     function MaxAggregator(field) {
         this.field_ = field;
 
@@ -1129,7 +1177,4 @@
             groupTotals.sum[this.field_] = this.sum_;
         }
     }
-
-    // TODO:  add more built-in aggregators
-    // TODO:  merge common aggregators in one to prevent needles iterating
 })(jQuery);
