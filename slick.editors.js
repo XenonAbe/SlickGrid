@@ -585,7 +585,7 @@
     // Returns the number of fixed decimal places or `null`
     this.getDecimalPlaces = function () {
       var rtn = args.column && args.column.editorFixedDecimalPlaces;
-      if (!rtn && rtn !== 0) { 
+      if (rtn == null) { 
         rtn = this.defaultDecimalPlaces;
       }
       return (!rtn && rtn !== 0 ? null : rtn);

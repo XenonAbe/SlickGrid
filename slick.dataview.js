@@ -1610,7 +1610,7 @@
     this.accumulate = function (item) {
       var val = item[this.field_];
       this.count_++;
-      if (val != null && val !== "" && !isNaN(val)) {
+      if (val != null && val !== "" && isFinite(val)) {
         this.nonNullCount_++;
         this.sum_ += parseFloat(val);
       }
@@ -1635,7 +1635,7 @@
 
     this.accumulate = function (item) {
       var val = item[this.field_];
-      if (val != null && val !== "" && !isNaN(val)) {
+      if (val != null && val !== "" && isFinite(val)) {
         val = parseFloat(val);
         if (this.min_ == null || val < this.min_) {
           this.min_ = val;
@@ -1660,7 +1660,7 @@
 
     this.accumulate = function (item) {
       var val = item[this.field_];
-      if (val != null && val !== "" && !isNaN(val)) {
+      if (val != null && val !== "" && isFinite(val)) {
         val = parseFloat(val);
         if (this.max_ == null || val > this.max_) {
           this.max_ = val;
@@ -1685,7 +1685,7 @@
 
     this.accumulate = function (item) {
       var val = item[this.field_];
-      if (val != null && val !== "" && !isNaN(val)) {
+      if (val != null && val !== "" && isFinite(val)) {
         this.sum_ += parseFloat(val);
       }
     };
@@ -1709,7 +1709,7 @@
     this.accumulate = function (item) {
       var val = item[this.field_];
       var found = false;
-      if (val != null && val !== "" && !isNaN(val)) {
+      if (val != null && val !== "" && isFinite(val)) {
         val = parseFloat(val);
         for (var i = 0, len = this.pairs_.length; i < len; i++) {
           if (this.pairs_[i].value === val) {
@@ -1753,7 +1753,7 @@
     this.accumulate = function (item) {
       var val = item[this.field_];
       var spliced = false;
-      if (val != null && val !== "" && !isNaN(val)) {
+      if (val != null && val !== "" && isFinite(val)) {
         val = parseFloat(val);
         for (var i = 0, len = this.sorted_.length; i < len; i++) {
           if (val < this.sorted_[i]) {
@@ -1793,7 +1793,7 @@
 
     this.accumulate = function (item) {
       var val = item[this.field_];
-      if (val != null && val !== "" && !isNaN(val)) {
+      if (val != null && val !== "" && isFinite(val)) {
         val = parseFloat(val);
         this.nonNullCount_++;
         if (this.Mk_ != null) {
@@ -1918,8 +1918,8 @@
       // we only accumulate if both the value and the weight are numbers.
       // this is equivalent to treating null weights or values as zero
       // weight or values.
-      if (currentValue != null && currentValue !== "" && !isNaN(currentValue) &&
-          currentWeight != null & currentWeight !== "" && !isNaN(currentWeight)) {
+      if (currentValue != null && currentValue !== "" && isFinite(currentValue) &&
+          currentWeight != null & currentWeight !== "" && isFinite(currentWeight)) {
         var parsedWeight = parseFloat(currentWeight);
         this.weightedSum_ += parseFloat(currentValue) * parsedWeight;
         this.weightSum_ += parsedWeight;
