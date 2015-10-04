@@ -914,11 +914,14 @@ if (typeof Slick === "undefined") {
      * plugins are unregistered!
      */
     function unregisterPlugin(plugin) {
-      // Defensive coding:
+      // Defensive coding / Re-entrant code support:
       // 
       // Account for the obscure issue where unregistering one plugin can cause its
       // `destroy` method to unregister *another* plugin: hence re-evaluate the
-      // `plugins.length` on every round!
+      // `plugins.length` on every round!        
+      //
+      // This makes our `unregisterPlugin()` API re-entrant (like it should be), just
+      // like its counterpart `registerPlugin()`.
       // 
       // Otherwise unregister these plugins in the *reverse order* in which they have
       // been registered.
@@ -1111,8 +1114,8 @@ if (typeof Slick === "undefined") {
       $boundAncestors = null;
     }
 
-    // tile may be NULL: this is similar to specifying an empty title.
-    // ditto for toolTip.
+    // title and/or toolTip may be NULL: then the existing value(s) as present in the column
+    // definition will be used instead.
     function updateColumnHeader(columnId, title, toolTip) {
       if (!initialized) { return false; }
       var idx = getColumnIndex(columnId);
@@ -4520,8 +4523,8 @@ if (0) {
         attributes: {
           // Make every cell keyboard-focusable as per W3C spec ( https://html.spec.whatwg.org/#focus-management-apis ); 
           // without us setting a valid tabindex DOM node attribute any `takeFocus=true` config option for
-          // setActiveCell() et al will fail to deliver in Chrome 38.x and upwards, at least, as calling `.focus()`
-          // on a node which doesn't have this apparently keeps the focus (document.activeElement) stuck at BODY
+          // `setActiveCell()` et al will fail to deliver in Chrome 38.x and upwards, at least, as calling `.focus()`
+          // on a node which doesn't have this apparently keeps the focus (`document.activeElement`) stuck at BODY
           // level :-(  -- added assertions elsewhere in the code to catch this problem.
           tabindex: 0    
         },

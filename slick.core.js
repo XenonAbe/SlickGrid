@@ -823,19 +823,26 @@
      *
      *                       - `params`: array of function parameters
      *                       - `body`: the function body (source code)
+     *                       - `name`: the function name; empty string when this is an anonymous function
      */
     function getFunctionInfo(fn) {
-      var fnRegex = /^function[^(]*\(([^)]*)\)\s*{([\s\S]*)}$/;
+      var fnRegex = /^function\s*([^(]*)\(([^)]*)\)\s*{([\s\S]*)}$/;
       var matches = fn.toString().match(fnRegex);
       // WARNING/NOTE: it turns out that at least Chrome puts some surplus at the end of the 
       // function parameter list when the function has been previously created using the
       // `new Function(...)` operation.
       // 
       // For completeness sake we cover that here too.
-      var args = matches[1].replace(/\/\*\*\//g, ' ').trim();
+      var args = matches[2].replace(/\/\*\*\//g, ' ').trim();
+      var fname = matches[1].trim();
+      if (fname === "anonymous") {
+        fname = "";
+      }
+      fname = fn.name || fname;
       return {
         params: args.split(","),
-        body: matches[2].trim()
+        body: matches[3].trim(),
+        name: fname 
       };
     }
 
@@ -968,13 +975,15 @@
         You may add other replacements here for HTML only
         (but it's not necessary).
         Or for XML, only if the named entities are defined in its DTD.
+
+        N.B.: Make sure you patch the replace regex below too! 
         */
     };
     options = options || {};
     if (!options.suitableForUriPrinting) {
         delete entityMap["/"];
     }
-    if (!options.preserveCR) {
+    if (!options.encodeCRLF) {
         delete entityMap["\n"];
         delete entityMap["\r"];
     }
@@ -984,7 +993,7 @@
         return "";
       } else {
         return ("" + s) /* Forces the conversion to string. */
-            .replace(/\r\n/g, "\n") /* Must be before the next replacement. */
+            .replace(/\r\n/g, "\n") // convert CRLF to LF-only before we do anything else 
             .replace(/[&<>"'\/\r\n]/g, function (s) {
                 return entityMap[s] || s;
             });
