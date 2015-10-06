@@ -55,6 +55,38 @@ Some highlights:
 * Support for [millions of rows](http://stackoverflow.com/a/2569488/1269037)
 
 
+
+## (re)Generating the Documentation
+
+Install `gitbook` on your system; `bitbook` says:
+
+> You need to install `gitbook-cli` to have access to the gitbook command anywhere on your system.
+> If you've installed this package globally, you need to uninstall it.
+>
+> Run 'npm uninstall -g gitbook' then 'npm install -g gitbook-cli'
+> and *ignore* the error message that will probably show up after that first command:
+>
+> ```
+> npm WARN uninstall not installed in C:\Users\Ger\AppData\Roaming\npm\node_modules: "gitbook"
+> ```
+
+Make sure you've got the development dependencies installed by running this one next:
+
+```
+npm install
+```
+
+and then the first round of docu carpet bombing is done by JSDoc with our *special* template:
+
+```
+jsdoc -t templates/raw -d __tmp__ --verbose slick.core.js
+gitbook
+```
+
+bla bla bla blaaaaaaaaaaaaaaaaaaaaaaaaaa................................
+
+
+
 ## TODO
 
 * extend the set of unit tests for DataView to help test grouping behaviour (which currently has bugs) and indirect access
