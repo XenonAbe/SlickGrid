@@ -10,8 +10,9 @@
 
 
 
-/***
+/**
  * Contains core SlickGrid classes.
+ * 
  * @module Core
  * @namespace Slick
  */
@@ -19,10 +20,13 @@
 (function ($) {
   "use strict";
 
-  /***
+  /**
    * An event object for passing data to event handlers and letting them control propagation.
-   * <p>This is pretty much identical to how W3C and jQuery implement events.</p>
-   * @class EventData
+   * 
+   * This is pretty much identical to how W3C and jQuery implement events.
+   * 
+   * @class 
+   * @memberof Slick
    * @constructor
    */
   function EventData(sourceEvent, propagateSignals) {
@@ -30,9 +34,10 @@
     var isImmediatePropagationStopped = false;
     var isDefaultPrevented = false;
 
-    /***
+    /**
      * Stops event from executing its default behaviour.
-     * @method preventDefault
+     * 
+     * @method 
      */
     this.preventDefault = function (propagateSignalsOverride) {
       isDefaultPrevented = true;
@@ -42,18 +47,21 @@
       }
     };
 
-    /***
+    /**
      * Returns whether preventDefault was called on this event object.
-     * @method isDefaultPrevented
+     * 
+     * @method 
+     * 
      * @return {Boolean}
      */
     this.isDefaultPrevented = function () {
       return isDefaultPrevented;
     };
 
-    /***
+    /**
      * Stops event from propagating up the DOM tree.
-     * @method stopPropagation
+     * 
+     * @method 
      */
     this.stopPropagation = function (propagateSignalsOverride) {
       isPropagationStopped = true;
@@ -63,18 +71,21 @@
       }
     };
 
-    /***
+    /**
      * Returns whether stopPropagation was called on this event object.
-     * @method isPropagationStopped
+     * 
+     * @method
+     *  
      * @return {Boolean}
      */
     this.isPropagationStopped = function () {
       return isPropagationStopped;
     };
 
-    /***
+    /**
      * Prevents the rest of the handlers from being executed.
-     * @method stopImmediatePropagation
+     * 
+     * @method 
      */
     this.stopImmediatePropagation = function (propagateSignalsOverride) {
       isImmediatePropagationStopped = true;
@@ -84,9 +95,11 @@
       }
     };
 
-    /***
+    /**
      * Returns whether stopImmediatePropagation was called on this event object.
-     * @method isImmediatePropagationStopped
+     * 
+     * @method 
+     * 
      * @return {Boolean}
      */
     this.isImmediatePropagationStopped = function () {
@@ -111,19 +124,24 @@
     }
   }
 
-  /***
+  /**
    * A simple publisher-subscriber implementation.
-   * @class Event
+   * 
+   * @class
+   * @memberof Slick
    * @constructor
    */
   function Event() {
     var handlers = [];
 
-    /***
+    /**
      * Adds an event handler to be called when the event is fired.
-     * <p>Event handler will receive two arguments - an <code>EventData</code> and the <code>data</code>
-     * object the event was fired with.<p>
-     * @method subscribe
+     * 
+     * Event handler will receive two arguments - an `EventData` and the `data`
+     * object the event was fired with.
+     * 
+     * @method
+     *  
      * @param fn {Function} Event handler.
      * @return {Function} the registered event handler `fn`.
      */
@@ -132,9 +150,11 @@
       return fn;
     };
 
-    /***
-     * Removes an event handler added with <code>subscribe(fn)</code>.
-     * @method unsubscribe
+    /**
+     * Removes an event handler added with `subscribe(fn)`.
+     * 
+     * @method 
+     * 
      * @param fn {Function} Event handler to be removed. When undefined, all event handlers are unsubscribed.
      */
     this.unsubscribe = function (fn) {
@@ -149,27 +169,31 @@
       }
     };
 
-    /***
+    /**
      * Returns the list of registered event handlers as an array.
-     * @method handlers
+     * 
+     * @method 
+     * 
      * @return the list of registered event handlers as an array. When no handlers are registered the array is empty.
      */
     this.handlers = function () {
       return handlers;
     };
 
-    /***
+    /**
      * Fires an event notifying all subscribers.
-     * @method notify
+     * 
+     * @method 
+     * 
      * @param args {Object} Additional data object to be passed to all handlers.
      * @param e {EventData}
      *      Optional.
-     *      An <code>EventData</code> object to be passed to all handlers.
+     *      An `EventData` object to be passed to all handlers.
      *      For DOM events, an existing W3C/jQuery event object can be passed in.
      * @param scope {Object}
      *      Optional.
      *      The scope ("this") within which the handler will be executed.
-     *      If not specified, the scope will be set to the <code>Event</code> instance.
+     *      If not specified, the scope will be set to the `Event` instance.
      * @return {boolean} the return value produced by the event handlers; boolean TRUE by default.
      */
     this.notify = function (args, e, scope) {
@@ -185,6 +209,13 @@
     };
   }
 
+  /**
+   * [EventHandler description]
+   *
+   * @class
+   * @memberof Slick
+   * @constructor
+   */
   function EventHandler() {
     var handlers = [];
 
@@ -223,14 +254,17 @@
     }
   }
 
-  /***
+  /**
    * A structure containing a range of cells.
-   * @class Range
+   * 
+   * @class
+   * @memberof Slick
    * @constructor
+   * 
    * @param fromRow {Integer} Starting row.
    * @param fromCell {Integer} Starting cell.
-   * @param toRow {Integer} Optional. Ending row. Defaults to <code>fromRow</code>.
-   * @param toCell {Integer} Optional. Ending cell. Defaults to <code>fromCell</code>.
+   * @param toRow {Integer} Optional. Ending row. Defaults to `fromRow`.
+   * @param toCell {Integer} Optional. Ending cell. Defaults to `fromCell`.
    */
   function Range(fromRow, fromCell, toRow, toCell) {
     if (toRow === undefined && toCell === undefined) {
@@ -238,51 +272,57 @@
       toCell = fromCell;
     }
 
-    /***
+    /**
      * @property fromRow
      * @type {Integer}
      */
     this.fromRow = Math.min(fromRow, toRow);
 
-    /***
+    /**
      * @property fromCell
      * @type {Integer}
      */
     this.fromCell = Math.min(fromCell, toCell);
 
-    /***
+    /**
      * @property toRow
      * @type {Integer}
      */
     this.toRow = Math.max(fromRow, toRow);
 
-    /***
+    /**
      * @property toCell
      * @type {Integer}
      */
     this.toCell = Math.max(fromCell, toCell);
 
-    /***
+    /**
      * Returns whether a range represents a single row.
-     * @method isSingleRow
+     * 
+     * @method 
+     * 
      * @return {Boolean}
      */
     this.isSingleRow = function () {
       return this.fromRow == this.toRow;
     };
 
-    /***
+    /**
      * Returns whether a range represents a single cell.
-     * @method isSingleCell
+     * 
+     * @method 
+     * 
      * @return {Boolean}
      */
     this.isSingleCell = function () {
       return this.fromRow == this.toRow && this.fromCell == this.toCell;
     };
 
-    /***
+    /**
      * Returns whether a range contains a given cell.
-     * @method contains
+     * 
+     * @method 
+     * 
      * @param row {Integer}
      * @param cell {Integer}
      * @return {Boolean}
@@ -292,9 +332,11 @@
           cell >= this.fromCell && cell <= this.toCell;
     };
 
-    /***
+    /**
      * Returns whether the range matches the given range.
-     * @method equals
+     * 
+     * @method 
+     * 
      * @param range {Range}
      * @return {Boolean}
      */
@@ -303,9 +345,11 @@
           range.fromCell === this.fromCell && range.toCell === this.toCell;
     };
     
-    /***
+    /**
      * Returns a readable representation of a range.
-     * @method toString
+     * 
+     * @method 
+     * 
      * @return {String}
      */
     this.toString = function () {
@@ -320,9 +364,12 @@
 
   /**
    * Used to decorate a master data row with information about a group of nested child rows.
-   * @class MasterRow
-   * @param nestingKey {Object} Key uniquely identifying the group.
+   * 
+   * @class
+   * @memberof Slick
    * @constructor
+   * 
+   * @param nestingKey {Object} Key uniquely identifying the group.
    */
   function MasterRow(nestingKey) {
     /**
@@ -332,7 +379,7 @@
      */
     this.level = 0;
 
-    /***
+    /**
      * Number of rows in the nesting.
      * @property count
      * @type {Integer}
@@ -346,7 +393,7 @@
      */
     this.rows = [];
 
-    /***
+    /**
      * Whether a nesting is expanded.
      * @property expanded
      * @type {Boolean}
@@ -362,15 +409,18 @@
     this.nestingKey = (null == nestingKey) ? null : nestingKey;
   }
 
-  /***
+  /**
    * Used to decorate related nested rows.
-   * @class NestedRow
+   * 
+   * @class
+   * @memberof Slick
+   * @constructor
+   * 
    * @param masterId {Object} Id of related master row.
    * @param idProperty {String} Defaults to "id".
-   * @constructor
    */
   function NestedRow(masterId, idProperty) {
-    /**
+    /*
      * Id of related master row.
      * @property id
      * @type {Object}
@@ -378,33 +428,41 @@
     this[idProperty || "id"] = masterId;
   }
 
-  /***
+  /**
    * A dummy loading data row.
-   * @class LoadingRow
+   * 
+   * @class
+   * @memberof Slick
+   * @constructor
+   * 
    * @param id {Object} Unique Id of the row.
    * @param idProperty {String} Defaults to "id".
-   * @constructor
    */
   function LoadingRow(id, idProperty) {
     this.__loading = true;
     this[idProperty || "id"] = id;
   }
 
-  /***
+  /**
    * A dummy missing data row.
-   * @class MissingRow
+   * 
+   * @class 
+   * @memberof Slick
+   * @constructor
+   * 
    * @param id {Object} Unique Id of the row.
    * @param idProperty {String} Defaults to "id".
-   * @constructor
    */
   function MissingRow(id, idProperty) {
     this.__missing = true;
     this[idProperty || "id"] = id;
   }
 
-  /***
+  /**
    * A base class that all special / non-data rows (like Group and GroupTotals) derive from.
-   * @class NonDataItem
+   * 
+   * @class 
+   * @memberof Slick
    * @constructor
    */
   function NonDataItem() {
@@ -412,10 +470,12 @@
   }
 
 
-  /***
+  /**
    * Information about a group of rows.
-   * @class Group
+   * 
+   * @class 
    * @extends Slick.NonDataItem
+   * @memberof Slick
    * @constructor
    */
   function Group() {
@@ -428,35 +488,35 @@
      */
     this.level = 0;
 
-    /***
+    /**
      * Number of rows in the group.
      * @property count
      * @type {Integer}
      */
     this.count = 0;
 
-    /***
+    /**
      * Grouping value.
      * @property value
      * @type {Object}
      */
     this.value = null;
 
-    /***
+    /**
      * Formatted display value of the group.
      * @property title
      * @type {String}
      */
     this.title = null;
 
-    /***
+    /**
      * Whether a group is collapsed.
      * @property collapsed
      * @type {Boolean}
      */
     this.collapsed = false;
 
-    /***
+    /**
      * GroupTotals, if any.
      * @property totals
      * @type {GroupTotals}
@@ -488,9 +548,11 @@
 
   Group.prototype = new NonDataItem();
 
-  /***
+  /**
    * Compares two Group instances.
-   * @method equals
+   * 
+   * @method 
+   * 
    * @return {Boolean}
    * @param group {Group} Group instance to compare to.
    */
@@ -501,26 +563,29 @@
         this.title === group.title;
   };
 
-  /***
+  /**
    * Information about group totals.
+   * 
    * An instance of GroupTotals will be created for each totals row and passed to the aggregators
    * so that they can store arbitrary data in it.  That data can later be accessed by group totals
    * formatters during the display.
-   * @class GroupTotals
+   * 
+   * @class 
    * @extends Slick.NonDataItem
+   * @memberof Slick
    * @constructor
    */
   function GroupTotals() {
     this.__groupTotals = true;
 
-    /***
+    /**
      * Parent Group.
      * @param group
      * @type {Group}
      */
     this.group = null;
 
-    /***
+    /**
      * Whether the totals have been fully initialized / calculated.
      * Will be set to false for lazy-calculated group totals.
      * @param initialized
@@ -531,21 +596,25 @@
 
   GroupTotals.prototype = new NonDataItem();
 
-  /***
+  /**
    * A locking helper to track the active edit controller and ensure that only a single controller
    * can be active at a time.  This prevents a whole class of state and validation synchronization
    * issues.  An edit controller (such as SlickGrid) can query if an active edit is in progress
    * and attempt a commit or cancel before proceeding.
-   * @class EditorLock
+   * 
+   * @class 
+   * @memberof Slick
    * @constructor
    */
   function EditorLock() {
     var activeEditController = null;
 
-    /***
+    /**
      * Returns true if a specified edit controller is active (has the edit lock).
      * If the parameter is not specified, returns true if any edit controller is active.
-     * @method isActive
+     * 
+     * @method 
+     * 
      * @param editController {EditController}
      * @return {Boolean}
      */
@@ -554,10 +623,12 @@
       return (editController ? activeEditController === editController : activeEditController !== null);
     };
 
-    /***
+    /**
      * Sets the specified edit controller as the active edit controller (acquire edit lock).
-     * If another edit controller is already active, and exception will be thrown.
-     * @method activate
+     * If another edit controller is already active an exception will be thrown.
+     * 
+     * @method 
+     * 
      * @param editController {EditController} edit controller acquiring the lock
      */
     this.activate = function (editController) {
@@ -577,10 +648,12 @@
       activeEditController = editController;
     };
 
-    /***
+    /**
      * Unsets the specified edit controller as the active edit controller (release edit lock).
      * If the specified edit controller is not the active one, an exception will be thrown.
-     * @method deactivate
+     * 
+     * @method 
+     * 
      * @param editController {EditController} edit controller releasing the lock
      */
     this.deactivate = function (editController) {
@@ -591,23 +664,27 @@
       activeEditController = null;
     };
 
-    /***
+    /**
      * Attempts to commit the current edit by calling "commitCurrentEdit" method on the active edit
      * controller and returns whether the commit attempt was successful (commit may fail due to validation
      * errors, etc.).  Edit controller's "commitCurrentEdit" must return true if the commit has succeeded
      * and false otherwise.  If no edit controller is active, returns true.
-     * @method commitCurrentEdit
+     * 
+     * @method 
+     * 
      * @return {Boolean}
      */
     this.commitCurrentEdit = function commitCurrentEdit() {
       return (activeEditController ? activeEditController.commitCurrentEdit() : true);
     };
 
-    /***
+    /**
      * Attempts to cancel the current edit by calling "cancelCurrentEdit" method on the active edit
      * controller and returns whether the edit was successfully canceled.  If no edit controller is
      * active, returns true.
-     * @method cancelCurrentEdit
+     * 
+     * @method 
+     * 
      * @return {Boolean}
      */
     this.cancelCurrentEdit = function cancelCurrentEdit() {
@@ -618,7 +695,7 @@
 
 
 
-  /***
+  /**
    * Provide a generic performance timer, which strives to produce highest possible accuracy time measurements.
    * 
    * methods:
@@ -661,6 +738,10 @@
    * 
    *    - http://updates.html5rocks.com/2012/08/When-milliseconds-are-not-enough-performance-now
    *    - http://ejohn.org/blog/accuracy-of-javascript-time/
+   *
+   * @class 
+   * @memberof Slick
+   * @constructor
    */
   function PerformanceTimer() {
     /* @private */ var start_time = false;
@@ -764,6 +845,8 @@
    *
    * + report whether we can name such generated functions and provide a means to do
    *   so through our compiler wrapper.
+   *
+   * @constructor
    */
   function CompileJavaScript() {
     var hasFunctionDisplayName = false;
@@ -959,8 +1042,8 @@
   }
 
 
-  // This is inspired by
-  // http://stackoverflow.com/questions/7753448/how-do-i-escape-quotes-in-html-attribute-values
+  /// This is inspired by
+  /// http://stackoverflow.com/questions/7753448/how-do-i-escape-quotes-in-html-attribute-values
   function HtmlEntities(options) {
     var entityMap = {
         "&": "&amp;",
@@ -1001,9 +1084,11 @@
     };
   }
 
-  // similar to jQuery .offset() but provides more info and guaranteed to match its numbers with getGridPosition() and  getActiveCellPosition()      
-  // 
-  // @param elem may be a DOM Element or a jQuery selector object.
+  /**
+   * similar to jQuery .offset() but provides more info and guaranteed to match its numbers with getGridPosition() and  getActiveCellPosition()      
+   * 
+   * @param elem may be a DOM Element or a jQuery selector object.
+   */
   function BoxInfo(elem) {
     if (!elem) {
       // produce a box which is positioned way outside the visible area.
@@ -1103,7 +1188,7 @@
 
 
 
-  /***
+  /**
    * Define a keyboard as a set of names for keypress codes, etc. for better code readability.
    */
   function Keyboard() {
@@ -1141,7 +1226,7 @@
 
   // register namespace
   $.extend(true, window, {
-    Slick: {
+    Slick: /* @nocollapse */ {
       Event: Event,
       EventData: EventData,
       EventHandler: EventHandler,
@@ -1160,10 +1245,12 @@
       MissingRow: MissingRow,
       EditorLock: EditorLock,
 
-      /***
+      /**
        * A global singleton editor lock.
+       * 
        * @class GlobalEditorLock
        * @static
+       * @memberof Slick
        * @constructor
        */
       GlobalEditorLock: new EditorLock()
