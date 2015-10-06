@@ -6,6 +6,8 @@
     ],
     "pluginsConfig": {},
     "structure": {
-        "readme": "documentation/reference/README.md"
+        "readme": "documentation/reference/README.md",
+        "summary": "documentation/reference/SUMMARY.md",
+        "glossary": "documentation/reference/GLOSSARY.md"
     }
 }
