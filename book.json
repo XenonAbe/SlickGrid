@@ -1,11 +1,11 @@
 {
     "plugins": [
         "anchors",
-        "multipart"
+        "multipart",
+        "richquotes"
     ],
     "pluginsConfig": {},
     "structure": {
         "readme": "documentation/reference/README.md"
     }
-    
 }
