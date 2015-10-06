@@ -2,4 +2,5 @@
 
 * Preface
 * Introduction
+* Installing and Using SlickGrid
 
