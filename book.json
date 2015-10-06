@@ -3,5 +3,9 @@
         "anchors",
         "multipart"
     ],
-    "pluginsConfig": {}
+    "pluginsConfig": {},
+    "structure": {
+        "readme": "documentation/reference/README.md"
+    }
+    
 }
