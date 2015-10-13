@@ -1205,16 +1205,18 @@
         }
 
         function accumulate(item) {
-           this.minElement.push(item[this.field_][0]);
-           if(item[this.field_][1]){
+            if(item[this.field_].length>1){
+                this.minElement.push(item[this.field_][0]);
                 this.maxElement.push(item[this.field_][1]);
-           }
+            }else{
+                this.maxElement.push(item[this.field_][0]);
+            }
 
         }
 
         function storeResult(groupTotals) {
             groupTotals.integerRange =  groupTotals.integerRange || {};
-            groupTotals.integerRange[this.field_] = (this.maxElement.length === 0) ? [array.Min(this.minElement)] :[array.Min(this.minElement),array.Max(this.maxElement)];
+            groupTotals.CurrencyRange[this.field_] = (this.maxElement.length === 0) ? [array.Min(this.minElement)] :[(array.Min(this.minElement)===Number.POSITIVE_INFINITY)?0:array.Min(this.minElement),array.Max(this.maxElement)];
         }
     }
 
@@ -1232,12 +1234,12 @@
         }
 
         function accumulate(item) {
-
-           this.minElement.push(new Date(item[this.field_][0]));
-           if(item[this.field_][1]){
+             if(item[this.field_].length>1){
+                this.minElement.push(new Date(item[this.field_][0]));
                 this.maxElement.push(new Date(item[this.field_][1]));
-           }
-
+            }else{
+                this.maxElement.push(new Date(item[this.field_][0]));
+            }
         }
 
         function storeResult(groupTotals) {
@@ -1279,16 +1281,17 @@
         }
 
         function accumulate(item) {
-           this.minElement.push(item[this.field_][0]);
-           if(item[this.field_][1]){
+           if(item[this.field_].length>1){
+                this.minElement.push(item[this.field_][0]);
                 this.maxElement.push(item[this.field_][1]);
-           }
-
+            }else{
+                this.maxElement.push(item[this.field_][0]);
+            }
         }
 
         function storeResult(groupTotals) {
             groupTotals.CurrencyRange =  groupTotals.CurrencyRange || {};
-            groupTotals.CurrencyRange[this.field_] = (this.maxElement.length === 0) ? [array.Min(this.minElement)] :[array.Min(this.minElement),array.Max(this.maxElement)];
+            groupTotals.CurrencyRange[this.field_] = (this.maxElement.length === 0) ? [array.Min(this.minElement)] :[(array.Min(this.minElement)===Number.POSITIVE_INFINITY)?0:array.Min(this.minElement),array.Max(this.maxElement)];
         }
     }
 
@@ -1306,16 +1309,19 @@
         }
 
         function accumulate(item) {
-           this.minElement.push(item[this.field_][0]);
-           if(item[this.field_][1]){
+            if(item[this.field_].length>1){
+                this.minElement.push(item[this.field_][0]);
                 this.maxElement.push(item[this.field_][1]);
-           }
+            }else{
+                this.maxElement.push(item[this.field_][0]);
+            }
+           
 
         }
 
         function storeResult(groupTotals) {
             groupTotals.PercentRange =  groupTotals.PercentRange || {};
-            groupTotals.PercentRange[this.field_] = (this.maxElement.length === 0) ? [array.Min(this.minElement)] :[array.Min(this.minElement),array.Max(this.maxElement)];
+            groupTotals.CurrencyRange[this.field_] = (this.maxElement.length === 0) ? [array.Min(this.minElement)] :[(array.Min(this.minElement)===Number.POSITIVE_INFINITY)?0:array.Min(this.minElement),array.Max(this.maxElement)];
         }
     }
 
