@@ -10,10 +10,8 @@
                     Sum: SumAggregator,
                     UniqueString: UniqueStringAggregator,
                     SelectionCount: SelectionCountAggregator,
-                    IntegerRange: IntegerRangeAggregator,
-                    DateRange: DateRangeAggregator,
-                    CurrencyRange: CurrencyRangeAggregator,
-                    PercentRange: PercentRangeAggregator
+                    NumberRange: NumberRangeAggregator,
+                    DateRange: DateStringRangeAggregator,
                 }
             }
         }
@@ -1182,16 +1180,7 @@
         }
     }
 
-    var array ={
-        Min: function (arr) {
-            return Math.min.apply( Math, arr );
-        },
-        Max: function (arr) {
-            return Math.max.apply( Math, arr );
-        }
-    }
-
-    function IntegerRangeAggregator(field){
+    function NumberRangeAggregator(field){
         this.field_ = field;
 
         this.init = init;
@@ -1199,28 +1188,38 @@
         this.storeResult = storeResult;
 
         function init() {
-            this.minElement = [];
-            this.maxElement = [];
-
+            this.min = undefined;
+            this.max = undefined
         }
 
         function accumulate(item) {
-            if(item[this.field_].length>1){
-                this.minElement.push(item[this.field_][0]);
-                this.maxElement.push(item[this.field_][1]);
-            }else{
-                this.maxElement.push(item[this.field_][0]);
+            var startElement = item[this.field_][0] || 0;
+            var endElement = item[this.field_][1] || 0;
+            if (item[this.field_][1] === undefined){
+                endElement = startElement;
             }
 
+            var min = Math.min(startElement, endElement);
+            var max = Math.max(startElement, endElement);
+
+            if ((this.min || Number.MAX_VALUE) > min) {
+                this.min = min;
+            }
+            if ((this.max || Number.MIN_VALUE) < max) {
+                this.max = max;
+            }
         }
 
         function storeResult(groupTotals) {
-            groupTotals.integerRange =  groupTotals.integerRange || {};
-            groupTotals.CurrencyRange[this.field_] = (this.maxElement.length === 0) ? [array.Min(this.minElement)] :[(array.Min(this.minElement)===Number.POSITIVE_INFINITY)?0:array.Min(this.minElement),array.Max(this.maxElement)];
+            groupTotals.numberRange = groupTotals.numberRange || {};
+            groupTotals.numberRange[this.field_] = [this.min || 0];
+            if (this.max > this.min) {
+                groupTotals.numberRange[this.field_].push(this.max);
+            }
         }
     }
 
-    function DateRangeAggregator(field){
+    function DateStringRangeAggregator(field){
         this.field_ = field;
 
         this.init = init;
@@ -1228,100 +1227,40 @@
         this.storeResult = storeResult;
 
         function init() {
-            this.minElement = [];
-            this.maxElement = [];
-
+            debugger;
+            this.min = undefined;
+            this.max = undefined;
+            this.actualMinFormat = undefined;
+            this.actualMaxFormat = undefined;
         }
 
         function accumulate(item) {
-             if(item[this.field_].length>1){
-                this.minElement.push(new Date(item[this.field_][0]));
-                this.maxElement.push(new Date(item[this.field_][1]));
-            }else{
-                this.maxElement.push(new Date(item[this.field_][0]));
+            var startElement = new Date(item[this.field_][0]);
+            var endElement = new Date(item[this.field_][1]);
+
+            if (item[this.field_][1] === undefined){
+                endElement = startElement;
+            }
+
+            var min = Math.min(startElement, endElement);
+            var max = Math.max(startElement, endElement);
+
+            if ((this.min || Number.MAX_VALUE) > min) {
+                this.min = min;
+                this.actualMinFormat = (min === startElement.getTime()) ? item[this.field_][0] : item[this.field_][1];
+            }
+            if ((this.max || Number.MIN_VALUE) < max) {
+                this.max = max;
+                this.actualMaxFormat = (max === startElement.getTime()) ? item[this.field_][0] : item[this.field_][1];
             }
         }
 
         function storeResult(groupTotals) {
-
-            function getFormattedDate(date) {
-                var year = date.getFullYear();
-                var month = (1 + date.getMonth()).toString();
-                month = month.length > 1 ? month : '0' + month;
-                var day = date.getDate().toString();
-                day = day.length > 1 ? day : '0' + day;
-                return month + '/' +  day + '/' + year ;
-            }
-
-              var array ={
-                Min: function (arr) {
-                    return new Date(Math.min.apply(null,arr));
-                },
-                Max: function (arr) {
-                    return new Date(Math.max.apply(null,arr));
-                }
-            }
-
             groupTotals.DateRange =  groupTotals.DateRange || {};
-            groupTotals.DateRange[this.field_] = (this.maxElement.length === 0) ? [getFormattedDate(array.Min(this.minElement))] :[getFormattedDate(array.Min(this.minElement)),getFormattedDate(array.Max(this.maxElement))];
-        }
-    }
-
-    function CurrencyRangeAggregator(field){
-        this.field_ = field;
-
-        this.init = init;
-        this.accumulate = accumulate;
-        this.storeResult = storeResult;
-
-        function init() {
-            this.minElement = [];
-            this.maxElement = [];
-
-        }
-
-        function accumulate(item) {
-           if(item[this.field_].length>1){
-                this.minElement.push(item[this.field_][0]);
-                this.maxElement.push(item[this.field_][1]);
-            }else{
-                this.maxElement.push(item[this.field_][0]);
+            groupTotals.DateRange[this.field_] = [this.actualMinFormat];
+            if (this.max > this.min) {
+                groupTotals.DateRange[this.field_].push(this.actualMaxFormat);
             }
-        }
-
-        function storeResult(groupTotals) {
-            groupTotals.CurrencyRange =  groupTotals.CurrencyRange || {};
-            groupTotals.CurrencyRange[this.field_] = (this.maxElement.length === 0) ? [array.Min(this.minElement)] :[(array.Min(this.minElement)===Number.POSITIVE_INFINITY)?0:array.Min(this.minElement),array.Max(this.maxElement)];
-        }
-    }
-
-    function PercentRangeAggregator(field){
-        this.field_ = field;
-
-        this.init = init;
-        this.accumulate = accumulate;
-        this.storeResult = storeResult;
-
-        function init() {
-            this.minElement = [];
-            this.maxElement = [];
-
-        }
-
-        function accumulate(item) {
-            if(item[this.field_].length>1){
-                this.minElement.push(item[this.field_][0]);
-                this.maxElement.push(item[this.field_][1]);
-            }else{
-                this.maxElement.push(item[this.field_][0]);
-            }
-           
-
-        }
-
-        function storeResult(groupTotals) {
-            groupTotals.PercentRange =  groupTotals.PercentRange || {};
-            groupTotals.CurrencyRange[this.field_] = (this.maxElement.length === 0) ? [array.Min(this.minElement)] :[(array.Min(this.minElement)===Number.POSITIVE_INFINITY)?0:array.Min(this.minElement),array.Max(this.maxElement)];
         }
     }
 
