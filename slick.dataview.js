@@ -9,7 +9,9 @@
                     Max: MaxAggregator,
                     Sum: SumAggregator,
                     UniqueString: UniqueStringAggregator,
-                    SelectionCount: SelectionCountAggregator
+                    SelectionCount: SelectionCountAggregator,
+                    NumberRange: NumberRangeAggregator,
+                    DateRange: DateStringRangeAggregator,
                 }
             }
         }
@@ -1177,4 +1179,88 @@
             groupTotals.sum[this.field_] = this.sum_;
         }
     }
+
+    function NumberRangeAggregator(field){
+        this.field_ = field;
+
+        this.init = init;
+        this.accumulate = accumulate;
+        this.storeResult = storeResult;
+
+        function init() {
+            this.min = undefined;
+            this.max = undefined
+        }
+
+        function accumulate(item) {
+            var startElement = item[this.field_][0] || 0;
+            var endElement = item[this.field_][1] || 0;
+            if (item[this.field_][1] === undefined){
+                endElement = startElement;
+            }
+
+            var min = Math.min(startElement, endElement);
+            var max = Math.max(startElement, endElement);
+
+            if ((this.min || Number.MAX_VALUE) > min) {
+                this.min = min;
+            }
+            if ((this.max || Number.MIN_VALUE) < max) {
+                this.max = max;
+            }
+        }
+
+        function storeResult(groupTotals) {
+            groupTotals.numberRange = groupTotals.numberRange || {};
+            groupTotals.numberRange[this.field_] = [this.min || 0];
+            if (this.max > this.min) {
+                groupTotals.numberRange[this.field_].push(this.max);
+            }
+        }
+    }
+
+    function DateStringRangeAggregator(field){
+        this.field_ = field;
+
+        this.init = init;
+        this.accumulate = accumulate;
+        this.storeResult = storeResult;
+
+        function init() {
+            this.min = undefined;
+            this.max = undefined;
+            this.actualMinFormat = undefined;
+            this.actualMaxFormat = undefined;
+        }
+
+        function accumulate(item) {
+            var startElement = new Date(item[this.field_][0]);
+            var endElement = new Date(item[this.field_][1]);
+
+            if (item[this.field_][1] === undefined){
+                endElement = startElement;
+            }
+
+            var min = Math.min(startElement, endElement);
+            var max = Math.max(startElement, endElement);
+
+            if ((this.min || Number.MAX_VALUE) > min) {
+                this.min = min;
+                this.actualMinFormat = (min === startElement.getTime()) ? item[this.field_][0] : item[this.field_][1];
+            }
+            if ((this.max || Number.MIN_VALUE) < max) {
+                this.max = max;
+                this.actualMaxFormat = (max === startElement.getTime()) ? item[this.field_][0] : item[this.field_][1];
+            }
+        }
+
+        function storeResult(groupTotals) {
+            groupTotals.DateRange =  groupTotals.DateRange || {};
+            groupTotals.DateRange[this.field_] = [this.actualMinFormat];
+            if (this.max > this.min) {
+                groupTotals.DateRange[this.field_].push(this.actualMaxFormat);
+            }
+        }
+    }
+
 })(jQuery);
