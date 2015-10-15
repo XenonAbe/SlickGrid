@@ -1227,7 +1227,6 @@
         this.storeResult = storeResult;
 
         function init() {
-            debugger;
             this.min = undefined;
             this.max = undefined;
             this.actualMinFormat = undefined;
