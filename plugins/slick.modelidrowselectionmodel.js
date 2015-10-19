@@ -381,23 +381,25 @@
                             return !(item instanceof Slick.GroupTotals);
                         });
 
-                    if (isGroup(flattenedData[flattenedData.length - 1])) {
-                        ids = flattenedData.map(function (item) { return item[dataView.getIdProperty()]; });
-                    } else {
-                        var lastData = dataView.getItem(to);
-                        var passedLastData = false;
-                        ids = $.grep(flattenedData, function (item) {
-                            if (passedLastData) {
-                                return false;
-                            }
-                            if (lastData === item) {
-                                passedLastData = true;
-                            }
-                            return true;
-                         }).map(function (item) {
-                            return item[dataView.getIdProperty()];
-                        });
+                    var lastData = dataView.getItem(to);
+
+                    if (isGroup(_grid.getDataItem(to))) {
+                        var flattenedLastGroup = getFlattenedSelection([_grid.getDataItem(to)]);
+                        lastData = flattenedLastGroup[flattenedLastGroup.length - 1];
                     }
+
+                    var passedLastData = false;
+                    ids = $.grep(flattenedData, function (item) {
+                        if (passedLastData) {
+                            return false;
+                        }
+                        if (lastData === item) {
+                            passedLastData = true;
+                        }
+                        return true;
+                    }).map(function (item) {
+                        return item[dataView.getIdProperty()];
+                    });
 
                     _grid.setActiveCell(cell.row, cell.cell);
                 }
