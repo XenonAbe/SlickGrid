@@ -34,6 +34,59 @@
             "onSelectedRangesChanged": new Slick.Event()
         });
 
+        function getFlattenedSelection(dataSelection) {
+            var flattenedData = [], item, length = dataSelection.length;
+            for (var i = 0; i < length; i++) {
+                item = dataSelection[i];
+                if (isGroup(item)) {
+                    arrayConcat(flattenedData, flattenGroupRowHierarchy(item));
+                } else {
+                    flattenedData.push(item);
+                }
+            }
+            return flattenedData;
+        }
+
+        function flattenGroupRowHierarchy(item) {
+            var flattenedRows = [];
+
+            // var groups, group, len, index, groupResults;
+            // var groupLen, groupIndex;
+            var group, len, groupResults, groupIndex;
+
+            /// the item passed in was a data row
+            if (!isGroup(item) && !isGroupTotals(item)) {
+                return [item];
+            }
+
+            /// the item passed in was a group with rows
+            if (item.rows && item.rows.length) {
+                return arrayConcat([item], item.rows);
+            }
+
+            /// the item apssed in was a group with groups
+            if (item.groups && item.groups.length) {
+
+                if (item.groups.length && !item.rows.length) {
+                    flattenedRows.push(item);
+                }
+
+                len = item.groups.length;
+                for (groupIndex = 0; groupIndex < len; groupIndex++) {
+                    group = item.groups[groupIndex];
+
+                    groupResults = flattenGroupRowHierarchy(group);
+                    arrayConcat(flattenedRows, groupResults);
+                }
+            }
+
+            return flattenedRows;
+        }
+
+        function isGroup(item) {
+            return item instanceof Slick.Group;
+        }
+
         function setSelectedUniqueIds(ids) {
             var rowPositionIds;
             _selectedUniqueIds = arrayConcat([], ids);
@@ -213,26 +266,14 @@
         }
 
         function arrayConcat(a1) {
-            if (!arguments || arguments.length < 2) {
-                return arguments;
+            a1 = a1 || [];
+            var index = 1, anotherArr;
+
+            while (anotherArr = arguments[index++]) {
+                anotherArr.forEach(function (item) { a1.push(item); });
             }
 
-            var concatedArray = arguments[0];
-            var list;
-            var argumentsIndex = arguments.length;
-
-            while (--argumentsIndex) {
-                list = arguments[argumentsIndex];
-                if (!$.isArray(list)) {
-                    continue;
-                }
-                var index = 0, length = list.length, anotherValue;
-                for (index; index < length; index++) {
-                    anotherValue = list[index];
-                    concatedArray.push(anotherValue);
-                }
-            }
-            return concatedArray;
+            return a1;
         }
 
         function getSelectionInGroup(absoluteSelection, dataView) {
@@ -286,8 +327,19 @@
             return ids;
         }
 
+        function sortAsc(a, b) {
+            return a - b;
+        }
+
+        function getItemFromPositionId(positionId) {
+            return _grid.getDataItem(positionId);
+        }
+
         function handleClick(e) {
             var cell = _grid.getCellFromEvent(e);
+            var dataView = _grid.getData();
+            var ids;
+
             if (!cell || !_grid.canCellBeActive(cell.row, cell.cell)) {
                 return false;
             }
@@ -297,16 +349,20 @@
 
             if (!e.ctrlKey && !e.shiftKey && !e.metaKey) {
                 selection = [cell.row];
+                ids = getSelectionInGroup(selection, dataView);
             }
             else if (_grid.getOptions().multiSelect) {
-                if (idx === -1 && (e.ctrlKey || e.metaKey)) {
-                    selection.push(cell.row);
-                    _grid.setActiveCell(cell.row, cell.cell);
-                } else if (idx !== -1 && (e.ctrlKey || e.metaKey)) {
-                    selection = $.grep(selection, function (o, i) {
-                        return (o !== cell.row);
-                    });
-                    _grid.setActiveCell(cell.row, cell.cell);
+                if (e.ctrlKey || e.metaKey) {
+                    if (idx === -1) {
+                        selection.push(cell.row);
+                        _grid.setActiveCell(cell.row, cell.cell);
+                    } else {
+                        selection = $.grep(selection, function (o, i) {
+                            return (o !== cell.row);
+                        });
+                        _grid.setActiveCell(cell.row, cell.cell);
+                    }
+                    ids = getSelectionInGroup(selection, dataView);
                 } else if (selection.length && e.shiftKey) {
                     var last = selection.pop();
                     var from = Math.min(cell.row, last);
@@ -318,12 +374,35 @@
                         }
                     }
                     selection.push(last);
+                    selection.sort(sortAsc);
+                    var dataSelection = selection.map(getItemFromPositionId);
+                    var flattenedData = $.grep(getFlattenedSelection(dataSelection),
+                        function (item) {
+                            return !(item instanceof Slick.GroupTotals);
+                        });
+
+                    if (isGroup(flattenedData[flattenedData.length - 1])) {
+                        ids = flattenedData.map(function (item) { return item[dataView.getIdProperty()]; });
+                    } else {
+                        var lastData = dataView.getItem(to);
+                        var passedLastData = false;
+                        ids = $.grep(flattenedData, function (item) {
+                            if (passedLastData) {
+                                return false;
+                            }
+                            if (lastData === item) {
+                                passedLastData = true;
+                            }
+                            return true;
+                         }).map(function (item) {
+                            return item[dataView.getIdProperty()];
+                        });
+                    }
+
                     _grid.setActiveCell(cell.row, cell.cell);
                 }
             }
 
-            var dataView = _grid.getData();
-            var ids = getSelectionInGroup(selection, dataView);
             _allSelected = false;
             setSelectedUniqueIds(ids);
 
