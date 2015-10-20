@@ -100,9 +100,6 @@
             }
 
             _ranges = rowsToRanges(rowPositionIds);
-            if (_ranges.length === 0) {
-                _ranges = _nonSelected;
-            }
             _self.onSelectedRangesChanged.notify(_ranges);
         }
 
@@ -335,6 +332,26 @@
             return _grid.getDataItem(positionId);
         }
 
+        function LastSelected(ids, rowId, item) {
+            this.ids = ids;
+            this.rowId = rowId;
+            this.item = item;
+
+            this.isValid = function isValid(dataView) {
+                var checkItem = dataView.getItem(this.rowId);
+
+                return true &&
+                    this.ids && this.ids.length &&
+                    this.rowId >= 0 &&
+                    !!this.item &&
+                    ((this.item.groupingKey && this.item.groupingKey === checkItem.groupingKey) ||
+                    (this.item[dataView.getIdProperty()] && this.item[dataView.getIdProperty()] === checkItem[dataView.getIdProperty()]
+                    ));
+            };
+        }
+
+        var lastSelected = new LastSelected([], undefined, {});
+
         function handleClick(e) {
             var cell = _grid.getCellFromEvent(e);
             var dataView = _grid.getData();
@@ -347,6 +364,11 @@
             var selection = rangesToRows(_ranges);
             var idx = $.inArray(cell.row, selection);
 
+            if (!e.shiftKey) {
+                var _ids = getSelectionInGroup([cell.row], dataView);
+                var item = dataView.getItem(cell.row);
+                lastSelected = new LastSelected(_ids, cell.row, item);
+            }
             if (!e.ctrlKey && !e.shiftKey && !e.metaKey) {
                 selection = [cell.row];
                 ids = getSelectionInGroup(selection, dataView);
@@ -363,8 +385,8 @@
                         _grid.setActiveCell(cell.row, cell.cell);
                     }
                     ids = getSelectionInGroup(selection, dataView);
-                } else if (selection.length && e.shiftKey) {
-                    var last = selection.pop();
+                } else if (lastSelected.isValid(dataView) && e.shiftKey) {
+                    var last = lastSelected.rowId;
                     var from = Math.min(cell.row, last);
                     var to = Math.max(cell.row, last);
                     selection = [];
