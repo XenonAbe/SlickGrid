@@ -33,10 +33,36 @@
             "onSelectedRangesChanged": new Slick.Event()
         });
 
+        function getNonTotalItemsFromRowIds(ids) {
+            var index = ids.length, id, item, response = [];
+            var dataView = _grid.getData();
+            while (index--) {
+                id = ids[index];
+                item = dataView.getItem(id);
+                if (!isGroupTotals(item)) {
+                    response.push(item);
+                }
+            }
+            return response;
+        }
 
-        function getFlattenedSelectionFromRowIds(rowIds) {
-            var items = $.grep(rowIds.map(function (id) { return _grid.getDataItem(id); }), function (item) { return !isGroupTotals(item); });
-            return getFlattenedSelection(items);
+        function getFlattenedSelectionIdFromRowIds(rowIds) {
+            var items, flattenedItems, response, index, item, idProperty;
+
+            items = getNonTotalItemsFromRowIds(rowIds);
+            flattenedItems = getFlattenedSelection(items);
+            response = [];
+            index = flattenedItems.length;
+            idProperty = _grid.getData().getIdProperty();
+
+            while (index--) {
+                item = flattenedItems[index];
+                if (!isGroup(item)) {
+                    response.push(item[idProperty]);
+                }
+            }
+
+            return response;
         }
 
         function getFlattenedSelection(dataSelection) {
@@ -216,16 +242,6 @@
             setSelectedUniqueIds([]);
         }
 
-        function handleActiveCellChange(e, data) {
-            if (_options.selectActiveRow && data.row != null) {
-                _allSelected = false;
-                selectionObj.clear();
-                selectionObj.setItem(new LastSelected(data.row));
-                selectionObj.toggle($.grep(getFlattenedSelectionFromRowIds([data.row]), function (item) { return !isGroup(item); }).map(function (item) { return item[_grid.getData().getIdProperty()]; }));
-                setSelectedUniqueIds(selectionObj.getUniqueIds());
-            }
-        }
-
         function arrayConcat(a1) {
             a1 = a1 || [];
             var index = 1, anotherArr;
@@ -331,6 +347,16 @@
             return list;
         }
 
+        function handleActiveCellChange(e, data) {
+            if (_options.selectActiveRow && data.row != null) {
+                _allSelected = false;
+                selectionObj.clear();
+                selectionObj.setItem(new LastSelected(data.row));
+                selectionObj.toggle(getFlattenedSelectionIdFromRowIds([data.row]));
+                setSelectedUniqueIds(selectionObj.getUniqueIds());
+            }
+        }
+
         function handleKeyDown(e) {
             var dataView = _grid.getData();
             var shiftItemRow = selectionObj.getItem();
@@ -359,21 +385,14 @@
 
                 if (e.which === 40 && active <= shiftItemRow.rowId) { // down arrow clicked
                     // remove the selection from the item above the highest
-                    selectionObj.toggle($.grep(getFlattenedSelectionFromRowIds([active - 1]), function (item) { return !isGroup(item); }).
-                        map(function (item) { return item[dataView.getIdProperty()]; })
-                        , undefined, true);
+                    selectionObj.toggle(getFlattenedSelectionIdFromRowIds([active - 1]), undefined, true);
                 } else if (e.which === 38 && active >= shiftItemRow.rowId) { // up arrow clicked
                     // remove the selection from the item below the lowest
-                    selectionObj.toggle($.grep(getFlattenedSelectionFromRowIds([active + 1]), function (item) { return !isGroup(item); }).
-                        map(function (item) { return item[dataView.getIdProperty()]; })
-                        , undefined, true);
+                    selectionObj.toggle(getFlattenedSelectionIdFromRowIds([active + 1]), undefined, true);
                 }
 
                 _grid.scrollRowIntoView(active);
-                console.log(top, bottom);
-                selectionObj.toggle($.grep(getFlattenedSelectionFromRowIds(buildArray(top, bottom)), function (item) { return !isGroup(item); }).
-                    map(function (item) { console.log(item); return item[dataView.getIdProperty()]; })
-                    , true);
+                selectionObj.toggle(getFlattenedSelectionIdFromRowIds(buildArray(top, bottom)), true);
                 _allSelected = false;
                 setSelectedUniqueIds(selectionObj.getUniqueIds());
 
@@ -396,8 +415,7 @@
             }
 
             var dataView = _grid.getData();
-            var selectedItems = [dataView.getItem(cell.row)];
-            var selectedItemIds = $.grep(getFlattenedSelection(selectedItems), function (item) { return !isGroup(item) && !(item instanceof Slick.GroupTotals); }).map(function (item) { return item[dataView.getIdProperty()]; });
+            var selectedItemIds = getFlattenedSelectionIdFromRowIds([cell.row]);
 
             if (selectionObj.getItem() === undefined) {
                 selectionObj.setItem(new LastSelected(cell.row));
@@ -415,13 +433,8 @@
                 } else {
                     var highPosition = Math.max(selectionObj.getItem().rowId, cell.row);
                     var lowPosition = Math.min(selectionObj.getItem().rowId, cell.row);
-                    var rowIds = [];
-                    while (highPosition - lowPosition) {
-                        rowIds.push(lowPosition++);
-                    }
-                    rowIds.push(highPosition);
-                    selectedItems = rowIds.map(function (rowId) { return dataView.getItem(rowId); });
-                    selectedItemIds = $.grep(getFlattenedSelection(selectedItems), function (item) { return !isGroup(item) && !(item instanceof Slick.GroupTotals); }).map(function (item) { return item[dataView.getIdProperty()]; });
+                    var rowIds = buildArray(highPosition, lowPosition);
+                    selectedItemIds = getFlattenedSelectionIdFromRowIds(rowIds);
                     selectionObj.toggle(selectedItemIds);
                 }
             }
