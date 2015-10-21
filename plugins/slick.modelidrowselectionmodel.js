@@ -11,7 +11,6 @@
         var _self = this;
         var _allSelected = false;
         var _handler = new Slick.EventHandler();
-        var _nonSelected = [new Slick.Range(0, 1, 0, 1)];
         var _defaults = { selectActiveRow: true };
 
         $.extend(this, {
@@ -33,6 +32,12 @@
 
             "onSelectedRangesChanged": new Slick.Event()
         });
+
+
+        function getFlattenedSelectionFromRowIds(rowIds) {
+            var items = $.grep(rowIds.map(function (id) { return _grid.getDataItem(id); }), function (item) { return !isGroupTotals(item); });
+            return getFlattenedSelection(items);
+        }
 
         function getFlattenedSelection(dataSelection) {
             var flattenedData = [], item, length = dataSelection.length;
@@ -85,6 +90,9 @@
 
         function isGroup(item) {
             return item instanceof Slick.Group;
+        }
+        function isGroupTotals(item) {
+            return item instanceof Slick.GroupTotals;
         }
 
         function setSelectedUniqueIds(ids) {
@@ -211,55 +219,11 @@
         function handleActiveCellChange(e, data) {
             if (_options.selectActiveRow && data.row != null) {
                 _allSelected = false;
-                setSelectedUniqueIds(data.grid.getData().mapRowsToIds([data.row]));
+                selectionObj.clear();
+                selectionObj.setItem(new LastSelected(data.row));
+                selectionObj.toggle($.grep(getFlattenedSelectionFromRowIds([data.row]), function (item) { return !isGroup(item); }).map(function (item) { return item[_grid.getData().getIdProperty()]; }));
+                setSelectedUniqueIds(selectionObj.getUniqueIds());
             }
-        }
-
-        function handleKeyDown(e) {
-            var activeRow = _grid.getActiveCell();
-            if (activeRow && e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && (e.which == 38 || e.which == 40)) {
-                var selectedRows = getSelectedRows();
-                selectedRows.sort(function (x, y) {
-                    return x - y
-                });
-
-                if (!selectedRows.length) {
-                    selectedRows = [activeRow.row];
-                }
-
-                var top = selectedRows[0];
-                var bottom = selectedRows[selectedRows.length - 1];
-                var active;
-
-                if (e.which == 40) {
-                    active = activeRow.row < bottom || top == bottom ? ++bottom : ++top;
-                } else {
-                    active = activeRow.row < bottom ? --bottom : --top;
-                }
-
-                if (active >= 0 && active < _grid.getDataLength()) {
-                    _grid.scrollRowIntoView(active);
-                    var selection = getRowsRange(top, bottom);
-                    var dataView = _grid.getData();
-                    var ids = getSelectionInGroup(selection, dataView);
-                    _allSelected = false;
-                    setSelectedUniqueIds(ids);
-
-                    dataView.refresh();
-                }
-
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        }
-
-        function itemMatcher(isGroup) {
-            return function (item, index) {
-                if (isGroup) {
-                    return item instanceof Slick.Group || item instanceof Slick.GroupTotals;
-                }
-                return !(item instanceof Slick.Group) && !(item instanceof Slick.GroupTotals);
-            };
         }
 
         function arrayConcat(a1) {
@@ -273,162 +237,198 @@
             return a1;
         }
 
-        function getSelectionInGroup(absoluteSelection, dataView) {
-            if (!$.isArray(absoluteSelection) || !absoluteSelection.length) {
-                return absoluteSelection;
-            }
-            var reletiveIds = [];
+        function SelectionObj() {
+            var lastItem = undefined;
+            var uniqueIds = [];
+            var uniqueIdLookup = {};
+            var distance = 0;
 
-            var selectedItems = absoluteSelection.map(function (id) { return dataView.getItem(id); });
-            var idProperty = dataView.getIdProperty();
+            this.toggle = toggle;
+            this.getUniqueIds = getUniqueIds;
+            this.clear = clear;
+            this.getItem = getItem;
+            this.setItem = setItem;
+            this.incrementDistance = incrementDistance;
+            this.decrementDistance = decrementDistance;
+            this.clearDistance = clearDistance;
+            this.getDistance = getDistance;
 
-            reletiveIds = $.grep(selectedItems, itemMatcher(false)).map(function (item) { return item[idProperty]; });
-            var groupRows = $.grep(selectedItems, itemMatcher(true));
-
-            var ids = getIdsFromGroups(groupRows, idProperty);
-            arrayConcat(reletiveIds, ids);
-
-            return reletiveIds;
-        }
-
-        function getIdsFromGroups(groups, idProperty) {
-            if (!($.isArray(groups) && groups.length)) {
-                return [];
-            }
-
-            var ids = [], groupIds;
-            var group, length = groups.length, index;
-
-            for (index = 0; index < length; index++) {
-                group = groups[index];
-                groupIds = getIdsFromGroup(group, idProperty);
-                arrayConcat(ids, groupIds);
-            }
-            return ids;
-        }
-
-        function getIdsFromGroup(group, idProperty) {
-            var ids = [];
-
-            if (!group) {
-                return ids;
+            function getDistance() { return distance; }
+            function clearDistance() { distance = 0; }
+            function incrementDistance() { distance++; }
+            function decrementDistance() { distance--; }
+            function getItem() { return lastItem; }
+            function setItem(item) { lastItem = item; }
+            function getUniqueIds() { return uniqueIds; }
+            function clear() { uniqueIds = []; uniqueIdLookup = {}; distance = 0; }
+            function toggle(ids, forceAdd, forceRemove) {
+                var missingIds = missing(ids);
+                if (forceRemove || (missingIds.length === 0 && !forceAdd)) {
+                    removeIds(ids);
+                } else {
+                    addIds(missingIds);
+                }
             }
 
-            if ($.isArray(group.rows) && group.rows.length) {
-                ids = group.rows.map(function (item) { return item[idProperty]; });
+            function addIds(ids) {
+                var index = ids.length, id;
+                while (index--) {
+                    id = ids[index];
+                    if (uniqueIdLookup[id] !== true) {
+                        uniqueIdLookup[id] = uniqueIds.length;
+                        uniqueIds.push(id);
+                    }
+                }
             }
 
-            var groupIds = getIdsFromGroups(group.groups, idProperty);
-            arrayConcat(ids, groupIds);
+            function removeIds(ids) {
+                var index = ids.length, uniqueIdsIndex, id;
+                while (index--) {
+                    id = ids[index];
+                    uniqueIdsIndex = uniqueIdLookup[id];
+                    if (uniqueIdsIndex >= 0) {
+                        uniqueIds.splice(uniqueIdsIndex, 1);
+                        uniqueIdLookup = toLookup(uniqueIds);
+                    }
+                }
+            }
 
-            return ids;
+            function toLookup(list) {
+                var hash = {}
+                list.forEach(addToHash);
+                return hash;
+
+                function addToHash(item, index) {
+                    hash[item] = index;
+                }
+            }
+
+            function missing(ids) {
+                var missingIds = [], idsIndex = ids.length, id;
+                while (idsIndex--) {
+                    id = ids[idsIndex];
+                    if (uniqueIdLookup[id] === undefined) {
+                        missingIds.push(id);
+                    }
+                }
+                return missingIds;
+            }
         }
 
-        function sortAsc(a, b) {
-            return a - b;
-        }
-
-        function getItemFromPositionId(positionId) {
-            return _grid.getDataItem(positionId);
-        }
-
-        function LastSelected(ids, rowId, item) {
-            this.ids = ids;
+        function LastSelected(rowId) {
             this.rowId = rowId;
-            this.item = item;
-
-            this.isValid = function isValid(dataView) {
-                var checkItem = dataView.getItem(this.rowId);
-
-                return true &&
-                    this.ids && this.ids.length &&
-                    this.rowId >= 0 &&
-                    !!this.item &&
-                    ((this.item.groupingKey && this.item.groupingKey === checkItem.groupingKey) ||
-                    (this.item[dataView.getIdProperty()] && this.item[dataView.getIdProperty()] === checkItem[dataView.getIdProperty()]
-                    ));
-            };
         }
 
-        var lastSelected = new LastSelected([], undefined, {});
+        var selectionObj = new SelectionObj();
+
+        function buildArray(p1, p2) {
+            var high = Math.max(p1, p2);
+            var low = Math.min(p1, p2);
+            var list = [high];
+            while (low - high) {
+                list.push(low++);
+            }
+            return list;
+        }
+
+        function handleKeyDown(e) {
+            var dataView = _grid.getData();
+            var shiftItemRow = selectionObj.getItem();
+            if (shiftItemRow && e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && (e.which == 38 || e.which == 40)) {
+
+                var active;
+                if (e.which == 40) { //down
+                    selectionObj.incrementDistance();
+                } else { //up
+                    selectionObj.decrementDistance();
+                }
+                active = selectionObj.getDistance() + shiftItemRow.rowId;
+
+                if (active < 0) {
+                    selectionObj.incrementDistance();
+                    active++;
+                } else if (active >= _grid.getDataLength()) {
+                    selectionObj.decrementDistance();
+                    active--;
+                }
+
+                var top = Math.min(shiftItemRow.rowId, active);
+                var bottom = Math.max(shiftItemRow.rowId, active);
+
+                _grid.setActiveCell(active, 0);
+
+                if (e.which === 40 && active <= shiftItemRow.rowId) { // down arrow clicked
+                    // remove the selection from the item above the highest
+                    selectionObj.toggle($.grep(getFlattenedSelectionFromRowIds([active - 1]), function (item) { return !isGroup(item); }).
+                        map(function (item) { return item[dataView.getIdProperty()]; })
+                        , undefined, true);
+                } else if (e.which === 38 && active >= shiftItemRow.rowId) { // up arrow clicked
+                    // remove the selection from the item below the lowest
+                    selectionObj.toggle($.grep(getFlattenedSelectionFromRowIds([active + 1]), function (item) { return !isGroup(item); }).
+                        map(function (item) { return item[dataView.getIdProperty()]; })
+                        , undefined, true);
+                }
+
+                _grid.scrollRowIntoView(active);
+                console.log(top, bottom);
+                selectionObj.toggle($.grep(getFlattenedSelectionFromRowIds(buildArray(top, bottom)), function (item) { return !isGroup(item); }).
+                    map(function (item) { console.log(item); return item[dataView.getIdProperty()]; })
+                    , true);
+                _allSelected = false;
+                setSelectedUniqueIds(selectionObj.getUniqueIds());
+
+                dataView.refresh();
+
+                e.preventDefault();
+                e.stopPropagation();
+            } else if (!e.ctrlKey && !e.shiftKey && !e.metaKey) {
+                selectionObj.clear();
+            } else if (!e.shiftKey) {
+                selectionObj.clearDistance();
+            }
+        }
 
         function handleClick(e) {
+            selectionObj.clearDistance();
             var cell = _grid.getCellFromEvent(e);
-            var dataView = _grid.getData();
-            var ids;
-
             if (!cell || !_grid.canCellBeActive(cell.row, cell.cell)) {
                 return false;
             }
 
-            var selection = rangesToRows(_ranges);
-            var idx = $.inArray(cell.row, selection);
+            var dataView = _grid.getData();
+            var selectedItems = [dataView.getItem(cell.row)];
+            var selectedItemIds = $.grep(getFlattenedSelection(selectedItems), function (item) { return !isGroup(item) && !(item instanceof Slick.GroupTotals); }).map(function (item) { return item[dataView.getIdProperty()]; });
 
-            if (!e.shiftKey) {
-                var _ids = getSelectionInGroup([cell.row], dataView);
-                var item = dataView.getItem(cell.row);
-                lastSelected = new LastSelected(_ids, cell.row, item);
+            if (selectionObj.getItem() === undefined) {
+                selectionObj.setItem(new LastSelected(cell.row));
             }
+
             if (!e.ctrlKey && !e.shiftKey && !e.metaKey) {
-                selection = [cell.row];
-                ids = getSelectionInGroup(selection, dataView);
+                selectionObj.clear();
+                selectionObj.toggle(selectedItemIds);
+                selectionObj.setItem(new LastSelected(cell.row));
             }
             else if (_grid.getOptions().multiSelect) {
                 if (e.ctrlKey || e.metaKey) {
-                    if (idx === -1) {
-                        selection.push(cell.row);
-                        _grid.setActiveCell(cell.row, cell.cell);
-                    } else {
-                        selection = $.grep(selection, function (o, i) {
-                            return (o !== cell.row);
-                        });
-                        _grid.setActiveCell(cell.row, cell.cell);
+                    selectionObj.toggle(selectedItemIds);
+                    selectionObj.setItem(new LastSelected(cell.row));
+                } else {
+                    var highPosition = Math.max(selectionObj.getItem().rowId, cell.row);
+                    var lowPosition = Math.min(selectionObj.getItem().rowId, cell.row);
+                    var rowIds = [];
+                    while (highPosition - lowPosition) {
+                        rowIds.push(lowPosition++);
                     }
-                    ids = getSelectionInGroup(selection, dataView);
-                } else if (lastSelected.isValid(dataView) && e.shiftKey) {
-                    var last = lastSelected.rowId;
-                    var from = Math.min(cell.row, last);
-                    var to = Math.max(cell.row, last);
-                    selection = [];
-                    for (var i = from; i <= to; i++) {
-                        if (i !== last) {
-                            selection.push(i);
-                        }
-                    }
-                    selection.push(last);
-                    selection.sort(sortAsc);
-                    var dataSelection = selection.map(getItemFromPositionId);
-                    var flattenedData = $.grep(getFlattenedSelection(dataSelection),
-                        function (item) {
-                            return !(item instanceof Slick.GroupTotals);
-                        });
-
-                    var lastData = dataView.getItem(to);
-
-                    if (isGroup(_grid.getDataItem(to))) {
-                        var flattenedLastGroup = getFlattenedSelection([_grid.getDataItem(to)]);
-                        lastData = flattenedLastGroup[flattenedLastGroup.length - 1];
-                    }
-
-                    var passedLastData = false;
-                    ids = $.grep(flattenedData, function (item) {
-                        if (passedLastData) {
-                            return false;
-                        }
-                        if (lastData === item) {
-                            passedLastData = true;
-                        }
-                        return true;
-                    }).map(function (item) {
-                        return item[dataView.getIdProperty()];
-                    });
-
-                    _grid.setActiveCell(cell.row, cell.cell);
+                    rowIds.push(highPosition);
+                    selectedItems = rowIds.map(function (rowId) { return dataView.getItem(rowId); });
+                    selectedItemIds = $.grep(getFlattenedSelection(selectedItems), function (item) { return !isGroup(item) && !(item instanceof Slick.GroupTotals); }).map(function (item) { return item[dataView.getIdProperty()]; });
+                    selectionObj.toggle(selectedItemIds);
                 }
             }
 
+            _grid.setActiveCell(cell.row, cell.cell);
             _allSelected = false;
-            setSelectedUniqueIds(ids);
+            setSelectedUniqueIds(selectionObj.getUniqueIds());
 
             dataView.refresh();
             e.stopImmediatePropagation();
