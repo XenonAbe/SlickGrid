@@ -3040,7 +3040,6 @@ var Slick = require('./core');
       if (!getEditorLock().commitCurrentEdit()) {
         return true;
       }
-      setFocus();
 
       var tabbingDirections = {
         "up": -1,
@@ -3152,11 +3151,6 @@ var Slick = require('./core');
 
       // if selecting the 'add new' row, start editing right away
       setActiveCellInternal(newCell, forceEdit || (row === getDataLength()) || options.autoEdit);
-
-      // if no editor was created, set the focus back on the grid
-      if (!currentEditor) {
-        setFocus();
-      }
     }
 
 
