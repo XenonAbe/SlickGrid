@@ -34,10 +34,10 @@
         });
 
         function getNonTotalItemsFromRowIds(ids) {
-            var index = ids.length, id, item, response = [];
+            var index = 0, id, item, response = [], length = ids.length;
             var dataView = _grid.getData();
-            while (index--) {
-                id = ids[index];
+            while (index < length) {
+                id = ids[index++];
                 item = dataView.getItem(id);
                 if (!isGroupTotals(item)) {
                     response.push(item);
@@ -47,16 +47,16 @@
         }
 
         function getFlattenedSelectionIdFromRowIds(rowIds) {
-            var items, flattenedItems, response, index, item, idProperty;
+            var items, flattenedItems, response, index, item, idProperty, length;
 
             items = getNonTotalItemsFromRowIds(rowIds);
             flattenedItems = getFlattenedSelection(items);
             response = [];
-            index = flattenedItems.length;
+            length = index = flattenedItems.length;
             idProperty = _grid.getData().getIdProperty();
 
             while (index--) {
-                item = flattenedItems[index];
+                item = flattenedItems[length - 1 - index];
                 if (!isGroup(item)) {
                     response.push(item[idProperty]);
                 }
@@ -338,12 +338,14 @@
         var selectionObj = new SelectionObj();
 
         function buildArray(p1, p2) {
-            var high = Math.max(p1, p2);
-            var low = Math.min(p1, p2);
-            var list = [high];
+            var high, low, list;
+            high = Math.max(p1, p2);
+            low = Math.min(p1, p2);
+            list = [];
             while (low - high) {
                 list.push(low++);
             }
+            list.push(high);
             return list;
         }
 
@@ -434,7 +436,25 @@
                     var highPosition = Math.max(selectionObj.getItem().rowId, cell.row);
                     var lowPosition = Math.min(selectionObj.getItem().rowId, cell.row);
                     var rowIds = buildArray(highPosition, lowPosition);
-                    selectedItemIds = getFlattenedSelectionIdFromRowIds(rowIds);
+
+                    var highPositionedItem = dataView.getItem(highPosition);
+
+                    var highPositionItemId = undefined;
+                    if (!isGroup(highPositionedItem)) {
+                        highPositionItemId = highPositionedItem[_grid.getData().getIdProperty()];
+                    }
+
+                    var outOfBound = false;
+                    selectedItemIds = $.grep(getFlattenedSelectionIdFromRowIds(rowIds), function (item, index) {
+                        if (outOfBound) {
+                            return false;
+                        }
+                        if (!outOfBound && highPositionItemId !== undefined && highPositionItemId === item) {
+                            outOfBound = true;
+                        }
+                        return true;
+                    });
+
                     selectionObj.toggle(selectedItemIds);
                 }
             }
