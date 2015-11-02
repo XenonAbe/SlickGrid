@@ -3041,6 +3041,11 @@ var Slick = require('./core');
         return true;
       }
 
+      if ($canvas.find(":focus").length !== 0) {
+        // steals focus from other controls on row navigation
+        setFocus();
+      }
+
       var tabbingDirections = {
         "up": -1,
         "down": 1,
@@ -3151,6 +3156,12 @@ var Slick = require('./core');
 
       // if selecting the 'add new' row, start editing right away
       setActiveCellInternal(newCell, forceEdit || (row === getDataLength()) || options.autoEdit);
+
+      // if no editor was created, set the focus back on the grid
+      if (!currentEditor && $canvas.find(":focus").length !== 0) {
+        // steals focus when a row is programatically updated
+        setFocus();
+      }
     }
 
 
