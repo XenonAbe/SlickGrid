@@ -3040,7 +3040,11 @@ var Slick = require('./core');
       if (!getEditorLock().commitCurrentEdit()) {
         return true;
       }
-      setFocus();
+
+      if (options.editable) {
+        // steals focus from other controls on row navigation
+        setFocus();
+      }
 
       var tabbingDirections = {
         "up": -1,
@@ -3154,7 +3158,8 @@ var Slick = require('./core');
       setActiveCellInternal(newCell, forceEdit || (row === getDataLength()) || options.autoEdit);
 
       // if no editor was created, set the focus back on the grid
-      if (!currentEditor) {
+      if (!options.editable && $canvas.find(":focus").length !== 0) {
+        // steals focus when a row is programatically updated
         setFocus();
       }
     }
