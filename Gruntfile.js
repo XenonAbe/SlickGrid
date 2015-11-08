@@ -313,6 +313,18 @@ module.exports = function (grunt) {
         inject: 'js/tests/unit/phantom.js'
       },
       files: 'tests/**/*.html'
+    },
+
+    jsdoc: {
+      lib: {
+        src: ['slick.core.js'],
+        //src: ['slick.*.js', 'editors/**/*.js', 'editors/**/*.js'],
+        options: {
+          destination: 'documentation/jsdoc-output/lib',
+          template: 'templates/raw',
+          verbode: true
+        }
+      }
     }
   });
 
@@ -324,6 +336,8 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('assemble-less');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-gitbook');
+  grunt.loadNpmTasks('grunt-jsdoc');
   grunt.loadNpmTasks('grunt-version-bump');
   grunt.loadNpmTasks('grunt-rewrite');
 
@@ -350,6 +364,9 @@ module.exports = function (grunt) {
 
   // Bump the version and update all files accordingly.
   grunt.registerTask('bump', ['version_bump', 'rewrite']);
+
+  // Documentation extraction/generation task.
+  grunt.registerTask('doc', ['jsdoc', 'gitbook']);
 
   // Default task.
   grunt.registerTask('default', ['test', 'dist']);
