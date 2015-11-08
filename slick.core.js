@@ -15,6 +15,7 @@
  * 
  * @module Core
  * @namespace Slick
+ * @{
  */
 
 (function ($) {
@@ -26,7 +27,6 @@
    * This is pretty much identical to how W3C and jQuery implement events.
    * 
    * @class 
-   * @memberof Slick
    * @constructor
    */
   function EventData(sourceEvent, propagateSignals) {
@@ -128,7 +128,6 @@
    * A simple publisher-subscriber implementation.
    * 
    * @class
-   * @memberof Slick
    * @constructor
    */
   function Event() {
@@ -213,7 +212,6 @@
    * [EventHandler description]
    *
    * @class
-   * @memberof Slick
    * @constructor
    */
   function EventHandler() {
@@ -258,7 +256,6 @@
    * A structure containing a range of cells.
    * 
    * @class
-   * @memberof Slick
    * @constructor
    * 
    * @param fromRow {Integer} Starting row.
@@ -366,7 +363,6 @@
    * Used to decorate a master data row with information about a group of nested child rows.
    * 
    * @class
-   * @memberof Slick
    * @constructor
    * 
    * @param nestingKey {Object} Key uniquely identifying the group.
@@ -413,7 +409,6 @@
    * Used to decorate related nested rows.
    * 
    * @class
-   * @memberof Slick
    * @constructor
    * 
    * @param masterId {Object} Id of related master row.
@@ -432,7 +427,6 @@
    * A dummy loading data row.
    * 
    * @class
-   * @memberof Slick
    * @constructor
    * 
    * @param id {Object} Unique Id of the row.
@@ -447,7 +441,6 @@
    * A dummy missing data row.
    * 
    * @class 
-   * @memberof Slick
    * @constructor
    * 
    * @param id {Object} Unique Id of the row.
@@ -462,7 +455,6 @@
    * A base class that all special / non-data rows (like Group and GroupTotals) derive from.
    * 
    * @class 
-   * @memberof Slick
    * @constructor
    */
   function NonDataItem() {
@@ -475,7 +467,6 @@
    * 
    * @class 
    * @extends Slick.NonDataItem
-   * @memberof Slick
    * @constructor
    */
   function Group() {
@@ -572,7 +563,6 @@
    * 
    * @class 
    * @extends Slick.NonDataItem
-   * @memberof Slick
    * @constructor
    */
   function GroupTotals() {
@@ -603,7 +593,6 @@
    * and attempt a commit or cancel before proceeding.
    * 
    * @class 
-   * @memberof Slick
    * @constructor
    */
   function EditorLock() {
@@ -740,7 +729,6 @@
    *    - http://ejohn.org/blog/accuracy-of-javascript-time/
    *
    * @class 
-   * @memberof Slick
    * @constructor
    */
   function PerformanceTimer() {
@@ -853,6 +841,13 @@
     var hasFunctionName = false;
     var hasFunctionCompilation = false;
     var hasFunctionDecompilation = false;
+    // When the current browser is not capable of naming compiled functions, e.g. latest Chrome on OSX,
+    // then we have ourselves a look if we can get around that by indirect compilation: that's what's
+    // signaled by this flag `hasAltFunctionName`.
+    // When it is signaled, the `compiler` below will be generated in a slightly different way:
+    // we then use the *alternative* compiler function instance so that we always have the fastest
+    // possible available compiler for our current environment.
+    var hasAltFunctionName = false;
 
     // detect browser abilities re function compilation
     try {
@@ -869,18 +864,33 @@
       // Test function *naming* support; see also https://github.com/mleibman/SlickGrid/issues/1032
       try {
         __fn.displayName = "sg_foobar___";
-        if (__fn(1) === 1) {
+        if (__fn(1) === 1 && __fn.displayName === "sg_foobar___") {
           hasFunctionDisplayName = true;
         }
-      } catch (ex) { 
+      } catch (ex) {
+        console.warn("function compilation browser capability detection @ displayName: ", ex); 
       }
 
       try {
         __fn.name = "sg_foobar___";
-        if (__fn(1) === 1) {
+        if (__fn(1) === 1 && __fn.name === "sg_foobar___") {
           hasFunctionName = true;
         }
       } catch (ex) { 
+        console.warn("function compilation browser capability detection @ function name: ", ex);
+
+        // Check if we support the alternative way of naming a function: 
+        try {
+          __fn = new Function("return function sg_foobar___(_args) {return _args;};");
+          __fn = __fn();
+ 
+          if (__fn(1) === 1 && __fn.name === "sg_foobar___") {
+            hasFunctionName = true;
+            hasAltFunctionName = true;
+          }
+        } catch (ex) { 
+          console.warn("function compilation browser capability detection @ ALT function name: ", ex);
+        }
       }
 
       // test compilation last: we only enable that one when we passed the other tests:
@@ -895,6 +905,7 @@
       hasFunctionDisplayName = false;
       hasFunctionName = false;
       hasFunctionCompilation = false;
+      hasAltFunctionName = false;
     }
 
     /**
@@ -967,30 +978,61 @@
      * The caller is responsible for quality assurance of the inputs and handling this 
      * potential situation.
      */
-    var compiler = function compile_javascript(functionName, functionParameters, functionBody) {
-      if (Array.isArray(functionParameters)) {
-        functionParameters = functionParameters.join(",");
-      }
-      if (Array.isArray(functionBody)) {
-        functionBody = functionBody.join("\n");
-      }
+    var compiler;
+    switch (hasAltFunctionName) {
+    case false:
+      compiler = function compile_javascript(functionName, functionParameters, functionBody) {
+        if (Array.isArray(functionParameters)) {
+          functionParameters = functionParameters.join(",");
+        }
+        if (Array.isArray(functionBody)) {
+          functionBody = functionBody.join("\n");
+        }
 
-      var fn;
+        var fn;
 
-      if (hasFunctionCompilation) {
-        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function
-        fn = new Function(functionParameters || "", functionBody || "");                    // jshint ignore:line
-      } else {
-        return null;
-      }
-      // The next bits are only enabled on browsers which can handle them; see also issue #mleibman/1032 (https://github.com/mleibman/SlickGrid/issues/1032)
-      if (functionName) {
-        if (hasFunctionDisplayName) { fn.displayName = functionName; }
-        if (hasFunctionName) { fn.name = functionName; }
-      }
-      return fn;
-    };
+        if (hasFunctionCompilation) {
+          // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function
+          fn = new Function(functionParameters || "", functionBody || "");                    // jshint ignore:line
+        } else {
+          return null;
+        }
+        // The next bits are only enabled on browsers which can handle them; see also issue #mleibman/1032 (https://github.com/mleibman/SlickGrid/issues/1032)
+        if (functionName) {
+          if (hasFunctionDisplayName) { fn.displayName = functionName; }
+          if (hasFunctionName) { fn.name = functionName; }
+        }
+        return fn;
+      };
+      break;
 
+    default: // case true:
+      compiler = function compile_javascript_alternative(functionName, functionParameters, functionBody) {
+        if (Array.isArray(functionParameters)) {
+          functionParameters = functionParameters.join(",");
+        }
+        if (Array.isArray(functionBody)) {
+          functionBody = functionBody.join("\n");
+        }
+
+        var fn;
+
+        if (hasFunctionCompilation) {
+          // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function
+          fn = new Function("return function " + (functionName || "").replace(/[^a-z0-9]/gi, "_") + "(" + (functionParameters || "") + ") {\n" + (functionBody || "") + "};");                    // jshint ignore:line
+          fn = fn();
+        } else {
+          return null;
+        }
+        // The next bits are only enabled on browsers which can handle them; see also issue #mleibman/1032 (https://github.com/mleibman/SlickGrid/issues/1032)
+        if (functionName) {
+          if (hasFunctionDisplayName) { fn.displayName = functionName; }
+        }
+        return fn;
+      };
+      break;
+    }
+    
     /**
      * @api
      *
@@ -1058,8 +1100,6 @@
         You may add other replacements here for HTML only
         (but it's not necessary).
         Or for XML, only if the named entities are defined in its DTD.
-
-        N.B.: Make sure you patch the replace regex below too! 
         */
     };
     options = options || {};
@@ -1070,15 +1110,17 @@
         delete entityMap["\n"];
         delete entityMap["\r"];
     }
+    var crlf_re = /\r\n/g;
+    var map_re = new RegExp("[" + entityMap.keys().join("") + "]", "g");
 
     this.encode = function (s) {
       if (s == null) {
         return "";
       } else {
         return ("" + s) /* Forces the conversion to string. */
-            .replace(/\r\n/g, "\n") // convert CRLF to LF-only before we do anything else 
-            .replace(/[&<>"'\/\r\n]/g, function (s) {
-                return entityMap[s] || s;
+            .replace(crlf_re, "\n") // convert CRLF to LF-only before we do anything else 
+            .replace(map_re, function (s) {
+                return entityMap[s];
             });
       }
     };
@@ -1190,9 +1232,14 @@
 
   /**
    * Define a keyboard as a set of names for keypress codes, etc. for better code readability.
+   *
+   * @const Keyboard
+   * @readonly
+   * @enum {Number}
+   * @{
    */
   function Keyboard() {
-    // for now, base the keyboard code set off of jQueryUI, if it is present
+    // For now, base the keyboard code set off of jQueryUI, if it is present
     var keycodes = $.extend({}, $.ui && $.ui.keyCode, {
       BACKSPACE: 8,
       COMMA: 188,
@@ -1223,6 +1270,8 @@
     return keycodes;
   }
 
+  /** @} */
+
 
   // register namespace
   $.extend(true, window, {
@@ -1250,7 +1299,6 @@
        * 
        * @class GlobalEditorLock
        * @static
-       * @memberof Slick
        * @constructor
        */
       GlobalEditorLock: new EditorLock()
@@ -1258,5 +1306,7 @@
   });
 
 })(jQuery);
+
+/** @} */
 
 
