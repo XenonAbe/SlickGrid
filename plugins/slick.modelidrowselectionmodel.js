@@ -127,7 +127,7 @@
             if (allSelected()) {
                 var dataView = _grid.getData();
                 var getIdList = function (item) { return item[dataView.getIdProperty()]; };
-                var idList = dataView.getItems().map(getIdList);
+                var idList = _selectedUniqueIds = dataView.getItems().map(getIdList);
                 rowPositionIds = uniqueIdsToRowIds(idList);
             } else {
                 rowPositionIds = uniqueIdsToRowIds(_selectedUniqueIds);
@@ -150,6 +150,7 @@
                 wrapHandler(handleKeyDown));
             _handler.subscribe(_grid.onClick,
                 wrapHandler(handleClick));
+            _handler.subscribe(_grid.getData().onRowCountChanged, updateSelection);
         }
 
         function destroy() {
@@ -233,6 +234,7 @@
         function selectAll() {
             _allSelected = true;
             setSelectedUniqueIds([]);
+            _grid.getData().refresh();
         }
 
         function deselectAll() {
@@ -240,6 +242,7 @@
             _selectedUniqueIds = [];
             _allSelected = false;
             setSelectedUniqueIds([]);
+            _grid.getData().refresh();
         }
 
         function arrayConcat(a1) {
