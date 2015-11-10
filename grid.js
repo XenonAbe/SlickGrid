@@ -94,7 +94,8 @@ var Slick = require('./core');
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
       forceSyncScrolling: false,
-      addNewRowCssClass: "new-row"
+      addNewRowCssClass: "new-row",
+      keyActions: {}
     };
 
     var columnDefaults = {
@@ -271,6 +272,12 @@ var Slick = require('./core');
       $canvas = $("<div class='grid-canvas' />").appendTo($viewport);
 
       $focusSink2 = $focusSink.clone().appendTo($container);
+      // tab is set, so remove the focus sink from the tab.
+      // leaving it turns the grid into 2 tab stops.
+      // removing it all the time breaks slick grid tab stealing.
+      if (!options.keyActions || (options.keyActions.hasOwnProperty(9) && !options.keyActions[9].action)) {
+        $focusSink2.attr("tabindex", "-1");
+      }
 
       if (!options.explicitInitialization) {
         finishInitialization();
@@ -2206,6 +2213,7 @@ var Slick = require('./core');
 
     function handleKeyDown(e) {
       trigger(self.onKeyDown, {row: activeRow, cell: activeCell}, e);
+      if (self.getOptions().keyActions.hasOwnProperty(e.which)) { return; }
       var handled = e.isImmediatePropagationStopped();
 
       if (!handled) {
