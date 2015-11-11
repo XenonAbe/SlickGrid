@@ -95,6 +95,7 @@ var Slick = require('./core');
       defaultFormatter: defaultFormatter,
       forceSyncScrolling: false,
       addNewRowCssClass: "new-row",
+      disableKeyHandler: false,
       keyActions: {}
     };
 
@@ -328,10 +329,13 @@ var Slick = require('./core');
             .delegate(".slick-header-column", "mouseleave", handleHeaderMouseLeave);
         $headerRowScroller
             .bind("scroll", handleHeaderRowScroll);
-        $focusSink.add($focusSink2)
-            .bind("keydown", handleKeyDown);
+        if (!self.getOptions().disableKeyHandler) {
+          $focusSink.add($focusSink2)
+              .bind("keydown", handleKeyDown);
+          $canvas
+              .bind("keydown", handleKeyDown)
+        }
         $canvas
-            .bind("keydown", handleKeyDown)
             .bind("click", handleClick)
             .bind("dblclick", handleDblClick)
             .bind("contextmenu", handleContextMenu)
@@ -2213,33 +2217,32 @@ var Slick = require('./core');
 
     function handleKeyDown(e) {
       trigger(self.onKeyDown, {row: activeRow, cell: activeCell}, e);
-      if (self.getOptions().keyActions.hasOwnProperty(e.which)) { return; }
       var handled = e.isImmediatePropagationStopped();
 
       if (!handled) {
         if (!e.shiftKey && !e.altKey && !e.ctrlKey) {
-          if (e.which == 27) {
+          if (e.which == 27) { // esc
             if (!getEditorLock().isActive()) {
               return; // no editing mode to cancel, allow bubbling and default processing (exit without cancelling the event)
             }
             cancelEditAndSetFocus();
-          } else if (e.which == 34) {
+          } else if (e.which == 34) { // space
             navigatePageDown();
             handled = true;
-          } else if (e.which == 33) {
+          } else if (e.which == 33) { // pageup
             navigatePageUp();
             handled = true;
-          } else if (e.which == 37) {
+          } else if (e.which == 37) { // pagedown
             handled = navigateLeft();
-          } else if (e.which == 39) {
+          } else if (e.which == 39) { // left
             handled = navigateRight();
-          } else if (e.which == 38) {
+          } else if (e.which == 38) { // right
             handled = navigateUp();
-          } else if (e.which == 40) {
+          } else if (e.which == 40) { // down
             handled = navigateDown();
-          } else if (e.which == 9) {
+          } else if (e.which == 9) { // tab
             handled = navigateNext();
-          } else if (e.which == 13) {
+          } else if (e.which == 13) { // enter
             if (options.editable) {
               if (currentEditor) {
                 // adding new row
@@ -2257,7 +2260,7 @@ var Slick = require('./core');
             handled = true;
           }
         } else if (e.which == 9 && e.shiftKey && !e.ctrlKey && !e.altKey) {
-          handled = navigatePrev();
+          handled = navigatePrev(); // shift tab
         }
       }
 
