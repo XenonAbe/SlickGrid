@@ -96,7 +96,7 @@ var Slick = require('./core');
       forceSyncScrolling: false,
       addNewRowCssClass: "new-row",
       disableKeyHandler: false,
-      keyActions: {}
+      keyMap: {}
     };
 
     var columnDefaults = {
@@ -276,7 +276,7 @@ var Slick = require('./core');
       // tab is set, so remove the focus sink from the tab.
       // leaving it turns the grid into 2 tab stops.
       // removing it all the time breaks slick grid tab stealing.
-      if (!options.keyActions || (options.keyActions.hasOwnProperty(9) && !options.keyActions[9].action)) {
+      if ((!options.keyMap || !options.keyMap.lookup) || (options.keyMap.lookup.hasOwnProperty(9) && !options.keyMap.lookup[9])) {
         $focusSink2.attr("tabindex", "-1");
       }
 
