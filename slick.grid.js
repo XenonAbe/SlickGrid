@@ -3817,13 +3817,13 @@ if (0) {
 
     // Note: this is a separate function as the for..in causes the code to remain unoptimized
     // ( http://commondatastorage.googleapis.com/io-2013/presentations/223.pdf / https://github.com/paperjs/paper.js/issues/466 )
-    function appendCellCssStylesToArray(dst, cellCssClasses, row, columnDef) {
+    function appendCellCssStylesToArray(dst, cellCssClasses, row, cell) {
       for (var key in cellCssClasses) {
         assert(cellCssClasses.hasOwnProperty(key));
         var clsdef = cellCssClasses[key];
         var classes = (clsdef && clsdef[row]);
-        if (classes && classes[columnDef.id]) {
-          dst.push(classes[columnDef.id]);
+        if (classes && classes[cell]) {
+          dst.push(classes[cell]);
         }
       }
     }
@@ -3897,7 +3897,7 @@ if (0) {
 
       var cellCss = [];
       if (config.css) {
-        appendCellCssStylesToArray(cellCss, cellCssClasses, row, m);
+        appendCellCssStylesToArray(cellCss, cellCssClasses, row, cell);
       }
 
       var cellHeight = options.rowHeight;
@@ -5430,7 +5430,7 @@ if (0) {
         cellCss.push("active");
       }
 
-      appendCellCssStylesToArray(cellCss, cellCssClasses, row, m);
+      appendCellCssStylesToArray(cellCss, cellCssClasses, row, cell);
 
       var cellHeight = getCellHeight(row, rowspan);
       if (cellHeight !== options.rowHeight) {
@@ -7620,18 +7620,19 @@ out:
     }
 
     function updateCellCssStylesOnRenderedRows(addedHash, removedHash) {
-      var node, columnId, addedRowHash, removedRowHash;
+      var node, cell, addedRowHash, removedRowHash;
       for (var row = rowsCacheStartIndex, endrow = rowsCache.length; row < endrow; row++) {
         removedRowHash = removedHash && removedHash[row];
         addedRowHash = addedHash && addedHash[row];
 
         if (removedRowHash) {
           //@TO-OPT
-          for (columnId in removedRowHash) {
-            if (!addedRowHash || removedRowHash[columnId] !== addedRowHash[columnId]) {
-              node = getCellNode(row, getColumnIndex(columnId));
+          for (cell in removedRowHash) {
+            cell = +cell;       // make sure to convert the cell index (hash key) to a NUMBER
+            if (!addedRowHash || removedRowHash[cell] !== addedRowHash[cell]) {
+              node = getCellNode(row, cell);
               if (node) {
-                $(node).removeClass(removedRowHash[columnId]);
+                $(node).removeClass(removedRowHash[cell]);
               }
             }
           }
@@ -7639,11 +7640,12 @@ out:
 
         if (addedRowHash) {
           //@TO-OPT
-          for (columnId in addedRowHash) {
-            if (!removedRowHash || removedRowHash[columnId] !== addedRowHash[columnId]) {
-              node = getCellNode(row, getColumnIndex(columnId));
+          for (cell in addedRowHash) {
+            cell = +cell;       // make sure to convert the cell index (hash key) to a NUMBER
+            if (!removedRowHash || removedRowHash[cell] !== addedRowHash[cell]) {
+              node = getCellNode(row, cell);
               if (node) {
-                $(node).addClass(addedRowHash[columnId]);
+                $(node).addClass(addedRowHash[cell]);
               }
             }
           }

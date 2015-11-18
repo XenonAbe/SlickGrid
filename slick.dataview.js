@@ -1803,6 +1803,18 @@ dataView.endUpdate();
       // get the existing ones right away
       storeCellCssStyles(grid.getCellCssStyles(key));
 
+      // Warning/Note: this stores *references* to each *row* of CellCssStyles hashes.
+      // The way `grid.setCellCssStyles()` works today this '1 level deep clone' approach
+      // is sufficient to ensure that `grid.setCellCssStyles()` will observe changes
+      // on a *per-entire-row* basis, which is good enough for DataView as it won't *edit*
+      // the CellCssStyles but merely must *track* the changes done by the user while
+      // rows may be moving around.
+      // 
+      // Anyway, tread carefully when you want to fiddle with this stuff...   
+      // (DataView internally does not care how the entire-row hash is constructed: it is 
+      // agnostic in that way so the fact that we changed the `grid.setCellCssStyles()` hash
+      // index from (row_index, column_id) to (row_index, column_index) does not affect
+      // DataView itself.)
       function storeCellCssStyles(hash) {
         hashById = {};
         for (var row in hash) {
