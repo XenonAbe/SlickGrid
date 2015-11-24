@@ -1193,10 +1193,13 @@
         }
 
         function accumulate(item) {
-            var startElement = item[this.field_][0] || 0;
-            var endElement = item[this.field_][1] || 0;
-            if (item[this.field_][1] === undefined){
-                endElement = startElement;
+            var startArray = item[this.field_] || [];
+
+            var startElement = startArray[0] || 0;
+            var endElement = startArray[1] || 0;
+
+            if (startArray[1] === undefined){
+                endElement = startArray;
             }
 
             var min = Math.min(startElement, endElement);
