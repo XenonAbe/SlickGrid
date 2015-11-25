@@ -1199,7 +1199,7 @@
             var endElement = startArray[1] || 0;
 
             if (startArray[1] === undefined){
-                endElement = startArray;
+                endElement = startElement;
             }
 
             var min = Math.min(startElement, endElement);
