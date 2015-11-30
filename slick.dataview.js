@@ -1237,11 +1237,17 @@
         }
 
         function accumulate(item) {
-            var startElement = new Date(item[this.field_][0]);
-            var endElement = new Date(item[this.field_][1]);
+            var field = item[this.field_];
 
-            if (item[this.field_][1] === undefined){
+            if (!field || !field.length){
+                return;
+            }
+
+            var startElement = new Date(field[0]).getTime(),
                 endElement = startElement;
+
+            if (field[1]) {
+                endElement = new Date(field[1]).getTime();
             }
 
             var min = Math.min(startElement, endElement);
@@ -1249,11 +1255,11 @@
 
             if ((this.min || Number.MAX_VALUE) > min) {
                 this.min = min;
-                this.actualMinFormat = (min === startElement.getTime()) ? item[this.field_][0] : item[this.field_][1];
+                this.actualMinFormat = (min === startElement) ? item[this.field_][0] : item[this.field_][1];
             }
             if ((this.max || Number.MIN_VALUE) < max) {
                 this.max = max;
-                this.actualMaxFormat = (max === startElement.getTime()) ? item[this.field_][0] : item[this.field_][1];
+                this.actualMaxFormat = (max === startElement) ? item[this.field_][0] : item[this.field_][1];
             }
         }
 
