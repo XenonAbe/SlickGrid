@@ -1255,11 +1255,11 @@
 
             if ((this.min || Number.MAX_VALUE) > min) {
                 this.min = min;
-                this.actualMinFormat = (min === startElement) ? item[this.field_][0] : item[this.field_][1];
+                this.actualMinFormat = (min === startElement) ? field[0] : field[1];
             }
             if ((this.max || Number.MIN_VALUE) < max) {
                 this.max = max;
-                this.actualMaxFormat = (max === startElement) ? item[this.field_][0] : item[this.field_][1];
+                this.actualMaxFormat = (max === startElement) ? field[0] : field[1];
             }
         }
 
