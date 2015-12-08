@@ -1,6 +1,4 @@
-var jQuery = require("jquery");
-
-(function($) {
+var $ = require("jquery");
 
 module("basic");
 
@@ -842,4 +840,4 @@ test("delete at the end", function() {
 // TODO: combination
 
 
-})(jQuery);
+
