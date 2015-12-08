@@ -4,6 +4,8 @@
  * @namespace Slick
  */
 
+var jQuery = require("jquery");
+
 (function ($) {
   // register namespace
   $.extend(true, window, {

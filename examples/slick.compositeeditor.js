@@ -1,4 +1,5 @@
-;
+var jQuery = require("jquery");
+
 (function ($) {
   $.extend(true, window, {
     Slick: {

@@ -1,4 +1,5 @@
 var Slick = require('../core');
+var jQuery = require("jquery");
 
 (function ($) {
 

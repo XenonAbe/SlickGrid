@@ -1,3 +1,5 @@
+var jQuery = require("jquery");
+
 (function ($) {
   function SlickColumnPicker(columns, grid, options) {
     var $menu;

@@ -16,6 +16,8 @@
  *     and do proper cleanup.
  */
 
+var jQuery = require("jquery");
+
 // make sure required JavaScript modules are loaded
 if (typeof jQuery === "undefined") {
   throw "SlickGrid requires jquery module to be loaded";
