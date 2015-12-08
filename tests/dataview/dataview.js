@@ -1,4 +1,4 @@
-(function($) {
+var $ = require("jquery");
 
 module("basic");
 
@@ -475,7 +475,7 @@ test("updating an item to pass the filter", function() {
         same(args.pageSize, 0, "pageSize arg");
         same(args.pageNum, 0, "pageNum arg");
         same(args.totalRows, 4, "totalRows arg");
-        count++;        
+        count++;
     });
     dv.updateItem(3,{id:3,val:3});
     equal(count, 3, "events fired");
@@ -840,4 +840,4 @@ test("delete at the end", function() {
 // TODO: combination
 
 
-})(jQuery);
+
