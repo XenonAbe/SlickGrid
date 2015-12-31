@@ -1027,8 +1027,8 @@
         }
 
         function storeResult(groupTotals) {
-            groupTotals.uniqueString = groupTotals.uniqueString || {};
-            groupTotals.uniqueString[this.field_] = this.stringField_;
+            groupTotals.UniqueString = groupTotals.UniqueString || {};
+            groupTotals.UniqueString[this.field_] = this.stringField_;
         }
     }
 
@@ -1051,11 +1051,11 @@
         };
 
         this.storeResult = function (groupTotals) {
-            if (!groupTotals.avg) {
-                groupTotals.avg = {};
+            if (!groupTotals.Avg) {
+                groupTotals.Avg = {};
             }
             if (this.nonNullCount_ != 0) {
-                groupTotals.avg[this.field_] = this.sum_ / this.nonNullCount_;
+                groupTotals.Avg[this.field_] = this.sum_ / this.nonNullCount_;
             }
         };
     }
@@ -1077,10 +1077,10 @@
         };
 
         this.storeResult = function (groupTotals) {
-            if (!groupTotals.min) {
-                groupTotals.min = {};
+            if (!groupTotals.Min) {
+                groupTotals.Min = {};
             }
-            groupTotals.min[this.field_] = this.min_;
+            groupTotals.Min[this.field_] = this.min_;
         }
     }
 
@@ -1151,10 +1151,10 @@
         };
 
         this.storeResult = function (groupTotals) {
-            if (!groupTotals.max) {
-                groupTotals.max = {};
+            if (!groupTotals.Max) {
+                groupTotals.Max = {};
             }
-            groupTotals.max[this.field_] = this.max_;
+            groupTotals.Max[this.field_] = this.max_;
         }
     }
 
@@ -1173,10 +1173,10 @@
         };
 
         this.storeResult = function (groupTotals) {
-            if (!groupTotals.sum) {
-                groupTotals.sum = {};
+            if (!groupTotals.Sum) {
+                groupTotals.Sum = {};
             }
-            groupTotals.sum[this.field_] = this.sum_;
+            groupTotals.Sum[this.field_] = this.sum_;
         }
     }
 
@@ -1214,10 +1214,10 @@
         }
 
         function storeResult(groupTotals) {
-            groupTotals.numberRange = groupTotals.numberRange || {};
-            groupTotals.numberRange[this.field_] = [this.min || 0];
+            groupTotals.NumberRange = groupTotals.NumberRange || {};
+            groupTotals.NumberRange[this.field_] = [this.min || 0];
             if (this.max > this.min) {
-                groupTotals.numberRange[this.field_].push(this.max);
+                groupTotals.NumberRange[this.field_].push(this.max);
             }
         }
     }
