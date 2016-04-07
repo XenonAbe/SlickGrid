@@ -1349,6 +1349,8 @@ if (typeof Slick === "undefined") {
     var selectedRows = [];
 
     var plugins = [];
+    
+    // WARNING: vanilla SlickGrid uses a (row_index, column_ID) hash index, *we* use a (row_index, column_INDEX) hash index as that's consistent with the rest of the APIs and just a tad faster too!
     /* @dict */ var cellCssClasses = {};
 
     /* @dict */ var columnsById = {};
@@ -10520,7 +10522,7 @@ out:
         // userland event handler tells us otherwise; 
         // simply scroll in the indicated direction if possible.
         // 
-        // Note that we MAY arrive at this peculiar position when we haven't rendered the
+        // Note that we MAY arrive at this peculiar situation when we haven't rendered the
         // `activeNode`, hence we *do* check the render-result-independent `activeCell` and
         // `activeRow` settings before we travel any further:
         assert(!activeCell);
