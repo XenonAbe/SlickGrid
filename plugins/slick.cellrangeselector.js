@@ -71,13 +71,22 @@
 
       _grid.focus();
 
-      var x, y, o;
-      o = $(_canvas).offset();
-      x = dd.startX - o.left;
-      y = dd.startY - o.top;
-      var start = _grid.getCellFromPoint(x, y, {
-        clipToValidRange: true
-      });
+      // comment by prashant
+      // note for ger issue #1249
+      // i have no idea why ger used the commented code while we get the row and cell in cell variable
+      // if any special function let me know
+      // same for the handleDrag function bellow.
+
+      // var x, y, o;
+      // //o = $(_canvas).offset();
+      // o = $($(".grid-canvas")[0]).offset();
+      // x = dd.startX - o.left;
+      // y = dd.startY - o.top;
+      // var start = _grid.getCellFromPoint(x, y, {
+      //   clipToValidRange: true
+      // });
+
+      var start = cell;
       assert(start);
 
       dd.range = {
@@ -95,15 +104,21 @@
       }
       e.stopImmediatePropagation();
 
-      var x, y, o;
-      o = $(_canvas).offset();
-      x = e.pageX - o.left;
-      y = e.pageY - o.top;
-      var end = _grid.getCellFromPoint(x, y, {
-        clipToValidRange: true
-      });
+      var cell = _grid.getCellFromEvent(e);
+
+      // comment by prashant
+      // note for ger issue #1249
+      // var x, y, o;
+      // o = $($(".grid-canvas")[0]).offset();  
+      // x = e.pageX - o.left;
+      // y = e.pageY - o.top;
+      // var end = _grid.getCellFromPoint(x, y, {
+      //   clipToValidRange: true
+      // });
+
+      var end = cell;
       assert(end);
-      
+
       var eventData = {
           range: dd.range,
           currentCell: end
