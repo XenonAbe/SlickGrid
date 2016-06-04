@@ -98,7 +98,7 @@
           $node: $node,
           options: options
       });
-      if (text != null) {
+      if (text != null && text !== "") {
         $node.attr("title", text);
       }
     }
@@ -121,7 +121,7 @@
           $node: $node,
           options: options
       });
-      if (text != null) {
+      if (text != null && text !== "") {
         $node.attr("title", text);
       }
     }
