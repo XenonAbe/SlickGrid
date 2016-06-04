@@ -3,11 +3,50 @@
 ## Welcome to SlickGrid
 
 Find documentation and examples in [the original wiki](https://github.com/mleibman/SlickGrid/wiki) and [this clone's wiki](https://github.com/GerHobbelt/SlickGrid/wiki).
-This is a fork of SlickGrid maintained by Ger Hobbelt / Visyond Inc. The new features that have been added / mixed in:
+This is a fork of SlickGrid maintained by Ger Hobbelt / Visyond Inc. The new features that have been added / mixed in from the old [1] and new [2] originals and various other forks:
+
+The following, in short, are the changes made since forking from the main MLeibman branch, a significant number in response to issues or pull requests.
+
+**Maintenance:**
+
+* update to jquery-1.11.2 and jquery-ui-1.11.3, with minor patches to accommodate the change
+* Fix bug in dataview causing model benchmark test to throw an error
+* Remove redundant slick pager code
+* Fix unnecessary horizontal scroll for autosized columns when viewport has fractional pixel width
+* Make default group comparer function more robust
+* fix grouping bug (issue #841 & #896 mleibman#898)
+* update DataView compiled-expression regex to deal with some forms of minification
+* Fix Issue #963 ajax example not working
+* additional version of ajax loading page, using Yahoo news and YQL as a source. the format of the grid rows is more in keeping with the newsfeed style of the original
+* Fix tooltip error with draggable columns 
+* Prevent useless onSelectedRangesChanged events in selectionmodels' setSelectedRanges
+* Fix jQueryUI css interfering with SlickGrid css issues
+* Fix column resizing issues with Bootstrap 3/box-sizing:border-box
+* Patch absBox for null element bug (MLeibman #1066)
+* fix bugs identified by JsHint
+* remove deprecated jquery .browser property
+* fix error in autotooltips test
+* add internal keycode enums
+* fix bug in compound editor example 'isValueChanged' method
+
+**New features imported from [2]:**
+
+* Add css manipulation so that grid initialises successfully if the parent element is hidden
+* Add jQueryUI accordion and Bootstrap 3 examples
+* Add multi grid on page example (example-multi-grid-basic)
+* Add async post render async cleanup
+* Allow custom editors to suppress automatic cell clear on edit
+* Add Floating Point editor
+* Add grid as member of args parameter for all events, and to column formatter. Add dataView as member of args parameter for all dataView events
+* add custom validator option to integer, float and date editors
+* Add example of dynamic tab and grid creation for basic grid 
+* Add example of dynamic tab and grid creation for grid with all the features of example-4-model
+
+
 
 ## This Fork's Features
 
-* This is synced with the 6pac SlickGrid repo: @6pac is maintaining his own clone as a separate 'alternative master'. Check [his wiki](https://github.com/6pac/SlickGrid/wiki) for details.
+* This is synced with the 6pac SlickGrid repo: @6pac is maintaining his own clone [2] as a separate, alternative master which is now endorsed by Michael Leibman. Check [his wiki](https://github.com/6pac/SlickGrid/wiki) for details.
 * Cells spanning arbitrary numbers of rows and/or columns (colspan / rowspan)
 * A footer row that mimics the behavior of the header row, with similar options and controls.
 * Enhanced info feed to/from Formatters and Editors
@@ -30,12 +69,19 @@ This is a fork of SlickGrid maintained by Ger Hobbelt / Visyond Inc. The new fea
 * Adds [antiscroll](https://github.com/learnboost/antiscroll) compatibility to enable a uniform, OSX-style scrolling experience across browsers. Enable antiscroll by including the antiscroll library on your page, and passing the `useAntiscroll: true` option to your SlickGrid instance. By default we don't show scrollbars until the user begins scrolling (to mimic the way OSX does it); to change that behavior, you can set the `showScrollbarsOnHover` option.
 * Adds `skipPaging` option to prevent SlickGrid from paging when user keypress takes the user off the current page. Instead, up & down keypresses reveal one new row at a time.
 
+Example pages showcase any new features.
+
+
 
 ### Message by Michael Leibman (@mleibman)
 
 **UPDATE:  March 5th, 2014 - I have too many things going on in my life right now to really give SlickGrid support and development the time and attention it deserves.  I am not stopping it, but I will most likely be unresponsive for some time.  Sorry.**
 
 **UPDATE:  This repo hasn't been updated in a while. https://github.com/6pac/SlickGrid/wiki seems to be the most active fork at the moment.**
+
+Original mleibman README follows:
+
+
 
 ## SlickGrid is an advanced JavaScript grid/spreadsheet component
 
@@ -80,3 +126,8 @@ Some highlights:
     + What to do with too many pinned columns i.e. when the 'total pinned width' is larger than than the available viewport width? This is where 'pinning priority levels' come in, but that also means we have a complex rule for 'who shifts behind whom when space gets tight and the user scrolls'...
     + The *active cell* may be a cell, including any cell which is not pinned. Given that we can pin columns to the left and right (to facilitate LTR and RTL displays, but the same applies to row-level use cases where summary rows are 'footer' pin candidates versus label rows which are 'header' pin candidates), do we have to ensure that the active cell is always visible (and thus accessible)? And since I suppose we do, is that active cell to be shown in its entirety at all times, even when it happens to be very wide and/or high? Or do we accept a situation where you can reach a *part* of the active cell, enough to click on it / focus on it and have an 'external' editor pop up? Do we scroll the active cell into view (yes, we do) and then adjust its scroll position when the left and/or right pinned crowd is getting very wide, i.e. do we adjust the viewport scroll position to enable the maximum amount of pinned columns to be visible while also showing as much as possible of the currently active cell?
     
+
+
+
+[1] https://github.com/mleibman/SlickGrid    MLeibman's Original
+[2] https://github.com/6pac/SlickGrid        6Pac's Endorsed Original
