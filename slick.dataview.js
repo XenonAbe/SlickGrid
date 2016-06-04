@@ -1591,7 +1591,7 @@ dataView.endUpdate();
 
     function getRowDiffs(rows, newRows) {
       var item, r, eitherIsNonData, diff = [];
-      var from = 0, to = newRows.length - 1;
+      var from = 0, to = Math.max(newRows.length, rows.length);
 
       if (refreshHints && refreshHints.ignoreDiffsBefore) {
         from = Math.max(0,
@@ -1599,11 +1599,11 @@ dataView.endUpdate();
       }
 
       if (refreshHints && refreshHints.ignoreDiffsAfter) {
-        to = Math.min(newRows.length - 1,
+        to = Math.min(to,
             Math.max(0, refreshHints.ignoreDiffsAfter));
       }
 
-      for (var i = from, rl = rows.length; i <= to; i++) {
+      for (var i = from, rl = Math.min(newRows.length, rows.length); i < to; i++) {
         if (i >= rl) {
           diff[diff.length] = i;
         } else {
