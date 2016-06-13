@@ -7,7 +7,7 @@
   "repository": "pandell/SlickGrid",
   "author": "Michael Leibman <michael.leibman@gmail.com>",
   "dependencies": {
-    "jquery": "^2.2",
+    "jquery": "~2.1",
     "node.extend": "^1.1"
   },
   "directories": {
