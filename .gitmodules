@@ -32,9 +32,9 @@
 [submodule "lib/jquery-iCheck"]
 	path = lib/jquery-iCheck
 	url = https://github.com/GerHobbelt/iCheck.git
-[submodule "lib/jquery-jsonp"]
-	path = lib/jquery-jsonp
-	url = https://github.com/GerHobbelt/jquery-jsonp.git
+#[submodule "lib/jquery-jsonp"]
+#	path = lib/jquery-jsonp
+#	url = https://github.com/GerHobbelt/jquery-jsonp.git
 [submodule "lib/jquery-fixclick"]
 	path = lib/jquery-fixclick
 	url = https://github.com/GerHobbelt/jquery-fixclick.git
