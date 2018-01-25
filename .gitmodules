@@ -1,43 +1,43 @@
 [submodule "lib/threedubmedia"]
 	path = lib/threedubmedia
-	url = git@github.com:GerHobbelt/jquery.threedubmedia.git
+	url = https://github.com/GerHobbelt/jquery.threedubmedia.git
 [submodule "documentation/wiki"]
 	path = documentation/wiki
-	url = git@github.com:GerHobbelt/SlickGrid.wiki.git
+	url = https://github.com/GerHobbelt/SlickGrid.wiki.git
 [submodule "lib/hammer"]
 	path = lib/hammer
-	url = git@github.com:GerHobbelt/hammer.js.git
+	url = https://github.com/GerHobbelt/hammer.js.git
 [submodule "lib/jquery-multiselect"]
 	path = lib/jquery-multiselect
-	url = git@github.com:GerHobbelt/jquery-multiselect.git
+	url = https://github.com/GerHobbelt/jquery-multiselect.git
 [submodule "lib/jquery-simulate"]
 	path = lib/jquery-simulate
-	url = git@github.com:GerHobbelt/jquery-simulate.git
+	url = https://github.com/GerHobbelt/jquery-simulate.git
 	ignore = dirty
 [submodule "lib/jquery-sparkline"]
 	path = lib/jquery-sparkline
-	url = git@github.com:GerHobbelt/jquery.sparkline.git
+	url = https://github.com/GerHobbelt/jquery.sparkline.git
 [submodule "lib/keymaster"]
 	path = lib/keymaster
-	url = git@github.com:GerHobbelt/keymaster.git
+	url = https://github.com/GerHobbelt/keymaster.git
 [submodule "lib/spectrum"]
 	path = lib/spectrum
-	url = git@github.com:GerHobbelt/spectrum.git
+	url = https://github.com/GerHobbelt/spectrum.git
 [submodule "lib/verge-screendimensions"]
 	path = lib/verge-screendimensions
-	url = git@github.com:GerHobbelt/verge.git
+	url = https://github.com/GerHobbelt/verge.git
 [submodule "lib/TinyColor"]
 	path = lib/TinyColor
-	url = git@github.com:GerHobbelt/TinyColor.git
+	url = https://github.com/GerHobbelt/TinyColor.git
 [submodule "lib/jquery-iCheck"]
 	path = lib/jquery-iCheck
-	url = git@github.com:GerHobbelt/iCheck.git
+	url = https://github.com/GerHobbelt/iCheck.git
 [submodule "lib/jquery-jsonp"]
 	path = lib/jquery-jsonp
-	url = git@github.com:GerHobbelt/jquery-jsonp.git
+	url = https://github.com/GerHobbelt/jquery-jsonp.git
 [submodule "lib/jquery-fixclick"]
 	path = lib/jquery-fixclick
-	url = git@github.com:GerHobbelt/jquery-fixclick.git
+	url = https://github.com/GerHobbelt/jquery-fixclick.git
 [submodule "lib/jquery-migrate"]
 	path = lib/jquery-migrate
-	url = git@github.com:GerHobbelt/jquery-migrate.git
+	url = https://github.com/GerHobbelt/jquery-migrate.git
