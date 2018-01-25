@@ -20,9 +20,9 @@
 [submodule "lib/keymaster"]
 	path = lib/keymaster
 	url = https://github.com/GerHobbelt/keymaster.git
-[submodule "lib/spectrum"]
-	path = lib/spectrum
-	url = https://github.com/GerHobbelt/spectrum.git
+#[submodule "lib/spectrum"]
+#	path = lib/spectrum
+#	url = https://github.com/GerHobbelt/spectrum.git
 [submodule "lib/verge-screendimensions"]
 	path = lib/verge-screendimensions
 	url = https://github.com/GerHobbelt/verge.git
